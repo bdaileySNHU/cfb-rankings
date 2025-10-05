@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Teams - College Football Rankings</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>College Football Rankings</h1>
+      <p class="subtitle">All Teams</p>
+    </div>
+  </header>
+
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="nav-link">Rankings</a>
+      <a href="teams.html" class="nav-link active">All Teams</a>
+      <a href="games.html" class="nav-link">Games</a>
+      <a href="comparison.html" class="nav-link">vs AP Poll</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">All Teams</h2>
+        <div class="filters">
+          <select class="filter-select" id="conference-filter">
+            <option value="">All Conferences</option>
+            <option value="P5">Power 5</option>
+            <option value="G5">Group of 5</option>
+            <option value="FCS">FCS</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <span>Loading teams...</span>
+      </div>
+
+      <div id="teams-container" class="hidden">
+        <table class="rankings-table">
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>Conference</th>
+              <th>Record</th>
+              <th>ELO Rating</th>
+              <th>Recruiting Rank</th>
+              <th>Transfer Rank</th>
+            </tr>
+          </thead>
+          <tbody id="teams-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2024 College Football Ranking System</p>
+    </div>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script>
+    let allTeams = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTeams();
+      document.getElementById('conference-filter').addEventListener('change', filterTeams);
+    });
+
+    async function loadTeams() {
+      try {
+        allTeams = await api.getTeams();
+        displayTeams(allTeams);
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('teams-container').classList.remove('hidden');
+      } catch (err) {
+        console.error('Error loading teams:', err);
+      }
+    }
+
+    function filterTeams() {
+      const conf = document.getElementById('conference-filter').value;
+      const filtered = conf ? allTeams.filter(t => t.conference === conf) : allTeams;
+      displayTeams(filtered);
+    }
+
+    function displayTeams(teams) {
+      const tbody = document.getElementById('teams-tbody');
+      tbody.innerHTML = '';
+
+      teams.sort((a, b) => b.elo_rating - a.elo_rating).forEach(team => {
+        const row = document.createElement('tr');
+        row.onclick = () => window.location.href = `team.html?id=${team.id}`;
+        row.innerHTML = `
+          <td><span class="team-name">${team.name}</span></td>
+          <td><span class="conference-badge ${team.conference.toLowerCase()}">${team.conference}</span></td>
+          <td><span class="record ${team.losses === 0 && team.wins > 0 ? 'undefeated' : ''}">${team.wins}-${team.losses}</span></td>
+          <td style="font-weight: 600;">${team.elo_rating.toFixed(2)}</td>
+          <td>${team.recruiting_rank === 999 ? 'N/A' : '#' + team.recruiting_rank}</td>
+          <td>${team.transfer_rank === 999 ? 'N/A' : '#' + team.transfer_rank}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Details - College Football Rankings</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <h1>College Football Rankings</h1>
+      <p class="subtitle">Team Details</p>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="nav-link">Rankings</a>
+      <a href="teams.html" class="nav-link">All Teams</a>
+      <a href="games.html" class="nav-link">Games</a>
+      <a href="comparison.html" class="nav-link">vs AP Poll</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Loading State -->
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <span>Loading team details...</span>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="error hidden">
+      <strong>Error loading team.</strong>
+      <span id="error-message"></span>
+    </div>
+
+    <!-- Team Content -->
+    <div id="team-content" class="hidden">
+      <!-- Team Header -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+          <div>
+            <h1 id="team-name" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 0.5rem;">--</h1>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+              <span id="conference-badge" class="conference-badge">--</span>
+              <span id="team-record" class="record" style="font-size: 1.25rem;">--</span>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Current Rank</div>
+            <div id="team-rank" class="rank-badge top-5" style="width: 4rem; height: 4rem; font-size: 2rem;">--</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">ELO Rating</div>
+          <div class="stat-value" id="elo-rating">--</div>
+          <div class="stat-subtext">Current rating</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Preseason Rating</div>
+          <div class="stat-value" id="initial-rating">--</div>
+          <div class="stat-subtext">Based on recruiting</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Strength of Schedule</div>
+          <div class="stat-value" id="sos-rating">--</div>
+          <div class="stat-subtext" id="sos-rank">--</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Rating Change</div>
+          <div class="stat-value" id="rating-change">--</div>
+          <div class="stat-subtext">From preseason</div>
+        </div>
+      </div>
+
+      <!-- Preseason Factors -->
+      <div class="card">
+        <h2 class="card-title mb-4">Preseason Factors</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+          <div>
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Recruiting Rank</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);" id="recruiting-rank">--</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">247Sports Composite</div>
+          </div>
+          <div>
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Transfer Portal Rank</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);" id="transfer-rank">--</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">247Sports Portal</div>
+          </div>
+          <div>
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Returning Production</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);" id="returning-production">--</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">% returning starters</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule -->
+      <div class="card">
+        <h2 class="card-title mb-4">Season Schedule</h2>
+        <div id="schedule-loading" class="loading">
+          <div class="spinner"></div>
+          <span>Loading schedule...</span>
+        </div>
+        <div id="schedule-container" class="hidden">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Opponent</th>
+                <th>Location</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="schedule-tbody">
+              <!-- Schedule will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+        <div id="no-schedule" class="hidden" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+          No games scheduled yet.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2024 College Football Ranking System</p>
+      <p style="margin-top: 0.5rem; opacity: 0.8;">
+        Modified ELO Algorithm | Data updates in real-time
+      </p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/team.js"></script>
+</body>
+</html>

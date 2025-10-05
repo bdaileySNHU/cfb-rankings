@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rankings Comparison - College Football Rankings</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>College Football Rankings</h1>
+      <p class="subtitle">ELO vs AP Poll Comparison</p>
+    </div>
+  </header>
+
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="nav-link">Rankings</a>
+      <a href="teams.html" class="nav-link">All Teams</a>
+      <a href="games.html" class="nav-link">Games</a>
+      <a href="comparison.html" class="nav-link active">Comparison</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Summary Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Prediction Accuracy</div>
+        <div class="stat-value" id="prediction-accuracy">--</div>
+        <div class="stat-subtext">Games predicted correctly</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Exact Matches</div>
+        <div class="stat-value" id="exact-matches">--</div>
+        <div class="stat-subtext">Same rank as AP Poll</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Within 5 Spots</div>
+        <div class="stat-value" id="within-five">--</div>
+        <div class="stat-subtext">Close to AP Poll</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Difference</div>
+        <div class="stat-value" id="avg-diff">--</div>
+        <div class="stat-subtext">Positions from AP Poll</div>
+      </div>
+    </div>
+
+    <!-- ELO vs AP Comparison -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">ELO vs AP Poll (Week 6, 2025)</h2>
+      </div>
+
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <span>Loading comparison...</span>
+      </div>
+
+      <div id="comparison-container" class="hidden">
+        <table class="rankings-table">
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>ELO Rank</th>
+              <th>AP Rank</th>
+              <th>Difference</th>
+              <th>ELO Rating</th>
+              <th>Record</th>
+              <th>SOS</th>
+            </tr>
+          </thead>
+          <tbody id="comparison-tbody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Biggest Disagreements -->
+    <div class="card">
+      <h2 class="card-title mb-4">Biggest Disagreements</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+        Teams where ELO rankings differ most from the AP Poll
+      </p>
+      <div id="disagreements-container">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>ELO Rank</th>
+              <th>AP Rank</th>
+              <th>Difference</th>
+              <th>Analysis</th>
+            </tr>
+          </thead>
+          <tbody id="disagreements-tbody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ELO's Unique Picks -->
+    <div class="card">
+      <h2 class="card-title mb-4">ELO's Unique Top 25 Picks</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+        Teams in ELO's top 25 that aren't ranked in the AP Poll
+      </p>
+      <div id="unique-container">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>ELO Rank</th>
+              <th>Team</th>
+              <th>Record</th>
+              <th>ELO Rating</th>
+              <th>SOS</th>
+              <th>Why ELO Likes Them</th>
+            </tr>
+          </thead>
+          <tbody id="unique-tbody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Biggest Upsets -->
+    <div class="card">
+      <h2 class="card-title mb-4">Biggest Upsets (ELO's Surprises)</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+        Games where the underdog won according to ELO ratings
+      </p>
+      <div id="upsets-container">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Week</th>
+              <th>Winner</th>
+              <th>Defeated</th>
+              <th>Score</th>
+              <th>Rating Difference</th>
+            </tr>
+          </thead>
+          <tbody id="upsets-tbody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="card">
+      <h2 class="card-title mb-4">Key Insights</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div>
+          <h3 style="color: var(--primary-color); margin-bottom: 0.5rem;">What ELO Does Well</h3>
+          <ul style="color: var(--text-secondary); line-height: 1.8;">
+            <li>Rewards strength of schedule objectively</li>
+            <li>Accounts for quality losses</li>
+            <li>Identifies underrated teams with tough schedules</li>
+            <li>Caps margin of victory to prevent running up scores</li>
+            <li>Incorporates preseason talent (recruiting)</li>
+          </ul>
+        </div>
+        <div>
+          <h3 style="color: var(--primary-color); margin-bottom: 0.5rem;">Where ELO Differs from AP</h3>
+          <ul style="color: var(--text-secondary); line-height: 1.8;">
+            <li><strong>More objective:</strong> No human bias</li>
+            <li><strong>SOS matters:</strong> Tough schedules rewarded</li>
+            <li><strong>Quality losses:</strong> Losing to #1 hurts less</li>
+            <li><strong>Conference neutral:</strong> G5 can rank high</li>
+            <li><strong>Real-time:</strong> Updates after every game</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2025 College Football Ranking System</p>
+      <p style="margin-top: 0.5rem; opacity: 0.8;">
+        Modified ELO Algorithm | Comparing with AP Poll Week 6, 2025
+      </p>
+    </div>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/comparison.js"></script>
+</body>
+</html>

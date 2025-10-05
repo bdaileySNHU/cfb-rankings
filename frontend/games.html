@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Games - College Football Rankings</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>College Football Rankings</h1>
+      <p class="subtitle">Game Results</p>
+    </div>
+  </header>
+
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="nav-link">Rankings</a>
+      <a href="teams.html" class="nav-link">All Teams</a>
+      <a href="games.html" class="nav-link active">Games</a>
+      <a href="comparison.html" class="nav-link">vs AP Poll</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Game Results</h2>
+        <div class="filters">
+          <select class="filter-select" id="week-filter">
+            <option value="">All Weeks</option>
+            <option value="1">Week 1</option>
+            <option value="2">Week 2</option>
+            <option value="3">Week 3</option>
+            <option value="4">Week 4</option>
+            <option value="5">Week 5</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <span>Loading games...</span>
+      </div>
+
+      <div id="games-container" class="hidden">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Week</th>
+              <th>Winner</th>
+              <th>Score</th>
+              <th>Loser</th>
+              <th>Location</th>
+              <th>ELO Change</th>
+            </tr>
+          </thead>
+          <tbody id="games-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2024 College Football Ranking System</p>
+    </div>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script>
+    let allGames = [];
+    let teams = {};
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadGames();
+      document.getElementById('week-filter').addEventListener('change', filterGames);
+    });
+
+    async function loadGames() {
+      try {
+        const [gamesData, teamsData] = await Promise.all([
+          api.getGames({ season: 2024, limit: 200 }),
+          api.getTeams()
+        ]);
+
+        allGames = gamesData;
+
+        // Create teams lookup
+        teamsData.forEach(t => teams[t.id] = t);
+
+        displayGames(allGames);
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('games-container').classList.remove('hidden');
+      } catch (err) {
+        console.error('Error loading games:', err);
+      }
+    }
+
+    function filterGames() {
+      const week = document.getElementById('week-filter').value;
+      const filtered = week ? allGames.filter(g => g.week === parseInt(week)) : allGames;
+      displayGames(filtered);
+    }
+
+    function displayGames(games) {
+      const tbody = document.getElementById('games-tbody');
+      tbody.innerHTML = '';
+
+      games.sort((a, b) => b.week - a.week || b.id - a.id).forEach(game => {
+        const winner = game.home_score > game.away_score ? teams[game.home_team_id] : teams[game.away_team_id];
+        const loser = game.home_score > game.away_score ? teams[game.away_team_id] : teams[game.home_team_id];
+        const winnerScore = Math.max(game.home_score, game.away_score);
+        const loserScore = Math.min(game.home_score, game.away_score);
+        const isHomeWin = game.home_score > game.away_score;
+        const location = game.is_neutral_site ? 'Neutral' : (isHomeWin ? 'Home' : 'Away');
+        const eloChange = Math.abs(isHomeWin ? game.home_rating_change : game.away_rating_change);
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td style="font-weight: 600;">Week ${game.week}</td>
+          <td><a href="team.html?id=${winner.id}" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">${winner.name}</a></td>
+          <td style="font-weight: 700; color: var(--success-color);">${winnerScore}-${loserScore}</td>
+          <td><a href="team.html?id=${loser.id}" style="color: var(--text-secondary); text-decoration: none;">${loser.name}</a></td>
+          <td style="color: var(--text-secondary);">${location}</td>
+          <td style="color: var(--accent-color); font-weight: 600;">+${eloChange.toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+  </script>
+</body>
+</html>

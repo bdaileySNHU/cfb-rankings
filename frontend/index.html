@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>College Football Rankings - Modified ELO</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <h1>College Football Rankings</h1>
+      <p class="subtitle">Modified ELO System with Recruiting, Transfers & Returning Production</p>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="nav-link active">Rankings</a>
+      <a href="teams.html" class="nav-link">All Teams</a>
+      <a href="games.html" class="nav-link">Games</a>
+      <a href="comparison.html" class="nav-link">vs AP Poll</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- System Stats -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Current Week</div>
+        <div class="stat-value" id="current-week">--</div>
+        <div class="stat-subtext">Season 2024</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Teams</div>
+        <div class="stat-value" id="total-teams">--</div>
+        <div class="stat-subtext">FBS & FCS</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Games Played</div>
+        <div class="stat-value" id="games-played">--</div>
+        <div class="stat-subtext">This season</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Last Updated</div>
+        <div class="stat-value" id="last-updated" style="font-size: 1.2rem;">--</div>
+        <div class="stat-subtext">Rankings update live</div>
+      </div>
+    </div>
+
+    <!-- Rankings Card -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Current Rankings</h2>
+        <div class="filters">
+          <select class="filter-select" id="limit-select">
+            <option value="10">Top 10</option>
+            <option value="25" selected>Top 25</option>
+            <option value="50">Top 50</option>
+            <option value="200">All Teams</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <span>Loading rankings...</span>
+      </div>
+
+      <!-- Error State -->
+      <div id="error" class="error hidden">
+        <strong>Error loading rankings.</strong>
+        <span id="error-message"></span>
+      </div>
+
+      <!-- Rankings Table -->
+      <div id="rankings-container" class="hidden">
+        <table class="rankings-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Team</th>
+              <th>Conference</th>
+              <th>Record</th>
+              <th>ELO Rating</th>
+              <th>SOS</th>
+              <th>SOS Rank</th>
+            </tr>
+          </thead>
+          <tbody id="rankings-tbody">
+            <!-- Rankings will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="card">
+      <h3 class="card-title mb-4">Legend</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+        <div>
+          <strong>Rank Badges:</strong>
+          <div style="margin-top: 0.5rem;">
+            <span class="rank-badge top-5" style="margin-right: 0.5rem;">1</span> Top 5
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <span class="rank-badge top-10" style="margin-right: 0.5rem;">8</span> Top 10
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <span class="rank-badge top-25" style="margin-right: 0.5rem;">15</span> Top 25
+          </div>
+        </div>
+        <div>
+          <strong>Conference:</strong>
+          <div style="margin-top: 0.5rem;">
+            <span class="conference-badge p5">P5</span> Power 5
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <span class="conference-badge g5">G5</span> Group of 5
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <span class="conference-badge fcs">FCS</span> FCS
+          </div>
+        </div>
+        <div>
+          <strong>SOS Difficulty:</strong>
+          <div style="margin-top: 0.5rem;">
+            <span class="sos-indicator elite"></span> Elite (1700+)
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <span class="sos-indicator hard"></span> Hard (1600-1699)
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <span class="sos-indicator average"></span> Average (1500-1599)
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <span class="sos-indicator easy"></span> Easy (<1500)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2024 College Football Ranking System</p>
+      <p style="margin-top: 0.5rem; opacity: 0.8;">
+        Modified ELO Algorithm | Data updates in real-time
+      </p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
