@@ -11,8 +11,15 @@ User=www-data
 Group=www-data
 RuntimeDirectory=cfb-rankings
 WorkingDirectory=/var/www/cfb-rankings
+
+# Set environment variables
 Environment="PATH=/var/www/cfb-rankings/venv/bin"
-EnvironmentFile=/var/www/cfb-rankings/.env
+Environment="CFBD_API_KEY=EAi7pR9hLKENNyAiU+VdIKalPgYeNHob29XIY18M6QKoYJhrtne8ZVX4u6Oy3d0A"
+Environment="DATABASE_URL=sqlite:///./cfb_rankings.db"
+
+# Or use EnvironmentFile if .env exists
+# EnvironmentFile=-/var/www/cfb-rankings/.env
+
 ExecStart=/var/www/cfb-rankings/venv/bin/gunicorn -c gunicorn_config.py main:app
 ExecReload=/bin/kill -s HUP $MAINPID
 KillMode=mixed
