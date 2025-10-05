@@ -6,10 +6,9 @@ Description=College Football Rankings - Gunicorn/FastAPI
 After=network.target
 
 [Service]
-Type=notify
+Type=simple
 User=www-data
 Group=www-data
-RuntimeDirectory=cfb-rankings
 WorkingDirectory=/var/www/cfb-rankings
 
 # Set environment variables
@@ -24,7 +23,6 @@ ExecStart=/var/www/cfb-rankings/venv/bin/gunicorn -c gunicorn_config.py main:app
 ExecReload=/bin/kill -s HUP $MAINPID
 KillMode=mixed
 TimeoutStopSec=5
-PrivateTmp=true
 Restart=on-failure
 RestartSec=10
 

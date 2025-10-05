@@ -12,8 +12,8 @@ timeout = 60
 keepalive = 5
 
 # Logging
-accesslog = "/var/log/cfb-rankings/access.log"
-errorlog = "/var/log/cfb-rankings/error.log"
+accesslog = "-"  # Log to stdout (systemd will capture it)
+errorlog = "-"   # Log to stderr (systemd will capture it)
 loglevel = "info"
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
 
@@ -22,7 +22,7 @@ proc_name = "cfb-rankings"
 
 # Server mechanics
 daemon = False
-pidfile = "/var/run/cfb-rankings.pid"
+pidfile = None  # Don't use pidfile, systemd manages the process
 user = None
 group = None
 tmp_upload_dir = None
