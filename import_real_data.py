@@ -3,6 +3,11 @@ Import Real College Football Data
 Fetches data from CollegeFootballData API and populates the database
 """
 
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 from database import SessionLocal, reset_db
 from models import Team, Game, Season, ConferenceType
 from ranking_service import RankingService
