@@ -134,7 +134,7 @@ async function loadSchedule() {
   noSchedule.classList.add('hidden');
 
   try {
-    const schedule = await api.getTeamSchedule(teamId, 2024);
+    const schedule = await api.getTeamSchedule(teamId, 2025);
 
     if (schedule.games.length === 0) {
       scheduleLoading.classList.add('hidden');
@@ -164,6 +164,14 @@ async function loadSchedule() {
 function createScheduleRow(game) {
   const row = document.createElement('tr');
 
+  // Check if game has been played
+  const isPlayed = game.is_played && game.score;
+
+  // Apply scheduled game styling if not played
+  if (!isPlayed) {
+    row.classList.add('game-scheduled');
+  }
+
   // Week
   const weekCell = document.createElement('td');
   weekCell.textContent = `Week ${game.week}`;
@@ -175,9 +183,18 @@ function createScheduleRow(game) {
   const oppLink = document.createElement('a');
   oppLink.href = `team.html?id=${game.opponent_id}`;
   oppLink.textContent = game.opponent_name;
-  oppLink.style.color = 'var(--primary-color)';
+
+  if (isPlayed) {
+    // Played game - normal styling
+    oppLink.style.color = 'var(--primary-color)';
+    oppLink.style.fontWeight = '600';
+  } else {
+    // Future game - grayed out styling
+    oppLink.style.color = 'var(--text-secondary)';
+    oppLink.style.fontStyle = 'italic';
+  }
+
   oppLink.style.textDecoration = 'none';
-  oppLink.style.fontWeight = '600';
   oppLink.onmouseover = () => oppLink.style.textDecoration = 'underline';
   oppLink.onmouseout = () => oppLink.style.textDecoration = 'none';
   oppCell.appendChild(oppLink);
@@ -185,13 +202,21 @@ function createScheduleRow(game) {
 
   // Location
   const locCell = document.createElement('td');
-  locCell.textContent = game.is_home ? 'Home' : 'Away';
+  if (game.is_neutral_site) {
+    locCell.textContent = 'Neutral';
+  } else {
+    locCell.textContent = game.is_home ? 'Home' : 'Away';
+  }
   locCell.style.color = 'var(--text-secondary)';
+  if (!isPlayed) {
+    locCell.style.fontStyle = 'italic';
+  }
   row.appendChild(locCell);
 
   // Result
   const resultCell = document.createElement('td');
-  if (game.is_played && game.score) {
+  if (isPlayed) {
+    // Completed game - show W/L with score
     const resultSpan = document.createElement('span');
     resultSpan.className = 'game-result';
     const isWin = game.score.startsWith('W');
@@ -199,8 +224,10 @@ function createScheduleRow(game) {
     resultSpan.textContent = game.score;
     resultCell.appendChild(resultSpan);
   } else {
-    resultCell.textContent = '--';
+    // Future game - show "vs Opponent" or "TBD"
+    resultCell.textContent = `vs ${game.opponent_name}`;
     resultCell.style.color = 'var(--text-secondary)';
+    resultCell.style.fontStyle = 'italic';
   }
   row.appendChild(resultCell);
 

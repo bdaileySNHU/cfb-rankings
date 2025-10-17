@@ -299,6 +299,33 @@ nav {
   color: var(--danger-color);
 }
 
+/* Scheduled Games */
+.game-scheduled {
+  opacity: 0.75;
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.game-scheduled td {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.game-scheduled a {
+  color: var(--text-secondary) !important;
+  transition: color 0.2s ease;
+}
+
+.game-scheduled:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-left-color: var(--border-color);
+  opacity: 0.85;
+}
+
+.game-scheduled:hover a {
+  color: var(--primary-color) !important;
+}
+
 /* Loading Spinner */
 .loading {
   display: flex;
@@ -393,6 +420,15 @@ nav {
   .rankings-table th,
   .rankings-table td {
     padding: 0.5rem;
+  }
+
+  .schedule-table {
+    font-size: 0.875rem;
+  }
+
+  .schedule-table th,
+  .schedule-table td {
+    padding: 0.5rem 0.25rem;
   }
 
   .stats-grid {
