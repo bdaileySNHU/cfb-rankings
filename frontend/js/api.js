@@ -1,6 +1,9 @@
 // API Service for College Football Ranking System
 
-const API_BASE_URL = 'http://localhost:8000/api';
+// Automatically detect API URL based on environment
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8000/api'  // Local development
+  : '/api';  // Production (uses same domain via Nginx proxy)
 
 class ApiService {
   constructor(baseUrl = API_BASE_URL) {
