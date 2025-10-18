@@ -41,10 +41,13 @@ async function loadComparisonData() {
   const container = document.getElementById('comparison-container');
 
   try {
+    // Fetch active season from API
+    const activeSeason = await api.getActiveSeason();
+
     // Load ELO rankings and games
     const [rankingsData, gamesData] = await Promise.all([
       api.getRankings(50),
-      api.getGames({ season: 2025, limit: 300 })
+      api.getGames({ season: activeSeason, limit: 300 })
     ]);
 
     eloRankings = rankingsData.rankings;

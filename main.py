@@ -384,6 +384,29 @@ async def reset_season(year: int, db: Session = Depends(get_db)):
     }
 
 
+@app.get("/api/seasons/active", tags=["Seasons"])
+async def get_active_season(db: Session = Depends(get_db)):
+    """
+    Get the currently active season.
+
+    Returns:
+        dict: Active season data with year, current_week, is_active
+
+    Raises:
+        HTTPException: 404 if no active season found
+    """
+    season = db.query(Season).filter(Season.is_active == True).order_by(Season.year.desc()).first()
+
+    if not season:
+        raise HTTPException(status_code=404, detail="No active season found")
+
+    return {
+        "year": season.year,
+        "current_week": season.current_week,
+        "is_active": season.is_active
+    }
+
+
 # ============================================================================
 # STATS ENDPOINTS
 # ============================================================================

@@ -1,0 +1,53 @@
+[run]
+# Source code to measure coverage for
+source = .
+
+# Omit these patterns from coverage
+omit =
+    tests/*
+    venv/*
+    */site-packages/*
+    */dist-packages/*
+    seed_data.py
+    demo.py
+    compare_rankings.py
+    import_real_data.py
+    deploy/*
+
+# Branch coverage (measure both True and False branches)
+branch = True
+
+[report]
+# Precision of coverage percentage
+precision = 2
+
+# Exclude these lines from coverage reporting
+exclude_lines =
+    # Standard pragmas
+    pragma: no cover
+
+    # Debug-only code
+    def __repr__
+    def __str__
+
+    # Abstract methods
+    raise NotImplementedError
+
+    # Type checking blocks
+    if TYPE_CHECKING:
+
+    # Main entry points
+    if __name__ == .__main__.:
+
+    # Defensive programming
+    pass
+
+# Sort coverage report by coverage percentage
+sort = Cover
+
+[html]
+# Directory for HTML coverage report
+directory = htmlcov
+
+# Title for HTML report
+title = CFB Rankings Test Coverage Report

@@ -14,6 +14,7 @@ from ranking_service import RankingService
 from cfbd_client import CFBDClient
 from datetime import datetime
 import sys
+import argparse
 
 
 # Conference mapping from CFBD to our system
@@ -32,7 +33,58 @@ CONFERENCE_MAP = {
 }
 
 
-def import_teams(cfbd: CFBDClient, db, year: int = 2025):
+def validate_api_connection(cfbd: CFBDClient, year: int) -> bool:
+    """
+    Test CFBD API connectivity and authentication.
+
+    Args:
+        cfbd: CFBD client instance
+        year: Year to test with
+
+    Returns:
+        bool: True if API accessible, False otherwise
+    """
+    try:
+        print("Validating CFBD API connection...")
+        teams = cfbd.get_teams(year)
+        if teams and len(teams) > 0:
+            print(f"✓ API Connection OK ({len(teams)} teams found)")
+            return True
+        else:
+            print("✗ API Connection Failed: No teams returned")
+            return False
+    except Exception as e:
+        print(f"✗ API Connection Failed: {e}")
+        return False
+
+
+def get_week_statistics(cfbd: CFBDClient, year: int, week: int) -> dict:
+    """
+    Get statistics about games available for a given week.
+
+    Args:
+        cfbd: CFBD client instance
+        year: Season year
+        week: Week number
+
+    Returns:
+        dict: Statistics including total games, completed games
+    """
+    games = cfbd.get_games(year, week=week)
+    if not games:
+        return {"total": 0, "completed": 0, "scheduled": 0}
+
+    completed = sum(1 for g in games if g.get('homePoints') is not None and g.get('awayPoints') is not None)
+    total = len(games)
+
+    return {
+        "total": total,
+        "completed": completed,
+        "scheduled": total - completed
+    }
+
+
+def import_teams(cfbd: CFBDClient, db, year: int):
     """Import all FBS teams"""
     print(f"\nImporting FBS teams for {year}...")
 
@@ -102,16 +154,38 @@ def import_teams(cfbd: CFBDClient, db, year: int = 2025):
     return team_objects
 
 
-def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int = 2025, max_week: int = None):
-    """Import games for the season"""
+def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: int = None, validate_only: bool = False, strict: bool = False):
+    """
+    Import games for the season with validation and completeness reporting.
+
+    Args:
+        cfbd: CFBD client instance
+        db: Database session
+        team_objects: Dictionary mapping team names to Team objects
+        year: Season year
+        max_week: Maximum week to import
+        validate_only: If True, don't actually import (dry-run)
+        strict: If True, fail on validation warnings
+
+    Returns:
+        dict: Import statistics including total imported, skipped, etc.
+    """
     print(f"\nImporting games for {year}...")
+    if validate_only:
+        print("**VALIDATION MODE** - No changes will be made to database\n")
 
     ranking_service = RankingService(db)
 
     # Determine which weeks to import
     weeks = range(1, (max_week or 15) + 1)
 
+    # Track statistics
     total_imported = 0
+    total_skipped = 0
+    skipped_fcs = 0
+    skipped_not_found = 0
+    skipped_incomplete = 0
+    skipped_details = []  # List of (week, reason, game_description) tuples
 
     for week in weeks:
         print(f"\nWeek {week}...")
@@ -121,7 +195,10 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int = 2025, max
             print(f"  No games found for week {week}")
             continue
 
-        week_count = 0
+        # Get week statistics for validation
+        week_stats = get_week_statistics(cfbd, year, week)
+        week_imported = 0
+        week_skipped = 0
 
         for game_data in games_data:
             # API uses camelCase
@@ -130,12 +207,30 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int = 2025, max
             home_score = game_data.get('homePoints')
             away_score = game_data.get('awayPoints')
 
+            game_desc = f"{away_team_name} @ {home_team_name}"
+
             # Skip if game not completed
             if home_score is None or away_score is None:
+                week_skipped += 1
+                skipped_incomplete += 1
+                skipped_details.append((week, "Game not completed", game_desc))
                 continue
 
             # Skip if teams not in our database (filters out FCS games)
             if home_team_name not in team_objects or away_team_name not in team_objects:
+                week_skipped += 1
+                total_skipped += 1
+
+                # Determine if it's FCS or just not found
+                if home_team_name not in team_objects and away_team_name not in team_objects:
+                    skipped_not_found += 1
+                    skipped_details.append((week, "Teams not in database", game_desc))
+                elif home_team_name not in team_objects:
+                    skipped_fcs += 1
+                    skipped_details.append((week, f"{home_team_name} not in database (likely FCS)", game_desc))
+                else:
+                    skipped_fcs += 1
+                    skipped_details.append((week, f"{away_team_name} not in database (likely FCS)", game_desc))
                 continue
 
             home_team = team_objects[home_team_name]
@@ -150,6 +245,12 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int = 2025, max
             ).first()
 
             if existing:
+                continue
+
+            # In validate-only mode, just count
+            if validate_only:
+                week_imported += 1
+                total_imported += 1
                 continue
 
             # Create game
@@ -178,13 +279,53 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int = 2025, max
             score = result['score']
 
             print(f"    {winner} defeats {loser} {score}")
-            week_count += 1
+            week_imported += 1
             total_imported += 1
 
-        print(f"  Imported {week_count} games for week {week}")
+        # Print week summary
+        total_week_games = week_stats['completed']
+        if total_week_games > 0:
+            completion_rate = (week_imported / total_week_games) * 100
+            status = "✓" if completion_rate >= 95 else "⚠"
+            print(f"\n  {status} Week {week} Summary:")
+            print(f"    Expected: {total_week_games} games")
+            print(f"    Imported: {week_imported} games ({completion_rate:.0f}%)")
+            if week_skipped > 0:
+                print(f"    Skipped: {week_skipped} games")
 
-    print(f"\n✓ Imported {total_imported} total games")
-    return total_imported
+    # Print final import summary
+    print("\n" + "="*80)
+    print("IMPORT SUMMARY")
+    print("="*80)
+    print(f"Total Games Imported: {total_imported}")
+    print(f"Total Games Skipped: {total_skipped}")
+    if skipped_fcs > 0:
+        print(f"  - FCS Opponents: {skipped_fcs}")
+    if skipped_not_found > 0:
+        print(f"  - Team Not Found: {skipped_not_found}")
+    if skipped_incomplete > 0:
+        print(f"  - Incomplete Games: {skipped_incomplete}")
+
+    # Show details of skipped games (limit to first 10)
+    if skipped_details and not validate_only:
+        print(f"\nSkipped Game Details (showing first 10 of {len(skipped_details)}):")
+        for week, reason, game in skipped_details[:10]:
+            print(f"  Week {week}: {game} - {reason}")
+
+    # Check for strict mode failures
+    if strict and total_skipped > 0:
+        print("\n✗ STRICT MODE: Import failed due to skipped games")
+        sys.exit(1)
+
+    print("="*80)
+
+    return {
+        "imported": total_imported,
+        "skipped": total_skipped,
+        "skipped_fcs": skipped_fcs,
+        "skipped_not_found": skipped_not_found,
+        "skipped_incomplete": skipped_incomplete
+    }
 
 
 def main():
@@ -196,10 +337,11 @@ def main():
     print("This script imports real college football data from CollegeFootballData.com")
     print()
 
-    # Check for API key
+    # Parse command-line arguments
     import os
     api_key = os.getenv('CFBD_API_KEY')
 
+    # Initialize CFBD client first (needed for auto-detection)
     if not api_key:
         print("ERROR: No API key found!")
         print()
@@ -212,8 +354,82 @@ def main():
         print("Then run this script again.")
         sys.exit(1)
 
-    # Initialize
     cfbd = CFBDClient(api_key)
+
+    # Auto-detect current season and week
+    current_season = cfbd.get_current_season()
+    max_week_available = cfbd.get_current_week(current_season)
+
+    # If API doesn't have week data yet, estimate from calendar
+    if max_week_available is None:
+        max_week_available = cfbd.estimate_current_week(current_season)
+        if max_week_available == 0:
+            max_week_available = 1  # Default to week 1 if pre-season
+
+    # Set up argument parser
+    parser = argparse.ArgumentParser(
+        description='Import college football data from CFBD API',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=f"""
+Examples:
+  # Auto-detect season and import all available weeks
+  python3 import_real_data.py
+
+  # Override season year
+  python3 import_real_data.py --season 2024
+
+  # Override max week to import
+  python3 import_real_data.py --max-week 10
+
+  # Specify both
+  python3 import_real_data.py --season 2024 --max-week 12
+        """
+    )
+    parser.add_argument(
+        '--season',
+        type=int,
+        help=f'Season year (default: auto-detect, currently {current_season})'
+    )
+    parser.add_argument(
+        '--max-week',
+        type=int,
+        help=f'Maximum week to import (default: all available, currently {max_week_available})'
+    )
+    parser.add_argument(
+        '--validate-only',
+        action='store_true',
+        help='Validate import without making changes (dry-run mode)'
+    )
+    parser.add_argument(
+        '--strict',
+        action='store_true',
+        help='Fail on validation warnings (exit with error if games skipped)'
+    )
+
+    args = parser.parse_args()
+
+    # Use overrides or detected values
+    season = args.season or current_season
+    max_week = args.max_week or max_week_available
+
+    # Validate API connection
+    if not validate_api_connection(cfbd, season):
+        print("\n✗ Cannot proceed without valid API connection")
+        sys.exit(1)
+
+    print(f"✓ Detected current season: {current_season}")
+    print(f"✓ Latest completed week: {max_week_available}")
+    if args.season:
+        print(f"  → Using season override: {season}")
+    if args.max_week:
+        print(f"  → Using max week override: {max_week}")
+    if args.validate_only:
+        print(f"  → VALIDATE-ONLY MODE: No database changes will be made")
+    if args.strict:
+        print(f"  → STRICT MODE: Will fail on validation warnings")
+    print()
+
+    # Initialize database
     db = SessionLocal()
 
     # Confirm reset
@@ -229,46 +445,50 @@ def main():
     reset_db()
 
     # Create season
-    print("Creating 2025 season...")
-    season = Season(year=2025, current_week=0, is_active=True)
-    db.add(season)
+    print(f"Creating {season} season...")
+    season_obj = Season(year=season, current_week=0, is_active=True)
+    db.add(season_obj)
     db.commit()
 
     # Import teams
-    team_objects = import_teams(cfbd, db, year=2025)
+    team_objects = import_teams(cfbd, db, year=season)
 
     if not team_objects:
         print("\nFailed to import teams. Check your API key.")
         return
 
-    # Import games
-    print("\nHow many weeks of games would you like to import?")
-    print("(The 2025 season is currently through Week 6)")
-    try:
-        max_week = int(input("Enter max week (1-6): "))
-        max_week = min(max(max_week, 1), 6)
-    except:
-        print("Invalid input, using Week 1 only")
-        max_week = 1
+    # Import games (using detected/overridden max_week)
+    print(f"\nImporting games through Week {max_week}...")
+    import_stats = import_games(
+        cfbd, db, team_objects,
+        year=season,
+        max_week=max_week,
+        validate_only=args.validate_only,
+        strict=args.strict
+    )
 
-    total_games = import_games(cfbd, db, team_objects, year=2025, max_week=max_week)
+    # Skip remaining steps if validate-only mode
+    if args.validate_only:
+        print("\n✓ Validation complete - no changes made to database")
+        db.close()
+        return
 
     # Update season current week
-    season.current_week = max_week
+    season_obj.current_week = max_week
     db.commit()
 
     # Save rankings
     print("\nSaving final rankings...")
     ranking_service = RankingService(db)
     for week in range(1, max_week + 1):
-        ranking_service.save_weekly_rankings(2025, week)
+        ranking_service.save_weekly_rankings(season, week)
 
     # Show final rankings
     print("\n" + "="*80)
     print("FINAL RANKINGS")
     print("="*80)
 
-    rankings = ranking_service.get_current_rankings(2025, limit=25)
+    rankings = ranking_service.get_current_rankings(season, limit=25)
     print(f"\n{'RANK':<6} {'TEAM':<30} {'RATING':<10} {'RECORD':<10} {'SOS':<10}")
     print("-"*80)
 
@@ -280,7 +500,9 @@ def main():
     print("="*80)
     print(f"✓ Import Complete!")
     print(f"  - {len(team_objects)} teams imported")
-    print(f"  - {total_games} games processed")
+    print(f"  - {import_stats['imported']} games imported")
+    if import_stats['skipped'] > 0:
+        print(f"  - {import_stats['skipped']} games skipped")
     print(f"  - Rankings calculated through Week {max_week}")
     print("="*80)
 

@@ -43,3 +43,9 @@ Thumbs.db
 
 # Application specific
 /var/
+
+# Test coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/

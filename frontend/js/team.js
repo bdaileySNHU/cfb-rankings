@@ -134,7 +134,9 @@ async function loadSchedule() {
   noSchedule.classList.add('hidden');
 
   try {
-    const schedule = await api.getTeamSchedule(teamId, 2025);
+    // Fetch active season from API
+    const activeSeason = await api.getActiveSeason();
+    const schedule = await api.getTeamSchedule(teamId, activeSeason);
 
     if (schedule.games.length === 0) {
       scheduleLoading.classList.add('hidden');

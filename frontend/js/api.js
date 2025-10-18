@@ -109,6 +109,17 @@ class ApiService {
     return this.fetch('/seasons');
   }
 
+  async getActiveSeason() {
+    try {
+      const response = await this.fetch('/seasons/active');
+      return response.year;
+    } catch (error) {
+      console.error('Failed to fetch active season:', error);
+      // Fallback to current year
+      return new Date().getFullYear();
+    }
+  }
+
   async createSeason(year) {
     return this.fetch('/seasons', {
       method: 'POST',

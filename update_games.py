@@ -18,14 +18,26 @@ import sys
 import os
 
 
-def update_games(year: int = 2025, start_week: int = None, end_week: int = None):
+def get_active_season(db) -> int:
+    """Get currently active season from database"""
+    season = db.query(Season).filter(Season.is_active == True).order_by(Season.year.desc()).first()
+    return season.year if season else None
+
+
+def get_last_imported_week(db, year: int) -> int:
+    """Get highest week number in database for season"""
+    highest = db.query(Game).filter(Game.season == year).order_by(Game.week.desc()).first()
+    return highest.week if highest else 0
+
+
+def update_games(year: int = None, start_week: int = None, end_week: int = None):
     """
     Update games for specified weeks
 
     Args:
-        year: Season year
+        year: Season year (defaults to active season in database)
         start_week: First week to import (defaults to next week after last imported)
-        end_week: Last week to import (defaults to current week of season)
+        end_week: Last week to import (defaults to current week of season from API)
     """
 
     # Check for API key
@@ -44,6 +56,11 @@ def update_games(year: int = 2025, start_week: int = None, end_week: int = None)
     print("UPDATE COLLEGE FOOTBALL GAMES DATA")
     print("="*80)
     print()
+
+    # Auto-detect season if not provided
+    if year is None:
+        year = get_active_season(db) or cfbd.get_current_season()
+        print(f"✓ Auto-detected season: {year}")
 
     # Get current season info
     season = db.query(Season).filter(Season.year == year).first()
@@ -68,18 +85,25 @@ def update_games(year: int = 2025, start_week: int = None, end_week: int = None)
 
     # Determine week range to import
     if start_week is None:
-        # Find highest week in database
-        highest_game = db.query(Game).filter(Game.season == year).order_by(Game.week.desc()).first()
-        if highest_game:
-            start_week = highest_game.week
-            print(f"Last imported week: {start_week}")
+        # Auto-detect starting week from last imported week
+        start_week = get_last_imported_week(db, year)
+        if start_week > 0:
+            print(f"✓ Last imported week: {start_week}")
         else:
             start_week = 1
-            print(f"No games in database, starting from Week 1")
+            print(f"✓ No games in database, starting from Week 1")
 
     if end_week is None:
-        # Default to checking next 4 weeks
-        end_week = start_week + 4
+        # Auto-detect end week from CFBD API
+        current_week_api = cfbd.get_current_week(year)
+        if current_week_api:
+            end_week = current_week_api + 1  # Include in-progress week
+            print(f"✓ Current week from API: {current_week_api}")
+        else:
+            # Fallback to calendar estimation
+            estimated_week = cfbd.estimate_current_week(year)
+            end_week = max(estimated_week, start_week + 4)
+            print(f"✓ Estimated current week: {estimated_week}")
 
     print(f"Checking weeks {start_week} through {end_week}...")
     print()
@@ -204,10 +228,39 @@ def update_games(year: int = 2025, start_week: int = None, end_week: int = None)
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='Update college football games data')
-    parser.add_argument('--year', type=int, default=2025, help='Season year (default: 2025)')
-    parser.add_argument('--start-week', type=int, help='First week to check (default: auto-detect)')
-    parser.add_argument('--end-week', type=int, help='Last week to check (default: start_week + 4)')
+    parser = argparse.ArgumentParser(
+        description='Update college football games data',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Auto-detect everything (season, start week, end week)
+  python3 update_games.py
+
+  # Override season year
+  python3 update_games.py --year 2024
+
+  # Override week range
+  python3 update_games.py --start-week 5 --end-week 10
+
+  # Specify all parameters
+  python3 update_games.py --year 2024 --start-week 8 --end-week 12
+        """
+    )
+    parser.add_argument(
+        '--year',
+        type=int,
+        help='Season year (default: auto-detect from active season in database)'
+    )
+    parser.add_argument(
+        '--start-week',
+        type=int,
+        help='First week to check (default: last imported week from database)'
+    )
+    parser.add_argument(
+        '--end-week',
+        type=int,
+        help='Last week to check (default: current week from CFBD API + 1)'
+    )
 
     args = parser.parse_args()
 

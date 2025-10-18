@@ -80,8 +80,11 @@
 
     async function loadGames() {
       try {
+        // Fetch active season from API
+        const activeSeason = await api.getActiveSeason();
+
         const [gamesData, teamsData] = await Promise.all([
-          api.getGames({ season: 2025, limit: 200 }),
+          api.getGames({ season: activeSeason, limit: 200 }),
           api.getTeams()
         ]);
 

@@ -6,7 +6,7 @@ Fetches real college football data for the ranking system
 import requests
 import os
 from typing import List, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class CFBDClient:
@@ -37,6 +37,150 @@ class CFBDClient:
         except requests.exceptions.RequestException as e:
             print(f"API Error: {e}")
             return None
+
+    def get_current_season(self) -> int:
+        """
+        Determine the current college football season year based on calendar date.
+
+        Season year logic:
+        - August 1 through December 31: Current calendar year
+        - January 1 through July 31: Current calendar year
+
+        Examples:
+            July 31, 2025 → 2025 season
+            August 1, 2025 → 2025 season (new season starts)
+            December 31, 2025 → 2025 season
+            January 15, 2026 → 2026 season (next year's planning)
+
+        Returns:
+            int: The current season year (e.g., 2025)
+        """
+        now = datetime.now()
+        # Season year is always the current calendar year
+        # The college football season runs from August of year N to January of year N+1
+        # But we consider January-July of year N+1 as planning for year N+1 season
+        return now.year
+
+    def get_current_week(self, season: int) -> Optional[int]:
+        """
+        Get the current week of the season from CFBD API.
+
+        Queries the /games endpoint to find the highest week number
+        that has completed games (games with non-null scores).
+
+        Args:
+            season: The season year to check
+
+        Returns:
+            int: Highest completed week number (1-15), or None if no games played
+
+        Example:
+            >>> client.get_current_week(2025)
+            8  # Week 8 is the latest with completed games
+        """
+        try:
+            # Query all regular season games for the year
+            games = self.get_games(season, season_type='regular')
+
+            if not games:
+                return None
+
+            # Find max week with completed games (non-null scores)
+            max_week = 0
+            for game in games:
+                # Check if game has been played (has scores)
+                home_points = game.get('home_points')
+                away_points = game.get('away_points')
+
+                if home_points is not None and away_points is not None:
+                    week = game.get('week', 0)
+                    if week > max_week:
+                        max_week = week
+
+            return max_week if max_week > 0 else None
+
+        except Exception as e:
+            print(f"Error detecting current week: {e}")
+            return None
+
+    def estimate_current_week(self, season: int) -> int:
+        """
+        Estimate current week based on calendar (fallback when API unavailable).
+
+        Calculates weeks elapsed since the season start (first Saturday after Labor Day).
+
+        Args:
+            season: The season year
+
+        Returns:
+            int: Estimated week number (0-15)
+                0 = pre-season
+                1-15 = regular season weeks
+
+        Note:
+            This is a fallback estimate only. Use get_current_week() for accurate data.
+        """
+        now = datetime.now()
+
+        # Find Labor Day (first Monday of September)
+        labor_day = self._find_labor_day(season)
+
+        # Season starts on first Saturday after Labor Day
+        season_start = self._find_season_start(labor_day)
+
+        # If we're before the season start, return 0 (pre-season)
+        if now < season_start:
+            return 0
+
+        # Calculate weeks since season start
+        days_since_start = (now - season_start).days
+        weeks_elapsed = (days_since_start // 7) + 1
+
+        # Cap at 15 weeks (regular season maximum)
+        return min(weeks_elapsed, 15)
+
+    def _find_labor_day(self, year: int) -> datetime:
+        """
+        Find Labor Day (first Monday of September).
+
+        Args:
+            year: The year to find Labor Day for
+
+        Returns:
+            datetime: Labor Day date
+        """
+        # Start with September 1st
+        september_first = datetime(year, 9, 1)
+
+        # Find first Monday (weekday 0 = Monday)
+        days_until_monday = (7 - september_first.weekday()) % 7
+
+        # If September 1st is already a Monday, that's Labor Day
+        if september_first.weekday() == 0:
+            return september_first
+
+        # Otherwise, add days to get to first Monday
+        return september_first + timedelta(days=days_until_monday)
+
+    def _find_season_start(self, labor_day: datetime) -> datetime:
+        """
+        Find season start (first Saturday after Labor Day).
+
+        Args:
+            labor_day: Labor Day date
+
+        Returns:
+            datetime: Season start date (first Saturday after Labor Day)
+        """
+        # Saturday = weekday 5
+        days_until_saturday = (5 - labor_day.weekday()) % 7
+
+        # If days_until_saturday is 0, Labor Day is already a Saturday
+        # In that case, we want the NEXT Saturday (7 days later)
+        if days_until_saturday == 0:
+            days_until_saturday = 7
+
+        return labor_day + timedelta(days=days_until_saturday)
 
     def get_teams(self, year: int = 2024) -> List[Dict]:
         """
