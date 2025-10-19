@@ -119,8 +119,12 @@ function createRankingRow(team) {
   confCell.appendChild(confBadge);
   row.appendChild(confCell);
 
-  // Record
+  // Record (FBS games only)
   const recordCell = document.createElement('td');
+  recordCell.style.display = 'flex';
+  recordCell.style.alignItems = 'center';
+  recordCell.style.gap = '4px';
+
   const recordSpan = document.createElement('span');
   recordSpan.className = 'record';
   if (team.losses === 0 && team.wins > 0) {
@@ -128,6 +132,15 @@ function createRankingRow(team) {
   }
   recordSpan.textContent = `${team.wins}-${team.losses}`;
   recordCell.appendChild(recordSpan);
+
+  // Add FBS Only note
+  const recordNote = document.createElement('span');
+  recordNote.className = 'record-note';
+  recordNote.textContent = 'FBS';
+  recordNote.title = 'Record includes FBS opponents only';
+  recordNote.style.fontSize = '0.7rem';
+  recordCell.appendChild(recordNote);
+
   row.appendChild(recordCell);
 
   // ELO Rating

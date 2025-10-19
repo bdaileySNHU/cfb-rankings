@@ -209,9 +209,10 @@ class TestGameImportWithMock:
         assert import_stats['skipped_incomplete'] == 1
 
     def test_import_games_skips_fcs_opponents(self, test_db: Session, mock_cfbd_client):
-        """Test that import skips games against teams not in database"""
+        """Test that import creates FCS games with excluded_from_rankings flag"""
         # Arrange
         from import_real_data import import_teams, import_games
+        from models import Game
 
         # Modify mock to include FCS opponent
         mock_cfbd_client.get_games.return_value = [
@@ -230,9 +231,15 @@ class TestGameImportWithMock:
         # Act
         import_stats = import_games(mock_cfbd_client, test_db, team_objects, year=2025, max_week=1)
 
-        # Assert - Game should be skipped
-        assert import_stats['imported'] == 0
-        assert import_stats['skipped_fcs'] == 1
+        # Assert - FCS game should be imported but not processed for rankings
+        assert import_stats['imported'] == 0, "No FBS games should be imported"
+        assert import_stats['fcs_imported'] == 1, "One FCS game should be imported"
+
+        # Verify the game was created with excluded_from_rankings=True
+        fcs_game = test_db.query(Game).first()
+        assert fcs_game is not None
+        assert fcs_game.excluded_from_rankings is True
+        assert fcs_game.is_processed is False
 
     def test_import_games_handles_neutral_site(self, test_db: Session, mock_cfbd_client):
         """Test that neutral site flag is properly imported"""

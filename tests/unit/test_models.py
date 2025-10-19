@@ -147,6 +147,28 @@ class TestTeamModel:
         assert "1650.50" in repr_string
         assert "9-3" in repr_string
 
+    def test_team_is_fcs_default(self, test_db: Session):
+        """Test that is_fcs defaults to False"""
+        # Arrange & Act
+        team = Team(name="FBS Team", conference=ConferenceType.POWER_5)
+        test_db.add(team)
+        test_db.commit()
+        test_db.refresh(team)
+
+        # Assert
+        assert team.is_fcs is False, "is_fcs should default to False"
+
+    def test_team_is_fcs_explicit(self, test_db: Session):
+        """Test that is_fcs can be set to True"""
+        # Arrange & Act
+        team = Team(name="FCS Team", conference=ConferenceType.FCS, is_fcs=True)
+        test_db.add(team)
+        test_db.commit()
+        test_db.refresh(team)
+
+        # Assert
+        assert team.is_fcs is True
+
 
 @pytest.mark.unit
 class TestGameModel:
@@ -303,6 +325,55 @@ class TestGameModel:
 
         # Assert
         assert game.is_neutral_site is True
+
+    def test_game_excluded_from_rankings_default(self, test_db: Session):
+        """Test that excluded_from_rankings defaults to False"""
+        # Arrange
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Act
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=27,
+            away_score=24,
+            week=1,
+            season=2025
+        )
+        test_db.add(game)
+        test_db.commit()
+        test_db.refresh(game)
+
+        # Assert
+        assert game.excluded_from_rankings is False
+
+    def test_game_excluded_from_rankings_explicit(self, test_db: Session):
+        """Test that excluded_from_rankings can be set to True"""
+        # Arrange
+        fbs_team = Team(name="FBS", conference=ConferenceType.POWER_5)
+        fcs_team = Team(name="FCS", conference=ConferenceType.FCS, is_fcs=True)
+        test_db.add_all([fbs_team, fcs_team])
+        test_db.commit()
+
+        # Act
+        game = Game(
+            home_team_id=fbs_team.id,
+            away_team_id=fcs_team.id,
+            home_score=70,
+            away_score=0,
+            week=2,
+            season=2025,
+            excluded_from_rankings=True
+        )
+        test_db.add(game)
+        test_db.commit()
+        test_db.refresh(game)
+
+        # Assert
+        assert game.excluded_from_rankings is True
 
 
 @pytest.mark.unit

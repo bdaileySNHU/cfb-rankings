@@ -160,9 +160,12 @@ class ScheduleGame(BaseModel):
     week: int
     opponent_id: int
     opponent_name: str
+    opponent_conference: Optional[str] = None
     is_home: bool
     score: Optional[str] = None  # "W 35-14" or "L 21-28" or None if not played
     is_played: bool
+    excluded_from_rankings: bool = Field(False, description="Is this game excluded from rankings (e.g., FCS game)?")
+    is_fcs: bool = Field(False, description="Is the opponent an FCS team?")
 
 
 class TeamSchedule(BaseModel):

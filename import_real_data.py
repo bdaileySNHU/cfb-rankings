@@ -154,6 +154,46 @@ def import_teams(cfbd: CFBDClient, db, year: int):
     return team_objects
 
 
+def get_or_create_fcs_team(db, team_name: str, team_objects: dict) -> Team:
+    """
+    Get or create FCS team placeholder.
+
+    Args:
+        db: Database session
+        team_name: Name of FCS team
+        team_objects: Dictionary to update with new team
+
+    Returns:
+        Team object for FCS team
+    """
+    # Check if already in our cache
+    if team_name in team_objects:
+        return team_objects[team_name]
+
+    # Check if exists in database
+    team = db.query(Team).filter(Team.name == team_name).first()
+
+    if not team:
+        # Create new FCS team placeholder
+        team = Team(
+            name=team_name,
+            conference=ConferenceType.FCS,
+            is_fcs=True,
+            elo_rating=0,  # Not used for FCS
+            initial_rating=0,
+            recruiting_rank=999,
+            transfer_rank=999,
+            returning_production=0.5
+        )
+        db.add(team)
+        db.commit()
+        db.refresh(team)
+
+    # Add to cache
+    team_objects[team_name] = team
+    return team
+
+
 def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: int = None, validate_only: bool = False, strict: bool = False):
     """
     Import games for the season with validation and completeness reporting.
@@ -181,6 +221,7 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
 
     # Track statistics
     total_imported = 0
+    fcs_games_imported = 0  # NEW: Track FCS games separately
     total_skipped = 0
     skipped_fcs = 0
     skipped_not_found = 0
@@ -216,25 +257,31 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                 skipped_details.append((week, "Game not completed", game_desc))
                 continue
 
-            # Skip if teams not in our database (filters out FCS games)
-            if home_team_name not in team_objects or away_team_name not in team_objects:
+            # Determine if FBS vs FBS, FBS vs FCS, or both FCS
+            home_is_fbs = home_team_name in team_objects
+            away_is_fbs = away_team_name in team_objects
+
+            # Case 1: Both FCS (skip entirely)
+            if not home_is_fbs and not away_is_fbs:
                 week_skipped += 1
                 total_skipped += 1
-
-                # Determine if it's FCS or just not found
-                if home_team_name not in team_objects and away_team_name not in team_objects:
-                    skipped_not_found += 1
-                    skipped_details.append((week, "Teams not in database", game_desc))
-                elif home_team_name not in team_objects:
-                    skipped_fcs += 1
-                    skipped_details.append((week, f"{home_team_name} not in database (likely FCS)", game_desc))
-                else:
-                    skipped_fcs += 1
-                    skipped_details.append((week, f"{away_team_name} not in database (likely FCS)", game_desc))
+                skipped_fcs += 1
+                skipped_details.append((week, "Both teams FCS", game_desc))
                 continue
 
-            home_team = team_objects[home_team_name]
-            away_team = team_objects[away_team_name]
+            # Case 2: FBS vs FCS game - import with excluded flag
+            is_fcs_game = not (home_is_fbs and away_is_fbs)
+
+            # Get team objects (create FCS team if needed)
+            if home_is_fbs:
+                home_team = team_objects[home_team_name]
+            else:
+                home_team = get_or_create_fcs_team(db, home_team_name, team_objects)
+
+            if away_is_fbs:
+                away_team = team_objects[away_team_name]
+            else:
+                away_team = get_or_create_fcs_team(db, away_team_name, team_objects)
 
             # Check if game already exists
             existing = db.query(Game).filter(
@@ -264,6 +311,7 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                 week=week,
                 season=year,
                 is_neutral_site=is_neutral,
+                excluded_from_rankings=is_fcs_game,  # NEW: Mark FCS games as excluded
                 game_date=datetime.now()  # CFBD has date but in different format
             )
 
@@ -271,16 +319,23 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
             db.commit()
             db.refresh(game)
 
-            # Process game to update rankings
-            result = ranking_service.process_game(game)
+            # Process game to update rankings (ONLY for FBS vs FBS games)
+            if not is_fcs_game:
+                result = ranking_service.process_game(game)
 
-            winner = result['winner_name']
-            loser = result['loser_name']
-            score = result['score']
+                winner = result['winner_name']
+                loser = result['loser_name']
+                score = result['score']
 
-            print(f"    {winner} defeats {loser} {score}")
-            week_imported += 1
-            total_imported += 1
+                print(f"    {winner} defeats {loser} {score}")
+                week_imported += 1
+                total_imported += 1
+            else:
+                # FCS game - don't process for rankings, just track
+                fcs_opponent = away_team if home_is_fbs else home_team
+                fbs_team_obj = home_team if home_is_fbs else away_team
+                print(f"    {fbs_team_obj.name} vs {fcs_opponent.name} (FCS - not ranked)")
+                fcs_games_imported += 1
 
         # Print week summary
         total_week_games = week_stats['completed']
@@ -321,6 +376,7 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
 
     return {
         "imported": total_imported,
+        "fcs_imported": fcs_games_imported,  # NEW
         "skipped": total_skipped,
         "skipped_fcs": skipped_fcs,
         "skipped_not_found": skipped_not_found,
@@ -500,7 +556,9 @@ Examples:
     print("="*80)
     print(f"✓ Import Complete!")
     print(f"  - {len(team_objects)} teams imported")
-    print(f"  - {import_stats['imported']} games imported")
+    print(f"  - {import_stats['imported']} FBS games imported")
+    if import_stats.get('fcs_imported', 0) > 0:
+        print(f"  - {import_stats['fcs_imported']} FCS games imported (not ranked)")
     if import_stats['skipped'] > 0:
         print(f"  - {import_stats['skipped']} games skipped")
     print(f"  - Rankings calculated through Week {max_week}")

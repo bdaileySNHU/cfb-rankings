@@ -27,6 +27,9 @@ class Team(Base):
     name = Column(String(100), unique=True, index=True, nullable=False)
     conference = Column(Enum(ConferenceType), nullable=False)
 
+    # FCS flag
+    is_fcs = Column(Boolean, default=False, nullable=False)
+
     # Preseason factors
     recruiting_rank = Column(Integer, default=999)
     transfer_rank = Column(Integer, default=999)
@@ -73,6 +76,12 @@ class Game(Base):
 
     # Game processed flag
     is_processed = Column(Boolean, default=False)
+
+    # FCS exclusion flag
+    # Purpose: Mark FCS games or other non-ranked matchups
+    # Default False: FBS games are included in rankings
+    # Indexed: Performance for filtered queries
+    excluded_from_rankings = Column(Boolean, default=False, nullable=False, index=True)
 
     # ELO changes from this game
     home_rating_change = Column(Float, default=0.0)

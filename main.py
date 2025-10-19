@@ -168,7 +168,7 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    # Get all games for this team
+    # Get all games for this team (including FCS games)
     games = db.query(Game).filter(
         ((Game.home_team_id == team_id) | (Game.away_team_id == team_id)) &
         (Game.season == season)
@@ -193,9 +193,12 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
             "week": game.week,
             "opponent_id": opponent.id,
             "opponent_name": opponent.name,
+            "opponent_conference": opponent.conference.value if opponent.conference else None,
             "is_home": is_home,
             "score": score_str,
-            "is_played": game.is_processed
+            "is_played": game.is_processed,
+            "excluded_from_rankings": game.excluded_from_rankings,
+            "is_fcs": opponent.is_fcs
         })
 
     return {

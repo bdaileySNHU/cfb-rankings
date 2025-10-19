@@ -150,6 +150,10 @@ class RankingService:
         Returns:
             Dictionary with game result details
         """
+        # CRITICAL: Only process games included in rankings
+        if game.excluded_from_rankings:
+            raise ValueError("Cannot process excluded game for rankings")
+
         if game.is_processed:
             return {"error": "Game already processed"}
 
@@ -246,10 +250,12 @@ class RankingService:
             Average ELO rating of opponents
         """
         # Get all games for this team in this season
+        # CRITICAL: Only include games that count toward rankings
         games = self.db.query(Game).filter(
             ((Game.home_team_id == team_id) | (Game.away_team_id == team_id)) &
             (Game.season == season) &
-            (Game.is_processed == True)
+            (Game.is_processed == True) &
+            (Game.excluded_from_rankings == False)
         ).all()
 
         if not games:

@@ -477,3 +477,63 @@ footer {
 .sos-indicator.hard { background-color: #c05621; }
 .sos-indicator.average { background-color: #d69e2e; }
 .sos-indicator.easy { background-color: #38a169; }
+
+/* FCS Game Styling (Story 009) */
+.game-fcs {
+  background-color: rgba(0, 0, 0, 0.02);
+  opacity: 0.75;
+}
+
+.game-fcs:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  opacity: 0.85;
+}
+
+/* FCS Badge */
+.fcs-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 3px;
+  margin-left: 8px;
+  cursor: help;
+}
+
+.fcs-badge:hover {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+/* Team Record Note */
+.record-note {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-left: 4px;
+  font-weight: normal;
+  cursor: help;
+}
+
+/* Info Box */
+.info-box {
+  background-color: var(--bg-secondary);
+  border-left: 4px solid var(--accent-color);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-icon {
+  font-size: 1.2rem;
+}
+
+.info-text {
+  line-height: 1.4;
+}
