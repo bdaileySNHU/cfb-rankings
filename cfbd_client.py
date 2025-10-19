@@ -5,8 +5,188 @@ Fetches real college football data for the ranking system
 
 import requests
 import os
+import functools
+import logging
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Warning thresholds tracking (to prevent log spam)
+_warning_thresholds_logged = {
+    '80%': set(),   # Set of months where 80% warning was logged
+    '90%': set(),   # Set of months where 90% warning was logged
+    '95%': set()    # Set of months where 95% warning was logged
+}
+
+
+def track_api_usage(func):
+    """
+    Decorator to track CFBD API usage in database.
+
+    Logs endpoint, timestamp, status code, and response time for each API call.
+    Checks usage thresholds and logs warnings when approaching monthly limit.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = datetime.now()
+        status_code = 200
+        endpoint = "unknown"
+
+        try:
+            # Extract endpoint from args (assumes first arg after self is endpoint)
+            if len(args) >= 2:
+                endpoint = args[1]  # args[0] is self, args[1] is endpoint
+
+            # Execute the actual API call
+            response = func(*args, **kwargs)
+
+            # Calculate response time
+            end_time = datetime.now()
+            response_time_ms = (end_time - start_time).total_seconds() * 1000
+
+            # Track usage in database
+            try:
+                from database import SessionLocal
+                from models import APIUsage
+
+                month = start_time.strftime("%Y-%m")
+
+                db = SessionLocal()
+                usage_record = APIUsage(
+                    endpoint=endpoint,
+                    timestamp=start_time,
+                    status_code=status_code,
+                    response_time_ms=response_time_ms,
+                    month=month
+                )
+                db.add(usage_record)
+                db.commit()
+                db.close()
+
+                # Check warning thresholds
+                check_usage_warnings(month)
+
+            except Exception as tracking_error:
+                logger.warning(f"Failed to track API usage: {tracking_error}")
+                # Don't fail the API call due to tracking failure
+
+            return response
+
+        except Exception as e:
+            # If API call fails, still try to track it
+            status_code = getattr(e, 'status_code', 500)
+            raise
+
+    return wrapper
+
+
+def get_monthly_usage(month: str = None) -> dict:
+    """
+    Get API usage stats for specified month.
+
+    Args:
+        month: Month in YYYY-MM format (defaults to current month)
+
+    Returns:
+        dict: Usage statistics including total calls, limit, percentage, etc.
+    """
+    from database import SessionLocal
+    from models import APIUsage
+    from sqlalchemy import func
+
+    if not month:
+        month = datetime.now().strftime("%Y-%m")
+
+    db = SessionLocal()
+
+    try:
+        # Total calls for month
+        total_calls = db.query(APIUsage).filter(APIUsage.month == month).count()
+
+        # Monthly limit from environment
+        monthly_limit = int(os.getenv("CFBD_MONTHLY_LIMIT", "1000"))
+
+        # Calculate metrics
+        percentage_used = (total_calls / monthly_limit) * 100 if monthly_limit > 0 else 0
+        remaining_calls = max(0, monthly_limit - total_calls)
+
+        # Average calls per day (based on days elapsed in month)
+        year, month_num = map(int, month.split('-'))
+        current_date = datetime.now()
+
+        if year == current_date.year and month_num == current_date.month:
+            days_elapsed = current_date.day
+        else:
+            # For past months, use full month
+            import calendar
+            days_elapsed = calendar.monthrange(year, month_num)[1]
+
+        avg_per_day = total_calls / days_elapsed if days_elapsed > 0 else 0
+
+        # Top endpoints
+        top_endpoints = (
+            db.query(APIUsage.endpoint, func.count(APIUsage.id).label('count'))
+            .filter(APIUsage.month == month)
+            .group_by(APIUsage.endpoint)
+            .order_by(func.count(APIUsage.id).desc())
+            .limit(5)
+            .all()
+        )
+
+        # Determine warning level
+        warning_level = None
+        if percentage_used >= 95:
+            warning_level = "95%"
+        elif percentage_used >= 90:
+            warning_level = "90%"
+        elif percentage_used >= 80:
+            warning_level = "80%"
+
+        return {
+            "month": month,
+            "total_calls": total_calls,
+            "monthly_limit": monthly_limit,
+            "percentage_used": round(percentage_used, 2),
+            "remaining_calls": remaining_calls,
+            "average_calls_per_day": round(avg_per_day, 2),
+            "warning_level": warning_level,
+            "top_endpoints": [
+                {"endpoint": ep, "count": cnt, "percentage": round((cnt / total_calls) * 100, 1) if total_calls > 0 else 0}
+                for ep, cnt in top_endpoints
+            ]
+        }
+
+    finally:
+        db.close()
+
+
+def check_usage_warnings(month: str):
+    """
+    Check API usage against thresholds and log warnings.
+
+    Logs warning only once per threshold per month to prevent spam.
+
+    Args:
+        month: Month in YYYY-MM format
+    """
+    usage = get_monthly_usage(month)
+    percentage = usage['percentage_used']
+    total_calls = usage['total_calls']
+    limit = usage['monthly_limit']
+
+    # Check thresholds and log if not already logged for this month
+    if percentage >= 95 and month not in _warning_thresholds_logged['95%']:
+        logger.critical(f"CFBD API usage at 95% ({total_calls}/{limit} calls) - Month: {month}")
+        _warning_thresholds_logged['95%'].add(month)
+    elif percentage >= 90 and month not in _warning_thresholds_logged['90%']:
+        logger.warning(f"CFBD API usage at 90% ({total_calls}/{limit} calls) - Month: {month}")
+        _warning_thresholds_logged['90%'].add(month)
+    elif percentage >= 80 and month not in _warning_thresholds_logged['80%']:
+        logger.warning(f"CFBD API usage at 80% ({total_calls}/{limit} calls) - Month: {month}")
+        _warning_thresholds_logged['80%'].add(month)
 
 
 class CFBDClient:
@@ -27,6 +207,7 @@ class CFBDClient:
         if self.api_key:
             self.headers['Authorization'] = f'Bearer {self.api_key}'
 
+    @track_api_usage
     def _get(self, endpoint: str, params: dict = None) -> dict:
         """Make GET request to CFBD API"""
         url = f"{self.BASE_URL}{endpoint}"

@@ -36,6 +36,198 @@ python3 import_real_data.py
 
 See **[REAL_DATA_GUIDE.md](REAL_DATA_GUIDE.md)** for complete instructions.
 
+## API Usage Monitoring
+
+The system automatically tracks all CFBD API calls to help monitor usage against the monthly limit (1000 calls/month on the free tier).
+
+### Features
+- **Automatic tracking** of every API call (endpoint, timestamp, response time)
+- **Real-time usage statistics** with percentage used and remaining calls
+- **Warning thresholds** at 80%, 90%, and 95% usage (logged automatically)
+- **Configurable monthly limit** via environment variable
+- **Top endpoint analysis** to identify which calls are most frequent
+
+### Configuration
+
+Add to your `.env` file:
+```bash
+CFBD_MONTHLY_LIMIT=1000  # Default: 1000 (free tier)
+```
+
+### Monitoring Endpoint
+
+```bash
+# Get current month's usage
+curl "http://localhost:8000/api/admin/api-usage"
+
+# Get specific month's usage
+curl "http://localhost:8000/api/admin/api-usage?month=2025-01"
+```
+
+**Example Response:**
+```json
+{
+  "month": "2025-10",
+  "total_calls": 110,
+  "monthly_limit": 1000,
+  "percentage_used": 11.0,
+  "remaining_calls": 890,
+  "average_calls_per_day": 5.79,
+  "warning_level": null,
+  "top_endpoints": [
+    {
+      "endpoint": "/teams/fbs",
+      "count": 105,
+      "percentage": 95.5
+    }
+  ],
+  "last_updated": "2025-10-19T23:09:46.108954"
+}
+```
+
+### Warning Levels
+- **80%** - WARNING logged to console
+- **90%** - WARNING logged to console
+- **95%** - CRITICAL logged to console
+
+Warnings are logged once per threshold per month to prevent spam.
+
+## Automated Weekly Updates
+
+The system can automatically import new game data every Sunday evening during the active football season (August - January).
+
+### Features
+- **Scheduled updates** every Sunday at 8:00 PM Eastern Time
+- **Active season detection** - automatically skips updates in off-season (February - July)
+- **Pre-flight checks** before each update:
+  - Verifies we're in active season
+  - Detects current week from CFBD API
+  - Checks API usage is below 90% threshold
+- **Comprehensive logging** to `/var/log/cfb-rankings/weekly-update.log`
+- **Graceful error handling** with automatic retries and clear error messages
+
+### Setup (Production)
+
+1. **Copy systemd units to system directory:**
+```bash
+sudo cp deploy/cfb-weekly-update.timer /etc/systemd/system/
+sudo cp deploy/cfb-weekly-update.service /etc/systemd/system/
+```
+
+2. **Create log directory:**
+```bash
+sudo mkdir -p /var/log/cfb-rankings
+sudo chown www-data:www-data /var/log/cfb-rankings
+```
+
+3. **Enable and start the timer:**
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable cfb-weekly-update.timer
+sudo systemctl start cfb-weekly-update.timer
+```
+
+4. **Verify timer is active:**
+```bash
+sudo systemctl status cfb-weekly-update.timer
+sudo systemctl list-timers --all | grep cfb
+```
+
+### Manual Testing
+
+Run the weekly update script manually:
+```bash
+python3 scripts/weekly_update.py
+```
+
+Trigger the systemd service manually:
+```bash
+sudo systemctl start cfb-weekly-update.service
+sudo journalctl -u cfb-weekly-update -f  # Watch logs in real-time
+```
+
+### Monitoring
+
+Check recent update logs:
+```bash
+sudo tail -f /var/log/cfb-rankings/weekly-update.log
+```
+
+Check systemd journal:
+```bash
+sudo journalctl -u cfb-weekly-update -n 50
+```
+
+View next scheduled run:
+```bash
+systemctl list-timers cfb-weekly-update.timer
+```
+
+## Manual Update Trigger
+
+In addition to automated weekly updates, you can manually trigger data imports via the API. This is useful for:
+- Testing the update process
+- Importing mid-week data after rescheduled games
+- Forcing an update outside the normal schedule
+
+### Features
+- **Async execution** - Returns immediately with a task_id, update runs in background
+- **Pre-flight checks** - Same validation as automated updates:
+  - Active season check (August - January)
+  - Current week detection from CFBD API
+  - API usage threshold check (aborts if >= 90% used)
+- **Status tracking** - Poll task status to monitor progress
+- **Comprehensive results** - Returns games imported, teams updated, errors
+- **Admin dashboard** - View usage statistics and projections
+
+### Usage
+
+**1. Trigger an update:**
+```bash
+curl -X POST "http://localhost:8000/api/admin/trigger-update"
+```
+
+Returns a `task_id` immediately.
+
+**2. Check status:**
+```bash
+curl "http://localhost:8000/api/admin/update-status/{task_id}"
+```
+
+Poll this endpoint until `status` is `completed` or `failed`.
+
+**3. Monitor API usage:**
+```bash
+curl "http://localhost:8000/api/admin/usage-dashboard"
+```
+
+See current month usage, projections, and daily breakdown.
+
+### Error Scenarios
+
+**Off-season (February - July):**
+```json
+{
+  "detail": "Cannot update during off-season (Feb-July)"
+}
+```
+
+**No current week:**
+```json
+{
+  "detail": "No current week found - season may not be active"
+}
+```
+
+**API usage too high (>= 90%):**
+```json
+{
+  "detail": "API usage at 92.5% - aborting to prevent quota exhaustion"
+}
+```
+
+All endpoints are documented in the interactive API docs at `http://localhost:8000/docs`.
+
 ## Project Structure
 
 ```
@@ -73,7 +265,15 @@ See **[REAL_DATA_GUIDE.md](REAL_DATA_GUIDE.md)** for complete instructions.
 pip install -r requirements.txt
 ```
 
-2. **Initialize database with sample data:**
+2. **Configure environment variables:**
+Create a `.env` file (see `.env.example`):
+```bash
+CFBD_API_KEY=your_api_key_here
+DATABASE_URL=sqlite:///./cfb_rankings.db
+CFBD_MONTHLY_LIMIT=1000
+```
+
+3. **Initialize database with sample data:**
 ```bash
 python3 seed_data.py
 ```
@@ -188,6 +388,16 @@ See **[tests/README.md](tests/README.md)** for complete testing documentation.
 - `POST /api/calculate?season={year}` - Recalculate all rankings from scratch
 - `GET /` - Health check
 
+### Admin
+- `GET /api/admin/api-usage` - Get CFBD API usage statistics
+  - Query params: `month` (optional, format: YYYY-MM)
+- `POST /api/admin/trigger-update` - Manually trigger a weekly data update
+- `GET /api/admin/update-status/{task_id}` - Get status of an update task
+- `GET /api/admin/usage-dashboard` - Get comprehensive usage dashboard
+  - Query params: `month` (optional, format: YYYY-MM)
+- `GET /api/admin/config` - Get system configuration
+- `PUT /api/admin/config` - Update system configuration
+
 ## Example API Calls
 
 ### Get Top 10 Rankings
@@ -218,6 +428,112 @@ curl -X POST "http://localhost:8000/api/games" \
 ### Get Team Schedule
 ```bash
 curl "http://localhost:8000/api/teams/1/schedule?season=2024"
+```
+
+### Manual Update Trigger
+```bash
+# Trigger a manual data update
+curl -X POST "http://localhost:8000/api/admin/trigger-update"
+```
+
+**Example Response:**
+```json
+{
+  "status": "started",
+  "message": "Update started successfully",
+  "task_id": "update-20251019-140523",
+  "started_at": "2025-10-19T14:05:23.456789"
+}
+```
+
+### Check Update Status
+```bash
+# Poll the status using the task_id from trigger response
+curl "http://localhost:8000/api/admin/update-status/update-20251019-140523"
+```
+
+**Example Response (in progress):**
+```json
+{
+  "task_id": "update-20251019-140523",
+  "status": "running",
+  "trigger_type": "manual",
+  "started_at": "2025-10-19T14:05:23.456789",
+  "completed_at": null,
+  "duration_seconds": null,
+  "result": null
+}
+```
+
+**Example Response (completed):**
+```json
+{
+  "task_id": "update-20251019-140523",
+  "status": "completed",
+  "trigger_type": "manual",
+  "started_at": "2025-10-19T14:05:23.456789",
+  "completed_at": "2025-10-19T14:08:45.123456",
+  "duration_seconds": 201.67,
+  "result": {
+    "success": true,
+    "games_imported": 45,
+    "teams_updated": 133,
+    "error_message": null
+  }
+}
+```
+
+### Get Usage Dashboard
+```bash
+# Get comprehensive usage dashboard with projections
+curl "http://localhost:8000/api/admin/usage-dashboard"
+```
+
+**Example Response:**
+```json
+{
+  "current_month": {
+    "month": "2025-10",
+    "total_calls": 245,
+    "monthly_limit": 1000,
+    "percentage_used": 24.5,
+    "remaining_calls": 755,
+    "average_calls_per_day": 12.89,
+    "warning_level": null,
+    "days_until_reset": 12,
+    "projected_end_of_month": 399
+  },
+  "top_endpoints": [
+    {"endpoint": "/games", "count": 120, "percentage": 48.98},
+    {"endpoint": "/teams/fbs", "count": 105, "percentage": 42.86},
+    {"endpoint": "/calendar", "count": 20, "percentage": 8.16}
+  ],
+  "daily_usage": [
+    {"date": "2025-10-01", "calls": 15},
+    {"date": "2025-10-02", "calls": 18},
+    {"date": "2025-10-03", "calls": 12}
+  ],
+  "last_update": "2025-10-19T14:10:00.000000"
+}
+```
+
+### Update System Configuration
+```bash
+# Update monthly API limit (e.g., after upgrading to paid plan)
+curl -X PUT "http://localhost:8000/api/admin/config" \
+  -H "Content-Type: application/json" \
+  -d '{"cfbd_monthly_limit": 5000}'
+```
+
+**Example Response:**
+```json
+{
+  "cfbd_monthly_limit": 5000,
+  "update_schedule": "Sun 20:00 ET",
+  "api_usage_warning_thresholds": [80, 90, 95],
+  "active_season_start": "08-01",
+  "active_season_end": "01-31"
+}
 ```
 
 ## Algorithm Details

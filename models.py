@@ -152,3 +152,38 @@ class Season(Base):
 
     def __repr__(self):
         return f"<Season(year={self.year}, week={self.current_week}, active={self.is_active})>"
+
+
+class APIUsage(Base):
+    """API usage tracking for CFBD API calls"""
+    __tablename__ = "api_usage"
+
+    id = Column(Integer, primary_key=True, index=True)
+    endpoint = Column(String(200), nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    status_code = Column(Integer, nullable=False)
+    response_time_ms = Column(Float, default=0.0)
+    month = Column(String(7), index=True, nullable=False)  # YYYY-MM format
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<APIUsage(endpoint='{self.endpoint}', status={self.status_code}, month='{self.month}')>"
+
+
+class UpdateTask(Base):
+    """Track manual and automated update tasks"""
+    __tablename__ = "update_tasks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    task_id = Column(String(100), unique=True, nullable=False, index=True)
+    status = Column(String(20), nullable=False)  # started, running, completed, failed
+    trigger_type = Column(String(20), nullable=False)  # manual, automated
+    started_at = Column(DateTime, nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+    duration_seconds = Column(Float, nullable=True)
+    result_json = Column(String(2000), nullable=True)  # JSON string of result
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<UpdateTask(task_id='{self.task_id}', status='{self.status}', trigger_type='{self.trigger_type}')>"

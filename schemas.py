@@ -202,3 +202,107 @@ class SeasonResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# API Usage Schemas
+class EndpointUsage(BaseModel):
+    """Usage stats for a specific endpoint"""
+    endpoint: str
+    count: int
+    percentage: Optional[float] = None
+
+
+class APIUsageResponse(BaseModel):
+    """Response for API usage endpoint"""
+    month: str
+    total_calls: int
+    monthly_limit: int
+    percentage_used: float
+    remaining_calls: int
+    average_calls_per_day: float
+    warning_level: Optional[str] = None  # "80%", "90%", "95%" or null
+    top_endpoints: List[EndpointUsage]
+    last_updated: datetime
+
+
+# ============================================================================
+# Admin - Manual Update Trigger Schemas
+# ============================================================================
+
+class UpdateTriggerResponse(BaseModel):
+    """Response from triggering a manual update"""
+    status: str  # "started", "failed"
+    message: str
+    task_id: Optional[str] = None
+    started_at: Optional[datetime] = None
+    error_code: Optional[str] = None
+
+
+class UpdateTaskResult(BaseModel):
+    """Result details from an update task"""
+    success: bool
+    games_imported: Optional[int] = None
+    teams_updated: Optional[int] = None
+    error_message: Optional[str] = None
+    stdout: Optional[str] = None
+    stderr: Optional[str] = None
+
+
+class UpdateTaskStatus(BaseModel):
+    """Status of an update task"""
+    task_id: str
+    status: str  # "started", "running", "completed", "failed"
+    trigger_type: str  # "manual", "automated"
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    duration_seconds: Optional[float] = None
+    result: Optional[UpdateTaskResult] = None
+
+
+# ============================================================================
+# Admin - Usage Dashboard Schemas
+# ============================================================================
+
+class DailyUsage(BaseModel):
+    """Daily API usage stats"""
+    date: str
+    calls: int
+
+
+class CurrentMonthStats(BaseModel):
+    """Extended monthly stats for dashboard"""
+    month: str
+    total_calls: int
+    monthly_limit: int
+    percentage_used: float
+    remaining_calls: int
+    average_calls_per_day: float
+    warning_level: Optional[str] = None
+    days_until_reset: int
+    projected_end_of_month: int
+
+
+class UsageDashboardResponse(BaseModel):
+    """Comprehensive usage dashboard data"""
+    current_month: CurrentMonthStats
+    top_endpoints: List[EndpointUsage]
+    daily_usage: List[DailyUsage]
+    last_update: datetime
+
+
+# ============================================================================
+# Admin - Configuration Schemas
+# ============================================================================
+
+class SystemConfig(BaseModel):
+    """System configuration values"""
+    cfbd_monthly_limit: int
+    update_schedule: str
+    api_usage_warning_thresholds: List[int]
+    active_season_start: str
+    active_season_end: str
+
+
+class ConfigUpdate(BaseModel):
+    """Configuration update request"""
+    cfbd_monthly_limit: Optional[int] = None

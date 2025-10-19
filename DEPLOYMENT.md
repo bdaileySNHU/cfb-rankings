@@ -368,3 +368,107 @@ For issues:
 ├── cfb-rankings-access.log # Nginx access logs
 └── cfb-rankings-error.log  # Nginx error logs
 ```
+
+## Optional: Automated Weekly Updates
+
+The system includes automated weekly updates that run every Sunday at 8:00 PM ET during the active season (August - January).
+
+### Installing Weekly Update Timer
+
+1. **Create log directory:**
+```bash
+sudo mkdir -p /var/log/cfb-rankings
+sudo chown www-data:www-data /var/log/cfb-rankings
+```
+
+2. **Copy systemd units:**
+```bash
+sudo cp /var/www/cfb-rankings/deploy/cfb-weekly-update.timer /etc/systemd/system/
+sudo cp /var/www/cfb-rankings/deploy/cfb-weekly-update.service /etc/systemd/system/
+```
+
+3. **Enable and start timer:**
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable cfb-weekly-update.timer
+sudo systemctl start cfb-weekly-update.timer
+```
+
+4. **Verify timer is active:**
+```bash
+sudo systemctl status cfb-weekly-update.timer
+sudo systemctl list-timers --all | grep cfb
+```
+
+### Managing Weekly Updates
+
+**View recent update logs:**
+```bash
+sudo tail -f /var/log/cfb-rankings/weekly-update.log
+```
+
+**View systemd journal:**
+```bash
+sudo journalctl -u cfb-weekly-update -n 50
+```
+
+**Manually trigger an update:**
+```bash
+sudo systemctl start cfb-weekly-update.service
+```
+
+**Disable automatic updates:**
+```bash
+sudo systemctl stop cfb-weekly-update.timer
+sudo systemctl disable cfb-weekly-update.timer
+```
+
+**Re-enable automatic updates:**
+```bash
+sudo systemctl enable cfb-weekly-update.timer
+sudo systemctl start cfb-weekly-update.timer
+```
+
+### How Weekly Updates Work
+
+The weekly update script (`scripts/weekly_update.py`) performs these pre-flight checks:
+
+1. **Active Season Check** - Verifies current date is August 1 - January 31
+2. **Current Week Detection** - Queries CFBD API to find the current week
+3. **API Usage Check** - Ensures API usage is below 90% of monthly limit
+
+If all checks pass, it runs `import_real_data.py` to import new game data.
+
+If any check fails, the update is skipped and logged (not considered an error for off-season).
+
+### Troubleshooting
+
+**Timer not triggering:**
+```bash
+# Check timer status
+sudo systemctl status cfb-weekly-update.timer
+
+# Reload systemd if units were modified
+sudo systemctl daemon-reload
+sudo systemctl restart cfb-weekly-update.timer
+```
+
+**Update failing:**
+```bash
+# Check logs
+sudo journalctl -u cfb-weekly-update -n 100
+
+# Check weekly update log
+sudo cat /var/log/cfb-rankings/weekly-update.log
+
+# Run manually for debugging
+cd /var/www/cfb-rankings
+sudo -u www-data /var/www/cfb-rankings/venv/bin/python scripts/weekly_update.py
+```
+
+**API usage warnings:**
+If you see "API usage at 90% - aborting" messages:
+1. Check current usage: `curl http://localhost:8000/api/admin/api-usage`
+2. Consider upgrading to a paid CFBD API plan
+3. Adjust `CFBD_MONTHLY_LIMIT` in `.env` if you upgrade
+```

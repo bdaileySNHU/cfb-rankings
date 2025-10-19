@@ -1,0 +1,40 @@
+[Unit]
+Description=CFB Rankings Weekly Data Update
+Documentation=https://github.com/your-repo/cfb-rankings
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+
+# Working directory (adjust for your deployment)
+WorkingDirectory=/var/www/cfb-rankings
+
+# Load environment variables from .env file
+# Contains: CFBD_API_KEY, DATABASE_URL, CFBD_MONTHLY_LIMIT
+EnvironmentFile=/var/www/cfb-rankings/.env
+
+# Execute the weekly update script
+ExecStart=/var/www/cfb-rankings/venv/bin/python /var/www/cfb-rankings/scripts/weekly_update.py
+
+# Logging
+StandardOutput=append:/var/log/cfb-rankings/weekly-update.log
+StandardError=append:/var/log/cfb-rankings/weekly-update.log
+
+# Timeout (30 minutes should be plenty for data import)
+TimeoutStartSec=1800
+
+# Restart policy (don't restart on failure - let timer handle next run)
+Restart=no
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/cfb-rankings /var/log/cfb-rankings
+
+[Install]
+WantedBy=multi-user.target

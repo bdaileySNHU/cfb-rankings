@@ -14,7 +14,7 @@ load_dotenv()
 
 import schemas
 from database import get_db, init_db
-from models import Team, Game, RankingHistory, Season, ConferenceType
+from models import Team, Game, RankingHistory, Season, ConferenceType, APIUsage, UpdateTask
 from ranking_service import RankingService
 
 # Initialize FastAPI app
@@ -467,6 +467,408 @@ async def recalculate_rankings(season: int, db: Session = Depends(get_db)):
             "games_processed": processed_count
         }
     }
+
+
+# ============================================================================
+# ADMIN ENDPOINTS - API Usage Monitoring
+# ============================================================================
+
+@app.get("/api/admin/api-usage", response_model=schemas.APIUsageResponse, tags=["Admin"])
+async def get_api_usage(month: Optional[str] = None):
+    """
+    Get CFBD API usage statistics for a specific month.
+
+    Returns comprehensive usage stats including:
+    - Total API calls for the month
+    - Percentage of monthly limit used
+    - Remaining calls available
+    - Average calls per day
+    - Warning level (if approaching limit)
+    - Top 5 most-called endpoints
+
+    Args:
+        month: Optional month in YYYY-MM format (defaults to current month)
+
+    Returns:
+        APIUsageResponse with usage statistics
+
+    Example:
+        GET /api/admin/api-usage
+        GET /api/admin/api-usage?month=2025-01
+    """
+    from cfbd_client import get_monthly_usage
+
+    try:
+        usage_stats = get_monthly_usage(month)
+
+        return {
+            **usage_stats,
+            "last_updated": datetime.utcnow()
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve API usage stats: {str(e)}"
+        )
+
+
+# ============================================================================
+# ADMIN ENDPOINTS - Manual Update Trigger
+# ============================================================================
+
+from fastapi import BackgroundTasks
+import subprocess
+import json
+import sys
+from pathlib import Path
+
+# Global dictionary to track running updates (in-memory, resets on restart)
+_running_updates = {}
+
+
+def run_weekly_update_task(task_id: str, db_session):
+    """Execute weekly update script as background task"""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    project_root = Path(__file__).parent
+    script_path = project_root / "scripts" / "weekly_update.py"
+
+    try:
+        # Update status to running
+        from models import UpdateTask
+        task = db_session.query(UpdateTask).filter(UpdateTask.task_id == task_id).first()
+        if task:
+            task.status = "running"
+            db_session.commit()
+
+        # Execute the script
+        result = subprocess.run(
+            [sys.executable, str(script_path)],
+            capture_output=True,
+            text=True,
+            timeout=1800,  # 30 minute timeout
+            cwd=str(project_root)
+        )
+
+        # Parse result
+        success = result.returncode == 0
+        result_data = {
+            "success": success,
+            "stdout": result.stdout[-1000:] if result.stdout else "",  # Last 1000 chars
+            "stderr": result.stderr[-1000:] if result.stderr else "",
+            "error_message": None if success else "Update script failed"
+        }
+
+        # Update task record
+        task = db_session.query(UpdateTask).filter(UpdateTask.task_id == task_id).first()
+        if task:
+            task.status = "completed" if success else "failed"
+            task.completed_at = datetime.utcnow()
+            task.duration_seconds = (task.completed_at - task.started_at).total_seconds()
+            task.result_json = json.dumps(result_data)
+            db_session.commit()
+
+        # Remove from running updates
+        if task_id in _running_updates:
+            del _running_updates[task_id]
+
+        logger.info(f"Manual update task {task_id} completed with status: {task.status}")
+
+    except subprocess.TimeoutExpired:
+        logger.error(f"Manual update task {task_id} timed out")
+        task = db_session.query(UpdateTask).filter(UpdateTask.task_id == task_id).first()
+        if task:
+            task.status = "failed"
+            task.completed_at = datetime.utcnow()
+            task.duration_seconds = (task.completed_at - task.started_at).total_seconds()
+            task.result_json = json.dumps({
+                "success": False,
+                "error_message": "Update timed out after 30 minutes"
+            })
+            db_session.commit()
+        if task_id in _running_updates:
+            del _running_updates[task_id]
+
+    except Exception as e:
+        logger.error(f"Manual update task {task_id} failed: {e}", exc_info=True)
+        task = db_session.query(UpdateTask).filter(UpdateTask.task_id == task_id).first()
+        if task:
+            task.status = "failed"
+            task.completed_at = datetime.utcnow()
+            task.duration_seconds = (task.completed_at - task.started_at).total_seconds()
+            task.result_json = json.dumps({
+                "success": False,
+                "error_message": str(e)
+            })
+            db_session.commit()
+        if task_id in _running_updates:
+            del _running_updates[task_id]
+
+    finally:
+        db_session.close()
+
+
+@app.post("/api/admin/trigger-update", response_model=schemas.UpdateTriggerResponse, tags=["Admin"])
+async def trigger_manual_update(background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """
+    Manually trigger a weekly data update.
+
+    Performs pre-flight checks before starting:
+    - Active season verification (August-January)
+    - Current week detection from CFBD API
+    - API usage threshold check (<90%)
+
+    If all checks pass, executes the update in the background and returns immediately.
+    Use the update-status endpoint to poll for completion.
+
+    Returns:
+        UpdateTriggerResponse with task_id for status tracking
+
+    Raises:
+        HTTPException 400: If in off-season
+        HTTPException 429: If API usage >= 90%
+        HTTPException 400: If no current week detected
+    """
+    task_id = f"update-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+    # Import pre-flight check functions
+    sys.path.insert(0, str(Path(__file__).parent / "scripts"))
+    from weekly_update import is_active_season, check_api_usage, get_current_week_wrapper
+
+    # Pre-flight check 1: Active season
+    if not is_active_season():
+        raise HTTPException(
+            status_code=400,
+            detail="Off-season (February-July) - updates not allowed during off-season"
+        )
+
+    # Pre-flight check 2: Current week detection
+    try:
+        current_week = get_current_week_wrapper()
+        if not current_week:
+            raise HTTPException(
+                status_code=400,
+                detail="No current week detected - season may not have started yet"
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to detect current week: {str(e)}"
+        )
+
+    # Pre-flight check 3: API usage
+    if not check_api_usage():
+        usage = get_monthly_usage()
+        raise HTTPException(
+            status_code=429,
+            detail=f"API usage at {usage['percentage_used']}% - update aborted to prevent quota exhaustion"
+        )
+
+    # Create task record
+    task = UpdateTask(
+        task_id=task_id,
+        status="started",
+        trigger_type="manual",
+        started_at=datetime.utcnow()
+    )
+    db.add(task)
+    db.commit()
+
+    # Track in memory
+    _running_updates[task_id] = datetime.utcnow()
+
+    # Create new session for background task (don't reuse request session)
+    from database import SessionLocal
+    bg_db = SessionLocal()
+
+    # Run update in background
+    background_tasks.add_task(run_weekly_update_task, task_id, bg_db)
+
+    return {
+        "status": "started",
+        "message": f"Weekly update triggered manually for week {current_week}",
+        "task_id": task_id,
+        "started_at": task.started_at
+    }
+
+
+@app.get("/api/admin/update-status/{task_id}", response_model=schemas.UpdateTaskStatus, tags=["Admin"])
+async def get_update_status(task_id: str, db: Session = Depends(get_db)):
+    """
+    Get the status of a manual update task.
+
+    Args:
+        task_id: Task ID returned from trigger-update endpoint
+
+    Returns:
+        UpdateTaskStatus with current status and result
+
+    Raises:
+        HTTPException 404: If task_id not found
+    """
+    task = db.query(UpdateTask).filter(UpdateTask.task_id == task_id).first()
+
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+
+    # Parse result JSON if available
+    result = None
+    if task.result_json:
+        try:
+            result_data = json.loads(task.result_json)
+            result = schemas.UpdateTaskResult(**result_data)
+        except:
+            result = None
+
+    return schemas.UpdateTaskStatus(
+        task_id=task.task_id,
+        status=task.status,
+        trigger_type=task.trigger_type,
+        started_at=task.started_at,
+        completed_at=task.completed_at,
+        duration_seconds=task.duration_seconds,
+        result=result
+    )
+
+
+@app.get("/api/admin/usage-dashboard", response_model=schemas.UsageDashboardResponse, tags=["Admin"])
+async def get_usage_dashboard(month: Optional[str] = None, db: Session = Depends(get_db)):
+    """
+    Get comprehensive API usage dashboard data.
+
+    Returns detailed usage statistics including:
+    - Current month usage summary
+    - Top 5 endpoints by call count
+    - Daily usage for last 7 days
+    - Projected end-of-month usage
+
+    Args:
+        month: Optional month in YYYY-MM format (defaults to current month)
+
+    Returns:
+        UsageDashboardResponse with comprehensive usage stats
+    """
+    from cfbd_client import get_monthly_usage
+    from sqlalchemy import func
+    import calendar
+
+    if not month:
+        month = datetime.now().strftime("%Y-%m")
+
+    # Get monthly stats (from Story 001)
+    monthly_stats = get_monthly_usage(month)
+
+    # Calculate daily usage (last 7 days)
+    daily_usage_data = (
+        db.query(
+            func.date(APIUsage.timestamp).label('date'),
+            func.count(APIUsage.id).label('calls')
+        )
+        .filter(APIUsage.month == month)
+        .group_by(func.date(APIUsage.timestamp))
+        .order_by(func.date(APIUsage.timestamp).desc())
+        .limit(7)
+        .all()
+    )
+
+    # Reverse to get chronological order
+    daily_usage = [
+        schemas.DailyUsage(date=str(date), calls=calls)
+        for date, calls in reversed(daily_usage_data)
+    ]
+
+    # Calculate days until reset
+    year, month_num = map(int, month.split('-'))
+    current_date = datetime.now()
+
+    if year == current_date.year and month_num == current_date.month:
+        days_in_month = calendar.monthrange(year, month_num)[1]
+        days_until_reset = days_in_month - current_date.day
+        days_elapsed = current_date.day
+    else:
+        days_in_month = calendar.monthrange(year, month_num)[1]
+        days_until_reset = 0  # Past month
+        days_elapsed = days_in_month
+
+    # Project end-of-month usage
+    avg_per_day = monthly_stats['total_calls'] / days_elapsed if days_elapsed > 0 else 0
+    projected_eom = int(avg_per_day * days_in_month)
+
+    # Build current month stats with extended fields
+    current_month_stats = schemas.CurrentMonthStats(
+        month=monthly_stats['month'],
+        total_calls=monthly_stats['total_calls'],
+        monthly_limit=monthly_stats['monthly_limit'],
+        percentage_used=monthly_stats['percentage_used'],
+        remaining_calls=monthly_stats['remaining_calls'],
+        average_calls_per_day=monthly_stats['average_calls_per_day'],
+        warning_level=monthly_stats['warning_level'],
+        days_until_reset=days_until_reset,
+        projected_end_of_month=projected_eom
+    )
+
+    return schemas.UsageDashboardResponse(
+        current_month=current_month_stats,
+        top_endpoints=[schemas.EndpointUsage(**ep) for ep in monthly_stats['top_endpoints']],
+        daily_usage=daily_usage,
+        last_update=datetime.utcnow()
+    )
+
+
+@app.get("/api/admin/config", response_model=schemas.SystemConfig, tags=["Admin"])
+async def get_system_config():
+    """
+    Get current system configuration.
+
+    Returns configuration values including:
+    - CFBD monthly API limit
+    - Update schedule
+    - Warning thresholds
+    - Active season dates
+
+    Returns:
+        SystemConfig with all configuration values
+    """
+    import os
+
+    return schemas.SystemConfig(
+        cfbd_monthly_limit=int(os.getenv("CFBD_MONTHLY_LIMIT", "1000")),
+        update_schedule="Sun 20:00 ET",
+        api_usage_warning_thresholds=[80, 90, 95],
+        active_season_start="08-01",
+        active_season_end="01-31"
+    )
+
+
+@app.put("/api/admin/config", response_model=schemas.SystemConfig, tags=["Admin"])
+async def update_system_config(config_update: schemas.ConfigUpdate):
+    """
+    Update system configuration.
+
+    Currently supports updating:
+    - cfbd_monthly_limit: Monthly API call limit
+
+    Note: Configuration changes are applied to the environment but
+    require a service restart to take full effect in some cases.
+
+    Args:
+        config_update: Configuration values to update
+
+    Returns:
+        SystemConfig with updated values
+    """
+    import os
+
+    # Update environment variable
+    if config_update.cfbd_monthly_limit is not None:
+        os.environ["CFBD_MONTHLY_LIMIT"] = str(config_update.cfbd_monthly_limit)
+
+        # TODO: Persist to .env file for permanent change
+        # For now, changes only affect current process
+
+    # Return updated config
+    return await get_system_config()
 
 
 if __name__ == "__main__":
