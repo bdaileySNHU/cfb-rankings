@@ -142,11 +142,14 @@ nav {
   text-transform: uppercase;
   font-size: 0.875rem;
   letter-spacing: 0.05em;
+  vertical-align: middle;  /* Matches td alignment for consistency */
 }
 
 .rankings-table td {
   padding: 1rem;
   border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;  /* Centers content vertically - fixes row height inconsistency */
+  line-height: 1.5;        /* Standardizes line height across all cells */
 }
 
 .rankings-table tbody tr:hover {
@@ -168,6 +171,8 @@ nav {
   border-radius: 50%;
   font-weight: 700;
   font-size: 1rem;
+  vertical-align: middle;  /* Aligns with text baseline - prevents row height expansion */
+  line-height: 1;          /* Prevents internal height expansion */
 }
 
 .rank-badge.top-5 {
@@ -200,6 +205,8 @@ nav {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
+  vertical-align: middle;  /* Aligns with text baseline */
+  line-height: 1.2;        /* Prevents internal height expansion */
 }
 
 .conference-badge.p5 {
@@ -471,6 +478,7 @@ footer {
   height: 10px;
   border-radius: 50%;
   margin-right: 0.5rem;
+  vertical-align: middle;  /* Aligns with text baseline */
 }
 
 .sos-indicator.elite { background-color: #742a2a; }
