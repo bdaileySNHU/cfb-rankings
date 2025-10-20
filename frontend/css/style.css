@@ -422,6 +422,8 @@ nav {
 
   .rankings-table {
     font-size: 0.875rem;
+    min-width: 650px;  /* Prevent column crush, allows horizontal scroll */
+    margin-bottom: 0;  /* Remove bottom margin inside scroll container */
   }
 
   .rankings-table th,
@@ -429,8 +431,21 @@ nav {
     padding: 0.5rem;
   }
 
+  /* Extra padding on first/last cells for touch scrolling */
+  .rankings-table th:first-child,
+  .rankings-table td:first-child {
+    padding-left: 0.75rem;
+  }
+
+  .rankings-table th:last-child,
+  .rankings-table td:last-child {
+    padding-right: 0.75rem;
+  }
+
   .schedule-table {
     font-size: 0.875rem;
+    min-width: 650px;
+    margin-bottom: 0;
   }
 
   .schedule-table th,
@@ -440,6 +455,39 @@ nav {
 
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Table container scroll indicators */
+  .table-container {
+    /* Scroll hint using gradient fade */
+    background:
+      linear-gradient(90deg, var(--bg-primary) 0%, transparent 2%),
+      linear-gradient(90deg, transparent 98%, var(--bg-primary) 100%),
+      linear-gradient(90deg, rgba(0,0,0,0.1) 0%, transparent 2%),
+      linear-gradient(270deg, rgba(0,0,0,0.1) 0%, transparent 2%);
+    background-repeat: no-repeat;
+    background-size: 30px 100%, 30px 100%, 10px 100%, 10px 100%;
+    background-position: left center, right center, left center, right center;
+    background-attachment: local, local, scroll, scroll;
+  }
+
+  /* Style scrollbar for better UX (Chrome/Safari) */
+  .table-container::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .table-container::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+  }
+
+  .table-container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+  }
+
+  .table-container::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
   }
 }
 
@@ -456,6 +504,21 @@ footer {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem;
+}
+
+/* Table Container for horizontal scroll on mobile (EPIC-005 Story 002) */
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;  /* Smooth momentum scrolling on iOS */
+  margin: 0 -1.5rem;  /* Extend to card edges for full-width scroll */
+  padding: 0 1.5rem;  /* Restore padding inside container */
+}
+
+/* No scroll on desktop */
+@media (min-width: 769px) {
+  .table-container {
+    overflow-x: visible;
+  }
 }
 
 /* Utility Classes */
