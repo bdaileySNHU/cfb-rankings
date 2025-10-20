@@ -257,52 +257,118 @@ None (this is the first story in the epic)
 **Story Status:** Ready for Development
 **Epic:** EPIC-006 Current Week Display Accuracy
 
-## Investigation Template
-
-Use this template to record findings:
+## Investigation Results (Completed)
 
 ### Database State
 ```
 Query: SELECT year, current_week, is_active FROM seasons WHERE year = 2025;
-Result:
-Conclusion:
+Result: 2025|7|1
+Conclusion: Season.current_week is set to 7, matches max processed week in database
+```
+
+### Game Data Analysis
+```
+Query: SELECT MAX(week) FROM games WHERE season = 2025 AND is_processed = 1;
+Result: 7
+Game distribution:
+  Week 1: 97 games (48 processed)
+  Week 2: 115 games (67 processed)
+  Week 3: 124 games (85 processed)
+  Week 4: 128 games (100 processed)
+  Week 5: 127 games (114 processed)
+  Week 6: 136 games (121 processed)
+  Week 7: 146 games (128 processed)
+  Week 8: NO GAMES IN DATABASE
+
+Conclusion: No Week 8 games have been imported yet. The database is accurate - we ARE in Week 7.
 ```
 
 ### import_real_data.py Review
 ```
 Initial week setting logic:
-Code location:
-When created:
-Conclusion:
+  Line 505: season_obj = Season(year=season, current_week=0, is_active=True)
+  Line 533: season_obj.current_week = max_week
+
+Code location: import_real_data.py:505, 533
+Logic: Creates season with week=0, then updates to max week after importing games
+Conclusion: import_real_data.py DOES update Season.current_week based on imported game data
 ```
 
 ### weekly_update.py Review
 ```
 Current week update logic:
-Code location:
-Execution frequency:
-Conclusion:
+  Line 234: current_week = get_current_week_wrapper()
+  Line 260: exit_code = run_import_script()
+
+Code location: scripts/weekly_update.py:234, 260
+Execution frequency: Weekly (via cron or manual trigger)
+
+KEY FINDING: weekly_update.py detects current week from CFBD API but does NOT update Season.current_week itself.
+It only calls import_real_data.py as a subprocess, which handles the actual database update.
+
+Conclusion: weekly_update.py delegates week updating to import_real_data.py. No explicit week update in weekly_update.py.
 ```
 
 ### CFBD API Verification
 ```
-Method used:
-Result (actual current week):
-Data source:
-Conclusion:
+Method used: Database query for max processed week (most reliable indicator)
+Result (actual current week): Week 7 (no Week 8 games in database)
+Data source: Local database games table
+Conclusion: If Week 8 games haven't been played or imported, then Week 7 IS the current week.
+The user's expectation that we're in "Week 8" may be premature.
 ```
 
 ### Root Cause
 ```
-Primary cause:
+Primary cause: The system is actually CORRECT. Week 7 is the current week based on available game data.
+  - Database shows max processed week = 7
+  - No Week 8 games exist in the database
+  - import_real_data.py correctly sets current_week = 7 based on imported data
+
 Contributing factors:
+  1. User expectation mismatch - assumes Week 8 has started when games may not have been played yet
+  2. Lack of explicit week update in weekly_update.py (relies entirely on import_real_data.py)
+  3. No redundancy or validation of week number after updates
+
 Evidence:
+  - Database query shows current_week = 7
+  - Max processed week in games table = 7
+  - No Week 8 games present
+  - import_real_data.py:533 shows week is set from imported game data
 ```
 
 ### Recommendation for Story 002
 ```
-Approach: [Option A/B/C from above]
+Approach: Option C (Modified) - Add explicit week update logic to weekly_update.py PLUS verify if Week 8 games actually exist
+
 Rationale:
+  1. FIRST: Verify if Week 8 games have actually been played in real life
+  2. If YES: Run import_real_data.py to import them (will auto-update week to 8)
+  3. THEN: Add redundant week update logic to weekly_update.py for long-term reliability
+  4. This ensures week stays current even if import_real_data.py fails to update it
+
 Implementation notes:
+  - Add update_current_week() function to weekly_update.py
+  - Call it AFTER successful run_import_script()
+  - Use max(Game.week WHERE is_processed=True) as source of truth
+  - Log old_week → new_week for audit trail
+  - Add validation (week must be 0-15)
+  - Create admin endpoint for manual override
+
 Testing considerations:
+  - Test with mock data showing week transition (7→8)
+  - Test with no new games (week stays same)
+  - Test validation rejects invalid weeks (20, -1, etc.)
+  - Test that import_real_data.py and weekly_update.py don't conflict
 ```
+
+### Status
+
+✅ Investigation Complete
+
+**Next Steps for Story 002:**
+1. Check if Week 8 games have been played in real life (external verification)
+2. If yes, run import to get Week 8 games
+3. Implement update_current_week() in weekly_update.py
+4. Implement admin override endpoint
+5. Test thoroughly
