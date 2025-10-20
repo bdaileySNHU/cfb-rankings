@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 from dotenv import load_dotenv
+import logging
 
 # Load environment variables from .env file
 load_dotenv()
@@ -16,6 +17,14 @@ import schemas
 from database import get_db, init_db
 from models import Team, Game, RankingHistory, Season, ConferenceType, APIUsage, UpdateTask
 from ranking_service import RankingService
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -730,6 +739,63 @@ async def get_update_status(task_id: str, db: Session = Depends(get_db)):
         duration_seconds=task.duration_seconds,
         result=result
     )
+
+
+@app.post("/api/admin/update-current-week", tags=["Admin"])
+async def update_current_week_manual(
+    year: int,
+    week: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Manually update the current week for a season.
+
+    Use this endpoint to correct the current week if automatic detection fails
+    or if an immediate update is needed before the weekly update runs.
+
+    Args:
+        year: Season year (e.g., 2025)
+        week: Week number to set (0-15)
+
+    Returns:
+        Success message with updated week number
+
+    Raises:
+        HTTPException 400: If week is out of valid range (0-15)
+        HTTPException 404: If season not found
+
+    Example:
+        POST /api/admin/update-current-week?year=2025&week=8
+    """
+    # Validate week
+    if not (0 <= week <= 15):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Week must be between 0 and 15, got {week}"
+        )
+
+    # Get season
+    season = db.query(Season).filter(Season.year == year).first()
+    if not season:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Season {year} not found"
+        )
+
+    # Update
+    old_week = season.current_week
+    season.current_week = week
+    db.commit()
+
+    logger.info(f"Manual current week update: {old_week} → {week} for season {year}")
+
+    return {
+        "success": True,
+        "season": year,
+        "old_week": old_week,
+        "new_week": week,
+        "message": f"Current week updated from {old_week} to {week}"
+    }
 
 
 @app.get("/api/admin/usage-dashboard", response_model=schemas.UsageDashboardResponse, tags=["Admin"])

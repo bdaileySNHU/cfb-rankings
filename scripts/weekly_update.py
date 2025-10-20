@@ -136,6 +136,84 @@ def get_current_week_wrapper() -> int:
         raise
 
 
+def update_current_week(season_year: int) -> int:
+    """
+    Update the current week for a season based on the latest processed games.
+
+    This function queries the database for the maximum week number among
+    processed games and updates the Season.current_week field accordingly.
+    Provides redundancy in case import_real_data.py fails to update the week.
+
+    Args:
+        season_year: Year of the season to update (e.g., 2025)
+
+    Returns:
+        int: The updated current week number (0-15), or 0 if update fails
+
+    Side Effects:
+        - Updates Season.current_week in database
+        - Logs INFO when week changes
+        - Logs WARNING if week validation fails
+        - Logs ERROR if season not found
+    """
+    try:
+        # Import here to avoid circular imports
+        from sqlalchemy import create_engine, func
+        from sqlalchemy.orm import sessionmaker
+        from models import Season, Game
+
+        # Create database session
+        db_path = project_root / "cfb_rankings.db"
+        engine = create_engine(f"sqlite:///{db_path}")
+        SessionLocal = sessionmaker(bind=engine)
+        db = SessionLocal()
+
+        try:
+            # Get max week from processed games this season
+            max_week = db.query(func.max(Game.week)).filter(
+                Game.season == season_year,
+                Game.is_processed == True
+            ).scalar()
+
+            # Default to 0 if no games processed
+            max_week = max_week or 0
+
+            # Validate week is reasonable (0-15 for college football)
+            if not (0 <= max_week <= 15):
+                logger.warning(
+                    f"Detected week {max_week} is out of bounds (0-15), "
+                    f"skipping update for season {season_year}"
+                )
+                return 0
+
+            # Get season record
+            season = db.query(Season).filter(Season.year == season_year).first()
+            if not season:
+                logger.error(f"Season {season_year} not found in database")
+                return 0
+
+            # Update if changed
+            if season.current_week != max_week:
+                old_week = season.current_week
+                season.current_week = max_week
+                db.commit()
+                logger.info(
+                    f"✓ Updated current week: {old_week} → {max_week} "
+                    f"for season {season_year}"
+                )
+            else:
+                logger.debug(f"Current week already {max_week}, no update needed")
+
+            return max_week
+
+        finally:
+            db.close()
+
+    except Exception as e:
+        logger.error(f"Failed to update current week: {e}", exc_info=True)
+        return 0
+
+
 def run_import_script() -> int:
     """
     Execute the import_real_data.py script.
@@ -261,6 +339,19 @@ def main():
 
     logger.info("-" * 80)
     if exit_code == 0:
+        logger.info("✅ Data import completed successfully")
+
+        # Update current week (redundancy in case import didn't update it)
+        logger.info("Updating current week from processed games...")
+        try:
+            client = CFBDClient()
+            season = client.get_current_season()
+            updated_week = update_current_week(season)
+            logger.info(f"✓ Current week confirmed: Week {updated_week}")
+        except Exception as e:
+            logger.warning(f"Could not update current week: {e}")
+            # Non-fatal - continue anyway
+
         logger.info("✅ Weekly update completed successfully")
     else:
         logger.error(f"❌ Weekly update failed with exit code {exit_code}")
