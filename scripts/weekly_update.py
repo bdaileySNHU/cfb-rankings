@@ -136,6 +136,67 @@ def get_current_week_wrapper() -> int:
         raise
 
 
+def validate_week_number(week: int, season_year: int) -> bool:
+    """
+    Validate that a week number is reasonable for college football.
+
+    College football regular season runs from Week 1 through Week 14-15,
+    with Week 0 used for preseason and early games, and weeks up to 15
+    for bowl games and playoffs.
+
+    Args:
+        week: Week number to validate
+        season_year: Year of the season (for logging context)
+
+    Returns:
+        bool: True if valid (0-15), False otherwise
+
+    Side Effects:
+        - Logs ERROR for invalid week values
+        - Logs DEBUG for valid week values
+
+    Examples:
+        >>> validate_week_number(8, 2025)  # Valid regular season week
+        True
+        >>> validate_week_number(0, 2025)  # Valid preseason week
+        True
+        >>> validate_week_number(15, 2025)  # Valid bowl/playoff week
+        True
+        >>> validate_week_number(20, 2025)  # Invalid - too high
+        False
+        >>> validate_week_number(-1, 2025)  # Invalid - negative
+        False
+    """
+    MIN_WEEK = 0  # Preseason / Week 0 games
+    MAX_WEEK = 15  # Includes bowl season and playoffs
+
+    # Type check
+    if not isinstance(week, int):
+        logger.error(
+            f"Week must be an integer, got {type(week).__name__}: {week} "
+            f"for season {season_year}"
+        )
+        return False
+
+    # Range check
+    if week < MIN_WEEK:
+        logger.error(
+            f"Week {week} is below minimum {MIN_WEEK} "
+            f"for season {season_year}"
+        )
+        return False
+
+    if week > MAX_WEEK:
+        logger.error(
+            f"Week {week} exceeds maximum {MAX_WEEK} "
+            f"for season {season_year}"
+        )
+        return False
+
+    logger.debug(f"Week {week} validated successfully for season {season_year}")
+    return True
+
+
 def update_current_week(season_year: int) -> int:
     """
     Update the current week for a season based on the latest processed games.
@@ -179,9 +240,9 @@ def update_current_week(season_year: int) -> int:
             max_week = max_week or 0
 
             # Validate week is reasonable (0-15 for college football)
-            if not (0 <= max_week <= 15):
+            if not validate_week_number(max_week, season_year):
                 logger.warning(
-                    f"Detected week {max_week} is out of bounds (0-15), "
+                    f"Week validation failed for {max_week}, "
                     f"skipping update for season {season_year}"
                 )
                 return 0
