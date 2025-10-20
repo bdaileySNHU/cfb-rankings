@@ -442,6 +442,12 @@ nav {
     padding-right: 0.75rem;
   }
 
+  /* Hide SOS Rank column (7th column) - least critical (EPIC-005 Story 003) */
+  .rankings-table th:nth-child(7),
+  .rankings-table td:nth-child(7) {
+    display: none;
+  }
+
   .schedule-table {
     font-size: 0.875rem;
     min-width: 650px;
@@ -488,6 +494,81 @@ nav {
 
   .table-container::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
+  }
+}
+
+/* Small mobile phones - Hide additional low-priority columns (EPIC-005 Story 003) */
+@media (max-width: 480px) {
+  /* Hide SOS column (6th column) in addition to SOS Rank */
+  .rankings-table th:nth-child(6),
+  .rankings-table td:nth-child(6),
+  .rankings-table th:nth-child(7),
+  .rankings-table td:nth-child(7) {
+    display: none;
+  }
+
+  /* Reduce table minimum width since fewer columns */
+  .table-container .rankings-table {
+    min-width: 500px;
+  }
+
+  /* Adjust remaining column widths for better balance */
+  .rankings-table th:nth-child(1),
+  .rankings-table td:nth-child(1) {
+    width: 60px;
+  }
+
+  .rankings-table th:nth-child(2),
+  .rankings-table td:nth-child(2) {
+    min-width: 150px;
+  }
+
+  .rankings-table th:nth-child(4),
+  .rankings-table td:nth-child(4) {
+    width: 70px;
+  }
+
+  /* Info box responsive adjustments */
+  .info-box {
+    font-size: 0.875rem;
+    padding: 0.75rem;
+  }
+
+  /* Filter dropdown full width on small screens */
+  .filters {
+    width: 100%;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+}
+
+/* Very small mobile phones - Hide Conference, keep core data only (EPIC-005 Story 003) */
+@media (max-width: 375px) {
+  /* Hide Conference column (3rd column) in addition to SOS/SOS Rank */
+  .rankings-table th:nth-child(3),
+  .rankings-table td:nth-child(3),
+  .rankings-table th:nth-child(6),
+  .rankings-table td:nth-child(6),
+  .rankings-table th:nth-child(7),
+  .rankings-table td:nth-child(7) {
+    display: none;
+  }
+
+  /* Further reduce minimum width */
+  .table-container .rankings-table {
+    min-width: 380px;
+  }
+
+  /* Optimize visible column widths */
+  .rankings-table {
+    font-size: 0.875rem;
+  }
+
+  /* Further optimize info-box for tiny screens */
+  .info-box {
+    font-size: 0.8125rem;
   }
 }
 
