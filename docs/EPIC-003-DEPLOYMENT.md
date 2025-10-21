@@ -46,7 +46,6 @@ ssh user@your-server.com
 
 # Navigate to application directory
 cd /var/www/cfb-rankings
-
 # Create backup
 sudo cp cfb_rankings.db cfb_rankings.db.backup-$(date +%Y%m%d-%H%M%S)
 

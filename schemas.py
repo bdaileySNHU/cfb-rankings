@@ -306,3 +306,32 @@ class SystemConfig(BaseModel):
 class ConfigUpdate(BaseModel):
     """Configuration update request"""
     cfbd_monthly_limit: Optional[int] = None
+
+
+# ============================================================================
+# Prediction Schemas
+# ============================================================================
+
+class GamePrediction(BaseModel):
+    """Schema for game prediction response"""
+    game_id: int
+    home_team_id: int
+    home_team: str
+    away_team_id: int
+    away_team: str
+    week: int
+    season: int
+    game_date: Optional[str] = None
+    is_neutral_site: bool
+    predicted_winner: str
+    predicted_winner_id: int
+    predicted_home_score: int = Field(..., ge=0, le=150)
+    predicted_away_score: int = Field(..., ge=0, le=150)
+    home_win_probability: float = Field(..., ge=0, le=100)
+    away_win_probability: float = Field(..., ge=0, le=100)
+    confidence: str = Field(..., pattern="^(High|Medium|Low)$")
+    home_team_rating: float
+    away_team_rating: float
+
+    class Config:
+        from_attributes = True

@@ -16,7 +16,7 @@ load_dotenv()
 import schemas
 from database import get_db, init_db
 from models import Team, Game, RankingHistory, Season, ConferenceType, APIUsage, UpdateTask
-from ranking_service import RankingService
+from ranking_service import RankingService, generate_predictions
 
 # Configure logging
 logging.basicConfig(
@@ -293,6 +293,48 @@ async def create_game(game: schemas.GameCreate, db: Session = Depends(get_db)):
     result = ranking_service.process_game(db_game)
 
     return result
+
+
+# ============================================================================
+# PREDICTION ENDPOINTS
+# ============================================================================
+
+@app.get("/api/predictions", response_model=List[schemas.GamePrediction], tags=["Predictions"])
+async def get_predictions(
+    week: Optional[int] = Query(None, ge=0, le=15, description="Specific week number (0-15)"),
+    team_id: Optional[int] = Query(None, ge=1, description="Filter by team ID"),
+    next_week: bool = Query(True, description="Only show next week's games"),
+    season: Optional[int] = Query(None, ge=2020, description="Season year"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get game predictions for upcoming games.
+
+    Returns predictions with winner, scores, and win probabilities based on
+    current ELO ratings. Predictions use the same ELO formula as game processing
+    but applied in reverse to forecast outcomes.
+
+    **Query Parameters:**
+    - **week**: Get predictions for specific week (0-15)
+    - **team_id**: Filter predictions involving specific team
+    - **next_week**: Only show next week's games (default: true)
+    - **season**: Season year (defaults to current year)
+
+    **Returns:**
+    - Array of predictions with winner, scores, probabilities, and confidence
+    """
+    try:
+        predictions = generate_predictions(
+            db=db,
+            week=week,
+            team_id=team_id,
+            next_week=next_week,
+            season_year=season
+        )
+        return predictions
+    except Exception as e:
+        logger.error(f"Error generating predictions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating predictions: {str(e)}")
 
 
 # ============================================================================

@@ -133,6 +133,17 @@ class ApiService {
     });
   }
 
+  // Predictions
+  async getPredictions(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.week !== undefined) params.append('week', filters.week.toString());
+    if (filters.teamId) params.append('team_id', filters.teamId.toString());
+    if (filters.nextWeek !== undefined) params.append('next_week', filters.nextWeek.toString());
+    if (filters.season) params.append('season', filters.season.toString());
+
+    return this.fetch(`/predictions?${params}`);
+  }
+
   // Stats
   async getStats() {
     return this.fetch('/stats');

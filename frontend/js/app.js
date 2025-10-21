@@ -7,8 +7,10 @@ let rankingsData = null;
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   loadStats();
+  loadPredictions();
   loadRankings();
   setupEventListeners();
+  setupPredictionListeners();
 });
 
 // Setup Event Listeners
@@ -193,4 +195,160 @@ function formatTime(dateString) {
     hour: 'numeric',
     minute: '2-digit'
   });
+}
+
+// ============================================================================
+// PREDICTIONS
+// ============================================================================
+
+// Setup Prediction Event Listeners
+function setupPredictionListeners() {
+  const nextWeekBtn = document.getElementById('next-week-btn');
+  const weekSelector = document.getElementById('week-selector');
+  const refreshBtn = document.getElementById('refresh-predictions-btn');
+
+  if (nextWeekBtn) {
+    nextWeekBtn.addEventListener('click', () => {
+      setActiveFilterButton('next-week-btn');
+      weekSelector.value = '';
+      loadPredictions({ nextWeek: true });
+    });
+  }
+
+  if (weekSelector) {
+    weekSelector.addEventListener('change', (e) => {
+      const week = e.target.value;
+      if (week) {
+        setActiveFilterButton(null);
+        loadPredictions({ nextWeek: false, week: parseInt(week) });
+      }
+    });
+  }
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      const selectedWeek = weekSelector.value;
+      if (selectedWeek) {
+        loadPredictions({ nextWeek: false, week: parseInt(selectedWeek) });
+      } else {
+        loadPredictions({ nextWeek: true });
+      }
+    });
+  }
+}
+
+// Set Active Filter Button
+function setActiveFilterButton(buttonId) {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+
+  if (buttonId) {
+    const btn = document.getElementById(buttonId);
+    if (btn) btn.classList.add('active');
+  }
+}
+
+// Load Predictions
+async function loadPredictions(filters = { nextWeek: true }) {
+  const loading = document.getElementById('predictions-loading');
+  const empty = document.getElementById('predictions-empty');
+  const error = document.getElementById('predictions-error');
+  const container = document.getElementById('predictions-container');
+
+  // Show loading
+  loading.classList.remove('hidden');
+  empty.classList.add('hidden');
+  error.classList.add('hidden');
+  container.innerHTML = '';
+
+  try {
+    const predictions = await api.getPredictions(filters);
+
+    // Hide loading
+    loading.classList.add('hidden');
+
+    // Handle empty results
+    if (predictions.length === 0) {
+      empty.classList.remove('hidden');
+      return;
+    }
+
+    // Render predictions
+    predictions.forEach(pred => {
+      const card = createPredictionCard(pred);
+      container.appendChild(card);
+    });
+
+  } catch (err) {
+    console.error('Error loading predictions:', err);
+    loading.classList.add('hidden');
+    error.classList.remove('hidden');
+    document.getElementById('predictions-error-message').textContent = ` ${err.message}`;
+  }
+}
+
+// Create Prediction Card
+function createPredictionCard(prediction) {
+  const card = document.createElement('div');
+  card.className = 'prediction-card';
+
+  // Determine winner styling
+  const homeIsWinner = prediction.predicted_winner === prediction.home_team;
+  const awayIsWinner = prediction.predicted_winner === prediction.away_team;
+
+  // Format game date
+  let gameDate = '';
+  if (prediction.game_date) {
+    const date = new Date(prediction.game_date);
+    gameDate = date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  }
+
+  card.innerHTML = `
+    <div class="prediction-header">
+      <span class="prediction-badge">PREDICTED</span>
+      <span class="game-info">Week ${prediction.week}${gameDate ? ' • ' + gameDate : ''}</span>
+    </div>
+
+    <div class="matchup">
+      <div class="team away-team ${awayIsWinner ? 'predicted-winner' : ''}">
+        <span class="team-name">${prediction.away_team}</span>
+        <span class="score">${prediction.predicted_away_score}</span>
+      </div>
+
+      <div class="matchup-separator">
+        <span class="at-symbol">@</span>
+      </div>
+
+      <div class="team home-team ${homeIsWinner ? 'predicted-winner' : ''}">
+        <span class="team-name">${prediction.home_team}</span>
+        <span class="score">${prediction.predicted_home_score}</span>
+      </div>
+    </div>
+
+    <div class="prediction-details">
+      <div class="win-probability">
+        <span class="prob-label">Win Probability:</span>
+        <span class="prob-values">
+          ${prediction.home_team}: ${prediction.home_win_probability}%
+          •
+          ${prediction.away_team}: ${prediction.away_win_probability}%
+        </span>
+      </div>
+      <div class="confidence-indicator confidence-${prediction.confidence.toLowerCase()}">
+        <span class="confidence-label">Confidence:</span>
+        <span class="confidence-value">${prediction.confidence}</span>
+      </div>
+    </div>
+
+    ${prediction.is_neutral_site ? '<div class="neutral-site-badge">Neutral Site</div>' : ''}
+  `;
+
+  return card;
 }

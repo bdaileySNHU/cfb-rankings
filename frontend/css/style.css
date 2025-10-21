@@ -689,3 +689,237 @@ footer {
 .info-text {
   line-height: 1.4;
 }
+
+/* ============================================================================
+   PREDICTIONS SECTION
+   ============================================================================ */
+
+/* Filter Buttons */
+.filter-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  background: white;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.filter-btn:hover {
+  background: var(--bg-secondary);
+}
+
+.filter-btn.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.refresh-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--success-color);
+  background: white;
+  color: var(--success-color);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.refresh-btn:hover {
+  background: var(--success-color);
+  color: white;
+}
+
+/* Predictions Grid */
+.predictions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+/* Prediction Card */
+.prediction-card {
+  border: 2px dashed var(--border-color);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  background: #fafafa;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.prediction-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Prediction Header */
+.prediction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.prediction-badge {
+  background: #ffc107;
+  color: #000;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.game-info {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Matchup */
+.matchup {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  background: white;
+  transition: all 0.2s;
+}
+
+.team.predicted-winner {
+  background: #e7f3ff;
+  border: 2px solid var(--primary-color);
+  font-weight: bold;
+}
+
+.team-name {
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.team .score {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.team.predicted-winner .score {
+  color: var(--primary-color);
+}
+
+.matchup-separator {
+  padding: 0 1rem;
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+
+/* Prediction Details */
+.prediction-details {
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+  font-size: 0.85rem;
+}
+
+.win-probability {
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.prob-label {
+  font-weight: 600;
+}
+
+.prob-values {
+  color: var(--text-primary);
+}
+
+.confidence-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.confidence-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.confidence-value {
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.75rem;
+}
+
+.confidence-high .confidence-value {
+  background: #d4edda;
+  color: #155724;
+}
+
+.confidence-medium .confidence-value {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.confidence-low .confidence-value {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Neutral Site Badge */
+.neutral-site-badge {
+  margin-top: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--text-secondary);
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .predictions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filters {
+    margin-top: 1rem;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .filter-btn, .filter-select, .refresh-btn {
+    flex: 1;
+    min-width: 120px;
+  }
+}

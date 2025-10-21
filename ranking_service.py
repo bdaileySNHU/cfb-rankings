@@ -3,9 +3,11 @@ Ranking service that integrates ELO calculations with database
 """
 
 import math
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict, Any
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from models import Team, Game, RankingHistory, Season, ConferenceType
+from datetime import datetime
 
 
 class RankingService:
@@ -365,3 +367,223 @@ class RankingService:
             team.losses = 0
 
         self.db.commit()
+
+
+# Prediction Functions (standalone, not part of RankingService class)
+
+def generate_predictions(
+    db: Session,
+    week: Optional[int] = None,
+    team_id: Optional[int] = None,
+    next_week: bool = True,
+    season_year: Optional[int] = None
+) -> List[Dict[str, Any]]:
+    """
+    Generate predictions for upcoming (unprocessed) games.
+
+    Args:
+        db: Database session
+        week: Optional specific week filter
+        team_id: Optional team filter
+        next_week: If True, only predict games in next week (default: True)
+        season_year: Optional season year (defaults to current season)
+
+    Returns:
+        List of prediction dictionaries with winner, scores, and probabilities
+    """
+    # Determine season year
+    if not season_year:
+        season_year = datetime.now().year
+
+    # Build query for unprocessed games
+    query = db.query(Game).filter(
+        Game.is_processed == False,
+        Game.season == season_year
+    )
+
+    # Apply week filter
+    if next_week:
+        # Get current week from Season model
+        current_week = db.query(Season.current_week).filter(
+            Season.year == season_year
+        ).scalar()
+
+        if current_week is None:
+            return []  # No active season
+
+        query = query.filter(Game.week == current_week + 1)
+    elif week is not None:
+        query = query.filter(Game.week == week)
+
+    # Apply team filter
+    if team_id is not None:
+        query = query.filter(
+            or_(
+                Game.home_team_id == team_id,
+                Game.away_team_id == team_id
+            )
+        )
+
+    # Execute query
+    games = query.all()
+    predictions = []
+
+    for game in games:
+        # Get team data
+        home_team = db.query(Team).filter(Team.id == game.home_team_id).first()
+        away_team = db.query(Team).filter(Team.id == game.away_team_id).first()
+
+        # Validate teams exist and have valid ratings
+        if not _validate_prediction_teams(home_team, away_team):
+            continue
+
+        # Generate prediction
+        prediction = _calculate_game_prediction(game, home_team, away_team)
+        predictions.append(prediction)
+
+    return predictions
+
+
+# Validation constants
+MIN_VALID_RATING = 1  # Minimum valid ELO rating
+MAX_PREDICTED_SCORE = 150  # Maximum reasonable score
+MIN_PREDICTED_SCORE = 0  # Minimum score
+MIN_WEEK = 0  # Preseason
+MAX_WEEK = 15  # Postseason
+
+
+def validate_week(week: int) -> bool:
+    """
+    Validate week number is within valid range.
+
+    Args:
+        week: Week number to validate
+
+    Returns:
+        True if valid, False otherwise
+    """
+    return MIN_WEEK <= week <= MAX_WEEK
+
+
+def validate_team_for_prediction(team: Optional[Team]) -> bool:
+    """
+    Validate team exists and has valid rating for prediction.
+
+    Args:
+        team: Team object to validate
+
+    Returns:
+        True if valid, False otherwise
+    """
+    if team is None:
+        return False
+
+    if team.elo_rating < MIN_VALID_RATING:
+        return False
+
+    return True
+
+
+def validate_predicted_score(score: int) -> int:
+    """
+    Ensure predicted score is within reasonable bounds.
+
+    Args:
+        score: Predicted score
+
+    Returns:
+        Clamped score within valid range [0, 150]
+    """
+    return max(MIN_PREDICTED_SCORE, min(score, MAX_PREDICTED_SCORE))
+
+
+def validate_game_for_prediction(game: Game) -> bool:
+    """
+    Validate game can be predicted.
+
+    Args:
+        game: Game object to validate
+
+    Returns:
+        True if game is valid for prediction, False otherwise
+    """
+    # Only predict unprocessed games
+    if game.is_processed:
+        return False
+
+    # Week must be valid
+    if not validate_week(game.week):
+        return False
+
+    return True
+
+
+def _validate_prediction_teams(home_team: Team, away_team: Team) -> bool:
+    """Validate both teams exist and have valid ELO ratings."""
+    if not home_team or not away_team:
+        return False
+    if home_team.elo_rating <= 0 or away_team.elo_rating <= 0:
+        return False
+    return True
+
+
+def _calculate_game_prediction(game: Game, home_team: Team, away_team: Team) -> Dict[str, Any]:
+    """
+    Calculate prediction for a single game.
+
+    Uses standard ELO formula for win probability and estimates scores
+    based on rating difference.
+    """
+    # Apply home field advantage (unless neutral site)
+    home_rating = home_team.elo_rating + (0 if game.is_neutral_site else 65)
+    away_rating = away_team.elo_rating
+
+    # Calculate win probability (standard ELO formula)
+    rating_diff = home_rating - away_rating
+    home_win_prob = 1 / (1 + 10 ** ((away_rating - home_rating) / 400))
+    away_win_prob = 1 - home_win_prob
+
+    # Estimate scores based on ELO difference
+    # Base score: historical average (~30 points per team)
+    base_score = 30
+
+    # Adjust based on rating difference
+    # Every 100 rating points ≈ 7 point margin, so 3.5 points per team
+    score_adjustment = (rating_diff / 100) * 3.5
+
+    predicted_home_score = round(base_score + score_adjustment)
+    predicted_away_score = round(base_score - score_adjustment)
+
+    # Ensure scores are reasonable (0-150 range)
+    predicted_home_score = max(0, min(predicted_home_score, 150))
+    predicted_away_score = max(0, min(predicted_away_score, 150))
+
+    # Determine confidence level based on win probability margin
+    prob_margin = abs(home_win_prob - 0.5)
+    if prob_margin > 0.3:
+        confidence = "High"
+    elif prob_margin > 0.15:
+        confidence = "Medium"
+    else:
+        confidence = "Low"
+
+    return {
+        "game_id": game.id,
+        "home_team_id": home_team.id,
+        "home_team": home_team.name,
+        "away_team_id": away_team.id,
+        "away_team": away_team.name,
+        "week": game.week,
+        "season": game.season,
+        "game_date": game.game_date.isoformat() if game.game_date else None,
+        "is_neutral_site": game.is_neutral_site,
+        "predicted_winner": home_team.name if home_win_prob > 0.5 else away_team.name,
+        "predicted_winner_id": home_team.id if home_win_prob > 0.5 else away_team.id,
+        "predicted_home_score": predicted_home_score,
+        "predicted_away_score": predicted_away_score,
+        "home_win_probability": round(home_win_prob * 100, 1),
+        "away_win_probability": round(away_win_prob * 100, 1),
+        "confidence": confidence,
+        "home_team_rating": home_team.elo_rating,
+        "away_team_rating": away_team.elo_rating
+    }
