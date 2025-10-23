@@ -144,6 +144,28 @@ class ApiService {
     return this.fetch(`/predictions?${params}`);
   }
 
+  // EPIC-009: Prediction Accuracy
+  async getPredictionAccuracy(season = null) {
+    const params = new URLSearchParams();
+    if (season) params.append('season', season.toString());
+    return this.fetch(`/predictions/accuracy?${params}`);
+  }
+
+  async getTeamPredictionAccuracy(teamId, season = null) {
+    const params = new URLSearchParams();
+    if (season) params.append('season', season.toString());
+    return this.fetch(`/predictions/accuracy/team/${teamId}?${params}`);
+  }
+
+  async getStoredPredictions(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.season) params.append('season', filters.season.toString());
+    if (filters.week !== undefined) params.append('week', filters.week.toString());
+    if (filters.teamId) params.append('team_id', filters.teamId.toString());
+    if (filters.evaluatedOnly !== undefined) params.append('evaluated_only', filters.evaluatedOnly.toString());
+    return this.fetch(`/predictions/stored?${params}`);
+  }
+
   // Stats
   async getStats() {
     return this.fetch('/stats');

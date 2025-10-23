@@ -923,3 +923,60 @@ footer {
     min-width: 120px;
   }
 }
+
+/* ========================================
+   EPIC-009: Prediction Accuracy Styles
+   ======================================== */
+
+/* Prediction cell in schedule table */
+.prediction-cell {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.prediction-correct {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.prediction-incorrect {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Prediction accuracy stat card */
+#prediction-accuracy-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+  border-left: 3px solid var(--primary-color);
+}
+
+/* Overall accuracy banner on rankings page */
+.accuracy-banner {
+  background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.accuracy-banner h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+}
+
+.accuracy-banner .accuracy-value {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.accuracy-banner .accuracy-subtext {
+  font-size: 1rem;
+  opacity: 0.9;
+}

@@ -7,6 +7,7 @@ let rankingsData = null;
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   loadStats();
+  loadPredictionAccuracy(); // EPIC-009
   loadPredictions();
   loadRankings();
   setupEventListeners();
@@ -351,4 +352,26 @@ function createPredictionCard(prediction) {
   `;
 
   return card;
+}
+
+// EPIC-009: Load Prediction Accuracy
+async function loadPredictionAccuracy() {
+  try {
+    const activeSeason = await api.getActiveSeason();
+    const accuracy = await api.getPredictionAccuracy(activeSeason);
+
+    if (accuracy.evaluated_predictions > 0) {
+      const banner = document.getElementById('accuracy-banner');
+      const accuracyEl = document.getElementById('overall-accuracy');
+      const detailsEl = document.getElementById('accuracy-details');
+
+      accuracyEl.textContent = `${accuracy.accuracy_percentage.toFixed(1)}%`;
+      detailsEl.textContent = `${accuracy.correct_predictions} correct out of ${accuracy.evaluated_predictions} predictions`;
+
+      banner.style.display = 'block';
+    }
+  } catch (error) {
+    console.error('Error loading prediction accuracy:', error);
+    // Don't show error - just hide the banner
+  }
 }

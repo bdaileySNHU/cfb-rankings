@@ -2,6 +2,7 @@
 
 let teamId = null;
 let teamData = null;
+let predictionData = {}; // EPIC-009: Store predictions by game_id
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -34,6 +35,9 @@ async function loadTeamDetails() {
     // Populate team info
     populateTeamInfo(teamData);
 
+    // EPIC-009: Load prediction accuracy
+    loadPredictionAccuracy();
+
     // Load schedule
     loadSchedule();
 
@@ -45,6 +49,37 @@ async function loadTeamDetails() {
     loading.classList.add('hidden');
     error.classList.remove('hidden');
     document.getElementById('error-message').textContent = ` ${err.message}`;
+  }
+}
+
+// EPIC-009: Load Prediction Accuracy
+async function loadPredictionAccuracy() {
+  try {
+    const activeSeason = await api.getActiveSeason();
+    const accuracy = await api.getTeamPredictionAccuracy(teamId, activeSeason);
+
+    if (accuracy.evaluated_predictions > 0) {
+      const card = document.getElementById('prediction-accuracy-card');
+      const accuracyEl = document.getElementById('prediction-accuracy');
+      const countEl = document.getElementById('prediction-count');
+
+      accuracyEl.textContent = `${accuracy.accuracy_percentage.toFixed(1)}%`;
+      countEl.textContent = `${accuracy.correct_predictions}/${accuracy.evaluated_predictions} correct`;
+
+      // Color code based on accuracy
+      if (accuracy.accuracy_percentage >= 70) {
+        accuracyEl.style.color = 'var(--success-color)';
+      } else if (accuracy.accuracy_percentage >= 50) {
+        accuracyEl.style.color = 'var(--primary-color)';
+      } else {
+        accuracyEl.style.color = 'var(--danger-color)';
+      }
+
+      card.style.display = 'block';
+    }
+  } catch (err) {
+    console.error('Error loading prediction accuracy:', err);
+    // Don't show error - just hide the card
   }
 }
 
@@ -140,6 +175,22 @@ async function loadSchedule() {
     // Fetch active season from API
     const activeSeason = await api.getActiveSeason();
     const schedule = await api.getTeamSchedule(teamId, activeSeason);
+
+    // EPIC-009: Fetch stored predictions for this team
+    try {
+      const predictions = await api.getStoredPredictions({
+        teamId: teamId,
+        season: activeSeason
+      });
+
+      // Store predictions by game_id for quick lookup
+      predictions.forEach(pred => {
+        predictionData[pred.game_id] = pred;
+      });
+    } catch (err) {
+      console.error('Error loading predictions:', err);
+      // Continue without predictions
+    }
 
     if (schedule.games.length === 0) {
       scheduleLoading.classList.add('hidden');
@@ -237,6 +288,47 @@ function createScheduleRow(game) {
     locCell.style.fontStyle = 'italic';
   }
   row.appendChild(locCell);
+
+  // EPIC-009: Prediction
+  const predCell = document.createElement('td');
+  const prediction = predictionData[game.game_id];
+
+  if (prediction && !isFCS) {
+    const predSpan = document.createElement('span');
+    predSpan.className = 'prediction-cell';
+
+    // Determine if this team was predicted to win
+    const wasPredictedWinner = prediction.predicted_winner_id === parseInt(teamId);
+    const predOutcome = wasPredictedWinner ? 'W' : 'L';
+    const probability = (prediction.win_probability * 100).toFixed(0);
+
+    predSpan.textContent = `${predOutcome} (${probability}%)`;
+    predSpan.style.fontSize = '0.875rem';
+
+    // If game is complete, color-code based on correctness
+    if (isPlayed && prediction.was_correct !== null) {
+      if (prediction.was_correct) {
+        predSpan.className = 'prediction-cell prediction-correct';
+        predSpan.title = 'Correct prediction';
+      } else {
+        predSpan.className = 'prediction-cell prediction-incorrect';
+        predSpan.title = 'Incorrect prediction';
+      }
+    } else if (!isPlayed) {
+      // Future game - gray it out
+      predSpan.style.color = 'var(--text-secondary)';
+      predSpan.style.fontStyle = 'italic';
+      predSpan.title = 'Pre-game prediction';
+    }
+
+    predCell.appendChild(predSpan);
+  } else {
+    // No prediction available
+    predCell.textContent = '--';
+    predCell.style.color = 'var(--text-secondary)';
+    predCell.style.fontSize = '0.875rem';
+  }
+  row.appendChild(predCell);
 
   // Result
   const resultCell = document.createElement('td');
