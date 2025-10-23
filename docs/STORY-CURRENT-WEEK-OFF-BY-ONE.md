@@ -121,3 +121,32 @@ Simple git revert of single-line change in `cfbd_client.py`
 **Related Documentation:**
 - `docs/EPIC-008-STORY-001.md` - Future game import implementation
 - `docs/EPIC-006-CURRENT-WEEK-ACCURACY.md` - Current week display system
+
+---
+
+## Deployment Record
+
+**Deployed:** 2025-01-23
+
+**Changes Deployed:**
+1. `cfbd_client.py:278-279` - Modified to exclude 0-0 games from current week detection
+2. `tests/unit/test_cfbd_client.py` - Added 2 new tests for 0-0 game exclusion
+3. Database update: Set current_week from 10 → 9 for 2024 season
+
+**Deployment Steps:**
+```bash
+cd /var/www/cfb-rankings
+git pull
+sudo systemctl restart cfb-rankings
+curl -X POST "http://localhost:8000/api/admin/update-current-week?year=2024&week=9"
+```
+
+**Verification:**
+- ✅ Frontend displays "Current Week: 9" (was showing 10)
+- ✅ All unit tests pass (9/9)
+- ✅ No regressions in week detection logic
+
+**Impact:**
+- Fixed immediate bug: Current week now displays correctly
+- Future-proofed: Automatic week detection will now exclude 0-0 future games
+- No breaking changes to existing functionality
