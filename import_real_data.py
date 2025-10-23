@@ -33,6 +33,29 @@ CONFERENCE_MAP = {
 }
 
 
+def parse_game_date(game_data: dict) -> datetime:
+    """
+    Parse game date from CFBD API response.
+
+    EPIC-008: CFBD provides dates in ISO 8601 format:
+    "start_date": "2025-09-06T19:00:00.000Z"
+
+    Args:
+        game_data: Game data dictionary from CFBD API
+
+    Returns:
+        datetime: Parsed game date or current datetime as fallback
+    """
+    date_str = game_data.get('start_date')
+    if date_str:
+        try:
+            # CFBD uses ISO 8601 format with Z suffix (UTC)
+            return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        except (ValueError, AttributeError):
+            pass
+    return datetime.now()  # Fallback if date parsing fails
+
+
 def validate_api_connection(cfbd: CFBDClient, year: int) -> bool:
     """
     Test CFBD API connectivity and authentication.
@@ -194,6 +217,143 @@ def get_or_create_fcs_team(db, team_name: str, team_objects: dict) -> Team:
     return team
 
 
+# EPIC-008 Story 003: Validation and duplicate detection functions
+
+def check_for_duplicates(db) -> list:
+    """
+    Check for duplicate games in the database.
+
+    A duplicate is defined as two games with the same:
+    - home_team_id
+    - away_team_id
+    - week
+    - season
+
+    Args:
+        db: Database session
+
+    Returns:
+        list: List of duplicate game groups with details
+    """
+    from sqlalchemy import func
+
+    # Query for duplicate games
+    duplicates = db.query(
+        Game.home_team_id,
+        Game.away_team_id,
+        Game.week,
+        Game.season,
+        func.count(Game.id).label('count')
+    ).group_by(
+        Game.home_team_id,
+        Game.away_team_id,
+        Game.week,
+        Game.season
+    ).having(func.count(Game.id) > 1).all()
+
+    if not duplicates:
+        return []
+
+    # Get details for each duplicate group
+    duplicate_details = []
+    for dup in duplicates:
+        games = db.query(Game).filter(
+            Game.home_team_id == dup.home_team_id,
+            Game.away_team_id == dup.away_team_id,
+            Game.week == dup.week,
+            Game.season == dup.season
+        ).all()
+
+        home_team = db.query(Team).filter(Team.id == dup.home_team_id).first()
+        away_team = db.query(Team).filter(Team.id == dup.away_team_id).first()
+
+        duplicate_details.append({
+            'home_team': home_team.name if home_team else 'Unknown',
+            'away_team': away_team.name if away_team else 'Unknown',
+            'week': dup.week,
+            'season': dup.season,
+            'count': dup.count,
+            'game_ids': [g.id for g in games],
+            'scores': [(g.home_score, g.away_score) for g in games]
+        })
+
+    return duplicate_details
+
+
+def print_duplicate_report(duplicates: list):
+    """Print a formatted report of duplicate games."""
+    if not duplicates:
+        print("✓ No duplicate games found")
+        return
+
+    print("\n" + "="*80)
+    print("⚠ WARNING: DUPLICATE GAMES DETECTED")
+    print("="*80)
+
+    for dup in duplicates:
+        print(f"\n{dup['away_team']} @ {dup['home_team']} (Week {dup['week']}, {dup['season']})")
+        print(f"  Found {dup['count']} duplicate records:")
+        for game_id, scores in zip(dup['game_ids'], dup['scores']):
+            print(f"    - Game ID {game_id}: {scores[1]}-{scores[0]}")
+
+    print("\nTo fix duplicates manually:")
+    print("  sqlite3 cfb_rankings.db")
+    print("  DELETE FROM games WHERE id IN (...);")
+    print("="*80)
+
+
+def validate_import_results(db, import_stats: dict, year: int):
+    """
+    Validate import results and print summary.
+
+    Args:
+        db: Database session
+        import_stats: Dictionary with import counts
+        year: Season year
+    """
+    print("\n" + "="*80)
+    print("IMPORT VALIDATION")
+    print("="*80)
+
+    # Check for duplicates
+    duplicates = check_for_duplicates(db)
+    print_duplicate_report(duplicates)
+
+    # Verify game counts
+    total_games = db.query(Game).filter(Game.season == year).count()
+    future_games = db.query(Game).filter(
+        Game.season == year,
+        Game.home_score == 0,
+        Game.away_score == 0
+    ).count()
+    completed_games = total_games - future_games
+
+    print(f"\nDatabase Game Counts (Season {year}):")
+    print(f"  Total Games: {total_games}")
+    print(f"  Completed Games: {completed_games}")
+    print(f"  Future Games: {future_games}")
+
+    # Verify against import stats
+    print(f"\nImport Stats:")
+    print(f"  FBS Games Imported: {import_stats.get('imported', 0)}")
+    print(f"  FCS Games Imported: {import_stats.get('fcs_imported', 0)}")
+    print(f"  Future Games Imported: {import_stats.get('future_imported', 0)}")
+    print(f"  Games Updated: {import_stats.get('games_updated', 0)}")
+    print(f"  Games Skipped: {import_stats.get('skipped', 0)}")
+
+    # Warnings for anomalies
+    if duplicates:
+        print("\n⚠ WARNING: Duplicates detected (see above)")
+
+    if total_games == 0:
+        print("\n⚠ WARNING: No games in database!")
+
+    if future_games > 300:
+        print(f"\n⚠ WARNING: Unusually high future game count ({future_games})")
+
+    print("="*80)
+
+
 def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: int = None, validate_only: bool = False, strict: bool = False):
     """
     Import games for the season with validation and completeness reporting.
@@ -222,6 +382,8 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
     # Track statistics
     total_imported = 0
     fcs_games_imported = 0  # NEW: Track FCS games separately
+    future_games_imported = 0  # EPIC-008: Track future games
+    total_updated = 0  # EPIC-008 Story 002: Track updated games
     total_skipped = 0
     skipped_fcs = 0
     skipped_not_found = 0
@@ -240,6 +402,7 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
         week_stats = get_week_statistics(cfbd, year, week)
         week_imported = 0
         week_skipped = 0
+        week_updated = 0  # EPIC-008 Story 002: Track updated games per week
 
         for game_data in games_data:
             # API uses camelCase
@@ -250,12 +413,14 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
 
             game_desc = f"{away_team_name} @ {home_team_name}"
 
-            # Skip if game not completed
-            if home_score is None or away_score is None:
-                week_skipped += 1
-                skipped_incomplete += 1
-                skipped_details.append((week, "Game not completed", game_desc))
-                continue
+            # EPIC-008: Detect future games (no scores yet) and import them
+            is_future_game = home_score is None or away_score is None
+
+            if is_future_game:
+                # Future game - use placeholder scores and don't process for ELO
+                home_score = 0
+                away_score = 0
+                print(f"    Found future game: {game_desc}")
 
             # Determine if FBS vs FBS, FBS vs FCS, or both FCS
             home_is_fbs = home_team_name in team_objects
@@ -283,44 +448,103 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
             else:
                 away_team = get_or_create_fcs_team(db, away_team_name, team_objects)
 
-            # Check if game already exists
-            existing = db.query(Game).filter(
+            # EPIC-008 Story 002: Check if game already exists (upsert logic)
+            existing_game = db.query(Game).filter(
                 Game.home_team_id == home_team.id,
                 Game.away_team_id == away_team.id,
                 Game.week == week,
                 Game.season == year
             ).first()
 
-            if existing:
-                continue
+            if existing_game:
+                # Game exists - decide whether to update, skip, or process
+                if is_future_game:
+                    # Still a future game (no scores yet) - skip
+                    # This can happen if we re-import the same future week
+                    continue
+
+                # Game now has scores - check if we should update
+                if existing_game.home_score == 0 and existing_game.away_score == 0:
+                    # Future game that now has scores - UPDATE IT
+                    print(f"    Updating game: {game_desc} -> {home_score}-{away_score}")
+
+                    existing_game.home_score = home_score
+                    existing_game.away_score = away_score
+                    existing_game.is_neutral_site = game_data.get('neutralSite', False)
+                    existing_game.excluded_from_rankings = is_fcs_game  # Update based on actual FCS status
+                    existing_game.game_date = parse_game_date(game_data)
+
+                    # Mark as unprocessed so ELO calculation runs
+                    existing_game.is_processed = False
+
+                    db.commit()
+                    db.refresh(existing_game)
+
+                    # Now process the game for ELO ratings (if FBS vs FBS)
+                    if not is_fcs_game:
+                        result = ranking_service.process_game(existing_game)
+                        winner = result['winner_name']
+                        loser = result['loser_name']
+                        score = result['score']
+                        print(f"      Processed: {winner} defeats {loser} {score}")
+                        week_imported += 1
+                        total_imported += 1
+
+                    week_updated += 1
+                    total_updated += 1
+                    continue
+
+                elif existing_game.is_processed:
+                    # Already processed - skip
+                    continue
+                else:
+                    # Has scores but not processed yet - process it
+                    if not is_fcs_game:
+                        result = ranking_service.process_game(existing_game)
+                        week_imported += 1
+                        total_imported += 1
+                    continue
+
+            # EPIC-008 Story 002: Game doesn't exist - INSERT NEW GAME
 
             # In validate-only mode, just count
             if validate_only:
                 week_imported += 1
                 total_imported += 1
+                if is_future_game:
+                    future_games_imported += 1
                 continue
 
             # Create game
             is_neutral = game_data.get('neutralSite', False)
 
+            # EPIC-008: Future games are excluded from rankings for safety
+            excluded_from_rankings = is_fcs_game or is_future_game
+
             game = Game(
                 home_team_id=home_team.id,
                 away_team_id=away_team.id,
-                home_score=home_score,
-                away_score=away_score,
+                home_score=home_score,  # 0 for future games, real score for completed
+                away_score=away_score,  # 0 for future games, real score for completed
                 week=week,
                 season=year,
                 is_neutral_site=is_neutral,
-                excluded_from_rankings=is_fcs_game,  # NEW: Mark FCS games as excluded
-                game_date=datetime.now()  # CFBD has date but in different format
+                excluded_from_rankings=excluded_from_rankings,
+                game_date=parse_game_date(game_data)  # EPIC-008: Parse actual date from CFBD
             )
 
             db.add(game)
             db.commit()
             db.refresh(game)
 
-            # Process game to update rankings (ONLY for FBS vs FBS games)
-            if not is_fcs_game:
+            # EPIC-008: Process game to update rankings (ONLY for completed FBS vs FBS games)
+            if is_future_game:
+                # Future game - don't process for rankings
+                print(f"    {game_desc} (scheduled - not ranked)")
+                future_games_imported += 1
+                week_imported += 1
+            elif not is_fcs_game:
+                # Completed FBS vs FBS game - process for rankings
                 result = ranking_service.process_game(game)
 
                 winner = result['winner_name']
@@ -345,6 +569,8 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
             print(f"\n  {status} Week {week} Summary:")
             print(f"    Expected: {total_week_games} games")
             print(f"    Imported: {week_imported} games ({completion_rate:.0f}%)")
+            if week_updated > 0:  # EPIC-008 Story 002
+                print(f"    Updated: {week_updated} games")
             if week_skipped > 0:
                 print(f"    Skipped: {week_skipped} games")
 
@@ -352,14 +578,17 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
     print("\n" + "="*80)
     print("IMPORT SUMMARY")
     print("="*80)
-    print(f"Total Games Imported: {total_imported}")
+    print(f"Total FBS Games Imported: {total_imported}")
+    print(f"Total FCS Games Imported: {fcs_games_imported}")
+    print(f"Total Future Games Imported: {future_games_imported}")  # EPIC-008
+    print(f"Total Games Updated: {total_updated}")  # EPIC-008 Story 002
     print(f"Total Games Skipped: {total_skipped}")
     if skipped_fcs > 0:
         print(f"  - FCS Opponents: {skipped_fcs}")
     if skipped_not_found > 0:
         print(f"  - Team Not Found: {skipped_not_found}")
     if skipped_incomplete > 0:
-        print(f"  - Incomplete Games: {skipped_incomplete}")
+        print(f"  - Incomplete Games (now imported as future): {skipped_incomplete}")
 
     # Show details of skipped games (limit to first 10)
     if skipped_details and not validate_only:
@@ -376,7 +605,9 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
 
     return {
         "imported": total_imported,
-        "fcs_imported": fcs_games_imported,  # NEW
+        "fcs_imported": fcs_games_imported,
+        "future_imported": future_games_imported,  # EPIC-008
+        "games_updated": total_updated,  # EPIC-008 Story 002
         "skipped": total_skipped,
         "skipped_fcs": skipped_fcs,
         "skipped_not_found": skipped_not_found,
@@ -528,6 +759,9 @@ Examples:
         print("\n✓ Validation complete - no changes made to database")
         db.close()
         return
+
+    # EPIC-008 Story 003: Validate import results
+    validate_import_results(db, import_stats, season)
 
     # Update season current week
     season_obj.current_week = max_week

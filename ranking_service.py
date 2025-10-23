@@ -151,17 +151,44 @@ class RankingService:
 
         Returns:
             Dictionary with game result details
+
+        Raises:
+            ValueError: If game is invalid (no scores, already processed, excluded, etc.)
         """
+        # EPIC-008 Story 003: Comprehensive validation
+
+        # Validation: Ensure game has scores (not a future game)
+        if game.home_score == 0 and game.away_score == 0:
+            raise ValueError(
+                f"Cannot process game {game.id} ({game.home_team.name if game.home_team else 'Unknown'} vs "
+                f"{game.away_team.name if game.away_team else 'Unknown'}) - no scores available. "
+                f"This is likely a future/scheduled game."
+            )
+
+        # Get teams
+        home_team = game.home_team
+        away_team = game.away_team
+
+        # Validation: Ensure both teams exist
+        if not home_team or not away_team:
+            raise ValueError(
+                f"Game {game.id} has invalid teams. "
+                f"Home: {game.home_team_id}, Away: {game.away_team_id}"
+            )
+
+        # Validation: Ensure valid week and season
+        if not (0 <= game.week <= 15):
+            raise ValueError(f"Game {game.id} has invalid week: {game.week}")
+
+        if not (2020 <= game.season <= 2030):
+            raise ValueError(f"Game {game.id} has invalid season: {game.season}")
+
         # CRITICAL: Only process games included in rankings
         if game.excluded_from_rankings:
             raise ValueError("Cannot process excluded game for rankings")
 
         if game.is_processed:
             return {"error": "Game already processed"}
-
-        # Get teams
-        home_team = game.home_team
-        away_team = game.away_team
 
         # Determine winner and loser
         if game.home_score > game.away_score:
