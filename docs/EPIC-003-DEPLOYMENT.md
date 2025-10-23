@@ -1,17 +1,39 @@
-# EPIC-003 Production Deployment Guide
+# Production Deployment Guide
 
-**Epic:** FCS Game Display for Schedule Completeness
+**Latest Epic:** EPIC-009 Prediction Accuracy Tracking & Display
+**Previous Epics:** EPIC-003 FCS Game Display, EPIC-006 Current Week Display
+**Deployment Date:** 2025-10-23
+**Version:** 3.0.0
+**Risk Level:** 🟢 Low (No database migration required for EPIC-009)
+
+---
+
+## Quick Overview - EPIC-009
+
+This deployment adds prediction accuracy tracking and display to the ranking system. Users can now see how well the system predicts game outcomes.
+
+**What's changing (EPIC-009):**
+- Backend API (3 new endpoints for prediction accuracy)
+- Frontend (prediction accuracy displays on rankings and team pages)
+- **NO DATABASE MIGRATION REQUIRED** (predictions table already exists)
+- **NO DATA RE-IMPORT REQUIRED**
+
+**Estimated deployment time:** 5-10 minutes (code deploy only)
+
+---
+
+## Previous Deployments
+
+<details>
+<summary><strong>EPIC-003: FCS Game Display</strong> (Click to expand)</summary>
+
 **Deployment Date:** 2025-10-19
 **Version:** 2.0.0
 **Risk Level:** 🟡 Medium (Database migration required)
 
----
+This deployment added FCS game visibility to team schedules while maintaining ranking integrity by excluding FCS games from ELO calculations.
 
-## Quick Overview
-
-This deployment adds FCS game visibility to team schedules while maintaining ranking integrity by excluding FCS games from ELO calculations.
-
-**What's changing:**
+**What changed:**
 - Database schema (2 new fields)
 - Backend API (3 files modified)
 - Frontend (5 files modified)
@@ -21,46 +43,30 @@ This deployment adds FCS game visibility to team schedules while maintaining ran
 
 **Estimated deployment time:** 30-45 minutes (includes migration + data import)
 
+</details>
+
 ---
 
-## Pre-Deployment Checklist
+## Pre-Deployment Checklist (EPIC-009)
 
-- [x] Code pushed to GitHub (commit: 183af90)
+- [ ] Code pushed to GitHub (all EPIC-009 commits)
 - [ ] SSH access to production VPS
-- [ ] Database backup created
-- [ ] CFBD API key configured on server
-- [ ] 45 minutes of focused time
-- [ ] All 289 tests passing locally ✅
+- [ ] Database backup created (optional for EPIC-009, but recommended)
+- [ ] 10 minutes of focused time
+- [ ] All tests passing locally ✅
+- [ ] Frontend tested locally (prediction accuracy displays correctly)
 
 ---
 
-## Deployment Steps
+## Deployment Steps (EPIC-009)
 
-### Step 1: Backup Production Database
-
-**CRITICAL:** Always backup before migrations!
+### Step 1: Pull Latest Code
 
 ```bash
 # SSH into production server
 ssh user@your-server.com
 
 # Navigate to application directory
-cd /var/www/cfb-rankings
-# Create backup
-sudo cp cfb_rankings.db cfb_rankings.db.backup-$(date +%Y%m%d-%H%M%S)
-
-# Verify backup exists
-ls -lh cfb_rankings.db.backup-*
-```
-
-**✅ Checkpoint:** Backup file created and size looks reasonable
-
----
-
-### Step 2: Pull Latest Code
-
-```bash
-# Still on production server
 cd /var/www/cfb-rankings
 
 # Stop the application service
@@ -69,55 +75,15 @@ sudo systemctl stop cfb-rankings
 # Pull latest code from main branch
 sudo git pull origin main
 
-# Verify correct commit
-git log -1 --oneline
-# Should show: 183af90 EPIC-003: Complete FCS Game Display Implementation
+# Verify correct commit (should show EPIC-009 commits)
+git log --oneline -5
 ```
 
-**✅ Checkpoint:** Latest code pulled, correct commit hash visible
+**✅ Checkpoint:** Latest code pulled, EPIC-009 commits visible
 
 ---
 
-### Step 3: Run Database Migration
-
-```bash
-# Activate virtual environment (if using one)
-source venv/bin/activate  # or your venv path
-
-# Run migration script
-python3 migrate_add_fcs_fields.py
-
-# Expected output:
-#   Starting migration...
-#     Adding teams.is_fcs column...
-#     Adding games.excluded_from_rankings column...
-#     Creating index on games.excluded_from_rankings...
-#
-#   Verifying migration...
-#     ✓ teams.is_fcs exists
-#     ✓ games.excluded_from_rankings exists
-#     ✓ Index idx_games_excluded_from_rankings exists
-#     ✓ All existing games have excluded_from_rankings=False
-#     ✓ All existing teams have is_fcs=False
-#
-#   Migration completed successfully!
-```
-
-**✅ Checkpoint:** Migration completed with all verification checks passing
-
-**🚨 Rollback Plan (if migration fails):**
-```bash
-# Restore from backup
-sudo cp cfb_rankings.db.backup-TIMESTAMP cfb_rankings.db
-
-# Restart service with old code
-sudo git reset --hard HEAD~1
-sudo systemctl start cfb-rankings
-```
-
----
-
-### Step 4: Restart Application Service
+### Step 2: Restart Application Service
 
 ```bash
 # Restart the service to load new code
@@ -141,128 +107,55 @@ sudo journalctl -u cfb-rankings -n 50 --no-pager
 
 ---
 
-### Step 5: Verify API Endpoints
+### Step 3: Verify EPIC-009 API Endpoints
 
 ```bash
-# Test basic API endpoint
-curl http://localhost:8000/api/stats
+# Test prediction accuracy endpoints
+curl http://localhost:8000/api/predictions/accuracy?season=2024 | python3 -m json.tool
 
-# Test team schedule endpoint (pick any team ID)
-curl http://localhost:8000/api/teams/82/schedule?season=2025 | python3 -m json.tool
+# Expected response:
+# {
+#   "season": 2024,
+#   "evaluated_predictions": X,
+#   "correct_predictions": Y,
+#   "accuracy_percentage": Z.Z
+# }
 
-# Look for new fields in response:
-#   "excluded_from_rankings": false/true
-#   "is_fcs": false/true
-#   "opponent_conference": "P5"/"G5"/"FCS"
+# Test team-specific accuracy (Ohio State example)
+curl http://localhost:8000/api/predictions/accuracy/team/82?season=2024 | python3 -m json.tool
+
+# Test stored predictions endpoint
+curl "http://localhost:8000/api/predictions/stored?season=2024&evaluated_only=true" | python3 -m json.tool
 ```
 
-**✅ Checkpoint:** API returning data with new fields
+**✅ Checkpoint:** All three EPIC-009 endpoints returning data
 
 ---
 
-### Step 6: Re-Import Game Data with FCS Games
-
-**IMPORTANT:** This step imports FCS games into the database.
-
-```bash
-# Ensure CFBD API key is set
-export CFBD_API_KEY='your-api-key-here'
-
-# Or verify it's in .env file
-cat .env | grep CFBD_API_KEY
-
-# Run import script
-echo "yes" | python3 import_real_data.py
-
-# This will:
-#   1. Reset the database (keep backup!)
-#   2. Import all FBS teams
-#   3. Import FBS vs FBS games (processed for rankings)
-#   4. Import FBS vs FCS games (excluded from rankings)
-#   5. Skip FCS vs FCS games
-#
-# Expected output:
-#   ✓ Imported 136 teams
-#   Week 1...
-#     Team A defeats Team B 35-21
-#     Team C vs FCS Opponent (FCS - not ranked)
-#   ...
-#   Final Summary:
-#     - XXX FBS games imported
-#     - YYY FCS games imported (not ranked)
-```
-
-**⏱️ This step takes 5-10 minutes** depending on API response times.
-
-**✅ Checkpoint:** Import completed, FCS games visible in output
-
----
-
-### Step 7: Verify Frontend Changes
-
-```bash
-# Test from local machine
-# Replace with your actual production URL
-
-# Main rankings page
-curl https://your-domain.com/frontend/index.html | grep "info-box"
-# Should find the FCS info box HTML
-
-# Team detail page (Ohio State as example)
-curl https://your-domain.com/frontend/team.html | grep "FCS"
-# Should find FCS badge styling and info box
-```
-
-**✅ Checkpoint:** Frontend files deployed correctly
-
----
-
-### Step 8: Manual UI Verification
+### Step 4: Verify Frontend Changes (EPIC-009)
 
 **Open your browser and test:**
 
 1. **Main Rankings Page** (`https://your-domain.com/frontend/`)
-   - [ ] Info box visible: "Team records and rankings reflect FBS opponents only..."
-   - [ ] Team records show "FBS" note (e.g., "5-0 FBS")
-   - [ ] Hover shows tooltip: "Record includes FBS opponents only"
+   - [ ] Prediction accuracy banner visible (if predictions exist)
+   - [ ] Banner shows overall accuracy percentage
+   - [ ] Banner shows "X correct out of Y predictions"
+   - [ ] Banner only appears if evaluated_predictions > 0
 
-2. **Team Detail Page** (pick a team with FCS games, e.g., Ohio State)
-   - [ ] Schedule shows ALL weeks (no gaps)
-   - [ ] FCS games have gray background
-   - [ ] FCS badge appears next to opponent name
-   - [ ] FCS badge tooltip: "FCS opponent - not included in rankings"
-   - [ ] Team record shows "FBS Only" note
-   - [ ] Info box above schedule explains FCS exclusion
+2. **Team Detail Page** (pick any team with predictions)
+   - [ ] Prediction accuracy stat card visible
+   - [ ] Shows team-specific accuracy percentage
+   - [ ] Shows "X/Y correct" format
+   - [ ] Color coded: green (≥70%), blue (≥50%), red (<50%)
 
-3. **Test Specific Examples:**
-   - Ohio State Week 2 vs Grambling (should be gray with FCS badge)
-   - Georgia Week 2 vs Austin Peay (should be gray with FCS badge)
-   - Any team's FBS games (should have normal styling)
+3. **Team Schedule Table:**
+   - [ ] "Prediction" column added to schedule
+   - [ ] Shows "W (65%)" or "L (35%)" format for each game
+   - [ ] Completed games: green background if correct, red if incorrect
+   - [ ] Future games: gray/italic styling
+   - [ ] Hover tooltip shows "Correct prediction" or "Incorrect prediction"
 
-**✅ Checkpoint:** All UI elements displaying correctly
-
----
-
-### Step 9: Verify Ranking Integrity
-
-**Critical verification that FCS games don't affect rankings:**
-
-```bash
-# Get Ohio State's record and ranking
-curl http://localhost:8000/api/teams/82 | python3 -m json.tool
-
-# Check:
-#   "wins": should reflect FBS games only (not include Grambling)
-#   "losses": should reflect FBS games only
-#   "elo_rating": should be calculated from FBS games only
-
-# Verify SOS calculation excludes FCS games
-curl http://localhost:8000/api/rankings/current?season=2025 | python3 -m json.tool | grep -A5 "Ohio State"
-
-# "sos": should be average of FBS opponents only (not include FCS)
-```
-
-**✅ Checkpoint:** Rankings unchanged, FCS games properly excluded
+**✅ Checkpoint:** All EPIC-009 UI elements displaying correctly
 
 ---
 
