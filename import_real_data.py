@@ -5,8 +5,13 @@ Fetches data from CollegeFootballData API and populates the database
 
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env file (if accessible)
+try:
+    load_dotenv()
+except (PermissionError, FileNotFoundError):
+    # .env file not accessible or doesn't exist
+    # Will fall back to system environment variables
+    pass
 
 from database import SessionLocal, reset_db
 from models import Team, Game, Season, ConferenceType
