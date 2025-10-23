@@ -24,7 +24,11 @@ def main():
         if predictions:
             print("\nSample predictions:")
             for pred in predictions[:5]:
-                print(f"  - Game {pred.game_id}: {pred.predicted_winner_id} (confidence: {pred.win_probability:.1%})")
+                # Handle both dict and object responses
+                if isinstance(pred, dict):
+                    print(f"  - Game {pred['game_id']}: Winner {pred['predicted_winner_id']} (confidence: {pred['win_probability']:.1%})")
+                else:
+                    print(f"  - Game {pred.game_id}: Winner {pred.predicted_winner_id} (confidence: {pred.win_probability:.1%})")
         else:
             print("\nℹ️  No upcoming games to predict")
             print("   Predictions will be generated when new games are imported")
