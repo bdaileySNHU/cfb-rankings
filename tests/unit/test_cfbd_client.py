@@ -278,18 +278,47 @@ class TestSeasonStartCalculation:
 class TestEdgeCases:
     """Tests for edge cases and error handling"""
 
-    def test_get_current_week_with_zero_points(self):
-        """Test week detection handles 0-0 games (completed with no score)"""
+    def test_get_current_week_excludes_future_games_with_zero_scores(self):
+        """Test week detection excludes 0-0 games (future game placeholders from EPIC-008)"""
         client = CFBDClient()
 
         mock_games = [
-            {'week': 5, 'home_points': 0, 'away_points': 0},  # Valid completed game
-            {'week': 6, 'home_points': None, 'away_points': None},  # Future game
+            {'week': 5, 'home_points': 28, 'away_points': 14},  # Completed game
+            {'week': 6, 'home_points': 0, 'away_points': 0},     # Future game (0-0 placeholder)
+            {'week': 7, 'home_points': None, 'away_points': None},  # Future game (None)
         ]
 
         with patch.object(client, 'get_games', return_value=mock_games):
             week = client.get_current_week(2025)
+            # Should return week 5, not week 6 (0-0 games are future games)
+            # College football games cannot end 0-0 due to overtime rules
             assert week == 5
+
+    def test_get_current_week_epic_008_scenario(self):
+        """Test exact EPIC-008 bug scenario: week 9 complete, week 10 has 0-0 future games"""
+        client = CFBDClient()
+
+        mock_games = [
+            # Weeks 1-9 have completed games
+            {'week': 1, 'home_points': 35, 'away_points': 28},
+            {'week': 2, 'home_points': 21, 'away_points': 14},
+            {'week': 3, 'home_points': 28, 'away_points': 24},
+            {'week': 4, 'home_points': 42, 'away_points': 17},
+            {'week': 5, 'home_points': 31, 'away_points': 28},
+            {'week': 6, 'home_points': 24, 'away_points': 21},
+            {'week': 7, 'home_points': 35, 'away_points': 14},
+            {'week': 8, 'home_points': 28, 'away_points': 27},
+            {'week': 9, 'home_points': 42, 'away_points': 38},
+            # Week 10 has future games with 0-0 placeholder scores
+            {'week': 10, 'home_points': 0, 'away_points': 0},
+            {'week': 10, 'home_points': 0, 'away_points': 0},
+            {'week': 10, 'home_points': 0, 'away_points': 0},
+        ]
+
+        with patch.object(client, 'get_games', return_value=mock_games):
+            week = client.get_current_week(2025)
+            # Should return week 9 (last completed week), NOT week 10
+            assert week == 9
 
     def test_get_current_week_with_mixed_data(self):
         """Test week detection with mixed completed and future games"""

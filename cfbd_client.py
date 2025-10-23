@@ -273,7 +273,10 @@ class CFBDClient:
                 home_points = game.get('home_points')
                 away_points = game.get('away_points')
 
-                if home_points is not None and away_points is not None:
+                # Exclude future games (0-0 placeholder scores from EPIC-008)
+                # College football games cannot end 0-0 due to overtime rules
+                if (home_points is not None and away_points is not None and
+                    not (home_points == 0 and away_points == 0)):
                     week = game.get('week', 0)
                     if week > max_week:
                         max_week = week
