@@ -428,8 +428,13 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                 print(f"    Found future game: {game_desc}")
 
             # Determine if FBS vs FBS, FBS vs FCS, or both FCS
-            home_is_fbs = home_team_name in team_objects
-            away_is_fbs = away_team_name in team_objects
+            # BUGFIX: Check is_fcs flag instead of just presence in team_objects
+            # (FCS teams get added to team_objects when we create them)
+            home_team_obj = team_objects.get(home_team_name)
+            away_team_obj = team_objects.get(away_team_name)
+
+            home_is_fbs = home_team_obj is not None and not home_team_obj.is_fcs
+            away_is_fbs = away_team_obj is not None and not away_team_obj.is_fcs
 
             # Case 1: Both FCS (skip entirely)
             if not home_is_fbs and not away_is_fbs:
@@ -443,13 +448,13 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
             is_fcs_game = not (home_is_fbs and away_is_fbs)
 
             # Get team objects (create FCS team if needed)
-            if home_is_fbs:
-                home_team = team_objects[home_team_name]
+            if home_team_obj and not home_team_obj.is_fcs:
+                home_team = home_team_obj
             else:
                 home_team = get_or_create_fcs_team(db, home_team_name, team_objects)
 
-            if away_is_fbs:
-                away_team = team_objects[away_team_name]
+            if away_team_obj and not away_team_obj.is_fcs:
+                away_team = away_team_obj
             else:
                 away_team = get_or_create_fcs_team(db, away_team_name, team_objects)
 
