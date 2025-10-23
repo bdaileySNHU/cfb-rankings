@@ -15,7 +15,7 @@ except (PermissionError, FileNotFoundError):
 
 from database import SessionLocal, reset_db
 from models import Team, Game, Season, ConferenceType
-from ranking_service import RankingService
+from ranking_service import RankingService, create_and_store_prediction
 from cfbd_client import CFBDClient
 from datetime import datetime
 import sys
@@ -388,6 +388,7 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
     total_imported = 0
     fcs_games_imported = 0  # NEW: Track FCS games separately
     future_games_imported = 0  # EPIC-008: Track future games
+    predictions_stored = 0  # EPIC-009: Track stored predictions
     total_updated = 0  # EPIC-008 Story 002: Track updated games
     total_skipped = 0
     skipped_fcs = 0
@@ -558,6 +559,12 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                 print(f"    {game_desc} (scheduled - not ranked)")
                 future_games_imported += 1
                 week_imported += 1
+
+                # EPIC-009: Store prediction for future game (FBS vs FBS only)
+                if not is_fcs_game:
+                    prediction = create_and_store_prediction(db, game)
+                    if prediction:
+                        predictions_stored += 1
             elif not is_fcs_game:
                 # Completed FBS vs FBS game - process for rankings
                 result = ranking_service.process_game(game)
@@ -596,6 +603,7 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
     print(f"Total FBS Games Imported: {total_imported}")
     print(f"Total FCS Games Imported: {fcs_games_imported}")
     print(f"Total Future Games Imported: {future_games_imported}")  # EPIC-008
+    print(f"Total Predictions Stored: {predictions_stored}")  # EPIC-009
     print(f"Total Games Updated: {total_updated}")  # EPIC-008 Story 002
     print(f"Total Games Skipped: {total_skipped}")
     if skipped_fcs > 0:
@@ -622,6 +630,7 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
         "imported": total_imported,
         "fcs_imported": fcs_games_imported,
         "future_imported": future_games_imported,  # EPIC-008
+        "predictions_stored": predictions_stored,  # EPIC-009
         "games_updated": total_updated,  # EPIC-008 Story 002
         "skipped": total_skipped,
         "skipped_fcs": skipped_fcs,
