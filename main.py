@@ -15,8 +15,13 @@ load_dotenv()
 
 import schemas
 from database import get_db, init_db
-from models import Team, Game, RankingHistory, Season, ConferenceType, APIUsage, UpdateTask
-from ranking_service import RankingService, generate_predictions
+from models import Team, Game, RankingHistory, Season, ConferenceType, APIUsage, UpdateTask, Prediction
+from ranking_service import (
+    RankingService,
+    generate_predictions,
+    get_overall_prediction_accuracy,
+    get_team_prediction_accuracy
+)
 
 # Configure logging
 logging.basicConfig(
@@ -335,6 +340,140 @@ async def get_predictions(
     except Exception as e:
         logger.error(f"Error generating predictions: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating predictions: {str(e)}")
+
+
+@app.get("/api/predictions/accuracy", response_model=schemas.PredictionAccuracyStats, tags=["Predictions"])
+async def get_prediction_accuracy(
+    season: Optional[int] = Query(None, description="Filter by season year"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get overall prediction accuracy statistics.
+
+    Part of EPIC-009: Prediction Accuracy Tracking.
+    Returns comprehensive accuracy statistics including total predictions,
+    evaluated predictions, and accuracy percentage.
+
+    **Query Parameters:**
+    - **season**: Optional season filter (defaults to all seasons)
+
+    **Returns:**
+    - Overall accuracy statistics with breakdown by confidence level
+    """
+    try:
+        stats = get_overall_prediction_accuracy(db, season=season)
+        return stats
+    except Exception as e:
+        logger.error(f"Error retrieving prediction accuracy: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving prediction accuracy: {str(e)}")
+
+
+@app.get("/api/predictions/accuracy/team/{team_id}", response_model=schemas.TeamPredictionAccuracy, tags=["Predictions"])
+async def get_team_prediction_accuracy_endpoint(
+    team_id: int,
+    season: Optional[int] = Query(None, description="Filter by season year"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get prediction accuracy for a specific team.
+
+    Part of EPIC-009: Prediction Accuracy Tracking.
+    Returns team-specific accuracy statistics including accuracy when
+    predicted to win (as favorite) vs predicted to lose (as underdog).
+
+    **Path Parameters:**
+    - **team_id**: Team ID to get accuracy for
+
+    **Query Parameters:**
+    - **season**: Optional season filter (defaults to all seasons)
+
+    **Returns:**
+    - Team-specific accuracy statistics
+    """
+    try:
+        stats = get_team_prediction_accuracy(db, team_id=team_id, season=season)
+        return stats
+    except Exception as e:
+        logger.error(f"Error retrieving team prediction accuracy: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving team prediction accuracy: {str(e)}")
+
+
+@app.get("/api/predictions/stored", response_model=List[schemas.StoredPrediction], tags=["Predictions"])
+async def get_stored_predictions(
+    season: Optional[int] = Query(None, description="Filter by season year"),
+    week: Optional[int] = Query(None, ge=0, le=15, description="Filter by week"),
+    team_id: Optional[int] = Query(None, description="Filter by team ID"),
+    evaluated_only: bool = Query(False, description="Only return evaluated predictions"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get stored predictions with evaluation results.
+
+    Part of EPIC-009: Prediction Accuracy Tracking.
+    Returns previously stored predictions with their was_correct evaluation.
+
+    **Query Parameters:**
+    - **season**: Filter by season year
+    - **week**: Filter by week number
+    - **team_id**: Filter by team ID (home or away)
+    - **evaluated_only**: Only return predictions that have been evaluated
+
+    **Returns:**
+    - List of stored predictions with evaluation status
+    """
+    try:
+        from sqlalchemy import or_
+
+        # Build query
+        query = db.query(Prediction).join(Game)
+
+        # Apply filters
+        if season:
+            query = query.filter(Game.season == season)
+        if week is not None:
+            query = query.filter(Game.week == week)
+        if team_id:
+            query = query.filter(
+                or_(
+                    Game.home_team_id == team_id,
+                    Game.away_team_id == team_id
+                )
+            )
+        if evaluated_only:
+            query = query.filter(Prediction.was_correct.isnot(None))
+
+        # Execute query
+        predictions = query.order_by(Game.week.desc(), Game.id.desc()).limit(100).all()
+
+        # Enrich with game details
+        result = []
+        for pred in predictions:
+            game = pred.game
+            result.append({
+                "id": pred.id,
+                "game_id": pred.game_id,
+                "predicted_winner_id": pred.predicted_winner_id,
+                "predicted_winner_name": pred.predicted_winner.name if pred.predicted_winner else None,
+                "predicted_home_score": pred.predicted_home_score,
+                "predicted_away_score": pred.predicted_away_score,
+                "win_probability": pred.win_probability,
+                "home_elo_at_prediction": pred.home_elo_at_prediction,
+                "away_elo_at_prediction": pred.away_elo_at_prediction,
+                "was_correct": pred.was_correct,
+                "created_at": pred.created_at,
+                "home_team_name": game.home_team.name if game.home_team else None,
+                "away_team_name": game.away_team.name if game.away_team else None,
+                "actual_home_score": game.home_score if game.is_processed else None,
+                "actual_away_score": game.away_score if game.is_processed else None,
+                "week": game.week,
+                "season": game.season
+            })
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error retrieving stored predictions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving stored predictions: {str(e)}")
 
 
 # ============================================================================

@@ -335,3 +335,58 @@ class GamePrediction(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ============================================================================
+# Prediction Accuracy Schemas (EPIC-009)
+# ============================================================================
+
+class PredictionAccuracyStats(BaseModel):
+    """Overall prediction accuracy statistics"""
+    total_predictions: int = Field(..., description="Total predictions made")
+    evaluated_predictions: int = Field(..., description="Predictions that have been evaluated (games completed)")
+    correct_predictions: int = Field(..., description="Number of correct predictions")
+    accuracy_percentage: float = Field(..., description="Accuracy percentage (0-100)", ge=0, le=100)
+
+    # Breakdown by confidence level
+    high_confidence_accuracy: Optional[float] = Field(None, description="Accuracy for high confidence predictions")
+    medium_confidence_accuracy: Optional[float] = Field(None, description="Accuracy for medium confidence predictions")
+    low_confidence_accuracy: Optional[float] = Field(None, description="Accuracy for low confidence predictions")
+
+
+class TeamPredictionAccuracy(BaseModel):
+    """Prediction accuracy for a specific team"""
+    team_id: int
+    team_name: str
+    total_predictions: int = Field(..., description="Total predictions involving this team")
+    evaluated_predictions: int = Field(..., description="Evaluated predictions for this team")
+    correct_predictions: int = Field(..., description="Correct predictions for this team")
+    accuracy_percentage: float = Field(..., description="Accuracy percentage", ge=0, le=100)
+    as_favorite_accuracy: Optional[float] = Field(None, description="Accuracy when predicted to win")
+    as_underdog_accuracy: Optional[float] = Field(None, description="Accuracy when predicted to lose")
+
+
+class StoredPrediction(BaseModel):
+    """Schema for a stored prediction with evaluation status"""
+    id: int
+    game_id: int
+    predicted_winner_id: int
+    predicted_winner_name: Optional[str] = None
+    predicted_home_score: int
+    predicted_away_score: int
+    win_probability: float = Field(..., ge=0, le=1.0)
+    home_elo_at_prediction: float
+    away_elo_at_prediction: float
+    was_correct: Optional[bool] = None
+    created_at: datetime
+
+    # Game details (optional, for enriched responses)
+    home_team_name: Optional[str] = None
+    away_team_name: Optional[str] = None
+    actual_home_score: Optional[int] = None
+    actual_away_score: Optional[int] = None
+    week: Optional[int] = None
+    season: Optional[int] = None
+
+    class Config:
+        from_attributes = True

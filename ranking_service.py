@@ -251,6 +251,9 @@ class RankingService:
         # Mark game as processed
         game.is_processed = True
 
+        # EPIC-009: Evaluate prediction accuracy if prediction exists
+        evaluate_prediction_accuracy(self.db, game)
+
         # Commit changes
         self.db.commit()
 
@@ -677,3 +680,170 @@ def create_and_store_prediction(db: Session, game: Game) -> Optional[Prediction]
         db.rollback()
         print(f"Error storing prediction for game {game.id}: {e}")
         return None
+
+
+def evaluate_prediction_accuracy(db: Session, game: Game) -> Optional[Prediction]:
+    """
+    Evaluate prediction accuracy for a completed game.
+
+    Part of EPIC-009: Prediction Accuracy Tracking.
+    This function checks if a prediction exists for the completed game
+    and updates the was_correct flag based on actual game outcome.
+
+    Args:
+        db: Database session
+        game: Completed game object
+
+    Returns:
+        Updated Prediction object if exists, None otherwise
+
+    Example:
+        >>> evaluate_prediction_accuracy(db, completed_game)
+        >>> prediction.was_correct  # True or False
+    """
+    # Check if prediction exists for this game
+    prediction = db.query(Prediction).filter(Prediction.game_id == game.id).first()
+
+    if not prediction:
+        return None  # No prediction to evaluate
+
+    # Validate game is completed
+    if not game.is_processed:
+        return None  # Game not yet complete
+
+    # Determine actual winner
+    actual_winner_id = game.winner_id
+
+    # Compare predicted winner to actual winner
+    prediction.was_correct = (prediction.predicted_winner_id == actual_winner_id)
+
+    # No need to commit here - will be committed by caller (process_game)
+    return prediction
+
+
+def get_overall_prediction_accuracy(db: Session, season: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Get overall prediction accuracy statistics.
+
+    Part of EPIC-009: Prediction Accuracy Tracking.
+
+    Args:
+        db: Database session
+        season: Optional season filter
+
+    Returns:
+        Dictionary with accuracy statistics
+
+    Example:
+        >>> stats = get_overall_prediction_accuracy(db, season=2024)
+        >>> print(f"Accuracy: {stats['accuracy_percentage']:.1f}%")
+    """
+    from sqlalchemy import func
+
+    # Build base query
+    query = db.query(Prediction)
+
+    # Filter by season if provided
+    if season:
+        query = query.join(Game).filter(Game.season == season)
+
+    # Total predictions
+    total_predictions = query.count()
+
+    # Evaluated predictions (where was_correct is not None)
+    evaluated_predictions = query.filter(Prediction.was_correct.isnot(None)).count()
+
+    # Correct predictions
+    correct_predictions = query.filter(Prediction.was_correct == True).count()
+
+    # Calculate accuracy
+    accuracy_percentage = (correct_predictions / evaluated_predictions * 100) if evaluated_predictions > 0 else 0.0
+
+    return {
+        "total_predictions": total_predictions,
+        "evaluated_predictions": evaluated_predictions,
+        "correct_predictions": correct_predictions,
+        "accuracy_percentage": round(accuracy_percentage, 2),
+        "high_confidence_accuracy": None,  # TODO: Implement confidence-based accuracy
+        "medium_confidence_accuracy": None,
+        "low_confidence_accuracy": None
+    }
+
+
+def get_team_prediction_accuracy(db: Session, team_id: int, season: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Get prediction accuracy for a specific team.
+
+    Part of EPIC-009: Prediction Accuracy Tracking.
+
+    Args:
+        db: Database session
+        team_id: Team ID
+        season: Optional season filter
+
+    Returns:
+        Dictionary with team-specific accuracy statistics
+
+    Example:
+        >>> stats = get_team_prediction_accuracy(db, team_id=15, season=2024)
+        >>> print(f"Team accuracy: {stats['accuracy_percentage']:.1f}%")
+    """
+    from sqlalchemy import or_
+
+    # Get team
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if not team:
+        return {
+            "team_id": team_id,
+            "team_name": "Unknown",
+            "total_predictions": 0,
+            "evaluated_predictions": 0,
+            "correct_predictions": 0,
+            "accuracy_percentage": 0.0,
+            "as_favorite_accuracy": None,
+            "as_underdog_accuracy": None
+        }
+
+    # Build query for predictions involving this team
+    query = db.query(Prediction).join(Game).filter(
+        or_(
+            Game.home_team_id == team_id,
+            Game.away_team_id == team_id
+        )
+    )
+
+    # Filter by season if provided
+    if season:
+        query = query.filter(Game.season == season)
+
+    # Get all predictions
+    predictions = query.all()
+
+    total_predictions = len(predictions)
+    evaluated_predictions = sum(1 for p in predictions if p.was_correct is not None)
+    correct_predictions = sum(1 for p in predictions if p.was_correct is True)
+
+    # Calculate accuracy
+    accuracy_percentage = (correct_predictions / evaluated_predictions * 100) if evaluated_predictions > 0 else 0.0
+
+    # Calculate as favorite/underdog accuracy
+    as_favorite = [p for p in predictions if p.predicted_winner_id == team_id and p.was_correct is not None]
+    as_underdog = [p for p in predictions if p.predicted_winner_id != team_id and p.was_correct is not None]
+
+    as_favorite_correct = sum(1 for p in as_favorite if p.was_correct is True)
+    # For underdogs: was_correct = True means prediction was correct (team lost as predicted)
+    as_underdog_correct = sum(1 for p in as_underdog if p.was_correct is True)
+
+    as_favorite_accuracy = (as_favorite_correct / len(as_favorite) * 100) if as_favorite else None
+    as_underdog_accuracy = (as_underdog_correct / len(as_underdog) * 100) if as_underdog else None
+
+    return {
+        "team_id": team_id,
+        "team_name": team.name,
+        "total_predictions": total_predictions,
+        "evaluated_predictions": evaluated_predictions,
+        "correct_predictions": correct_predictions,
+        "accuracy_percentage": round(accuracy_percentage, 2),
+        "as_favorite_accuracy": round(as_favorite_accuracy, 2) if as_favorite_accuracy is not None else None,
+        "as_underdog_accuracy": round(as_underdog_accuracy, 2) if as_underdog_accuracy is not None else None
+    }
