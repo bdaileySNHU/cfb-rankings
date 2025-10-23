@@ -476,6 +476,56 @@ async def get_stored_predictions(
         raise HTTPException(status_code=500, detail=f"Error retrieving stored predictions: {str(e)}")
 
 
+@app.get("/api/predictions/comparison", response_model=schemas.ComparisonStats, tags=["Predictions"])
+async def get_prediction_comparison(
+    season: Optional[int] = Query(None, description="Season year (defaults to active season)"),
+    db: Session = Depends(get_db)
+):
+    """
+    Compare ELO prediction accuracy vs AP Poll prediction accuracy.
+
+    Part of EPIC-010: AP Poll Prediction Comparison.
+
+    Compares how well the ELO system predicts game outcomes versus the
+    AP Poll "predictions" (where higher-ranked team is predicted to win).
+
+    **Query Parameters:**
+    - **season**: Season year to compare (defaults to active season)
+
+    **Returns:**
+    - Comprehensive comparison statistics including:
+        - Overall accuracy for each system
+        - Breakdown by week
+        - Games where systems disagreed
+        - Detailed accuracy metrics
+
+    **Example:**
+    ```
+    GET /api/predictions/comparison?season=2024
+    ```
+    """
+    try:
+        from ap_poll_service import calculate_comparison_stats
+
+        # Get active season if not specified
+        if not season:
+            active_season = db.query(Season).filter(Season.is_active == True).first()
+            if not active_season:
+                raise HTTPException(status_code=404, detail="No active season found")
+            season = active_season.year
+
+        # Calculate comparison statistics
+        comparison_stats = calculate_comparison_stats(db, season)
+
+        return comparison_stats
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error calculating prediction comparison: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error calculating prediction comparison: {str(e)}")
+
+
 # ============================================================================
 # RANKING ENDPOINTS
 # ============================================================================

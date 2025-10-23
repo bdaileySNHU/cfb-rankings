@@ -5,6 +5,10 @@
   --secondary-color: #2c5282;
   --accent-color: #d69e2e;
   --success-color: #38a169;
+  --success-bg: #f0fdf4;
+  --warning-color: #d69e2e;
+  --warning-bg: #fffbeb;
+  --error-color: #e53e3e;
   --danger-color: #e53e3e;
   --text-primary: #1a202c;
   --text-secondary: #4a5568;

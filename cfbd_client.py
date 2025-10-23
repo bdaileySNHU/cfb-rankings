@@ -456,6 +456,79 @@ class CFBDClient:
         """
         return self._get('/player/portal', params={'year': year})
 
+    def get_ap_poll(self, year: int, week: Optional[int] = None) -> List[Dict]:
+        """
+        Get AP Poll rankings for a specific week
+
+        Part of EPIC-010: AP Poll Prediction Comparison
+
+        Args:
+            year: Season year
+            week: Optional week number (if omitted, gets all weeks for the season)
+
+        Returns:
+            List of AP Poll ranking dictionaries, each containing:
+            - season: int
+            - seasonType: str (regular, postseason)
+            - week: int
+            - poll: str ("AP Top 25")
+            - rank: int
+            - school: str (team name)
+            - conference: str
+            - firstPlaceVotes: int
+            - points: int
+
+        Example:
+            >>> client.get_ap_poll(2024, 5)
+            [
+                {
+                    "season": 2024,
+                    "week": 5,
+                    "poll": "AP Top 25",
+                    "rank": 1,
+                    "school": "Georgia",
+                    "conference": "SEC",
+                    "firstPlaceVotes": 62,
+                    "points": 1550
+                },
+                ...
+            ]
+        """
+        params = {
+            'year': year,
+            'seasonType': 'regular'
+        }
+        if week:
+            params['week'] = week
+
+        rankings = self._get('/rankings', params=params)
+
+        # Filter to only AP Poll rankings
+        # CFBD API returns multiple polls (AP, Coaches, etc.)
+        # We only want AP Top 25
+        if not rankings:
+            return []
+
+        ap_rankings = []
+        for poll_week in rankings:
+            for poll in poll_week.get('polls', []):
+                if poll.get('poll') == 'AP Top 25':
+                    # Extract rankings with metadata
+                    for team_ranking in poll.get('ranks', []):
+                        ap_rankings.append({
+                            'season': poll_week.get('season'),
+                            'seasonType': poll_week.get('seasonType'),
+                            'week': poll_week.get('week'),
+                            'poll': poll.get('poll'),
+                            'rank': team_ranking.get('rank'),
+                            'school': team_ranking.get('school'),
+                            'conference': team_ranking.get('conference'),
+                            'firstPlaceVotes': team_ranking.get('firstPlaceVotes', 0),
+                            'points': team_ranking.get('points', 0)
+                        })
+
+        return ap_rankings
+
 
 def test_api():
     """Test CFBD API connection"""

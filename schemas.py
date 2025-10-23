@@ -390,3 +390,46 @@ class StoredPrediction(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# EPIC-010: AP Poll Comparison Schemas
+
+class DisagreementDetail(BaseModel):
+    """Schema for games where ELO and AP Poll disagreed"""
+    game_id: int
+    week: int
+    matchup: str = Field(..., description="Game matchup (Away @ Home)")
+    elo_predicted: str = Field(..., description="Team ELO predicted to win")
+    ap_predicted: str = Field(..., description="Team AP Poll predicted to win")
+    actual_winner: str = Field(..., description="Actual game winner")
+    elo_correct: bool
+    ap_correct: bool
+
+
+class WeeklyComparisonStats(BaseModel):
+    """Schema for weekly comparison statistics"""
+    week: int
+    elo_accuracy: float = Field(..., ge=0, le=1.0)
+    ap_accuracy: float = Field(..., ge=0, le=1.0)
+    games: int = Field(..., ge=0)
+
+
+class ComparisonStats(BaseModel):
+    """
+    Schema for ELO vs AP Poll comparison statistics
+
+    Part of EPIC-010: AP Poll Prediction Comparison
+    """
+    season: int
+    elo_accuracy: float = Field(..., description="ELO prediction accuracy (0-1)", ge=0, le=1.0)
+    ap_accuracy: float = Field(..., description="AP Poll prediction accuracy (0-1)", ge=0, le=1.0)
+    elo_advantage: float = Field(..., description="ELO advantage over AP (can be negative)")
+    total_games_compared: int = Field(..., description="Total games with both ELO and AP predictions", ge=0)
+    elo_correct: int = Field(..., description="Games ELO predicted correctly", ge=0)
+    ap_correct: int = Field(..., description="Games AP predicted correctly", ge=0)
+    both_correct: int = Field(..., description="Games both systems predicted correctly", ge=0)
+    elo_only_correct: int = Field(..., description="Games only ELO predicted correctly", ge=0)
+    ap_only_correct: int = Field(..., description="Games only AP predicted correctly", ge=0)
+    both_wrong: int = Field(..., description="Games both systems predicted incorrectly", ge=0)
+    by_week: List[WeeklyComparisonStats] = Field(default_factory=list, description="Weekly breakdown")
+    disagreements: List[DisagreementDetail] = Field(default_factory=list, description="Games where systems disagreed")

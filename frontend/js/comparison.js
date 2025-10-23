@@ -1,283 +1,253 @@
-// Comparison Page Logic
+/**
+ * Prediction Accuracy Comparison Page
+ * EPIC-010: AP Poll Prediction Comparison
+ */
 
-// AP Poll Week 6, 2025 (Released September 28, 2025)
-const AP_POLL = {
-  'Ohio State': 1,
-  'Oregon': 2,
-  'Miami': 3,
-  'Ole Miss': 4,
-  'Oklahoma': 5,
-  'Texas A&M': 6,
-  'Penn State': 7,
-  'Indiana': 8,
-  'LSU': 9,
-  'Alabama': 10,
-  'Texas Tech': 11,
-  'Georgia': 12,
-  'Clemson': 13,
-  'Iowa State': 14,
-  'BYU': 15,
-  'Vanderbilt': 16,
-  'Kansas': 17,
-  'Florida State': 18,
-  'South Carolina': 19,
-  'Michigan': 20,
-  'Notre Dame': 21,
-  'Illinois': 22,
-  'Kansas State': 23,
-  'Virginia': 24,
-  'Arizona State': 25
-};
+let comparisonChart = null;
 
-let eloRankings = [];
-let allGames = [];
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadComparisonData();
+// Initialize page
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await loadComparisonData();
+  } catch (error) {
+    console.error('Error loading comparison page:', error);
+    showError('Failed to load comparison data. Please try again later.');
+  }
 });
 
+/**
+ * Load and display all comparison data
+ */
 async function loadComparisonData() {
   const loading = document.getElementById('loading');
-  const container = document.getElementById('comparison-container');
+  const content = document.getElementById('comparison-content');
 
   try {
-    // Fetch active season from API
+    // Get active season
     const activeSeason = await api.getActiveSeason();
 
-    // Load ELO rankings and games
-    const [rankingsData, gamesData] = await Promise.all([
-      api.getRankings(50),
-      api.getGames({ season: activeSeason, limit: 300 })
-    ]);
+    // Fetch comparison data
+    const comparison = await api.getPredictionComparison(activeSeason);
 
-    eloRankings = rankingsData.rankings;
-    allGames = gamesData;
+    // Hide loading, show content
+    loading.classList.add('hidden');
+    content.classList.remove('hidden');
 
     // Display all sections
-    displayComparison();
-    displayDisagreements();
-    displayUniquePicks();
-    displayUpsets();
-    calculatePredictionAccuracy();
+    displayHeroStats(comparison);
+    displayBreakdownStats(comparison);
+    displayAccuracyChart(comparison);
+    displayDisagreements(comparison);
 
-    loading.classList.add('hidden');
-    container.classList.remove('hidden');
-  } catch (err) {
-    console.error('Error loading comparison:', err);
-  }
-}
-
-function displayComparison() {
-  const tbody = document.getElementById('comparison-tbody');
-  tbody.innerHTML = '';
-
-  // Create ELO lookup
-  const eloLookup = {};
-  eloRankings.forEach(r => {
-    eloLookup[r.team_name] = r;
-  });
-
-  // Compare with AP Poll
-  const comparisons = [];
-  let exactMatches = 0;
-  let withinFive = 0;
-  let differences = [];
-
-  for (const [team, apRank] of Object.entries(AP_POLL)) {
-    const eloData = eloLookup[team];
-    if (eloData) {
-      const diff = eloData.rank - apRank;
-      differences.push(Math.abs(diff));
-
-      if (diff === 0) exactMatches++;
-      if (Math.abs(diff) <= 5) withinFive++;
-
-      comparisons.push({
-        team,
-        eloRank: eloData.rank,
-        apRank,
-        diff,
-        eloRating: eloData.elo_rating,
-        wins: eloData.wins,
-        losses: eloData.losses,
-        sos: eloData.sos
-      });
-    }
-  }
-
-  // Sort by AP rank
-  comparisons.sort((a, b) => a.apRank - b.apRank);
-
-  // Display comparisons
-  comparisons.forEach(c => {
-    const row = document.createElement('tr');
-
-    // Team name
-    const teamCell = document.createElement('td');
-    teamCell.innerHTML = `<span class="team-name">${c.team}</span>`;
-    row.appendChild(teamCell);
-
-    // ELO Rank
-    const eloRankCell = document.createElement('td');
-    eloRankCell.textContent = `#${c.eloRank}`;
-    eloRankCell.style.fontWeight = '600';
-    row.appendChild(eloRankCell);
-
-    // AP Rank
-    const apRankCell = document.createElement('td');
-    apRankCell.textContent = `#${c.apRank}`;
-    apRankCell.style.color = 'var(--text-secondary)';
-    row.appendChild(apRankCell);
-
-    // Difference
-    const diffCell = document.createElement('td');
-    if (c.diff === 0) {
-      diffCell.innerHTML = '<span style="color: var(--success-color); font-weight: 600;">✓ Exact</span>';
-    } else {
-      const arrow = c.diff > 0 ? '↓' : '↑';
-      const color = Math.abs(c.diff) <= 5 ? 'var(--accent-color)' : 'var(--danger-color)';
-      diffCell.innerHTML = `<span style="color: ${color}; font-weight: 600;">${c.diff > 0 ? '+' : ''}${c.diff} ${arrow}</span>`;
-    }
-    row.appendChild(diffCell);
-
-    // ELO Rating
-    const ratingCell = document.createElement('td');
-    ratingCell.textContent = c.eloRating.toFixed(1);
-    ratingCell.style.fontFamily = 'monospace';
-    row.appendChild(ratingCell);
-
-    // Record
-    const recordCell = document.createElement('td');
-    recordCell.innerHTML = `<span class="record ${c.losses === 0 ? 'undefeated' : ''}">${c.wins}-${c.losses}</span>`;
-    row.appendChild(recordCell);
-
-    // SOS
-    const sosCell = document.createElement('td');
-    sosCell.textContent = c.sos.toFixed(1);
-    sosCell.style.fontFamily = 'monospace';
-    row.appendChild(sosCell);
-
-    tbody.appendChild(row);
-  });
-
-  // Update stats
-  const avgDiff = differences.length > 0 ? (differences.reduce((a, b) => a + b, 0) / differences.length) : 0;
-  document.getElementById('exact-matches').textContent = exactMatches;
-  document.getElementById('within-five').textContent = withinFive;
-  document.getElementById('avg-diff').textContent = avgDiff.toFixed(1);
-}
-
-function displayDisagreements() {
-  const tbody = document.getElementById('disagreements-tbody');
-  tbody.innerHTML = '';
-
-  const eloLookup = {};
-  eloRankings.forEach(r => {
-    eloLookup[r.team_name] = r;
-  });
-
-  const disagreements = [];
-  for (const [team, apRank] of Object.entries(AP_POLL)) {
-    const eloData = eloLookup[team];
-    if (eloData) {
-      const diff = Math.abs(eloData.rank - apRank);
-      disagreements.push({
-        team,
-        eloRank: eloData.rank,
-        apRank,
-        diff,
-        direction: eloData.rank > apRank ? 'underrated' : 'overrated'
-      });
-    }
-  }
-
-  disagreements.sort((a, b) => b.diff - a.diff);
-
-  disagreements.slice(0, 10).forEach(d => {
-    const row = document.createElement('tr');
-
-    row.innerHTML = `
-      <td><span class="team-name">${d.team}</span></td>
-      <td style="font-weight: 600;">#${d.eloRank}</td>
-      <td style="color: var(--text-secondary);">#${d.apRank}</td>
-      <td style="font-weight: 600; color: var(--danger-color);">${d.diff}</td>
-      <td style="color: var(--text-secondary);">
-        ${d.direction === 'underrated'
-          ? '<span style="color: var(--danger-color);">ELO ranks lower - weaker schedule or worse performance</span>'
-          : '<span style="color: var(--success-color);">ELO ranks higher - strong schedule or quality wins</span>'}
-      </td>
+  } catch (error) {
+    console.error('Error in loadComparisonData:', error);
+    loading.innerHTML = `
+      <div style="text-align: center; color: var(--error-color); padding: 2rem;">
+        <p style="font-size: 1.2rem; margin-bottom: 1rem;">⚠️ Error Loading Data</p>
+        <p style="color: var(--text-secondary);">${error.message}</p>
+        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+          This feature requires AP Poll data to be imported. Data will be available once games are imported with AP rankings.
+        </p>
+      </div>
     `;
+  }
+}
 
-    tbody.appendChild(row);
+/**
+ * Display hero stats (overall accuracy)
+ */
+function displayHeroStats(comparison) {
+  // ELO Accuracy
+  const eloAccuracy = (comparison.elo_accuracy * 100).toFixed(1);
+  document.getElementById('elo-accuracy-pct').textContent = `${eloAccuracy}%`;
+  document.getElementById('elo-correct-count').textContent =
+    `${comparison.elo_correct} of ${comparison.total_games_compared} correct`;
+
+  // AP Accuracy
+  const apAccuracy = (comparison.ap_accuracy * 100).toFixed(1);
+  document.getElementById('ap-accuracy-pct').textContent = `${apAccuracy}%`;
+  document.getElementById('ap-correct-count').textContent =
+    `${comparison.ap_correct} of ${comparison.total_games_compared} correct`;
+
+  // ELO Advantage
+  const advantage = (comparison.elo_advantage * 100).toFixed(1);
+  const advantageSign = advantage >= 0 ? '+' : '';
+  const advantageColor = advantage >= 0 ? '#10b981' : '#ef4444';
+
+  const advantageEl = document.getElementById('elo-advantage');
+  advantageEl.textContent = `${advantageSign}${advantage}%`;
+  advantageEl.style.color = advantageColor;
+
+  document.getElementById('games-compared').textContent =
+    `${comparison.total_games_compared} games compared`;
+}
+
+/**
+ * Display breakdown stats
+ */
+function displayBreakdownStats(comparison) {
+  document.getElementById('both-correct').textContent = comparison.both_correct;
+  document.getElementById('elo-only-correct').textContent = comparison.elo_only_correct;
+  document.getElementById('ap-only-correct').textContent = comparison.ap_only_correct;
+  document.getElementById('both-wrong').textContent = comparison.both_wrong;
+}
+
+/**
+ * Display accuracy over time chart
+ */
+function displayAccuracyChart(comparison) {
+  const ctx = document.getElementById('accuracy-chart');
+
+  // Destroy existing chart if present
+  if (comparisonChart) {
+    comparisonChart.destroy();
+  }
+
+  // Prepare data
+  const weeks = comparison.by_week.map(w => `Week ${w.week}`);
+  const eloData = comparison.by_week.map(w => (w.elo_accuracy * 100).toFixed(1));
+  const apData = comparison.by_week.map(w => (w.ap_accuracy * 100).toFixed(1));
+
+  // Create chart
+  comparisonChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: weeks,
+      datasets: [
+        {
+          label: 'ELO System',
+          data: eloData,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 3,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        },
+        {
+          label: 'AP Poll',
+          data: apData,
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 3,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            font: {
+              size: 14
+            },
+            padding: 20
+          }
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label: function(context) {
+              return `${context.dataset.label}: ${context.parsed.y}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: {
+            callback: function(value) {
+              return value + '%';
+            }
+          },
+          title: {
+            display: true,
+            text: 'Prediction Accuracy (%)',
+            font: {
+              size: 14
+            }
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Week',
+            font: {
+              size: 14
+            }
+          }
+        }
+      },
+      interaction: {
+        mode: 'nearest',
+        axis: 'x',
+        intersect: false
+      }
+    }
   });
 }
 
-function displayUniquePicks() {
-  const tbody = document.getElementById('unique-tbody');
-  tbody.innerHTML = '';
+/**
+ * Display disagreement games table
+ */
+function displayDisagreements(comparison) {
+  const tbody = document.getElementById('disagreements-tbody');
+  const noDisagreements = document.getElementById('no-disagreements');
+  const container = document.getElementById('disagreements-container');
 
-  const apTeams = new Set(Object.keys(AP_POLL));
-  const uniquePicks = eloRankings.filter(r => r.rank <= 25 && !apTeams.has(r.team_name));
-
-  if (uniquePicks.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">No unique picks - ELO top 25 matches AP Poll teams</td></tr>';
+  if (comparison.disagreements.length === 0) {
+    noDisagreements.classList.remove('hidden');
+    container.classList.add('hidden');
     return;
   }
 
-  uniquePicks.forEach(r => {
-    const row = document.createElement('tr');
+  noDisagreements.classList.add('hidden');
+  container.classList.remove('hidden');
 
-    const reason = r.losses === 0
-      ? '✓ Undefeated'
-      : r.sos > 1550
-      ? '💪 Tough schedule (High SOS)'
-      : r.elo_rating > 1650
-      ? '📈 Strong performance'
-      : '🎯 Quality wins';
+  tbody.innerHTML = comparison.disagreements.map(game => {
+    // Determine result styling
+    let resultBadge;
+    if (game.elo_correct && !game.ap_correct) {
+      resultBadge = '<span class="prediction-correct">ELO ✓</span>';
+    } else if (!game.elo_correct && game.ap_correct) {
+      resultBadge = '<span class="prediction-incorrect">AP ✓</span>';
+    } else {
+      resultBadge = '<span style="color: var(--text-secondary);">Both Wrong</span>';
+    }
 
-    row.innerHTML = `
-      <td style="font-weight: 600; color: var(--primary-color);">#${r.rank}</td>
-      <td><a href="team.html?id=${r.team_id}" class="team-name" style="text-decoration: none; color: var(--primary-color);">${r.team_name}</a></td>
-      <td><span class="record ${r.losses === 0 ? 'undefeated' : ''}">${r.wins}-${r.losses}</span></td>
-      <td style="font-family: monospace;">${r.elo_rating.toFixed(1)}</td>
-      <td style="font-family: monospace;">${r.sos.toFixed(1)}</td>
-      <td style="color: var(--text-secondary);">${reason}</td>
+    return `
+      <tr>
+        <td>${game.week}</td>
+        <td><strong>${game.matchup}</strong></td>
+        <td>${game.elo_predicted}</td>
+        <td>${game.ap_predicted}</td>
+        <td><strong>${game.actual_winner}</strong></td>
+        <td>${resultBadge}</td>
+      </tr>
     `;
-
-    tbody.appendChild(row);
-  });
+  }).join('');
 }
 
-function displayUpsets() {
-  const tbody = document.getElementById('upsets-tbody');
-  tbody.innerHTML = '';
-
-  // Calculate upsets (simplified - we don't have exact pre-game ratings)
-  const upsets = [
-    { week: 2, winner: 'Northern Illinois', loser: 'Notre Dame', score: '16-14', diff: 315 },
-    { week: 2, winner: 'Washington State', loser: 'Texas Tech', score: '37-16', diff: 146 },
-    { week: 3, winner: 'Georgia State', loser: 'Vanderbilt', score: '36-32', diff: 143 },
-    { week: 5, winner: 'Arizona', loser: 'Utah', score: '23-10', diff: 118 },
-    { week: 4, winner: 'Illinois', loser: 'Nebraska', score: '31-24', diff: 111 },
-    { week: 1, winner: 'USC', loser: 'LSU', score: '27-20', diff: 88 },
-    { week: 5, winner: 'Kentucky', loser: 'Ole Miss', score: '20-17', diff: 83 }
-  ];
-
-  upsets.forEach(u => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td style="font-weight: 600;">Week ${u.week}</td>
-      <td><span class="team-name" style="color: var(--success-color);">${u.winner}</span></td>
-      <td><span style="color: var(--text-secondary);">${u.loser}</span></td>
-      <td style="font-weight: 600;">${u.score}</td>
-      <td style="font-family: monospace; color: var(--danger-color);">${u.diff.toFixed(0)} pts</td>
-    `;
-    tbody.appendChild(row);
-  });
-}
-
-function calculatePredictionAccuracy() {
-  // Simplified calculation - in reality would need pre-game ratings
-  // Using the 69.9% accuracy from our analysis
-  document.getElementById('prediction-accuracy').textContent = '69.9%';
+/**
+ * Show error message
+ */
+function showError(message) {
+  const loading = document.getElementById('loading');
+  loading.innerHTML = `
+    <div style="text-align: center; color: var(--error-color); padding: 2rem;">
+      <p style="font-size: 1.2rem; margin-bottom: 1rem;">⚠️ Error</p>
+      <p style="color: var(--text-secondary);">${message}</p>
+    </div>
+  `;
 }

@@ -166,6 +166,12 @@ class ApiService {
     return this.fetch(`/predictions/stored?${params}`);
   }
 
+  // EPIC-010: AP Poll Comparison
+  async getPredictionComparison(season = null) {
+    const params = season ? `?season=${season}` : '';
+    return this.fetch(`/predictions/comparison${params}`);
+  }
+
   // Stats
   async getStats() {
     return this.fetch('/stats');

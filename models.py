@@ -3,7 +3,7 @@ Database models for College Football Ranking System
 Using SQLAlchemy ORM
 """
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, Enum
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, Enum, Index, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -234,3 +234,48 @@ class Prediction(Base):
     def __repr__(self):
         correct_str = "✓" if self.was_correct else "✗" if self.was_correct is False else "?"
         return f"<Prediction(game_id={self.game_id}, winner={self.predicted_winner.name if self.predicted_winner else 'Unknown'}, prob={self.win_probability:.1%}, correct={correct_str})>"
+
+
+class APPollRanking(Base):
+    """
+    AP Poll rankings stored weekly for comparison with ELO predictions.
+
+    Used to generate AP-implied predictions (higher ranked team should win)
+    and compare AP prediction accuracy against ELO prediction accuracy.
+
+    Part of EPIC-010: AP Poll Prediction Comparison
+    """
+    __tablename__ = "ap_poll_rankings"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Week/Season reference
+    season = Column(Integer, nullable=False, index=True)
+    week = Column(Integer, nullable=False, index=True)
+
+    # Poll metadata
+    poll_type = Column(String(50), default='AP Top 25', nullable=False)
+    rank = Column(Integer, nullable=False)
+
+    # Team reference
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False, index=True)
+
+    # Ranking details
+    first_place_votes = Column(Integer, default=0)
+    points = Column(Integer, default=0)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    team = relationship("Team", foreign_keys=[team_id])
+
+    # Unique constraint: one rank per team per week per season
+    __table_args__ = (
+        Index('idx_ap_season_week', 'season', 'week'),
+        Index('idx_ap_team_season', 'team_id', 'season'),
+        UniqueConstraint('season', 'week', 'team_id', name='uq_ap_season_week_team'),
+    )
+
+    def __repr__(self):
+        return f"<APPollRanking(season={self.season}, week={self.week}, rank=#{self.rank}, team={self.team.name if self.team else 'Unknown'})>"
