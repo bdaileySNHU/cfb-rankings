@@ -93,6 +93,7 @@ class Game(Base):
     # Relationships
     home_team = relationship("Team", foreign_keys=[home_team_id], back_populates="home_games")
     away_team = relationship("Team", foreign_keys=[away_team_id], back_populates="away_games")
+    prediction = relationship("Prediction", uselist=False, back_populates="game")
 
     @property
     def winner_id(self):
@@ -187,3 +188,49 @@ class UpdateTask(Base):
 
     def __repr__(self):
         return f"<UpdateTask(task_id='{self.task_id}', status='{self.status}', trigger_type='{self.trigger_type}')>"
+
+
+class Prediction(Base):
+    """
+    Game predictions stored before games are played.
+
+    Used to track prediction accuracy by storing pre-game predictions
+    and comparing them to actual results after games complete.
+
+    Part of EPIC-009: Prediction Accuracy Tracking
+    """
+    __tablename__ = "predictions"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Game reference (unique - one prediction per game)
+    game_id = Column(Integer, ForeignKey("games.id"), nullable=False, unique=True, index=True)
+
+    # Prediction details
+    predicted_winner_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    predicted_home_score = Column(Integer, nullable=False)
+    predicted_away_score = Column(Integer, nullable=False)
+    win_probability = Column(Float, nullable=False)  # Probability for predicted winner (0.0-1.0)
+
+    # ELO ratings at time of prediction (snapshot for analysis)
+    home_elo_at_prediction = Column(Float, nullable=False)
+    away_elo_at_prediction = Column(Float, nullable=False)
+
+    # Accuracy evaluation (set after game completes)
+    was_correct = Column(Boolean, nullable=True, index=True)  # None until game completes
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    game = relationship("Game", foreign_keys=[game_id])
+    predicted_winner = relationship("Team", foreign_keys=[predicted_winner_id])
+
+    @property
+    def predicted_margin(self):
+        """Return predicted margin of victory"""
+        return abs(self.predicted_home_score - self.predicted_away_score)
+
+    def __repr__(self):
+        correct_str = "✓" if self.was_correct else "✗" if self.was_correct is False else "?"
+        return f"<Prediction(game_id={self.game_id}, winner={self.predicted_winner.name if self.predicted_winner else 'Unknown'}, prob={self.win_probability:.1%}, correct={correct_str})>"

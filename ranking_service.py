@@ -6,7 +6,7 @@ import math
 from typing import List, Tuple, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from models import Team, Game, RankingHistory, Season, ConferenceType
+from models import Team, Game, RankingHistory, Season, ConferenceType, Prediction
 from datetime import datetime
 
 
@@ -614,3 +614,66 @@ def _calculate_game_prediction(game: Game, home_team: Team, away_team: Team) -> 
         "home_team_rating": home_team.elo_rating,
         "away_team_rating": away_team.elo_rating
     }
+
+
+def create_and_store_prediction(db: Session, game: Game) -> Optional[Prediction]:
+    """
+    Create and store a prediction for a future game.
+
+    Part of EPIC-009: Prediction Accuracy Tracking.
+    This function generates a prediction using the current ELO ratings
+    and stores it in the database for later accuracy evaluation.
+
+    Args:
+        db: Database session
+        game: Game object to predict (must be unprocessed/future game)
+
+    Returns:
+        Prediction object if successful, None if prediction cannot be created
+
+    Example:
+        >>> prediction = create_and_store_prediction(db, future_game)
+        >>> print(f"Predicted {prediction.predicted_winner.name} to win")
+    """
+    # Validate game is future/unprocessed
+    if game.is_processed:
+        return None
+
+    # Check if prediction already exists
+    existing = db.query(Prediction).filter(Prediction.game_id == game.id).first()
+    if existing:
+        return existing  # Don't create duplicate
+
+    # Get teams
+    home_team = db.query(Team).filter(Team.id == game.home_team_id).first()
+    away_team = db.query(Team).filter(Team.id == game.away_team_id).first()
+
+    # Validate teams
+    if not _validate_prediction_teams(home_team, away_team):
+        return None
+
+    # Generate prediction data
+    prediction_data = _calculate_game_prediction(game, home_team, away_team)
+
+    # Create Prediction object
+    prediction = Prediction(
+        game_id=game.id,
+        predicted_winner_id=prediction_data['predicted_winner_id'],
+        predicted_home_score=prediction_data['predicted_home_score'],
+        predicted_away_score=prediction_data['predicted_away_score'],
+        win_probability=prediction_data['home_win_probability'] / 100.0 if prediction_data['predicted_winner_id'] == home_team.id else prediction_data['away_win_probability'] / 100.0,
+        home_elo_at_prediction=home_team.elo_rating,
+        away_elo_at_prediction=away_team.elo_rating,
+        was_correct=None  # Will be set when game completes
+    )
+
+    # Store in database
+    try:
+        db.add(prediction)
+        db.commit()
+        db.refresh(prediction)
+        return prediction
+    except Exception as e:
+        db.rollback()
+        print(f"Error storing prediction for game {game.id}: {e}")
+        return None
