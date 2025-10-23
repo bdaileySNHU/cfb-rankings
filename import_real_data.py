@@ -504,6 +504,11 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                     continue
                 else:
                     # Has scores but not processed yet - process it
+                    # But first check if it's actually a future game (0-0)
+                    if existing_game.home_score == 0 and existing_game.away_score == 0:
+                        # This is a future game that still has no scores - skip
+                        continue
+
                     if not is_fcs_game:
                         result = ranking_service.process_game(existing_game)
                         week_imported += 1
