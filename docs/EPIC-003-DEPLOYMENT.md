@@ -1,28 +1,162 @@
 # Production Deployment Guide
 
-**Latest Epic:** EPIC-009 Prediction Accuracy Tracking & Display
-**Previous Epics:** EPIC-003 FCS Game Display, EPIC-006 Current Week Display
+**Latest Epic:** EPIC-010 AP Poll Prediction Comparison
+**Previous Epics:** EPIC-009 Prediction Accuracy, EPIC-006 Current Week Display, EPIC-003 FCS Game Display
 **Deployment Date:** 2025-10-23
-**Version:** 3.0.0
-**Risk Level:** 🟢 Low (No database migration required for EPIC-009)
+**Version:** 4.0.0
+**Risk Level:** 🟡 Medium (Database migration + data import required)
 
 ---
 
-## Quick Overview - EPIC-009
+## Quick Overview - EPIC-010
 
-This deployment adds prediction accuracy tracking and display to the ranking system. Users can now see how well the system predicts game outcomes.
+This deployment adds AP Poll prediction comparison to demonstrate the superiority of the ELO system over traditional AP Poll rankings. The system now compares ELO predictions against AP Poll-implied predictions.
 
-**What's changing (EPIC-009):**
-- Backend API (3 new endpoints for prediction accuracy)
-- Frontend (prediction accuracy displays on rankings and team pages)
-- **NO DATABASE MIGRATION REQUIRED** (predictions table already exists)
-- **NO DATA RE-IMPORT REQUIRED**
+**What's changing (EPIC-010):**
+- Backend API (1 new endpoint: `/api/predictions/comparison`)
+- Backend services (new `ap_poll_service.py` module)
+- Database schema (new `ap_poll_rankings` table)
+- Data import (AP Poll rankings from CFBD API)
+- Frontend (complete rewrite of comparison page)
+- **DATABASE MIGRATION REQUIRED** (new ap_poll_rankings table)
+- **DATA IMPORT REQUIRED** (AP Poll data + backfill predictions)
 
-**Estimated deployment time:** 5-10 minutes (code deploy only)
+**Estimated deployment time:** 20-30 minutes (migration + data import)
+
+**Results:** ELO system achieves 88.3% accuracy vs AP Poll's 73.7% (+14.6pp advantage)
+
+---
+
+## Pre-Deployment Checklist (EPIC-010)
+
+- [ ] All unit tests passing
+- [ ] Backend server running locally without errors
+- [ ] Frontend displays comparison page correctly
+- [ ] Git commit created with comprehensive message
+- [ ] Deployment documentation updated
+
+## Deployment Steps (EPIC-010)
+
+### Step 1: Deploy Code to Production Server
+
+```bash
+# On production server
+cd ~/Stat-urday\ Synthesis
+git pull origin main
+```
+
+### Step 2: Run Database Migration
+
+```bash
+# Create ap_poll_rankings table
+python3 migrate_add_ap_poll_rankings.py
+```
+
+**Expected output:**
+```
+✓ Created ap_poll_rankings table
+✓ Created indexes
+```
+
+### Step 3: Import AP Poll Data
+
+```bash
+# Import AP Poll rankings for all weeks
+python3 scripts/import_ap_poll_only.py
+# When prompted:
+# - Season: 2025 (or press Enter for default)
+# - Weeks: 1-10 (or whatever weeks you have data for)
+```
+
+**Expected output:**
+```
+Week 1...
+  ✓ Imported 25 rankings
+Week 2...
+  ✓ Imported 25 rankings
+...
+Total rankings imported: 225
+```
+
+### Step 4: Backfill Predictions for Completed Games
+
+```bash
+# Create predictions for all completed games
+python3 scripts/backfill_historical_predictions.py
+```
+
+**Expected output:**
+```
+  Created 50 predictions...
+  Created 100 predictions...
+  ...
+  Created 800 predictions...
+
+Backfill complete!
+  Total games: 806
+  Predictions created: 806
+```
+
+### Step 5: Restart Backend Service
+
+```bash
+# Restart the FastAPI service
+sudo systemctl restart cfb-rankings
+# Or if using PM2:
+pm2 restart cfb-rankings
+```
+
+### Step 6: Verify Deployment
+
+1. **Test API endpoint:**
+```bash
+curl https://your-domain.com/api/predictions/comparison?season=2025
+```
+
+Expected: JSON with comparison statistics
+
+2. **Visit comparison page:**
+   - Navigate to: `https://your-domain.com/frontend/comparison.html`
+   - Or click "Prediction Comparison" in navigation
+
+3. **Verify data displays:**
+   - Hero stats show accuracy percentages
+   - Chart displays accuracy over time
+   - Disagreement table shows games where systems disagreed
+
+### Rollback Plan (If Needed)
+
+If deployment fails:
+
+```bash
+# Revert to previous commit
+git revert HEAD
+sudo systemctl restart cfb-rankings
+
+# Drop new table if needed
+sqlite3 cfb_rankings.db "DROP TABLE IF EXISTS ap_poll_rankings;"
+```
 
 ---
 
 ## Previous Deployments
+
+<details>
+<summary><strong>EPIC-009: Prediction Accuracy Tracking & Display</strong> (Click to expand)</summary>
+
+**Deployment Date:** 2025-10-23
+**Version:** 3.0.0
+**Risk Level:** 🟢 Low
+
+This deployment added prediction accuracy tracking and display.
+
+**What changed:**
+- Backend API (3 new endpoints)
+- Frontend (accuracy displays on rankings/team pages)
+- No database migration required
+- No data re-import required
+
+</details>
 
 <details>
 <summary><strong>EPIC-003: FCS Game Display</strong> (Click to expand)</summary>
