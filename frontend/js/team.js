@@ -224,7 +224,9 @@ function createScheduleRow(game) {
   const isPlayed = game.is_played && game.score;
 
   // Check if FCS game (excluded from rankings)
-  const isFCS = game.is_fcs || game.excluded_from_rankings;
+  // EPIC-011: Only mark as FCS if game is played AND excluded
+  // This prevents future games from showing FCS badge
+  const isFCS = (game.is_fcs || game.excluded_from_rankings) && isPlayed;
 
   // Apply appropriate row styling
   if (!isPlayed) {
