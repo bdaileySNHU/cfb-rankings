@@ -107,7 +107,7 @@ function createRankingRow(team) {
   teamCell.appendChild(teamName);
   row.appendChild(teamCell);
 
-  // Conference
+  // EPIC-012: Conference with actual conference name
   const confCell = document.createElement('td');
   const confBadge = document.createElement('span');
   confBadge.className = 'conference-badge';
@@ -118,7 +118,11 @@ function createRankingRow(team) {
   } else {
     confBadge.classList.add('fcs');
   }
-  confBadge.textContent = team.conference;
+  if (team.conference_name) {
+    confBadge.textContent = `${team.conference_name} (${team.conference})`;
+  } else {
+    confBadge.textContent = team.conference;
+  }
   confCell.appendChild(confBadge);
   row.appendChild(confCell);
 

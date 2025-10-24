@@ -336,6 +336,7 @@ class RankingService:
                 'team_id': team.id,
                 'team_name': team.name,
                 'conference': team.conference,
+                'conference_name': team.conference_name,  # EPIC-012: Add actual conference name
                 'elo_rating': round(team.elo_rating, 2),
                 'wins': team.wins,
                 'losses': team.losses,

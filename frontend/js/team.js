@@ -89,9 +89,13 @@ function populateTeamInfo(team) {
   document.getElementById('team-name').textContent = team.name;
   document.title = `${team.name} - College Football Rankings`;
 
-  // Conference badge
+  // EPIC-012: Conference badge with actual conference name
   const confBadge = document.getElementById('conference-badge');
-  confBadge.textContent = team.conference;
+  if (team.conference_name) {
+    confBadge.textContent = `${team.conference_name} (${team.conference})`;
+  } else {
+    confBadge.textContent = team.conference;
+  }
   confBadge.className = 'conference-badge';
   if (team.conference === 'P5') {
     confBadge.classList.add('p5');

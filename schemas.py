@@ -13,6 +13,7 @@ class TeamBase(BaseModel):
     """Base team schema"""
     name: str = Field(..., description="Team name", max_length=100)
     conference: ConferenceType = Field(..., description="Conference type (P5, G5, FCS)")
+    conference_name: Optional[str] = Field(None, description="Actual conference name (Big Ten, SEC, etc.)", max_length=50)
     recruiting_rank: Optional[int] = Field(999, description="247Sports recruiting rank", ge=1)
     transfer_rank: Optional[int] = Field(999, description="247Sports transfer portal rank", ge=1)
     returning_production: Optional[float] = Field(0.5, description="Returning production percentage", ge=0.0, le=1.0)
@@ -27,6 +28,7 @@ class TeamUpdate(BaseModel):
     """Schema for updating team information"""
     name: Optional[str] = Field(None, max_length=100)
     conference: Optional[ConferenceType] = None
+    conference_name: Optional[str] = Field(None, max_length=50)
     recruiting_rank: Optional[int] = Field(None, ge=1)
     transfer_rank: Optional[int] = Field(None, ge=1)
     returning_production: Optional[float] = Field(None, ge=0.0, le=1.0)
@@ -98,6 +100,7 @@ class RankingEntry(BaseModel):
     team_id: int
     team_name: str
     conference: ConferenceType
+    conference_name: Optional[str] = None
     elo_rating: float
     wins: int
     losses: int

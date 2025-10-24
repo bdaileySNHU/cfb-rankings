@@ -154,18 +154,19 @@ def import_teams(cfbd: CFBDClient, db, year: int):
         team_name = team_data['school']
         conference_name = team_data.get('conference', 'FBS Independents')
 
-        # Map conference
-        conference = CONFERENCE_MAP.get(conference_name, ConferenceType.GROUP_5)
+        # Map conference to tier (P5/G5/FCS)
+        conference_tier = CONFERENCE_MAP.get(conference_name, ConferenceType.GROUP_5)
 
         # Get preseason data
         recruiting_rank = recruiting_map.get(team_name, 999)
         transfer_rank = 999  # CFBD doesn't have transfer portal rankings easily accessible
         returning_prod = returning_map.get(team_name, 0.5)
 
-        # Create team
+        # EPIC-012: Create team with BOTH conference tier and name
         team = Team(
             name=team_name,
-            conference=conference,
+            conference=conference_tier,           # P5/G5/FCS (for logic)
+            conference_name=conference_name,      # "Big Ten", "SEC", etc. (for display)
             recruiting_rank=recruiting_rank,
             transfer_rank=transfer_rank,
             returning_production=returning_prod
@@ -175,7 +176,7 @@ def import_teams(cfbd: CFBDClient, db, year: int):
         db.add(team)
         team_objects[team_name] = team
 
-        print(f"  Added: {team_name} ({conference.value}) - Recruiting: #{recruiting_rank}, Returning: {returning_prod*100:.0f}%")
+        print(f"  Added: {team_name} - {conference_name} ({conference_tier.value}) - Recruiting: #{recruiting_rank}, Returning: {returning_prod*100:.0f}%")
 
     db.commit()
     print(f"\n✓ Imported {len(team_objects)} teams")

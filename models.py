@@ -27,6 +27,9 @@ class Team(Base):
     name = Column(String(100), unique=True, index=True, nullable=False)
     conference = Column(Enum(ConferenceType), nullable=False)
 
+    # EPIC-012: Actual conference name (Big Ten, SEC, etc.)
+    conference_name = Column(String(50), nullable=True)
+
     # FCS flag
     is_fcs = Column(Boolean, default=False, nullable=False)
 
