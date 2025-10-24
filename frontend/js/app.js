@@ -31,6 +31,7 @@ async function loadStats() {
     const stats = await api.getStats();
 
     document.getElementById('current-week').textContent = stats.current_week;
+    document.getElementById('current-season').textContent = stats.current_season;
     document.getElementById('total-teams').textContent = stats.total_teams;
     document.getElementById('games-played').textContent = stats.total_games_processed;
 
