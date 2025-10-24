@@ -1,10 +1,199 @@
 # Production Deployment Guide
 
-**Latest Epic:** EPIC-010 AP Poll Prediction Comparison
-**Previous Epics:** EPIC-009 Prediction Accuracy, EPIC-006 Current Week Display, EPIC-003 FCS Game Display
-**Deployment Date:** 2025-10-23
-**Version:** 4.0.0
-**Risk Level:** 🟡 Medium (Database migration + data import required)
+**Latest Epic:** EPIC-012 Conference Display + EPIC-011 FCS Badge Fix
+**Previous Epics:** EPIC-010 AP Poll Comparison, EPIC-009 Prediction Accuracy, EPIC-006 Current Week Display, EPIC-003 FCS Game Display
+**Deployment Date:** 2025-10-24
+**Version:** 5.0.0
+**Risk Level:** 🟡 Medium (EPIC-012 requires database migration + data re-import; EPIC-011 is frontend-only)
+
+---
+
+## Quick Overview - EPIC-011 & EPIC-012
+
+This deployment includes two improvements:
+
+**EPIC-011: FCS Badge Fix** (Frontend-only, 🟢 Low Risk)
+- Fixed FCS badge incorrectly appearing on future FBS games
+- Simple 1-line JavaScript change
+- No migration, no backend restart needed
+
+**EPIC-012: Conference Display** (Database migration required, 🟡 Medium Risk)
+- Added actual conference names (Big Ten, SEC, etc.)
+- Keeps existing P5/G5/FCS tier system for logic
+- Display format: "Big Ten (P5)", "SEC (P5)", etc.
+
+**What's changing:**
+- Backend: Added `conference_name` field to teams table
+- Frontend: Display conference name with tier
+- Database migration + data re-import required
+- **EPIC-011:** No backend restart needed (frontend-only)
+- **EPIC-012:** Backend restart required after migration
+
+**Estimated deployment time:** 25-30 minutes
+
+**Benefits:**
+- Better user experience with clear conference affiliations
+- Fixed confusing FCS badges on future games
+- Maintains existing ranking logic
+
+---
+
+## Pre-Deployment Checklist (EPIC-011 & EPIC-012)
+
+- [ ] Code pushed to GitHub (commits for EPIC-011 and EPIC-012)
+- [ ] SSH access to production VPS
+- [ ] Database backup created (recommended for EPIC-012)
+- [ ] 30 minutes of focused time
+- [ ] All tests passing locally ✅
+
+---
+
+## Deployment Steps (EPIC-011 & EPIC-012)
+
+### Step 1: Pull Latest Code
+
+```bash
+# SSH into production server
+ssh user@your-server.com
+
+# Navigate to application directory
+cd ~/Stat-urday\ Synthesis
+
+# Stop the application service (for EPIC-012)
+sudo systemctl stop cfb-rankings
+
+# Pull latest code from main branch
+sudo git pull origin main
+
+# Verify correct commits (should show EPIC-011 and EPIC-012)
+git log --oneline -3
+```
+
+**✅ Checkpoint:** Latest code pulled, both EPIC commits visible
+
+---
+
+### Step 2: Run Database Migration (EPIC-012)
+
+```bash
+# Run migration to add conference_name field
+sudo -u www-data python3 migrate_add_conference_name.py
+```
+
+**Expected output:**
+```
+================================================================================
+MIGRATION: Add conference_name field
+EPIC-012: Conference Display
+================================================================================
+
+Adding conference_name column to teams table...
+✓ Added conference_name field
+
+================================================================================
+MIGRATION COMPLETE
+================================================================================
+```
+
+**✅ Checkpoint:** Migration completed successfully
+
+---
+
+### Step 3: Re-Import Team Data (EPIC-012)
+
+```bash
+# Re-import teams to populate conference names
+sudo -u www-data -E env PATH=$PATH python3 import_real_data.py <<< "yes"
+```
+
+**Expected output:**
+```
+Importing teams...
+  Added: Ohio State - Big Ten (P5)
+  Added: Alabama - SEC (P5)
+  Added: Air Force - Mountain West (G5)
+  ...
+✓ Imported 136 teams
+```
+
+**✅ Checkpoint:** Conference names populated
+
+---
+
+### Step 4: Restart Backend Service
+
+```bash
+# Restart the service to load new code
+sudo systemctl restart cfb-rankings
+
+# Check service status
+sudo systemctl status cfb-rankings
+
+# Should show: active (running)
+```
+
+**✅ Checkpoint:** Service running, no errors in logs
+
+---
+
+### Step 5: Verify Deployment
+
+**1. Test Database:**
+```bash
+sqlite3 cfb_rankings.db "SELECT name, conference, conference_name FROM teams WHERE conference='P5' LIMIT 5;"
+```
+
+**Expected:**
+```
+Ohio State|P5|Big Ten
+Alabama|P5|SEC
+Georgia|P5|SEC
+Michigan|P5|Big Ten
+Clemson|P5|ACC
+```
+
+**2. Test API Endpoint:**
+```bash
+curl http://localhost:8000/api/rankings?limit=3 | python3 -m json.tool
+```
+
+**Expected:** JSON with `conference_name` field:
+```json
+{
+  "team_name": "Ohio State",
+  "conference": "P5",
+  "conference_name": "Big Ten"
+}
+```
+
+**3. Test Frontend (EPIC-011 & EPIC-012):**
+- Visit rankings page: Conference badges show "Big Ten (P5)", "SEC (P5)", etc.
+- Visit team page: Conference shows actual name with tier
+- Check future games: No FCS badges on FBS opponents ✅
+- Clear browser cache if needed: Cmd+Shift+R / Ctrl+Shift+R
+
+**✅ Checkpoint:** Both EPICs working correctly
+
+---
+
+## Rollback Plan (If Needed)
+
+If deployment fails:
+
+```bash
+# Revert to previous commit
+cd ~/Stat-urday\ Synthesis
+git revert HEAD
+git revert HEAD~1
+sudo systemctl restart cfb-rankings
+
+# Drop new column if needed
+sqlite3 cfb_rankings.db "
+  CREATE TABLE teams_backup AS SELECT * FROM teams;
+  DROP TABLE teams;
+  -- Restore from backup without conference_name column
+"
+```
 
 ---
 
