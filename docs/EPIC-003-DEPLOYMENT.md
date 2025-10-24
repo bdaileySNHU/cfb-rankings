@@ -77,7 +77,8 @@ git log --oneline -3
 
 ```bash
 # Run migration to add conference_name field
-sudo -u www-data python3 migrate_add_conference_name.py
+# Use virtual environment's Python to ensure all packages are available
+sudo -u www-data venv/bin/python3 migrate_add_conference_name.py
 ```
 
 **Expected output:**
@@ -103,7 +104,8 @@ MIGRATION COMPLETE
 
 ```bash
 # Re-import teams to populate conference names
-sudo -u www-data -E env PATH=$PATH python3 import_real_data.py <<< "yes"
+# Use virtual environment's Python to ensure all packages are available
+sudo -u www-data -E env PATH=$PATH venv/bin/python3 import_real_data.py <<< "yes"
 ```
 
 **Expected output:**
@@ -238,7 +240,7 @@ git pull origin main
 
 ```bash
 # Create ap_poll_rankings table
-python3 migrate_add_ap_poll_rankings.py
+sudo -u www-data venv/bin/python3 migrate_add_ap_poll_rankings.py
 ```
 
 **Expected output:**
@@ -251,7 +253,7 @@ python3 migrate_add_ap_poll_rankings.py
 
 ```bash
 # Import AP Poll rankings for all weeks
-python3 scripts/import_ap_poll_only.py
+sudo -u www-data venv/bin/python3 scripts/import_ap_poll_only.py
 # When prompted:
 # - Season: 2025 (or press Enter for default)
 # - Weeks: 1-10 (or whatever weeks you have data for)
@@ -271,7 +273,7 @@ Total rankings imported: 225
 
 ```bash
 # Create predictions for all completed games
-python3 scripts/backfill_historical_predictions.py
+sudo -u www-data venv/bin/python3 scripts/backfill_historical_predictions.py
 ```
 
 **Expected output:**
