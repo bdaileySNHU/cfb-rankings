@@ -57,6 +57,11 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
             home_name = game_data.get('home_team')
             away_name = game_data.get('away_team')
 
+            # Skip if team names are missing
+            if not home_name or not away_name:
+                week_skipped += 1
+                continue
+
             # Get teams from database
             home_team = db.query(Team).filter(Team.name == home_name).first()
             away_team = db.query(Team).filter(Team.name == away_name).first()
