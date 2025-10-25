@@ -54,8 +54,8 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
         week_skipped = 0
 
         for game_data in games_data:
-            home_name = game_data.get('home_team')
-            away_name = game_data.get('away_team')
+            home_name = game_data.get('homeTeam')
+            away_name = game_data.get('awayTeam')
 
             # Skip if team names are missing
             if not home_name or not away_name:
@@ -105,7 +105,7 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
                 continue
 
             # Parse game date
-            game_date_str = game_data.get('start_date')
+            game_date_str = game_data.get('startDate')
             game_date = None
             if game_date_str:
                 try:
@@ -120,11 +120,11 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
             game = Game(
                 home_team_id=home_team.id,
                 away_team_id=away_team.id,
-                home_score=game_data.get('home_points', 0),
-                away_score=game_data.get('away_points', 0),
+                home_score=game_data.get('homePoints') or 0,
+                away_score=game_data.get('awayPoints') or 0,
                 week=week,
                 season=season,
-                is_neutral_site=game_data.get('neutral_site', False),
+                is_neutral_site=game_data.get('neutralSite', False),
                 game_date=game_date,
                 is_processed=False,  # Future game, not processed yet
                 excluded_from_rankings=is_fcs_game
