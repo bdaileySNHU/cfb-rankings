@@ -14,7 +14,6 @@ from sqlalchemy.orm import Session
 
 from models import Team, Game, Season, ConferenceType
 import sys
-sys.path.insert(0, '/Users/bryandailey/Stat-urday Synthesis/tests')
 from factories import (
     TeamFactory,
     GameFactory,

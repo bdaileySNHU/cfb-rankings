@@ -17,7 +17,6 @@ from models import Team, Game, ConferenceType
 from ranking_service import RankingService
 
 import sys
-sys.path.insert(0, '/Users/bryandailey/Stat-urday Synthesis/tests')
 from factories import TeamFactory, GameFactory, configure_factories
 
 

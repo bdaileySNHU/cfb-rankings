@@ -126,7 +126,6 @@ def factories(test_db: Session):
             game = factories['game'](home_team=team)
     """
     import sys
-    sys.path.insert(0, '/Users/bryandailey/Stat-urday Synthesis/tests')
     from factories import (
         configure_factories,
         TeamFactory,
@@ -253,6 +252,14 @@ def mock_cfbd_client(monkeypatch):
         {'team': 'Ohio State', 'rank': 4},
         {'team': 'Michigan', 'rank': 8},
         {'team': 'Boise State', 'rank': 25}
+    ]
+
+    # Mock get_ap_poll() - Returns AP Poll rankings
+    mock_client.get_ap_poll.return_value = [
+        {'school': 'Alabama', 'rank': 1, 'firstPlaceVotes': 45, 'points': 1500},
+        {'school': 'Georgia', 'rank': 2, 'firstPlaceVotes': 10, 'points': 1450},
+        {'school': 'Ohio State', 'rank': 3, 'firstPlaceVotes': 7, 'points': 1400},
+        {'school': 'Michigan', 'rank': 5, 'firstPlaceVotes': 0, 'points': 1300}
     ]
 
     return mock_client

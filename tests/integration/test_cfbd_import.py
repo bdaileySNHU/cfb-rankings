@@ -15,7 +15,6 @@ from unittest.mock import Mock, patch
 
 from models import Team, Game, Season, ConferenceType
 import sys
-sys.path.insert(0, '/Users/bryandailey/Stat-urday Synthesis/tests')
 from factories import configure_factories
 
 
@@ -183,7 +182,7 @@ class TestGameImportWithMock:
         assert georgia.losses == 1
 
     def test_import_games_skips_incomplete_games(self, test_db: Session, mock_cfbd_client):
-        """Test that import skips games without scores"""
+        """Test that import handles games without scores as future games"""
         # Arrange
         from import_real_data import import_teams, import_games
 
@@ -192,7 +191,7 @@ class TestGameImportWithMock:
             {
                 'homeTeam': 'Alabama',
                 'awayTeam': 'Georgia',
-                'homePoints': None,  # Incomplete game
+                'homePoints': None,  # Future/incomplete game
                 'awayPoints': None,
                 'week': 1,
                 'neutralSite': False
@@ -204,9 +203,9 @@ class TestGameImportWithMock:
         # Act
         import_stats = import_games(mock_cfbd_client, test_db, team_objects, year=2025, max_week=1)
 
-        # Assert - No games should be imported
+        # Assert - Games without scores are treated as future games
         assert import_stats['imported'] == 0
-        assert import_stats['skipped_incomplete'] == 1
+        assert import_stats['future_imported'] == 1
 
     def test_import_games_skips_fcs_opponents(self, test_db: Session, mock_cfbd_client):
         """Test that import creates FCS games with excluded_from_rankings flag"""
