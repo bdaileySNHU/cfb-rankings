@@ -6,7 +6,6 @@ Tests the evaluate_prediction_accuracy function and accuracy statistics.
 
 import pytest
 from datetime import datetime
-from database import SessionLocal
 from models import Team, Game, Prediction, ConferenceType
 from ranking_service import (
     evaluate_prediction_accuracy,
@@ -16,15 +15,7 @@ from ranking_service import (
 
 
 @pytest.fixture
-def db_session():
-    """Create a test database session"""
-    db = SessionLocal()
-    yield db
-    db.close()
-
-
-@pytest.fixture
-def test_game_with_prediction(db_session):
+def test_game_with_prediction(test_db):
     """Create a test game with a prediction"""
     import random
     unique_id = random.randint(10000, 99999)
@@ -43,11 +34,11 @@ def test_game_with_prediction(db_session):
         elo_rating=1550.0
     )
 
-    db_session.add(home_team)
-    db_session.add(away_team)
-    db_session.commit()
-    db_session.refresh(home_team)
-    db_session.refresh(away_team)
+    test_db.add(home_team)
+    test_db.add(away_team)
+    test_db.commit()
+    test_db.refresh(home_team)
+    test_db.refresh(away_team)
 
     # Create a completed game (home team wins 35-28)
     game = Game(
@@ -60,9 +51,9 @@ def test_game_with_prediction(db_session):
         is_processed=True,
         excluded_from_rankings=False
     )
-    db_session.add(game)
-    db_session.commit()
-    db_session.refresh(game)
+    test_db.add(game)
+    test_db.commit()
+    test_db.refresh(game)
 
     # Create a prediction (predicted home team to win)
     prediction = Prediction(
@@ -75,9 +66,9 @@ def test_game_with_prediction(db_session):
         away_elo_at_prediction=1550.0,
         was_correct=None  # Not yet evaluated
     )
-    db_session.add(prediction)
-    db_session.commit()
-    db_session.refresh(prediction)
+    test_db.add(prediction)
+    test_db.commit()
+    test_db.refresh(prediction)
 
     return game, prediction, home_team, away_team
 
@@ -86,7 +77,7 @@ def test_game_with_prediction(db_session):
 class TestPredictionAccuracyEvaluation:
     """Test prediction accuracy evaluation"""
 
-    def test_evaluate_correct_prediction(self, db_session, test_game_with_prediction):
+    def test_evaluate_correct_prediction(self, test_db, test_game_with_prediction):
         """Test evaluating a correct prediction"""
         game, prediction, home_team, away_team = test_game_with_prediction
 
@@ -94,14 +85,14 @@ class TestPredictionAccuracyEvaluation:
         assert prediction.was_correct is None
 
         # Evaluate prediction
-        result = evaluate_prediction_accuracy(db_session, game)
+        result = evaluate_prediction_accuracy(test_db, game)
 
         # Assertions
         assert result is not None
         assert result.id == prediction.id
         assert result.was_correct is True  # Home team was predicted and won
 
-    def test_evaluate_incorrect_prediction(self, db_session):
+    def test_evaluate_incorrect_prediction(self, test_db):
         """Test evaluating an incorrect prediction"""
         import random
         unique_id = random.randint(10000, 99999)
@@ -119,10 +110,10 @@ class TestPredictionAccuracyEvaluation:
             is_fcs=False,
             elo_rating=1650.0
         )
-        db_session.add_all([home_team, away_team])
-        db_session.commit()
-        db_session.refresh(home_team)
-        db_session.refresh(away_team)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+        test_db.refresh(home_team)
+        test_db.refresh(away_team)
 
         # Create a completed game (away team wins 35-21)
         game = Game(
@@ -134,9 +125,9 @@ class TestPredictionAccuracyEvaluation:
             season=2024,
             is_processed=True
         )
-        db_session.add(game)
-        db_session.commit()
-        db_session.refresh(game)
+        test_db.add(game)
+        test_db.commit()
+        test_db.refresh(game)
 
         # Create a prediction (incorrectly predicted home team to win)
         prediction = Prediction(
@@ -149,17 +140,17 @@ class TestPredictionAccuracyEvaluation:
             away_elo_at_prediction=1650.0,
             was_correct=None
         )
-        db_session.add(prediction)
-        db_session.commit()
+        test_db.add(prediction)
+        test_db.commit()
 
         # Evaluate prediction
-        result = evaluate_prediction_accuracy(db_session, game)
+        result = evaluate_prediction_accuracy(test_db, game)
 
         # Assertions
         assert result is not None
         assert result.was_correct is False  # Prediction was wrong
 
-    def test_evaluate_no_prediction(self, db_session):
+    def test_evaluate_no_prediction(self, test_db):
         """Test evaluating a game with no prediction"""
         import random
         unique_id = random.randint(10000, 99999)
@@ -177,10 +168,10 @@ class TestPredictionAccuracyEvaluation:
             is_fcs=False,
             elo_rating=1600.0
         )
-        db_session.add_all([home_team, away_team])
-        db_session.commit()
-        db_session.refresh(home_team)
-        db_session.refresh(away_team)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+        test_db.refresh(home_team)
+        test_db.refresh(away_team)
 
         # Create a completed game with no prediction
         game = Game(
@@ -192,15 +183,15 @@ class TestPredictionAccuracyEvaluation:
             season=2024,
             is_processed=True
         )
-        db_session.add(game)
-        db_session.commit()
+        test_db.add(game)
+        test_db.commit()
 
         # Evaluate prediction (should return None)
-        result = evaluate_prediction_accuracy(db_session, game)
+        result = evaluate_prediction_accuracy(test_db, game)
 
         assert result is None
 
-    def test_evaluate_unprocessed_game(self, db_session):
+    def test_evaluate_unprocessed_game(self, test_db):
         """Test evaluating an unprocessed game"""
         import random
         unique_id = random.randint(10000, 99999)
@@ -218,10 +209,10 @@ class TestPredictionAccuracyEvaluation:
             is_fcs=False,
             elo_rating=1600.0
         )
-        db_session.add_all([home_team, away_team])
-        db_session.commit()
-        db_session.refresh(home_team)
-        db_session.refresh(away_team)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+        test_db.refresh(home_team)
+        test_db.refresh(away_team)
 
         # Create an unprocessed game
         game = Game(
@@ -233,9 +224,9 @@ class TestPredictionAccuracyEvaluation:
             season=2024,
             is_processed=False  # Not yet played
         )
-        db_session.add(game)
-        db_session.commit()
-        db_session.refresh(game)
+        test_db.add(game)
+        test_db.commit()
+        test_db.refresh(game)
 
         # Create a prediction
         prediction = Prediction(
@@ -248,11 +239,11 @@ class TestPredictionAccuracyEvaluation:
             away_elo_at_prediction=1600.0,
             was_correct=None
         )
-        db_session.add(prediction)
-        db_session.commit()
+        test_db.add(prediction)
+        test_db.commit()
 
         # Try to evaluate (should return None for unprocessed game)
-        result = evaluate_prediction_accuracy(db_session, game)
+        result = evaluate_prediction_accuracy(test_db, game)
 
         assert result is None
 
@@ -261,7 +252,7 @@ class TestPredictionAccuracyEvaluation:
 class TestPredictionAccuracyStats:
     """Test prediction accuracy statistics functions"""
 
-    def test_overall_accuracy_calculation(self, db_session):
+    def test_overall_accuracy_calculation(self, test_db):
         """Test overall accuracy statistics calculation"""
         import random
         # Use a unique test season to avoid conflicts with existing data
@@ -278,11 +269,11 @@ class TestPredictionAccuracyStats:
                 elo_rating=1600.0
             )
             teams.append(team)
-            db_session.add(team)
+            test_db.add(team)
 
-        db_session.commit()
+        test_db.commit()
         for team in teams:
-            db_session.refresh(team)
+            test_db.refresh(team)
 
         # Create games with predictions (2 correct, 1 incorrect, 1 not evaluated)
         predictions_data = [
@@ -311,9 +302,9 @@ class TestPredictionAccuracyStats:
                 season=test_season,  # Use unique test season
                 is_processed=pred_data["processed"]
             )
-            db_session.add(game)
-            db_session.commit()
-            db_session.refresh(game)
+            test_db.add(game)
+            test_db.commit()
+            test_db.refresh(game)
 
             prediction = Prediction(
                 game_id=game.id,
@@ -324,15 +315,15 @@ class TestPredictionAccuracyStats:
                 home_elo_at_prediction=1600.0,
                 away_elo_at_prediction=1600.0
             )
-            db_session.add(prediction)
-            db_session.commit()  # Commit prediction
+            test_db.add(prediction)
+            test_db.commit()  # Commit prediction
 
             if pred_data["processed"]:
-                evaluate_prediction_accuracy(db_session, game)
-                db_session.commit()  # Commit after each evaluation
+                evaluate_prediction_accuracy(test_db, game)
+                test_db.commit()  # Commit after each evaluation
 
         # Get overall accuracy for our test season
-        stats = get_overall_prediction_accuracy(db_session, season=test_season)
+        stats = get_overall_prediction_accuracy(test_db, season=test_season)
 
         # Assertions
         assert stats["total_predictions"] == 4
@@ -340,7 +331,7 @@ class TestPredictionAccuracyStats:
         assert stats["correct_predictions"] == 2  # 2 correct predictions
         assert stats["accuracy_percentage"] == pytest.approx(66.67, rel=0.1)  # 2/3 = 66.67%
 
-    def test_team_accuracy_calculation(self, db_session):
+    def test_team_accuracy_calculation(self, test_db):
         """Test team-specific accuracy calculation"""
         import random
         # Use a unique test season to avoid conflicts with existing data
@@ -366,10 +357,10 @@ class TestPredictionAccuracyStats:
             is_fcs=False,
             elo_rating=1700.0
         )
-        db_session.add_all([target_team, opponent1, opponent2])
-        db_session.commit()
+        test_db.add_all([target_team, opponent1, opponent2])
+        test_db.commit()
         for team in [target_team, opponent1, opponent2]:
-            db_session.refresh(team)
+            test_db.refresh(team)
 
         # Create games involving target team
         # Game 1: Target team wins as favorite (correct prediction)
@@ -382,9 +373,9 @@ class TestPredictionAccuracyStats:
             season=test_season,  # Use unique test season
             is_processed=True
         )
-        db_session.add(game1)
-        db_session.commit()
-        db_session.refresh(game1)
+        test_db.add(game1)
+        test_db.commit()
+        test_db.refresh(game1)
 
         pred1 = Prediction(
             game_id=game1.id,
@@ -395,10 +386,10 @@ class TestPredictionAccuracyStats:
             home_elo_at_prediction=1650.0,
             away_elo_at_prediction=1550.0
         )
-        db_session.add(pred1)
-        db_session.commit()  # Commit prediction
-        evaluate_prediction_accuracy(db_session, game1)
-        db_session.commit()  # Commit evaluation
+        test_db.add(pred1)
+        test_db.commit()  # Commit prediction
+        evaluate_prediction_accuracy(test_db, game1)
+        test_db.commit()  # Commit evaluation
 
         # Game 2: Target team loses as underdog (correct prediction)
         game2 = Game(
@@ -410,9 +401,9 @@ class TestPredictionAccuracyStats:
             season=test_season,  # Use unique test season
             is_processed=True
         )
-        db_session.add(game2)
-        db_session.commit()
-        db_session.refresh(game2)
+        test_db.add(game2)
+        test_db.commit()
+        test_db.refresh(game2)
 
         pred2 = Prediction(
             game_id=game2.id,
@@ -423,13 +414,13 @@ class TestPredictionAccuracyStats:
             home_elo_at_prediction=1700.0,
             away_elo_at_prediction=1650.0
         )
-        db_session.add(pred2)
-        db_session.commit()  # Commit prediction
-        evaluate_prediction_accuracy(db_session, game2)
-        db_session.commit()  # Commit evaluation
+        test_db.add(pred2)
+        test_db.commit()  # Commit prediction
+        evaluate_prediction_accuracy(test_db, game2)
+        test_db.commit()  # Commit evaluation
 
         # Get team accuracy
-        stats = get_team_prediction_accuracy(db_session, target_team.id, season=test_season)
+        stats = get_team_prediction_accuracy(test_db, target_team.id, season=test_season)
 
         # Assertions
         assert stats["team_id"] == target_team.id

@@ -6,21 +6,14 @@ Tests the Prediction model and create_and_store_prediction function.
 
 import pytest
 from datetime import datetime
-from database import SessionLocal
 from models import Team, Game, Prediction, ConferenceType
 from ranking_service import create_and_store_prediction
 
 
-@pytest.fixture
-def db_session():
-    """Create a test database session"""
-    db = SessionLocal()
-    yield db
-    db.close()
 
 
 @pytest.fixture
-def test_teams(db_session):
+def test_teams(test_db):
     """Create test teams with ELO ratings"""
     import random
     unique_id = random.randint(10000, 99999)
@@ -38,11 +31,11 @@ def test_teams(db_session):
         elo_rating=1550.0
     )
 
-    db_session.add(home_team)
-    db_session.add(away_team)
-    db_session.commit()
-    db_session.refresh(home_team)
-    db_session.refresh(away_team)
+    test_db.add(home_team)
+    test_db.add(away_team)
+    test_db.commit()
+    test_db.refresh(home_team)
+    test_db.refresh(away_team)
 
     return home_team, away_team
 
@@ -51,7 +44,7 @@ def test_teams(db_session):
 class TestPredictionStorage:
     """Test prediction storage functionality"""
 
-    def test_create_prediction_for_future_game(self, db_session, test_teams):
+    def test_create_prediction_for_future_game(self, test_db, test_teams):
         """Test creating a prediction for a future game"""
         home_team, away_team = test_teams
 
@@ -66,12 +59,12 @@ class TestPredictionStorage:
             is_processed=False,
             excluded_from_rankings=False
         )
-        db_session.add(game)
-        db_session.commit()
-        db_session.refresh(game)
+        test_db.add(game)
+        test_db.commit()
+        test_db.refresh(game)
 
         # Create prediction
-        prediction = create_and_store_prediction(db_session, game)
+        prediction = create_and_store_prediction(test_db, game)
 
         # Assertions
         assert prediction is not None
@@ -84,7 +77,7 @@ class TestPredictionStorage:
         assert prediction.away_elo_at_prediction == away_team.elo_rating
         assert prediction.was_correct is None  # Not yet determined
 
-    def test_no_duplicate_predictions(self, db_session, test_teams):
+    def test_no_duplicate_predictions(self, test_db, test_teams):
         """Test that duplicate predictions are not created"""
         home_team, away_team = test_teams
 
@@ -98,26 +91,26 @@ class TestPredictionStorage:
             season=2024,
             is_processed=False
         )
-        db_session.add(game)
-        db_session.commit()
-        db_session.refresh(game)
+        test_db.add(game)
+        test_db.commit()
+        test_db.refresh(game)
 
         # Create first prediction
-        pred1 = create_and_store_prediction(db_session, game)
+        pred1 = create_and_store_prediction(test_db, game)
         assert pred1 is not None
 
         # Try to create second prediction for same game
-        pred2 = create_and_store_prediction(db_session, game)
+        pred2 = create_and_store_prediction(test_db, game)
 
         # Should return existing prediction, not create new one
         assert pred2 is not None
         assert pred2.id == pred1.id
 
         # Verify only one prediction exists
-        count = db_session.query(Prediction).filter(Prediction.game_id == game.id).count()
+        count = test_db.query(Prediction).filter(Prediction.game_id == game.id).count()
         assert count == 1
 
-    def test_no_prediction_for_completed_game(self, db_session, test_teams):
+    def test_no_prediction_for_completed_game(self, test_db, test_teams):
         """Test that predictions are not created for completed games"""
         home_team, away_team = test_teams
 
@@ -131,17 +124,17 @@ class TestPredictionStorage:
             season=2024,
             is_processed=True
         )
-        db_session.add(game)
-        db_session.commit()
-        db_session.refresh(game)
+        test_db.add(game)
+        test_db.commit()
+        test_db.refresh(game)
 
         # Try to create prediction
-        prediction = create_and_store_prediction(db_session, game)
+        prediction = create_and_store_prediction(test_db, game)
 
         # Should return None for completed games
         assert prediction is None
 
-    def test_prediction_model_properties(self, db_session, test_teams):
+    def test_prediction_model_properties(self, test_db, test_teams):
         """Test Prediction model properties"""
         home_team, away_team = test_teams
 
@@ -155,9 +148,9 @@ class TestPredictionStorage:
             season=2024,
             is_processed=False
         )
-        db_session.add(game)
-        db_session.commit()
-        db_session.refresh(game)
+        test_db.add(game)
+        test_db.commit()
+        test_db.refresh(game)
 
         prediction = Prediction(
             game_id=game.id,
@@ -168,9 +161,9 @@ class TestPredictionStorage:
             home_elo_at_prediction=1650.0,
             away_elo_at_prediction=1550.0
         )
-        db_session.add(prediction)
-        db_session.commit()
-        db_session.refresh(prediction)
+        test_db.add(prediction)
+        test_db.commit()
+        test_db.refresh(prediction)
 
         # Test predicted_margin property
         assert prediction.predicted_margin == 6
