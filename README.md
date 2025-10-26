@@ -390,7 +390,93 @@ Tests run automatically in GitHub Actions on:
 
 See [docs/CI-CD-PIPELINE.md](docs/CI-CD-PIPELINE.md) for detailed workflow documentation.
 
+## 🎯 Game Predictions (NEW!)
+
+**NEW!** Predict upcoming game outcomes using ELO-based win probability and score estimation.
+
+### Features
+- **Data-driven predictions** using Modified ELO ratings
+- **Win probability percentages** for each matchup
+- **Score estimates** based on rating difference
+- **Confidence levels** (High/Medium/Low)
+- **Prediction accuracy tracking** with historical comparison
+- **AP Poll comparison** to validate ELO system performance
+
+### Quick Start
+
+```bash
+# Get next week's predictions
+curl "http://localhost:8000/api/predictions?next_week=true"
+
+# Get predictions for specific week
+curl "http://localhost:8000/api/predictions?week=8"
+
+# Get predictions for specific team
+curl "http://localhost:8000/api/predictions?team_id=1"
+
+# Get prediction accuracy stats
+curl "http://localhost:8000/api/predictions/accuracy"
+
+# Compare ELO vs AP Poll predictions
+curl "http://localhost:8000/api/predictions/comparison"
+```
+
+### Example Prediction Response
+
+```json
+{
+  "game_id": 123,
+  "home_team": "Georgia",
+  "away_team": "Alabama",
+  "week": 8,
+  "season": 2025,
+  "predicted_winner": "Georgia",
+  "predicted_home_score": 31,
+  "predicted_away_score": 24,
+  "home_win_probability": 68.5,
+  "away_win_probability": 31.5,
+  "confidence": "Medium"
+}
+```
+
+### How It Works
+
+**Win Probability:**
+```
+P(home wins) = 1 / (1 + 10^((away_rating - home_rating) / 400))
+```
+
+**Score Estimation:**
+- Base score: 30 points per team (historical average)
+- Adjustment: ±3.5 points per 100 rating difference
+- Home field advantage: +65 rating points
+
+**Confidence Determination:**
+- **High:** Win probability > 80% or < 20%
+- **Medium:** Win probability 65-80% or 20-35%
+- **Low:** Win probability 35-65% (close matchup)
+
+### Prediction Accuracy
+
+The system automatically tracks predictions and evaluates accuracy after games complete:
+
+- **Stored predictions:** 9 tracked predictions
+- **Accuracy metrics:** Winner prediction success rate
+- **Team-specific accuracy:** View accuracy for individual teams
+- **AP Poll comparison:** See how ELO predictions compare to AP Poll rankings
+
+📖 See **[docs/PREDICTIONS.md](docs/PREDICTIONS.md)** for complete prediction methodology.
+
 ## API Endpoints
+
+### Predictions 🆕
+- `GET /api/predictions` - Get game predictions for upcoming games
+  - Query params: `next_week` (bool), `week` (0-15), `team_id`, `season`
+- `GET /api/predictions/accuracy` - Get overall prediction accuracy statistics
+- `GET /api/predictions/accuracy/team/{team_id}` - Get team-specific accuracy
+- `GET /api/predictions/stored` - Get all stored predictions
+- `GET /api/predictions/comparison` - Compare ELO vs AP Poll accuracy
+  - Query params: `season`
 
 ### Rankings
 - `GET /api/rankings` - Get current rankings (top 25 by default)
