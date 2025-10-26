@@ -22,9 +22,17 @@ from models import Team, Game, Season, Prediction
 
 
 @pytest.fixture
-def client():
-    """Create FastAPI test client"""
-    return TestClient(app)
+def client(test_db):
+    """Create FastAPI test client with test database"""
+    from database import get_db
+
+    def override_get_db():
+        yield test_db
+
+    app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(app)
+    yield client
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
