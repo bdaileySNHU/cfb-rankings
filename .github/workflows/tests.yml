@@ -112,7 +112,6 @@ jobs:
           python3 << 'EOF'
           from database import Base, engine, SessionLocal
           from models import Season, Team, ConferenceType
-          from datetime import datetime
 
           # Create tables
           Base.metadata.create_all(bind=engine)
@@ -124,9 +123,7 @@ jobs:
               season = Season(
                   year=2024,
                   is_active=True,
-                  current_week=10,
-                  start_date=datetime(2024, 8, 24),
-                  end_date=datetime(2025, 1, 20)
+                  current_week=10
               )
               db.add(season)
 
