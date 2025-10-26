@@ -106,6 +106,45 @@ jobs:
           pip install -r requirements-dev.txt
           python -m playwright install chromium
 
+      # Create and seed test database for E2E tests
+      - name: Setup test database
+        run: |
+          python3 << 'EOF'
+          from database import Base, engine, SessionLocal
+          from models import Season, Team, ConferenceType
+          from datetime import datetime
+
+          # Create tables
+          Base.metadata.create_all(bind=engine)
+
+          # Seed minimal data
+          db = SessionLocal()
+          try:
+              # Add current season
+              season = Season(
+                  year=2024,
+                  is_active=True,
+                  current_week=10,
+                  start_date=datetime(2024, 8, 24),
+                  end_date=datetime(2025, 1, 20)
+              )
+              db.add(season)
+
+              # Add a few test teams
+              teams = [
+                  Team(name="Alabama", conference=ConferenceType.POWER_5, is_fcs=False, elo_rating=1800.0),
+                  Team(name="Georgia", conference=ConferenceType.POWER_5, is_fcs=False, elo_rating=1780.0),
+                  Team(name="Ohio State", conference=ConferenceType.POWER_5, is_fcs=False, elo_rating=1750.0),
+              ]
+              for team in teams:
+                  db.add(team)
+
+              db.commit()
+              print("✓ Test database seeded successfully")
+          finally:
+              db.close()
+          EOF
+
       # Start FastAPI server in background
       - name: Start FastAPI server
         run: |
