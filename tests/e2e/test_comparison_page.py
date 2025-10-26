@@ -262,7 +262,7 @@ class TestComparisonUserWorkflow:
             comparison_link.click()
 
             # Wait for comparison page
-            expect(page).to_have_url(f"{base_url}/frontend/comparison.html}")
+            expect(page).to_have_url(f"{base_url}/frontend/comparison.html")
             page.wait_for_timeout(1000)
 
             # Navigate to games
