@@ -13,7 +13,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi.testclient import TestClient
 
-from models import Base
+# Import Base and ALL models to ensure they're registered with metadata
+from models import (
+    Base, Team, Game, RankingHistory, Season,
+    APIUsage, UpdateTask, Prediction, APPollRanking
+)
 from database import get_db
 from main import app
 
