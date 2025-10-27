@@ -13,13 +13,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi.testclient import TestClient
 
-# Import Base and ALL models to ensure they're registered with metadata
+from database import get_db
+from main import app
+
+# Import Base and ALL models AFTER main to ensure models are registered
+# Importing main first ensures it has already imported and registered all models
 from models import (
     Base, Team, Game, RankingHistory, Season,
     APIUsage, UpdateTask, Prediction, APPollRanking
 )
-from database import get_db
-from main import app
 
 
 @pytest.fixture(scope="function")
@@ -45,6 +47,10 @@ def test_db():
 
     # Create session factory
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+    # Ensure all model classes are registered with Base.metadata
+    # This explicit reference forces Python to load all model classes
+    _models = [Team, Game, RankingHistory, Season, APIUsage, UpdateTask, Prediction, APPollRanking]
 
     # Create all tables
     Base.metadata.create_all(bind=engine)
