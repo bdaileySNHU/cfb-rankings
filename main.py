@@ -919,12 +919,9 @@ async def trigger_manual_update(background_tasks: BackgroundTasks, db: Session =
     # Track in memory
     _running_updates[task_id] = datetime.utcnow()
 
-    # Create new session for background task (don't reuse request session)
-    from database import SessionLocal
-    bg_db = SessionLocal()
-
-    # Run update in background
-    background_tasks.add_task(run_weekly_update_task, task_id, bg_db)
+    # Use the same db session for background task
+    # This ensures tests use the test database instead of creating a production session
+    background_tasks.add_task(run_weekly_update_task, task_id, db)
 
     return {
         "status": "started",
