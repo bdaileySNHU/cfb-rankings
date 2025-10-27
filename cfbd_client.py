@@ -83,12 +83,13 @@ def track_api_usage(func):
     return wrapper
 
 
-def get_monthly_usage(month: str = None) -> dict:
+def get_monthly_usage(month: str = None, db: "Session" = None) -> dict:
     """
     Get API usage stats for specified month.
 
     Args:
         month: Month in YYYY-MM format (defaults to current month)
+        db: Optional database session (creates new session if not provided)
 
     Returns:
         dict: Usage statistics including total calls, limit, percentage, etc.
@@ -100,7 +101,10 @@ def get_monthly_usage(month: str = None) -> dict:
     if not month:
         month = datetime.now().strftime("%Y-%m")
 
-    db = SessionLocal()
+    # Use provided session or create new one
+    db_provided = db is not None
+    if not db_provided:
+        db = SessionLocal()
 
     try:
         # Total calls for month
@@ -160,7 +164,9 @@ def get_monthly_usage(month: str = None) -> dict:
         }
 
     finally:
-        db.close()
+        # Only close session if we created it
+        if not db_provided:
+            db.close()
 
 
 def check_usage_warnings(month: str):

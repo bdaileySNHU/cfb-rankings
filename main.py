@@ -1054,7 +1054,8 @@ async def get_usage_dashboard(month: Optional[str] = None, db: Session = Depends
         month = datetime.now().strftime("%Y-%m")
 
     # Get monthly stats (from Story 001)
-    monthly_stats = get_monthly_usage(month)
+    # Pass db session so it uses the test database in tests
+    monthly_stats = get_monthly_usage(month, db=db)
 
     # Calculate daily usage (last 7 days)
     daily_usage_data = (
