@@ -24,11 +24,13 @@ from models import UpdateTask, APIUsage
 class TestUsageDashboardEndpoint:
     """Tests for GET /api/admin/usage-dashboard"""
 
+    @pytest.mark.integration
     def test_usage_dashboard_returns_200(self, test_client):
         """Dashboard endpoint should return 200 OK"""
         response = test_client.get("/api/admin/usage-dashboard")
         assert response.status_code == 200
 
+    @pytest.mark.integration
     def test_usage_dashboard_has_required_fields(self, test_client):
         """Dashboard response should have all required fields"""
         response = test_client.get("/api/admin/usage-dashboard")
@@ -39,6 +41,7 @@ class TestUsageDashboardEndpoint:
         assert "daily_usage" in data
         assert "last_update" in data
 
+    @pytest.mark.integration
     def test_usage_dashboard_current_month_fields(self, test_client):
         """Current month stats should have all required fields"""
         response = test_client.get("/api/admin/usage-dashboard")
@@ -53,12 +56,14 @@ class TestUsageDashboardEndpoint:
         assert "days_until_reset" in current_month
         assert "projected_end_of_month" in current_month
 
+    @pytest.mark.integration
     def test_usage_dashboard_with_month_parameter(self, test_client):
         """Dashboard should accept month parameter"""
         response = test_client.get("/api/admin/usage-dashboard?month=2025-10")
         assert response.status_code == 200
         assert response.json()["current_month"]["month"] == "2025-10"
 
+    @pytest.mark.integration
     def test_usage_dashboard_calculates_projections(self, test_client):
         """Dashboard should calculate end-of-month projections"""
         response = test_client.get("/api/admin/usage-dashboard")
