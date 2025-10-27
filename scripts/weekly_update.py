@@ -63,12 +63,15 @@ def is_active_season() -> bool:
     return month >= 8 or month <= 1
 
 
-def check_api_usage() -> bool:
+def check_api_usage(db: "Session" = None) -> bool:
     """
     Check if CFBD API usage is below 90% threshold.
 
     Calls the get_monthly_usage() function from Story 001 to check
     current month's API usage against the configured limit.
+
+    Args:
+        db: Optional database session (creates new session if not provided)
 
     Returns:
         bool: True if usage < 90%, False if usage >= 90%
@@ -78,7 +81,7 @@ def check_api_usage() -> bool:
         Logs CRITICAL message if usage >= 90%
     """
     try:
-        usage = get_monthly_usage()
+        usage = get_monthly_usage(db=db)
         percentage = usage['percentage_used']
         remaining = usage['remaining_calls']
         total = usage['total_calls']
@@ -197,7 +200,7 @@ def validate_week_number(week: int, season_year: int) -> bool:
     return True
 
 
-def update_current_week(season_year: int) -> int:
+def update_current_week(season_year: int, db: "Session" = None) -> int:
     """
     Update the current week for a season based on the latest processed games.
 
@@ -207,6 +210,7 @@ def update_current_week(season_year: int) -> int:
 
     Args:
         season_year: Year of the season to update (e.g., 2025)
+        db: Optional database session (creates new session if not provided)
 
     Returns:
         int: The updated current week number (0-15), or 0 if update fails
@@ -219,15 +223,18 @@ def update_current_week(season_year: int) -> int:
     """
     try:
         # Import here to avoid circular imports
-        from sqlalchemy import create_engine, func
-        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy import func
         from models import Season, Game
 
-        # Create database session
-        db_path = project_root / "cfb_rankings.db"
-        engine = create_engine(f"sqlite:///{db_path}")
-        SessionLocal = sessionmaker(bind=engine)
-        db = SessionLocal()
+        # Use provided session or create new one
+        db_provided = db is not None
+        if not db_provided:
+            from sqlalchemy import create_engine
+            from sqlalchemy.orm import sessionmaker
+            db_path = project_root / "cfb_rankings.db"
+            engine = create_engine(f"sqlite:///{db_path}")
+            SessionLocal = sessionmaker(bind=engine)
+            db = SessionLocal()
 
         try:
             # Get max week from processed games this season
@@ -268,7 +275,9 @@ def update_current_week(season_year: int) -> int:
             return max_week
 
         finally:
-            db.close()
+            # Only close session if we created it
+            if not db_provided:
+                db.close()
 
     except Exception as e:
         logger.error(f"Failed to update current week: {e}", exc_info=True)

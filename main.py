@@ -875,6 +875,7 @@ async def trigger_manual_update(background_tasks: BackgroundTasks, db: Session =
     # Import pre-flight check functions
     sys.path.insert(0, str(Path(__file__).parent / "scripts"))
     from weekly_update import is_active_season, check_api_usage, get_current_week_wrapper
+    from cfbd_client import get_monthly_usage
 
     # Pre-flight check 1: Active season
     if not is_active_season():
@@ -898,8 +899,8 @@ async def trigger_manual_update(background_tasks: BackgroundTasks, db: Session =
         )
 
     # Pre-flight check 3: API usage
-    if not check_api_usage():
-        usage = get_monthly_usage()
+    if not check_api_usage(db=db):
+        usage = get_monthly_usage(db=db)
         raise HTTPException(
             status_code=429,
             detail=f"API usage at {usage['percentage_used']}% - update aborted to prevent quota exhaustion"
