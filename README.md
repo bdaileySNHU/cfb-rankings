@@ -163,6 +163,81 @@ View next scheduled run:
 systemctl list-timers cfb-weekly-update.timer
 ```
 
+## Scripts
+
+The project includes several utility scripts for data management and maintenance:
+
+### `scripts/weekly_update.py`
+
+**Automated weekly data import** that runs every Sunday evening to import completed game results and update rankings.
+
+**Purpose:** Keep the system up-to-date with the latest game results during the football season.
+
+**When to run:** Automatically via systemd timer (Sunday 8PM ET) or manually when needed.
+
+**Usage:**
+```bash
+python3 scripts/weekly_update.py
+```
+
+**See:** Automated Weekly Updates section above for setup instructions.
+
+---
+
+### `scripts/generate_predictions.py`
+
+**Generate predictions for upcoming games** using current ELO ratings before games are played.
+
+**Purpose:** Create pre-game predictions for the Prediction Comparison feature.
+
+**When to run:** Every Tuesday/Wednesday before the next weekend's games.
+
+**Usage:**
+```bash
+python3 scripts/generate_predictions.py
+```
+
+**Expected output:** "✅ Successfully saved N predictions to database"
+
+**See:** `docs/WEEKLY-WORKFLOW.md` for integration into weekly maintenance workflow.
+
+---
+
+### `scripts/backfill_historical_predictions.py`
+
+**One-time setup script** that generates predictions for past games using historical ELO ratings that existed before each game was played.
+
+**Purpose:** Populate the Prediction Comparison feature with historically accurate predictions for analysis of prediction algorithm performance.
+
+**When to run:** Once during initial setup, or when historical predictions are missing.
+
+**Usage:**
+```bash
+# Preview changes (recommended first step)
+python3 scripts/backfill_historical_predictions.py --dry-run
+
+# Run actual backfill
+python3 scripts/backfill_historical_predictions.py
+
+# Backfill specific season
+python3 scripts/backfill_historical_predictions.py --season 2025
+
+# Rollback if needed
+python3 scripts/backfill_historical_predictions.py --delete-backfilled \
+  --start-time "2025-10-27 10:00:00" --end-time "2025-10-27 10:05:00"
+```
+
+**Key features:**
+- Uses historical ratings from week before each game (not current ratings)
+- Automatic duplicate prevention (skips games with existing predictions)
+- Dry-run mode for preview without database changes
+- Rollback capability for undo operations
+- Comprehensive logging and progress tracking
+
+**See:** `docs/WEEKLY-WORKFLOW.md` "One-Time Setup: Historical Prediction Backfill" for detailed instructions and troubleshooting.
+
+---
+
 ## Manual Update Trigger
 
 In addition to automated weekly updates, you can manually trigger data imports via the API. This is useful for:
@@ -246,6 +321,10 @@ All endpoints are documented in the interactive API docs at `http://localhost:80
 ├── requirements-dev.txt  # Development & testing dependencies
 ├── Makefile              # Convenient test commands
 ├── cfb_rankings.db       # SQLite database (created on first run)
+├── scripts/              # Utility and maintenance scripts
+│   ├── weekly_update.py  # Automated weekly data import
+│   ├── generate_predictions.py  # Generate predictions for upcoming games
+│   └── backfill_historical_predictions.py  # One-time historical prediction backfill
 └── tests/                # Comprehensive test suite
     ├── unit/             # Unit tests (149 tests)
     ├── integration/      # Integration tests (87 tests)
