@@ -49,7 +49,12 @@ def parse_game_date(game_data: dict) -> datetime:
         game_data: Game data dictionary from CFBD API
 
     Returns:
-        datetime: Parsed game date or current datetime as fallback
+        datetime: Parsed game date, or None if not available
+
+    Note:
+        Returns None instead of datetime.now() when date is unavailable.
+        This prevents showing incorrect import timestamps as game dates.
+        Frontend will display "TBD" for games without scheduled dates.
     """
     date_str = game_data.get('start_date')
     if date_str:
@@ -58,7 +63,8 @@ def parse_game_date(game_data: dict) -> datetime:
             return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
         except (ValueError, AttributeError):
             pass
-    return datetime.now()  # Fallback if date parsing fails
+    # Return None for unscheduled games instead of showing wrong date
+    return None
 
 
 def validate_api_connection(cfbd: CFBDClient, year: int) -> bool:

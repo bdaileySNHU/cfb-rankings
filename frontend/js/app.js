@@ -314,6 +314,9 @@ function createPredictionCard(prediction) {
       hour: 'numeric',
       minute: '2-digit'
     });
+  } else {
+    // Show TBD for games without scheduled dates
+    gameDate = 'TBD';
   }
 
   card.innerHTML = `
