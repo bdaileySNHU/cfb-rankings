@@ -113,7 +113,7 @@ def get_week_statistics(cfbd: CFBDClient, year: int, week: int) -> dict:
 
 
 def import_teams(cfbd: CFBDClient, db, year: int):
-    """Import all FBS teams"""
+    """Import all FBS teams (or reuse existing teams in incremental mode)"""
     print(f"\nImporting FBS teams for {year}...")
 
     # Fetch teams from CFBD
@@ -149,37 +149,54 @@ def import_teams(cfbd: CFBDClient, db, year: int):
 
     team_objects = {}
     ranking_service = RankingService(db)
+    teams_created = 0
+    teams_reused = 0
 
     for team_data in teams_data:
         team_name = team_data['school']
         conference_name = team_data.get('conference', 'FBS Independents')
 
-        # Map conference to tier (P5/G5/FCS)
-        conference_tier = CONFERENCE_MAP.get(conference_name, ConferenceType.GROUP_5)
+        # Check if team already exists (incremental mode)
+        existing_team = db.query(Team).filter(Team.name == team_name).first()
 
-        # Get preseason data
-        recruiting_rank = recruiting_map.get(team_name, 999)
-        transfer_rank = 999  # CFBD doesn't have transfer portal rankings easily accessible
-        returning_prod = returning_map.get(team_name, 0.5)
+        if existing_team:
+            # Reuse existing team
+            team_objects[team_name] = existing_team
+            teams_reused += 1
+        else:
+            # Create new team
+            # Map conference to tier (P5/G5/FCS)
+            conference_tier = CONFERENCE_MAP.get(conference_name, ConferenceType.GROUP_5)
 
-        # EPIC-012: Create team with BOTH conference tier and name
-        team = Team(
-            name=team_name,
-            conference=conference_tier,           # P5/G5/FCS (for logic)
-            conference_name=conference_name,      # "Big Ten", "SEC", etc. (for display)
-            recruiting_rank=recruiting_rank,
-            transfer_rank=transfer_rank,
-            returning_production=returning_prod
-        )
+            # Get preseason data
+            recruiting_rank = recruiting_map.get(team_name, 999)
+            transfer_rank = 999  # CFBD doesn't have transfer portal rankings easily accessible
+            returning_prod = returning_map.get(team_name, 0.5)
 
-        ranking_service.initialize_team_rating(team)
-        db.add(team)
-        team_objects[team_name] = team
+            # EPIC-012: Create team with BOTH conference tier and name
+            team = Team(
+                name=team_name,
+                conference=conference_tier,           # P5/G5/FCS (for logic)
+                conference_name=conference_name,      # "Big Ten", "SEC", etc. (for display)
+                recruiting_rank=recruiting_rank,
+                transfer_rank=transfer_rank,
+                returning_production=returning_prod
+            )
 
-        print(f"  Added: {team_name} - {conference_name} ({conference_tier.value}) - Recruiting: #{recruiting_rank}, Returning: {returning_prod*100:.0f}%")
+            ranking_service.initialize_team_rating(team)
+            db.add(team)
+            team_objects[team_name] = team
+            teams_created += 1
+
+            print(f"  Added: {team_name} - {conference_name} ({conference_tier.value}) - Recruiting: #{recruiting_rank}, Returning: {returning_prod*100:.0f}%")
 
     db.commit()
-    print(f"\n✓ Imported {len(team_objects)} teams")
+
+    if teams_reused > 0:
+        print(f"\n✓ Reused {teams_reused} existing teams, created {teams_created} new teams")
+    else:
+        print(f"\n✓ Imported {len(team_objects)} teams")
+
     return team_objects
 
 
@@ -761,8 +778,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
 Examples:
-  # Auto-detect season and import all available weeks
+  # Incremental update (default) - import new data without resetting database
   python3 import_real_data.py
+
+  # Full reset - wipe database and reimport everything
+  python3 import_real_data.py --reset
 
   # Override season year
   python3 import_real_data.py --season 2024
@@ -770,9 +790,14 @@ Examples:
   # Override max week to import
   python3 import_real_data.py --max-week 10
 
-  # Specify both
+  # Specify both season and week
   python3 import_real_data.py --season 2024 --max-week 12
         """
+    )
+    parser.add_argument(
+        '--reset',
+        action='store_true',
+        help='Reset database before import (WARNING: destroys all existing data)'
     )
     parser.add_argument(
         '--season',
@@ -816,28 +841,45 @@ Examples:
         print(f"  → VALIDATE-ONLY MODE: No database changes will be made")
     if args.strict:
         print(f"  → STRICT MODE: Will fail on validation warnings")
+    if args.reset:
+        print(f"  → RESET MODE: Database will be wiped and rebuilt")
+    else:
+        print(f"  → INCREMENTAL MODE: New data will be added to existing database")
     print()
 
     # Initialize database
     db = SessionLocal()
 
-    # Confirm reset
-    print("WARNING: This will reset your database and replace all data!")
-    response = input("Continue? (yes/no): ")
+    # Conditional reset based on --reset flag
+    if args.reset:
+        # Confirm reset
+        print("WARNING: This will reset your database and replace all data!")
+        response = input("Continue? (yes/no): ")
 
-    if response.lower() != 'yes':
-        print("Cancelled.")
-        return
+        if response.lower() != 'yes':
+            print("Cancelled.")
+            return
 
-    # Reset database
-    print("\nResetting database...")
-    reset_db()
+        # Reset database
+        print("\nResetting database...")
+        reset_db()
 
-    # Create season
-    print(f"Creating {season} season...")
-    season_obj = Season(year=season, current_week=0, is_active=True)
-    db.add(season_obj)
-    db.commit()
+        # Create season
+        print(f"Creating {season} season...")
+        season_obj = Season(year=season, current_week=0, is_active=True)
+        db.add(season_obj)
+        db.commit()
+    else:
+        # Incremental mode - get or create season
+        print(f"Incremental mode: Getting or creating {season} season...")
+        season_obj = db.query(Season).filter(Season.year == season).first()
+        if not season_obj:
+            print(f"  Season {season} not found, creating new season...")
+            season_obj = Season(year=season, current_week=0, is_active=True)
+            db.add(season_obj)
+            db.commit()
+        else:
+            print(f"  Found existing season {season} (current week: {season_obj.current_week})")
 
     # Import teams
     team_objects = import_teams(cfbd, db, year=season)

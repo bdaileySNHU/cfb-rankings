@@ -369,26 +369,38 @@ Generating predictions for upcoming games...
 
 #### Automated (Recommended)
 
-The system has a cron job scheduled for Sunday evenings:
+The system has a cron job scheduled for Sunday evenings that runs in **incremental mode** (does not reset database):
 
 ```bash
 # Configured in crontab or scheduled task
+# Runs incremental update - preserves all existing data and manual corrections
 0 20 * * 0 cd "/path/to/Stat-urday Synthesis" && python3 scripts/weekly_update.py
 ```
+
+**The automated update uses incremental mode**, which safely adds new data without resetting the database or losing manual corrections.
 
 #### Manual
 
 ```bash
 cd "/path/to/Stat-urday Synthesis"
-echo "yes" | python3 import_real_data.py
+# Incremental update (default) - preserves all existing data
+python3 import_real_data.py
+
+# OR for full reset (rarely needed - wipes all data)
+python3 import_real_data.py --reset
 ```
 
-**What it does:**
-- Fetches completed game results from CFBD API
-- Marks games as processed
-- Updates team ELO ratings
-- Updates season current_week
-- **PRESERVES existing predictions** (does not overwrite them)
+**What it does (Incremental Mode - Default):**
+- ✅ Fetches new completed game results from CFBD API
+- ✅ Updates future games that now have scores
+- ✅ Marks games as processed
+- ✅ Updates team ELO ratings
+- ✅ Updates season current_week
+- ✅ **PRESERVES existing predictions** (does not overwrite them)
+- ✅ **PRESERVES manual corrections** (like current_week adjustments)
+- ✅ **PRESERVES historical data** (does not reset database)
+
+**Note:** Incremental mode is now the default. Use `--reset` only when you need to completely rebuild the database from scratch.
 
 ---
 

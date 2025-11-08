@@ -286,10 +286,11 @@ def update_current_week(season_year: int, db: "Session" = None) -> int:
 
 def run_import_script() -> int:
     """
-    Execute the import_real_data.py script.
+    Execute the import_real_data.py script in incremental mode.
 
-    Runs the existing import script as a subprocess, automatically
-    answering "yes" to any confirmation prompts.
+    Runs the existing import script as a subprocess using incremental update mode
+    (default behavior). This imports new games and updates existing games without
+    resetting the database, preserving manual corrections and historical data.
 
     Returns:
         int: Exit code from import script (0 for success, non-zero for failure)
@@ -297,6 +298,10 @@ def run_import_script() -> int:
     Side Effects:
         Logs start time, end time, duration, and success/failure status
         Logs stdout/stderr from import script if it fails
+
+    Note:
+        No --reset flag is passed, so import runs in incremental mode.
+        Manual corrections (e.g., current_week updates) are preserved.
     """
     import_script = project_root / "import_real_data.py"
 
@@ -304,14 +309,15 @@ def run_import_script() -> int:
         logger.error(f"Import script not found: {import_script}")
         return 1
 
-    logger.info(f"Starting data import: {import_script}")
+    logger.info(f"Starting incremental data import: {import_script}")
     start_time = datetime.now()
 
     try:
-        # Run import script with automatic "yes" to prompts
+        # Run import script in incremental mode (no --reset flag)
+        # Incremental mode: imports new data without resetting database
         result = subprocess.run(
             [sys.executable, str(import_script)],
-            input="yes\n",
+            input="yes\n",  # Legacy input for old reset prompts (ignored in incremental mode)
             text=True,
             capture_output=True,
             timeout=1800,  # 30 minute timeout
@@ -322,12 +328,12 @@ def run_import_script() -> int:
         duration = (end_time - start_time).total_seconds()
 
         if result.returncode == 0:
-            logger.info(f"Data import completed successfully in {duration:.1f} seconds")
+            logger.info(f"Incremental data import completed successfully in {duration:.1f} seconds")
             logger.debug(f"Import output: {result.stdout[:500]}")  # Log first 500 chars
             return 0
         else:
             logger.error(
-                f"Data import failed with exit code {result.returncode} "
+                f"Incremental data import failed with exit code {result.returncode} "
                 f"after {duration:.1f} seconds"
             )
             logger.error(f"STDOUT:\n{result.stdout}")
@@ -352,18 +358,21 @@ def main():
     """
     Main entry point for weekly update script.
 
-    Executes pre-flight checks and runs data import if all checks pass:
+    Executes pre-flight checks and runs incremental data import if all checks pass:
       1. Check if we're in active season (Aug-Jan)
       2. Detect current week from CFBD API
       3. Check API usage < 90%
-      4. Run import_real_data.py
+      4. Run import_real_data.py in incremental mode (no database reset)
+
+    Incremental mode preserves manual corrections and historical data while
+    importing new games and updating existing games with new scores.
 
     Exit Codes:
         0 - Success (data imported or gracefully skipped due to off-season)
         1 - Failure (check failed or import error)
     """
     logger.info("=" * 80)
-    logger.info("CFB Rankings Weekly Update Started")
+    logger.info("CFB Rankings Weekly Update Started (Incremental Mode)")
     logger.info("=" * 80)
 
     # Check 1: Active season
@@ -402,14 +411,15 @@ def main():
     logger.info("✓ API usage check passed")
 
     # Execute import
-    logger.info("All pre-flight checks passed - starting data import...")
+    logger.info("All pre-flight checks passed - starting incremental data import...")
+    logger.info("(Incremental mode: new data will be added without resetting database)")
     logger.info("-" * 80)
 
     exit_code = run_import_script()
 
     logger.info("-" * 80)
     if exit_code == 0:
-        logger.info("✅ Data import completed successfully")
+        logger.info("✅ Incremental data import completed successfully")
 
         # Update current week (redundancy in case import didn't update it)
         logger.info("Updating current week from processed games...")

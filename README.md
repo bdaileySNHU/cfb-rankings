@@ -30,11 +30,43 @@ A comprehensive college football ranking system using a **Modified ELO algorithm
 # Get free API key from https://collegefootballdata.com/key
 export CFBD_API_KEY='your-key-here'
 
-# Import real teams and games
+# Incremental update (default) - adds new data without resetting
 python3 import_real_data.py
+
+# Full reset (first time or clean slate)
+python3 import_real_data.py --reset
 ```
 
+**Incremental mode** preserves manual corrections and historical data while importing new games. Use `--reset` only for first-time setup or when you need a clean database.
+
 See **[REAL_DATA_GUIDE.md](REAL_DATA_GUIDE.md)** for complete instructions.
+
+### When to Use Reset vs. Incremental
+
+**Use Incremental Mode (Default)** for:
+- ✅ Weekly data updates
+- ✅ Importing new games for the latest week
+- ✅ Updating future games that now have scores
+- ✅ Preserving manual corrections (like current week adjustments)
+- ✅ Maintaining historical data and rankings
+
+**Use Reset Mode** only for:
+- 🔴 First-time database setup
+- 🔴 Fixing major data corruption issues
+- 🔴 Completely switching to a different season
+- 🔴 When you need to start from scratch
+
+**Quick Commands:**
+```bash
+# Normal weekly update (recommended)
+python3 import_real_data.py
+
+# Easy reset with wrapper script (with safety confirmation)
+./scripts/reset_and_import.sh
+
+# Direct reset command
+python3 import_real_data.py --reset
+```
 
 ## API Usage Monitoring
 

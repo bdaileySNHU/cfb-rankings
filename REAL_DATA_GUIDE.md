@@ -27,16 +27,31 @@ echo 'export CFBD_API_KEY="your-key-here"' >> ~/.zshrc
 ### Step 3: Run the Import Script
 
 ```bash
+# Incremental update (default) - adds new data without resetting database
 python3 import_real_data.py
+
+# Full reset - wipe database and reimport everything (first time setup)
+python3 import_real_data.py --reset
 ```
 
+**Incremental Mode (Default):**
+- Imports new games and updates existing games
+- Preserves manual corrections (like current week adjustments)
+- Reuses existing teams and season data
+- Safe for weekly updates
+
+**Reset Mode (--reset flag):**
+- Wipes the entire database and starts fresh
+- Use for first-time setup or when you need a clean slate
+- Asks for confirmation before resetting
+- Rebuilds everything from scratch
+
 The script will:
-1. Ask you to confirm (it will reset your database)
-2. Ask how many weeks of games to import
-3. Fetch all FBS teams (~130 teams)
-4. Import games with real scores
-5. Calculate ELO ratings based on actual results
-6. Display the final rankings
+1. Auto-detect the current season and week
+2. Fetch all FBS teams (~130 teams)
+3. Import games with real scores (incremental or full)
+4. Calculate ELO ratings based on actual results
+5. Display the final rankings
 
 **Example Output:**
 ```
@@ -110,16 +125,28 @@ The free tier includes:
 
 ## Updating Your Rankings
 
-### Add New Week's Games
+### Weekly Updates (Recommended)
 
-Once you've imported data, you can update weekly:
+The best way to update weekly is to use **incremental mode** (default):
 
 ```bash
-# Just import the latest week
-python3 update_games.py --week 6
+# Simply run the import script - it will add new data without resetting
+python3 import_real_data.py
+
+# Or specify a max week to import through
+python3 import_real_data.py --max-week 10
 ```
 
-Or use the API directly:
+**What incremental updates do:**
+- ✅ Import new games for the latest week
+- ✅ Update future games that now have scores
+- ✅ Preserve your manual corrections (like current week adjustments)
+- ✅ Keep all historical data and rankings
+- ✅ Much faster than full reset
+
+### Manual Game Entry (Alternative)
+
+Or use the API directly to add individual games:
 ```bash
 curl -X POST http://localhost:8000/api/games \
   -H "Content-Type: application/json" \
@@ -132,6 +159,15 @@ curl -X POST http://localhost:8000/api/games \
     "season": 2024
   }'
 ```
+
+### When to Use Reset Mode
+
+Only use `--reset` when you need to:
+- Start completely fresh with a clean database
+- Fix major data corruption issues
+- Switch to a different season
+
+**Warning:** Reset mode wipes all data including manual corrections!
 
 ## Data Sources
 
@@ -224,6 +260,44 @@ Your ELO rankings might reveal:
 - Some FCS teams play FBS teams but aren't imported
 - The script only imports FBS teams to keep rankings relevant
 - You can modify to include FCS if desired
+
+### Database Corruption or Data Issues
+
+If you encounter data corruption or incorrect data that can't be fixed incrementally:
+
+**Option 1: Easy Reset (Recommended)**
+```bash
+./scripts/reset_and_import.sh
+```
+This wrapper script:
+- Shows a clear warning about data loss
+- Asks for confirmation
+- Runs the full reset safely
+
+**Option 2: Direct Reset**
+```bash
+python3 import_real_data.py --reset
+```
+
+**Warning:** Reset mode deletes ALL data including:
+- All games and results
+- All team data and ELO ratings
+- All predictions and accuracy data
+- All ranking history
+- Manual corrections (like current_week adjustments)
+
+Only use reset when absolutely necessary. For most updates, use incremental mode (default).
+
+### Incremental Update Not Working
+
+If incremental updates aren't importing new data:
+
+1. **Check if games exist:** Verify games are available on CFBD for that week
+2. **Check current week:** Use `python3 scripts/fix_current_week.py --year 2024 --week X`
+3. **Check API usage:** Make sure you haven't hit the monthly limit
+4. **Try with specific week:** `python3 import_real_data.py --max-week 10`
+
+If problems persist, the upsert logic should handle duplicate games gracefully.
 
 ## Advanced: Automated Updates
 
