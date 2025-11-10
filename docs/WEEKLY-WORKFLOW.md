@@ -369,17 +369,17 @@ Generating predictions for upcoming games...
 
 #### Automated (Recommended)
 
-The system has a cron job scheduled for Sunday evenings that runs in **incremental mode** (does not reset database):
+The system has a systemd timer scheduled for Sunday evenings that runs in **incremental mode** (does not reset database):
 
 ```bash
-# Configured in crontab or scheduled task
-# Runs incremental update - preserves all existing data and manual corrections
-0 20 * * 0 cd "/path/to/Stat-urday Synthesis" && python3 scripts/weekly_update.py
+# Systemd timer runs automatically
+# View timer status: systemctl list-timers cfb-weekly-update.timer
+# View service status: systemctl status cfb-weekly-update.service
 ```
 
 **The automated update uses incremental mode**, which safely adds new data without resetting the database or losing manual corrections.
 
-#### Manual
+#### Manual - Development Environment
 
 ```bash
 cd "/path/to/Stat-urday Synthesis"
@@ -389,6 +389,33 @@ python3 import_real_data.py
 # OR for full reset (rarely needed - wipes all data)
 python3 import_real_data.py --reset
 ```
+
+#### Manual - Production Server
+
+**IMPORTANT:** On production servers, always run as the web server user to ensure proper permissions:
+
+```bash
+# Change to project directory
+cd /var/www/cfb-rankings
+
+# Pull latest code (if needed)
+git pull
+
+# Incremental update (default) - preserves all existing data
+sudo -u www-data /var/www/cfb-rankings/venv/bin/python /var/www/cfb-rankings/import_real_data.py
+
+# OR for full reset (rarely needed - wipes all data)
+sudo -u www-data /var/www/cfb-rankings/venv/bin/python /var/www/cfb-rankings/import_real_data.py --reset
+
+# Check database status after import
+sudo -u www-data /var/www/cfb-rankings/venv/bin/python /var/www/cfb-rankings/scripts/check_database_status.py
+```
+
+**Why `sudo -u www-data`?**
+- Ensures files are owned by the web server user
+- Prevents permission errors when the web application accesses the database
+- Maintains consistent file ownership across the system
+- Database file (`cfb_rankings.db`) must be writable by www-data
 
 **What it does (Incremental Mode - Default):**
 - ✅ Fetches new completed game results from CFBD API

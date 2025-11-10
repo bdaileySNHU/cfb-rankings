@@ -317,6 +317,83 @@ crontab -e
 # Similar to import_real_data.py but only new games
 ```
 
+## Production Deployment
+
+### Running Commands on Production Server
+
+**IMPORTANT:** On production servers (e.g., /var/www/cfb-rankings), always run Python scripts as the web server user to ensure proper file permissions:
+
+```bash
+# Navigate to project directory
+cd /var/www/cfb-rankings
+
+# Pull latest code updates
+git pull
+
+# Run import as www-data user (incremental mode - default)
+sudo -u www-data /var/www/cfb-rankings/venv/bin/python /var/www/cfb-rankings/import_real_data.py
+
+# OR full reset (rarely needed - wipes all data)
+sudo -u www-data /var/www/cfb-rankings/venv/bin/python /var/www/cfb-rankings/import_real_data.py --reset
+
+# Check database status
+sudo -u www-data /var/www/cfb-rankings/venv/bin/python /var/www/cfb-rankings/scripts/check_database_status.py
+
+# Check API data for current week
+sudo -u www-data /var/www/cfb-rankings/venv/bin/python /var/www/cfb-rankings/scripts/check_week11_api.py
+```
+
+### Why `sudo -u www-data`?
+
+Running scripts as the web server user ensures:
+- **Proper ownership**: Database and log files are owned by www-data
+- **No permission errors**: Web application can read/write database
+- **Security**: Follows principle of least privilege
+- **Consistency**: All files have consistent ownership
+
+### Common Production Commands
+
+**Check systemd timer status:**
+```bash
+systemctl list-timers cfb-weekly-update.timer
+systemctl status cfb-weekly-update.service
+journalctl -u cfb-weekly-update.service -n 50
+```
+
+**Manually trigger weekly update:**
+```bash
+sudo systemctl start cfb-weekly-update.service
+```
+
+**Install dependencies:**
+```bash
+# If you get "ModuleNotFoundError", install missing packages:
+sudo /var/www/cfb-rankings/venv/bin/pip install -r /var/www/cfb-rankings/requirements.txt
+```
+
+**View recent logs:**
+```bash
+tail -f /var/www/cfb-rankings/logs/weekly_update.log
+```
+
+### Environment Variables on Production
+
+**Set API key for www-data user:**
+```bash
+# Add to /etc/environment (system-wide)
+echo 'CFBD_API_KEY="your-key-here"' | sudo tee -a /etc/environment
+
+# OR add to systemd service file:
+# Edit /etc/systemd/system/cfb-weekly-update.service
+# Add under [Service]:
+# Environment="CFBD_API_KEY=your-key-here"
+```
+
+**Verify environment:**
+```bash
+sudo -u www-data env | grep CFBD
+```
+
 ## What's Next?
 
 With real data imported:
