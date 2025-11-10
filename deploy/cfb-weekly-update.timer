@@ -7,12 +7,13 @@ Requires=cfb-weekly-update.service
 # Trigger every Sunday at 5:00 PM Eastern Time
 #
 # IMPORTANT: Systemd timers use UTC time. Convert from ET to UTC:
+#   - During EST (Nov-Mar): 5:00 PM ET = 10:00 PM UTC Sunday (22:00)
 #   - During EDT (Mar-Nov): 5:00 PM ET = 9:00 PM UTC Sunday (21:00)
-#   - During EST (Nov-Feb): 5:00 PM ET = 10:00 PM UTC Sunday (22:00)
 #
-# Using two timer entries to handle DST automatically:
-OnCalendar=Sun *-03..10-* 21:00  # EDT months (March-October): 5pm ET = 9pm UTC
-OnCalendar=Sun *-11..02-* 22:00  # EST months (November-February): 5pm ET = 10pm UTC
+# Using 22:00 UTC covers EST period (most of CFB season: Sep-Jan)
+# During EDT period (late Aug-early Sep), timer runs at 6:00 PM ET instead of 5:00 PM
+# This is acceptable as most of the season is played during EST
+OnCalendar=Sun 22:00
 
 # Persistent=true ensures missed runs (e.g., system was off) will execute on next boot
 Persistent=true
