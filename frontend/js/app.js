@@ -280,6 +280,15 @@ async function loadPredictions(filters = { nextWeek: true }) {
       return;
     }
 
+    // EPIC-020 Story 20.2: Sort predictions by highest team rating (best matchups first)
+    predictions.sort((a, b) => {
+      // Get highest rating from each matchup
+      const maxRatingA = Math.max(a.home_team_rating || 0, a.away_team_rating || 0);
+      const maxRatingB = Math.max(b.home_team_rating || 0, b.away_team_rating || 0);
+      // Sort descending (highest rating first)
+      return maxRatingB - maxRatingA;
+    });
+
     // Render predictions
     predictions.forEach(pred => {
       const card = createPredictionCard(pred);
