@@ -577,6 +577,34 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                     existing_game.excluded_from_rankings = is_fcs_game  # Update based on actual FCS status
                     existing_game.game_date = parse_game_date(game_data)
 
+                    # EPIC-021: Fetch and update quarter scores
+                    line_scores = cfbd.get_game_line_scores(
+                        game_id=game_data.get('id', 0),
+                        year=year,
+                        week=week,
+                        home_team=home_team_name,
+                        away_team=away_team_name
+                    )
+                    if line_scores:
+                        existing_game.q1_home = line_scores['home'][0]
+                        existing_game.q1_away = line_scores['away'][0]
+                        existing_game.q2_home = line_scores['home'][1]
+                        existing_game.q2_away = line_scores['away'][1]
+                        existing_game.q3_home = line_scores['home'][2]
+                        existing_game.q3_away = line_scores['away'][2]
+                        existing_game.q4_home = line_scores['home'][3]
+                        existing_game.q4_away = line_scores['away'][3]
+
+                        # Validate quarter scores
+                        try:
+                            existing_game.validate_quarter_scores()
+                        except ValueError as e:
+                            print(f"    ⚠️  Quarter validation failed: {e}")
+                            existing_game.q1_home = existing_game.q1_away = None
+                            existing_game.q2_home = existing_game.q2_away = None
+                            existing_game.q3_home = existing_game.q3_away = None
+                            existing_game.q4_home = existing_game.q4_away = None
+
                     # Mark as unprocessed so ELO calculation runs
                     existing_game.is_processed = False
 
@@ -629,6 +657,17 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
             # EPIC-008: Future games are excluded from rankings for safety
             excluded_from_rankings = is_fcs_game or is_future_game
 
+            # EPIC-021: Fetch quarter scores if game is completed
+            line_scores = None
+            if not is_future_game:
+                line_scores = cfbd.get_game_line_scores(
+                    game_id=game_data.get('id', 0),
+                    year=year,
+                    week=week,
+                    home_team=home_team_name,
+                    away_team=away_team_name
+                )
+
             game = Game(
                 home_team_id=home_team.id,
                 away_team_id=away_team.id,
@@ -638,8 +677,26 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                 season=year,
                 is_neutral_site=is_neutral,
                 excluded_from_rankings=excluded_from_rankings,
-                game_date=parse_game_date(game_data)  # EPIC-008: Parse actual date from CFBD
+                game_date=parse_game_date(game_data),  # EPIC-008: Parse actual date from CFBD
+                # EPIC-021: Quarter scores (if available)
+                q1_home=line_scores['home'][0] if line_scores else None,
+                q1_away=line_scores['away'][0] if line_scores else None,
+                q2_home=line_scores['home'][1] if line_scores else None,
+                q2_away=line_scores['away'][1] if line_scores else None,
+                q3_home=line_scores['home'][2] if line_scores else None,
+                q3_away=line_scores['away'][2] if line_scores else None,
+                q4_home=line_scores['home'][3] if line_scores else None,
+                q4_away=line_scores['away'][3] if line_scores else None,
             )
+
+            # EPIC-021: Validate quarter scores if present
+            try:
+                game.validate_quarter_scores()
+            except ValueError as e:
+                print(f"    ⚠️  Quarter score validation failed: {e}")
+                # Set quarters to None if validation fails
+                game.q1_home = game.q1_away = game.q2_home = game.q2_away = None
+                game.q3_home = game.q3_away = game.q4_home = game.q4_away = None
 
             db.add(game)
             db.commit()

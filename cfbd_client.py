@@ -536,6 +536,91 @@ class CFBDClient:
 
         return ap_rankings
 
+    def get_game_line_scores(self, game_id: int, year: int, week: int,
+                            home_team: str, away_team: str) -> Optional[Dict[str, List[int]]]:
+        """
+        Fetch quarter-by-quarter line scores for a game from CFBD API.
+
+        Part of EPIC-021: Quarter-Weighted ELO
+
+        Args:
+            game_id: CFBD game ID (for logging/tracking)
+            year: Season year
+            week: Week number
+            home_team: Home team name
+            away_team: Away team name
+
+        Returns:
+            Dict with 'home' and 'away' keys, each containing list of 4 quarter scores
+            Returns None if line scores unavailable
+
+        Example:
+            >>> client.get_game_line_scores(401525476, 2024, 5, "Georgia", "Alabama")
+            {'home': [7, 14, 7, 10], 'away': [0, 7, 14, 3]}
+        """
+        try:
+            # Fetch game data with team stats (includes line scores)
+            params = {
+                'year': year,
+                'week': week,
+                'team': home_team  # Filter to games involving home team
+            }
+
+            games = self._get('/games/teams', params=params)
+
+            if not games:
+                logger.debug(f"No game data for {home_team} vs {away_team}, Week {week}, {year}")
+                return None
+
+            # Find the specific game matching both teams
+            for game_data in games:
+                game_teams = game_data.get('teams', [])
+                if len(game_teams) < 2:
+                    continue
+
+                team1 = game_teams[0]
+                team2 = game_teams[1]
+
+                # Check if this is the game we're looking for
+                team1_name = team1.get('school', '')
+                team2_name = team2.get('school', '')
+
+                if (team1_name == home_team and team2_name == away_team) or \
+                   (team1_name == away_team and team2_name == home_team):
+
+                    # Determine which team is home
+                    if team1.get('homeAway') == 'home':
+                        home_data = team1
+                        away_data = team2
+                    else:
+                        home_data = team2
+                        away_data = team1
+
+                    # Extract line scores
+                    home_line = home_data.get('lineScores', [])
+                    away_line = away_data.get('lineScores', [])
+
+                    # Verify we have at least 4 quarters
+                    if len(home_line) >= 4 and len(away_line) >= 4:
+                        logger.debug(f"✓ Line scores found for {home_team} vs {away_team}")
+                        return {
+                            'home': home_line[:4],  # First 4 quarters only
+                            'away': away_line[:4]
+                        }
+                    else:
+                        logger.debug(f"Line scores incomplete for {home_team} vs {away_team}")
+                        return None
+
+            logger.debug(f"Game not found: {home_team} vs {away_team}, Week {week}, {year}")
+            return None
+
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Failed to fetch line scores for game {game_id}: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error fetching line scores: {e}")
+            return None
+
 
 def test_api():
     """Test CFBD API connection"""

@@ -701,3 +701,220 @@ class TestSeasonModel:
         assert "2024" in repr_string
         assert "8" in repr_string
         assert "True" in repr_string
+
+
+@pytest.mark.unit
+class TestGameQuarterScores:
+    """Tests for Game quarter score validation - EPIC-021"""
+
+    def test_game_with_valid_quarter_scores(self, test_db: Session):
+        """Test creating game with valid quarter scores"""
+        # Arrange
+        home_team = Team(name="Home Q1", conference=ConferenceType.POWER_5)
+        away_team = Team(name="Away Q1", conference=ConferenceType.POWER_5)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Act
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=28,
+            away_score=21,
+            week=1,
+            season=2024,
+            q1_home=7, q1_away=7,
+            q2_home=7, q2_away=7,
+            q3_home=7, q3_away=0,
+            q4_home=7, q4_away=7
+        )
+        test_db.add(game)
+        test_db.commit()
+        test_db.refresh(game)
+
+        # Assert
+        assert game.q1_home == 7
+        assert game.q1_away == 7
+        assert game.q2_home == 7
+        assert game.q2_away == 7
+        assert game.q3_home == 7
+        assert game.q3_away == 0
+        assert game.q4_home == 7
+        assert game.q4_away == 7
+
+        # Validation should pass
+        game.validate_quarter_scores()  # Should not raise
+
+    def test_game_with_null_quarter_scores(self, test_db: Session):
+        """Test that NULL quarter scores are allowed (backward compatibility)"""
+        # Arrange
+        home_team = Team(name="Home Q2", conference=ConferenceType.POWER_5)
+        away_team = Team(name="Away Q2", conference=ConferenceType.POWER_5)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Act
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=35,
+            away_score=28,
+            week=1,
+            season=2024
+            # No quarter scores specified
+        )
+        test_db.add(game)
+        test_db.commit()
+        test_db.refresh(game)
+
+        # Assert
+        assert game.q1_home is None
+        assert game.q1_away is None
+        assert game.q2_home is None
+        assert game.q2_away is None
+        assert game.q3_home is None
+        assert game.q3_away is None
+        assert game.q4_home is None
+        assert game.q4_away is None
+
+        # Validation should pass (NULLs bypass validation)
+        game.validate_quarter_scores()  # Should not raise
+
+    def test_game_quarter_score_validation_home_mismatch(self, test_db: Session):
+        """Test that validation catches home team quarter score mismatch"""
+        # Arrange
+        home_team = Team(name="Home Q3", conference=ConferenceType.POWER_5)
+        away_team = Team(name="Away Q3", conference=ConferenceType.POWER_5)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Act
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=28,  # Final score
+            away_score=21,
+            week=1,
+            season=2024,
+            q1_home=7, q1_away=7,
+            q2_home=7, q2_away=7,
+            q3_home=7, q3_away=0,
+            q4_home=14, q4_away=7  # Sum: 35 != 28 final score
+        )
+
+        # Assert
+        with pytest.raises(ValueError) as excinfo:
+            game.validate_quarter_scores()
+
+        assert "Home quarter scores sum to 35, expected 28" in str(excinfo.value)
+
+    def test_game_quarter_score_validation_away_mismatch(self, test_db: Session):
+        """Test that validation catches away team quarter score mismatch"""
+        # Arrange
+        home_team = Team(name="Home Q4", conference=ConferenceType.POWER_5)
+        away_team = Team(name="Away Q4", conference=ConferenceType.POWER_5)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Act
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=28,
+            away_score=21,  # Final score
+            week=1,
+            season=2024,
+            q1_home=7, q1_away=3,
+            q2_home=7, q2_away=7,
+            q3_home=7, q3_away=7,
+            q4_home=7, q4_away=7  # Away sum: 24 != 21 final score
+        )
+
+        # Assert
+        with pytest.raises(ValueError) as excinfo:
+            game.validate_quarter_scores()
+
+        assert "Away quarter scores sum to 24, expected 21" in str(excinfo.value)
+
+    def test_game_partial_quarter_data_bypasses_validation(self, test_db: Session):
+        """Test that partial quarter data (some NULLs) bypasses validation"""
+        # Arrange
+        home_team = Team(name="Home Q5", conference=ConferenceType.POWER_5)
+        away_team = Team(name="Away Q5", conference=ConferenceType.POWER_5)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Act - Only have Q1 and Q2 data, missing Q3 and Q4
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=28,
+            away_score=21,
+            week=1,
+            season=2024,
+            q1_home=7, q1_away=7,
+            q2_home=7, q2_away=7,
+            q3_home=None, q3_away=None,  # Missing data
+            q4_home=None, q4_away=None   # Missing data
+        )
+
+        # Assert - Validation should pass (partial data bypasses validation)
+        game.validate_quarter_scores()  # Should not raise
+
+    def test_game_zero_scores_in_quarters(self, test_db: Session):
+        """Test that zero scores in quarters are valid"""
+        # Arrange
+        home_team = Team(name="Home Q6", conference=ConferenceType.POWER_5)
+        away_team = Team(name="Away Q6", conference=ConferenceType.POWER_5)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Act - Defensive game with 0-0 in some quarters
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=10,
+            away_score=3,
+            week=1,
+            season=2024,
+            q1_home=0, q1_away=0,  # 0-0 Q1
+            q2_home=3, q2_away=3,  # 3-3 Q2
+            q3_home=7, q3_away=0,  # 7-0 Q3
+            q4_home=0, q4_away=0   # 0-0 Q4
+        )
+        test_db.add(game)
+        test_db.commit()
+
+        # Assert
+        game.validate_quarter_scores()  # Should pass
+        assert game.q1_home == 0
+        assert game.q4_away == 0
+
+    def test_game_high_scoring_quarters(self, test_db: Session):
+        """Test game with high-scoring quarters"""
+        # Arrange
+        home_team = Team(name="Home Q7", conference=ConferenceType.POWER_5)
+        away_team = Team(name="Away Q7", conference=ConferenceType.POWER_5)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Act - High-scoring game
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=63,
+            away_score=56,
+            week=1,
+            season=2024,
+            q1_home=21, q1_away=14,
+            q2_home=14, q2_away=21,
+            q3_home=14, q3_away=14,
+            q4_home=14, q4_away=7
+        )
+        test_db.add(game)
+        test_db.commit()
+
+        # Assert
+        game.validate_quarter_scores()  # Should pass
+        assert sum([game.q1_home, game.q2_home, game.q3_home, game.q4_home]) == 63
+        assert sum([game.q1_away, game.q2_away, game.q3_away, game.q4_away]) == 56

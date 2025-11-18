@@ -71,6 +71,16 @@ class Game(Base):
     home_score = Column(Integer, nullable=False)
     away_score = Column(Integer, nullable=False)
 
+    # Quarter-by-quarter scores (nullable for backward compatibility)
+    q1_home = Column(Integer, nullable=True)
+    q1_away = Column(Integer, nullable=True)
+    q2_home = Column(Integer, nullable=True)
+    q2_away = Column(Integer, nullable=True)
+    q3_home = Column(Integer, nullable=True)
+    q3_away = Column(Integer, nullable=True)
+    q4_home = Column(Integer, nullable=True)
+    q4_away = Column(Integer, nullable=True)
+
     # Game info
     week = Column(Integer, nullable=False)
     season = Column(Integer, nullable=False)
@@ -107,6 +117,27 @@ class Game(Base):
     def loser_id(self):
         """Return the ID of the losing team"""
         return self.away_team_id if self.home_score > self.away_score else self.home_team_id
+
+    def validate_quarter_scores(self):
+        """
+        Validate quarter scores sum to final scores if provided.
+
+        Raises:
+            ValueError: If quarter scores don't sum to final scores
+        """
+        # Validate home team quarters
+        if all([self.q1_home is not None, self.q2_home is not None,
+                self.q3_home is not None, self.q4_home is not None]):
+            home_sum = self.q1_home + self.q2_home + self.q3_home + self.q4_home
+            if home_sum != self.home_score:
+                raise ValueError(f"Home quarter scores sum to {home_sum}, expected {self.home_score}")
+
+        # Validate away team quarters
+        if all([self.q1_away is not None, self.q2_away is not None,
+                self.q3_away is not None, self.q4_away is not None]):
+            away_sum = self.q1_away + self.q2_away + self.q3_away + self.q4_away
+            if away_sum != self.away_score:
+                raise ValueError(f"Away quarter scores sum to {away_sum}, expected {self.away_score}")
 
     def __repr__(self):
         return f"<Game(week={self.week}, {self.home_team.name} {self.home_score} vs {self.away_team.name} {self.away_score})>"

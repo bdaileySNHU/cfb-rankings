@@ -116,19 +116,51 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
             # Determine if game is excluded (FCS matchup)
             is_fcs_game = home_team.is_fcs or away_team.is_fcs
 
+            # Fetch quarter scores for completed games
+            home_score = game_data.get('homePoints') or 0
+            away_score = game_data.get('awayPoints') or 0
+            is_completed = home_score != 0 or away_score != 0
+
+            line_scores = None
+            if is_completed:
+                line_scores = cfbd.get_game_line_scores(
+                    game_id=game_data.get('id', 0),
+                    year=season,
+                    week=week,
+                    home_team=home_name,
+                    away_team=away_name
+                )
+
             # Create game record
             game = Game(
                 home_team_id=home_team.id,
                 away_team_id=away_team.id,
-                home_score=game_data.get('homePoints') or 0,
-                away_score=game_data.get('awayPoints') or 0,
+                home_score=home_score,
+                away_score=away_score,
                 week=week,
                 season=season,
                 is_neutral_site=game_data.get('neutralSite', False),
                 game_date=game_date,
                 is_processed=False,  # Future game, not processed yet
-                excluded_from_rankings=is_fcs_game
+                excluded_from_rankings=is_fcs_game,
+                # EPIC-021: Quarter scores (if available)
+                q1_home=line_scores['home'][0] if line_scores else None,
+                q1_away=line_scores['away'][0] if line_scores else None,
+                q2_home=line_scores['home'][1] if line_scores else None,
+                q2_away=line_scores['away'][1] if line_scores else None,
+                q3_home=line_scores['home'][2] if line_scores else None,
+                q3_away=line_scores['away'][2] if line_scores else None,
+                q4_home=line_scores['home'][3] if line_scores else None,
+                q4_away=line_scores['away'][3] if line_scores else None,
             )
+
+            # Validate quarter scores if present
+            try:
+                game.validate_quarter_scores()
+            except ValueError as e:
+                print(f"  ⚠️  Quarter validation failed: {e}")
+                game.q1_home = game.q1_away = game.q2_home = game.q2_away = None
+                game.q3_home = game.q3_away = game.q4_home = game.q4_away = None
 
             db.add(game)
             week_imported += 1

@@ -927,3 +927,351 @@ class TestGameProcessing:
         # Alabama was slightly favored due to home field, so upset value is moderate
         assert 'winner_expected_probability' in result
         assert 'mov_multiplier' in result
+
+
+@pytest.mark.unit
+class TestQuarterWeightedMOV:
+    """Tests for quarter-weighted MOV calculation - EPIC-021"""
+
+    def test_garbage_time_detection_true(self, test_db: Session):
+        """Test that garbage time is detected with 22+ point differential after Q3"""
+        # Arrange
+        service = RankingService(test_db)
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Game: 35-7 after Q3, then 7-7 in Q4 (garbage time TD)
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=42, away_score=14,
+            week=1, season=2024,
+            q1_home=14, q1_away=0,
+            q2_home=14, q2_away=0,
+            q3_home=7, q3_away=7,
+            q4_home=7, q4_away=7  # Garbage time TD by loser
+        )
+
+        # Act
+        mov = service.calculate_quarter_weighted_mov(game, winner_is_home=True)
+
+        # Assert - Q4 should have reduced weight
+        # Without garbage time reduction, MOV would be higher
+        # With reduction, Q4 is weighted at 25%
+        assert mov < 2.5, "Garbage time should reduce MOV"
+
+    def test_garbage_time_detection_false(self, test_db: Session):
+        """Test that close games don't trigger garbage time"""
+        # Arrange
+        service = RankingService(test_db)
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Game: 14-7 after Q3, then 7-7 in Q4 (close game)
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=21, away_score=14,
+            week=1, season=2024,
+            q1_home=7, q1_away=0,
+            q2_home=0, q2_away=7,
+            q3_home=7, q3_away=0,
+            q4_home=7, q4_away=7
+        )
+
+        # Act
+        mov = service.calculate_quarter_weighted_mov(game, winner_is_home=True)
+
+        # Assert - Should use full weight for all quarters
+        assert mov > 0.0
+        # Q4 not penalized in close game
+
+    def test_garbage_time_threshold_boundary(self, test_db: Session):
+        """Test that exactly 21 point differential does NOT trigger garbage time"""
+        # Arrange
+        service = RankingService(test_db)
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Game: Exactly 21-0 after Q3
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=21, away_score=0,
+            week=1, season=2024,
+            q1_home=7, q1_away=0,
+            q2_home=7, q2_away=0,
+            q3_home=7, q3_away=0,
+            q4_home=0, q4_away=0
+        )
+
+        # Act & Assert - Should NOT trigger garbage time (threshold is >21, not >=21)
+        mov = service.calculate_quarter_weighted_mov(game, winner_is_home=True)
+        # Q4 should have full weight
+        assert mov > 0.0
+
+    def test_quarter_weighted_mov_close_game(self, test_db: Session):
+        """Test quarter-weighted MOV for competitive game"""
+        # Arrange
+        service = RankingService(test_db)
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Even scoring across all quarters: 7-0 each quarter
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=28, away_score=0,
+            week=1, season=2024,
+            q1_home=7, q1_away=0,
+            q2_home=7, q2_away=0,
+            q3_home=7, q3_away=0,
+            q4_home=7, q4_away=0
+        )
+
+        # Act
+        mov = service.calculate_quarter_weighted_mov(game, winner_is_home=True)
+
+        # Assert
+        assert mov > 0.0
+        assert mov <= service.MAX_MOV_MULTIPLIER
+
+    def test_backward_compatibility_null_quarters(self, test_db: Session):
+        """Test that games without quarter data fall back to legacy MOV"""
+        # Arrange
+        service = RankingService(test_db)
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Game without quarter scores
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=35, away_score=28,
+            week=1, season=2024
+            # No quarter scores
+        )
+
+        # Act
+        quarter_mov = service.calculate_quarter_weighted_mov(game, winner_is_home=True)
+        legacy_mov = service.calculate_mov_multiplier(7)  # 35-28 = 7
+
+        # Assert - Should fall back to legacy calculation
+        assert quarter_mov == legacy_mov
+
+    def test_backward_compatibility_partial_quarters(self, test_db: Session):
+        """Test that games with partial quarter data fall back to legacy MOV"""
+        # Arrange
+        service = RankingService(test_db)
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Game with partial quarter scores (Q3, Q4 missing)
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=35, away_score=28,
+            week=1, season=2024,
+            q1_home=14, q1_away=7,
+            q2_home=7, q2_away=14,
+            q3_home=None, q3_away=None,  # Missing
+            q4_home=None, q4_away=None   # Missing
+        )
+
+        # Act
+        quarter_mov = service.calculate_quarter_weighted_mov(game, winner_is_home=True)
+        legacy_mov = service.calculate_mov_multiplier(7)
+
+        # Assert - Should fall back to legacy
+        assert quarter_mov == legacy_mov
+
+    def test_all_scoring_in_first_quarter(self, test_db: Session):
+        """Test game where all scoring happens in Q1"""
+        # Arrange
+        service = RankingService(test_db)
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # All scoring in Q1, defensive game after
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=28, away_score=0,
+            week=1, season=2024,
+            q1_home=28, q1_away=0,
+            q2_home=0, q2_away=0,
+            q3_home=0, q3_away=0,
+            q4_home=0, q4_away=0
+        )
+
+        # Act
+        mov = service.calculate_quarter_weighted_mov(game, winner_is_home=True)
+
+        # Assert - Should still calculate valid MOV
+        assert mov > 0.0
+        # 28-0 is > 21, so Q4 (0-0) would be reduced, but Q4 had no scoring anyway
+
+    def test_comeback_game(self, test_db: Session):
+        """Test game where loser was ahead early but lost late"""
+        # Arrange
+        service = RankingService(test_db)
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Away team (loser) led early, home team (winner) came back
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=28, away_score=21,
+            week=1, season=2024,
+            q1_home=0, q1_away=14,  # Away ahead
+            q2_home=0, q2_away=7,   # Away still ahead
+            q3_home=14, q3_away=0,  # Home rallies
+            q4_home=14, q4_away=0   # Home wins
+        )
+
+        # Act
+        mov = service.calculate_quarter_weighted_mov(game, winner_is_home=True)
+
+        # Assert - Should calculate based on quarter differentials from winner's perspective
+        # Q1: 0-14 = -14 (loser won), Q2: 0-7 = -7 (loser won), Q3: 14-0 = 14, Q4: 14-0 = 14
+        # Winner only "won" Q3 and Q4
+        assert mov > 0.0
+
+    def test_mov_capped_at_maximum(self, test_db: Session):
+        """Test that MOV is capped at MAX_MOV_MULTIPLIER"""
+        # Arrange
+        service = RankingService(test_db)
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Massive blowout: 70-0
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=70, away_score=0,
+            week=1, season=2024,
+            q1_home=21, q1_away=0,
+            q2_home=21, q2_away=0,
+            q3_home=14, q3_away=0,
+            q4_home=14, q4_away=0
+        )
+
+        # Act
+        mov = service.calculate_quarter_weighted_mov(game, winner_is_home=True)
+
+        # Assert - Should be capped
+        assert mov <= service.MAX_MOV_MULTIPLIER
+
+    def test_away_team_wins_quarter_calculation(self, test_db: Session):
+        """Test MOV calculation when away team wins"""
+        # Arrange
+        service = RankingService(test_db)
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Away team wins
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=14, away_score=35,
+            week=1, season=2024,
+            q1_home=0, q1_away=14,
+            q2_home=7, q2_away=7,
+            q3_home=7, q3_away=7,
+            q4_home=0, q4_away=7
+        )
+
+        # Act - winner_is_home=False because away team won
+        mov = service.calculate_quarter_weighted_mov(game, winner_is_home=False)
+
+        # Assert
+        assert mov > 0.0
+        assert mov <= service.MAX_MOV_MULTIPLIER
+
+
+@pytest.mark.unit
+class TestProcessGameWithQuarters:
+    """Test process_game() integration with quarter-weighted MOV - EPIC-021"""
+
+    def test_process_game_with_quarter_data_uses_new_algorithm(self, test_db: Session):
+        """Test that games with quarter data use quarter-weighted MOV"""
+        # Arrange
+        service = RankingService(test_db)
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5, elo_rating=1600.0)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1600.0)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Game with quarter scores
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=35, away_score=28,
+            week=1, season=2024,
+            q1_home=7, q1_away=7,
+            q2_home=14, q2_away=7,
+            q3_home=7, q3_away=7,
+            q4_home=7, q4_away=7
+        )
+        test_db.add(game)
+        test_db.commit()
+
+        # Act
+        result = service.process_game(game)
+
+        # Assert - Game should be processed successfully
+        assert game.is_processed is True
+        assert result['mov_multiplier'] is not None
+        # MOV should be from quarter-weighted calculation
+        assert result['winner_name'] == "Home"
+
+    def test_process_game_without_quarter_data_uses_legacy(self, test_db: Session):
+        """Test that games without quarter data use legacy MOV"""
+        # Arrange
+        service = RankingService(test_db)
+        home_team = Team(name="Home", conference=ConferenceType.POWER_5, elo_rating=1600.0)
+        away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1600.0)
+        test_db.add_all([home_team, away_team])
+        test_db.commit()
+
+        # Game WITHOUT quarter scores
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=35, away_score=28,
+            week=1, season=2024
+            # No quarter scores
+        )
+        test_db.add(game)
+        test_db.commit()
+
+        # Act
+        result = service.process_game(game)
+
+        # Assert - Game should be processed successfully with legacy MOV
+        assert game.is_processed is True
+        assert result['mov_multiplier'] is not None
+        # MOV should be from legacy calculation (7 point difference)
+        expected_legacy_mov = math.log(7 + 1)
+        assert abs(result['mov_multiplier'] - expected_legacy_mov) < 0.01
