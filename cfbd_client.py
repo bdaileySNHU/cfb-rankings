@@ -386,7 +386,8 @@ class CFBDClient:
         return self._get('/teams/fbs', params={'year': year})
 
     def get_games(self, year: int, week: Optional[int] = None,
-                  team: Optional[str] = None, season_type: str = 'regular') -> List[Dict]:
+                  team: Optional[str] = None, season_type: str = 'regular',
+                  classification: Optional[str] = None) -> List[Dict]:
         """
         Get games for a season
 
@@ -395,6 +396,7 @@ class CFBDClient:
             week: Optional week number
             team: Optional team name filter
             season_type: 'regular' or 'postseason'
+            classification: Optional division filter ('fbs', 'fcs', 'ii', 'iii')
 
         Returns:
             List of game dictionaries
@@ -407,6 +409,8 @@ class CFBDClient:
             params['week'] = week
         if team:
             params['team'] = team
+        if classification:
+            params['classification'] = classification
 
         return self._get('/games', params=params)
 

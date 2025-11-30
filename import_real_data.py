@@ -473,10 +473,11 @@ def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, ye
 
     # Fetch regular season weeks 14-15 (championship weeks)
     # Conference championships are part of regular season, not postseason
+    # Filter for FBS-only to exclude FCS/Division II/III championships
     conf_championships = []
 
     for week in [14, 15]:
-        week_games = cfbd.get_games(year, week=week, season_type='regular')
+        week_games = cfbd.get_games(year, week=week, season_type='regular', classification='fbs')
 
         if not week_games:
             continue
