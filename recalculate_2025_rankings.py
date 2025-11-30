@@ -89,7 +89,7 @@ def recalculate_2025_rankings():
 
     if max_week:
         current_week = max_week.week
-        ranking_service.save_rankings(season, current_week)
+        ranking_service.save_weekly_rankings(season, current_week)
         print(f"  ✓ Saved rankings for Week {current_week}")
 
     print()
