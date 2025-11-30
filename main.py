@@ -209,10 +209,12 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
             "opponent_name": opponent.name,
             "opponent_conference": opponent.conference.value if opponent.conference else None,
             "is_home": is_home,
+            "is_neutral_site": game.is_neutral_site,
             "score": score_str,
             "is_played": game.is_processed,
             "excluded_from_rankings": game.excluded_from_rankings,
-            "is_fcs": opponent.is_fcs
+            "is_fcs": opponent.is_fcs,
+            "game_type": game.game_type  # EPIC-022: Include game type for frontend badge display
         })
 
     return {

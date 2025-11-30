@@ -269,11 +269,31 @@ function createScheduleRow(game) {
     oppLink.style.color = 'var(--primary-color)';
     oppLink.style.fontWeight = '600';
     oppCell.appendChild(oppLink);
+
+    // EPIC-022: Add conference championship badge if applicable
+    if (game.game_type === 'conference_championship') {
+      const confChampBadge = document.createElement('span');
+      confChampBadge.className = 'conf-champ-badge';
+      confChampBadge.textContent = 'CONF CHAMP';
+      confChampBadge.title = 'Conference Championship Game';
+      oppCell.appendChild(document.createTextNode(' '));
+      oppCell.appendChild(confChampBadge);
+    }
   } else {
     // Future FBS game - grayed out
     oppLink.style.color = 'var(--text-secondary)';
     oppLink.style.fontStyle = 'italic';
     oppCell.appendChild(oppLink);
+
+    // EPIC-022: Add conference championship badge for scheduled championship games
+    if (game.game_type === 'conference_championship') {
+      const confChampBadge = document.createElement('span');
+      confChampBadge.className = 'conf-champ-badge';
+      confChampBadge.textContent = 'CONF CHAMP';
+      confChampBadge.title = 'Conference Championship Game';
+      oppCell.appendChild(document.createTextNode(' '));
+      oppCell.appendChild(confChampBadge);
+    }
   }
 
   oppLink.style.textDecoration = 'none';

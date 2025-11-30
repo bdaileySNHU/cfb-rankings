@@ -663,6 +663,50 @@ footer {
   color: white;
 }
 
+/* EPIC-022: Conference Championship Badge */
+.conf-champ-badge {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 3px;
+
+  /* Gold/yellow color to indicate championship significance */
+  background-color: #FFD700;  /* Gold */
+  color: #1a1a1a;  /* Dark text for contrast */
+
+  /* Subtle border for definition */
+  border: 1px solid #DAA520;  /* Darker gold */
+
+  /* Spacing */
+  margin-left: 0.5rem;
+  vertical-align: middle;
+
+  /* Visual emphasis */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effect for tooltip visibility */
+.conf-champ-badge:hover {
+  background-color: #FFED4E;  /* Lighter gold on hover */
+  cursor: help;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .conf-champ-badge {
+    background-color: #DAA520;  /* Darker gold for dark mode */
+    color: #1a1a1a;  /* Keep dark text */
+    border-color: #B8860B;  /* Even darker border */
+  }
+
+  .conf-champ-badge:hover {
+    background-color: #F0C020;  /* Brighter on hover */
+  }
+}
+
 /* Team Record Note */
 .record-note {
   font-size: 0.75rem;
