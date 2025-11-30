@@ -2,13 +2,18 @@
 
 let teamId = null;
 let teamData = null;
+let season = null; // Season from URL parameter
 let predictionData = {}; // EPIC-009: Store predictions by game_id
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  // Get team ID from URL
+document.addEventListener('DOMContentLoaded', async () => {
+  // Get team ID and season from URL
   const params = new URLSearchParams(window.location.search);
   teamId = params.get('id');
+  const urlSeason = params.get('season');
+
+  // Get season from URL or use active season as default
+  season = urlSeason ? parseInt(urlSeason) : await api.getActiveSeason();
 
   if (!teamId) {
     showError('No team ID provided');
@@ -29,10 +34,30 @@ async function loadTeamDetails() {
   content.classList.add('hidden');
 
   try {
-    // Load team data
+    // Load current team data (for name, conference, etc.)
     teamData = await api.getTeam(teamId);
 
-    // Populate team info
+    // Get active season to check if viewing historical data
+    const activeSeason = await api.getActiveSeason();
+
+    // If viewing a historical season, fetch ranking history for accurate record
+    if (season !== activeSeason) {
+      try {
+        const history = await api.getRankingHistory(teamId, season);
+        if (history && history.length > 0) {
+          // Get the last week of the season (most recent record)
+          const lastWeek = history[history.length - 1];
+          // Override current season stats with historical data
+          teamData.wins = lastWeek.wins;
+          teamData.losses = lastWeek.losses;
+          teamData.elo_rating = lastWeek.elo_rating;
+        }
+      } catch (err) {
+        console.warn('Could not load historical data for season', season, err);
+      }
+    }
+
+    // Populate team info (will use historical data if available)
     populateTeamInfo(teamData);
 
     // EPIC-009: Load prediction accuracy
@@ -55,8 +80,7 @@ async function loadTeamDetails() {
 // EPIC-009: Load Prediction Accuracy
 async function loadPredictionAccuracy() {
   try {
-    const activeSeason = await api.getActiveSeason();
-    const accuracy = await api.getTeamPredictionAccuracy(teamId, activeSeason);
+    const accuracy = await api.getTeamPredictionAccuracy(teamId, season);
 
     if (accuracy.evaluated_predictions > 0) {
       const card = document.getElementById('prediction-accuracy-card');
@@ -176,11 +200,7 @@ async function loadSchedule() {
   noSchedule.classList.add('hidden');
 
   try {
-    // Get season from URL parameter, or fetch active season as default
-    const params = new URLSearchParams(window.location.search);
-    const urlSeason = params.get('season');
-    const season = urlSeason ? parseInt(urlSeason) : await api.getActiveSeason();
-
+    // Use global season variable (set in DOMContentLoaded)
     const schedule = await api.getTeamSchedule(teamId, season);
 
     // EPIC-009: Fetch stored predictions for this team
