@@ -86,6 +86,15 @@ def debug_championships():
             away = game.get('away_team', 'Unknown')
             print(f"  {i+1}. {notes}")
             print(f"     {away} @ {home}")
+
+            # Show full game data for first championship to debug
+            if i == 0:
+                print()
+                print("  Full API response for first game:")
+                print(f"    Keys: {list(game.keys())}")
+                for key, value in game.items():
+                    if key not in ['home_line_scores', 'away_line_scores']:
+                        print(f"    {key}: {value}")
     else:
         print("  ⚠️  NO FBS championship games found with filter!")
         print("  The 'classification' parameter might not be working.")
