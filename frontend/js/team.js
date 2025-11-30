@@ -176,15 +176,18 @@ async function loadSchedule() {
   noSchedule.classList.add('hidden');
 
   try {
-    // Fetch active season from API
-    const activeSeason = await api.getActiveSeason();
-    const schedule = await api.getTeamSchedule(teamId, activeSeason);
+    // Get season from URL parameter, or fetch active season as default
+    const params = new URLSearchParams(window.location.search);
+    const urlSeason = params.get('season');
+    const season = urlSeason ? parseInt(urlSeason) : await api.getActiveSeason();
+
+    const schedule = await api.getTeamSchedule(teamId, season);
 
     // EPIC-009: Fetch stored predictions for this team
     try {
       const predictions = await api.getStoredPredictions({
         teamId: teamId,
-        season: activeSeason
+        season: season
       });
 
       // Store predictions by game_id for quick lookup
