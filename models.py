@@ -87,6 +87,13 @@ class Game(Base):
     is_neutral_site = Column(Boolean, default=False)
     game_date = Column(DateTime, nullable=True)
 
+    # EPIC-022: Game type classification
+    # NULL = regular season (default for backward compatibility)
+    # 'conference_championship' = conference championship game
+    # 'bowl' = bowl game (EPIC-023)
+    # 'playoff' = playoff game (EPIC-023)
+    game_type = Column(String(50), nullable=True)
+
     # Game processed flag
     is_processed = Column(Boolean, default=False)
 

@@ -450,6 +450,180 @@ def import_ap_poll_rankings(cfbd: CFBDClient, db, team_objects: dict, year: int,
     return rankings_imported
 
 
+def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, year: int, ranking_service):
+    """
+    Import conference championship games from CFBD API.
+
+    EPIC-022: Fetches regular season weeks 14-15 and filters for conference championships.
+    Conference championships are played in week 14 (and sometimes 15) and have "Championship"
+    in the game notes, but are not bowl games or playoff games.
+
+    Args:
+        cfbd: CFBD API client
+        db: Database session
+        team_objects: Dictionary of team objects by name
+        year: Season year
+        ranking_service: Ranking service instance for processing games
+
+    Returns:
+        int: Number of conference championship games imported
+    """
+    print(f"\nImporting conference championship games for {year}...")
+    print("="*80)
+
+    # Fetch regular season weeks 14-15 (championship weeks)
+    # Conference championships are part of regular season, not postseason
+    conf_championships = []
+
+    for week in [14, 15]:
+        week_games = cfbd.get_games(year, week=week, season_type='regular')
+
+        if not week_games:
+            continue
+
+        # Filter for conference championships in this week
+        for game in week_games:
+            notes = game.get('notes', '') or ''  # Handle None
+
+            # Conference championships have "Championship" in notes
+            # Exclude: CFP (College Football Playoff) games
+            is_championship = 'Championship' in notes or 'championship' in notes
+            is_cfp = 'playoff' in notes.lower() or 'semifinal' in notes.lower()
+
+            # Accept conference championships, exclude CFP
+            if is_championship and not is_cfp:
+                conf_championships.append(game)
+
+    if not conf_championships:
+        print("No conference championship games found")
+        return 0
+
+    print(f"Found {len(conf_championships)} conference championship games")
+
+    if len(conf_championships) == 0:
+        print("✓ No conference championships to import")
+        return 0
+
+    # Import each conference championship
+    imported = 0
+    skipped = 0
+    processed = 0
+
+    for game_data in conf_championships:
+        home_team_name = game_data.get('home_team')
+        away_team_name = game_data.get('away_team')
+        week = game_data.get('week', 14)
+        notes = game_data.get('notes', '')
+
+        # Skip if teams not found
+        if home_team_name not in team_objects or away_team_name not in team_objects:
+            print(f"  ⚠️  Skipping {notes}: Teams not found in database")
+            skipped += 1
+            continue
+
+        home_team = team_objects[home_team_name]
+        away_team = team_objects[away_team_name]
+
+        # Check for duplicate (prevent importing same game twice)
+        existing_game = db.query(Game).filter(
+            Game.home_team_id == home_team.id,
+            Game.away_team_id == away_team.id,
+            Game.season == year,
+            Game.week == week
+        ).first()
+
+        if existing_game:
+            print(f"  ⚠️  {notes}: Already exists (Week {week})")
+            skipped += 1
+            continue
+
+        # Get scores
+        home_score = game_data.get('home_points', 0) or 0
+        away_score = game_data.get('away_points', 0) or 0
+
+        # Check if game is completed (has actual scores)
+        is_future_game = (home_score == 0 and away_score == 0)
+
+        # EPIC-021: Fetch quarter scores if game is completed
+        line_scores = None
+        if not is_future_game:
+            line_scores = cfbd.get_game_line_scores(
+                game_id=game_data.get('id', 0),
+                year=year,
+                week=week,
+                home_team=home_team_name,
+                away_team=away_team_name
+            )
+
+        # Create game with game_type='conference_championship'
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=home_score,
+            away_score=away_score,
+            week=week,
+            season=year,
+            is_neutral_site=game_data.get('neutralSite', True),  # Championships usually at neutral site
+            game_type='conference_championship',  # EPIC-022: Mark as conference championship
+            game_date=parse_game_date(game_data),
+            # EPIC-021: Quarter scores (if available)
+            q1_home=line_scores['home'][0] if line_scores else None,
+            q1_away=line_scores['away'][0] if line_scores else None,
+            q2_home=line_scores['home'][1] if line_scores else None,
+            q2_away=line_scores['away'][1] if line_scores else None,
+            q3_home=line_scores['home'][2] if line_scores else None,
+            q3_away=line_scores['away'][2] if line_scores else None,
+            q4_home=line_scores['home'][3] if line_scores else None,
+            q4_away=line_scores['away'][3] if line_scores else None,
+        )
+
+        # EPIC-021: Validate quarter scores if present
+        try:
+            game.validate_quarter_scores()
+        except ValueError as e:
+            print(f"    ⚠️  Quarter score validation failed: {e}")
+            game.q1_home = game.q1_away = game.q2_home = game.q2_away = None
+            game.q3_home = game.q3_away = game.q4_home = game.q4_away = None
+
+        db.add(game)
+        db.commit()
+        db.refresh(game)
+
+        imported += 1
+
+        # Process game for rankings if completed
+        if not is_future_game:
+            result = ranking_service.process_game(game)
+            winner = result['winner_name']
+            loser = result['loser_name']
+            score = result['score']
+            print(f"  ✓ {notes}: {winner} defeats {loser} {score}")
+            processed += 1
+        else:
+            print(f"  ✓ {notes}: {home_team_name} vs {away_team_name} (scheduled)")
+
+            # EPIC-009: Store prediction for future championship game
+            from ranking_service import create_and_store_prediction
+            prediction = create_and_store_prediction(db, game)
+            if prediction:
+                print(f"      → Prediction stored ({prediction.predicted_winner.name} favored)")
+
+    # Summary
+    print()
+    print("="*80)
+    print("CONFERENCE CHAMPIONSHIP IMPORT SUMMARY")
+    print("="*80)
+    print(f"Total Identified: {len(conf_championships)}")
+    print(f"Imported: {imported}")
+    print(f"Processed for Rankings: {processed}")
+    if skipped > 0:
+        print(f"Skipped: {skipped}")
+    print("="*80)
+    print()
+
+    return imported
+
+
 def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: int = None, validate_only: bool = False, strict: bool = False):
     """
     Import games for the season with validation and completeness reporting.
@@ -961,6 +1135,15 @@ Examples:
         strict=args.strict
     )
 
+    # EPIC-022: Import conference championship games (postseason)
+    if not args.validate_only:
+        ranking_service = RankingService(db)
+        conf_champ_count = import_conference_championships(
+            cfbd, db, team_objects, season, ranking_service
+        )
+        # Add to import stats
+        import_stats['conf_championships_imported'] = conf_champ_count
+
     # Skip remaining steps if validate-only mode
     if args.validate_only:
         print("\n✓ Validation complete - no changes made to database")
@@ -976,7 +1159,7 @@ Examples:
 
     # Save rankings
     print("\nSaving final rankings...")
-    ranking_service = RankingService(db)
+    # ranking_service already created above for conference championships
     for week in range(1, max_week + 1):
         ranking_service.save_weekly_rankings(season, week)
 
@@ -1000,6 +1183,8 @@ Examples:
     print(f"  - {import_stats['imported']} FBS games imported")
     if import_stats.get('fcs_imported', 0) > 0:
         print(f"  - {import_stats['fcs_imported']} FCS games imported (not ranked)")
+    if import_stats.get('conf_championships_imported', 0) > 0:
+        print(f"  - {import_stats['conf_championships_imported']} conference championships imported")
     if import_stats['skipped'] > 0:
         print(f"  - {import_stats['skipped']} games skipped")
     print(f"  - Rankings calculated through Week {max_week}")
