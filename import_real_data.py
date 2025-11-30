@@ -511,8 +511,8 @@ def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, ye
     processed = 0
 
     for game_data in conf_championships:
-        home_team_name = game_data.get('home_team')
-        away_team_name = game_data.get('away_team')
+        home_team_name = game_data.get('homeTeam')
+        away_team_name = game_data.get('awayTeam')
         week = game_data.get('week', 14)
         notes = game_data.get('notes', '')
 
@@ -539,8 +539,8 @@ def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, ye
             continue
 
         # Get scores
-        home_score = game_data.get('home_points', 0) or 0
-        away_score = game_data.get('away_points', 0) or 0
+        home_score = game_data.get('homePoints', 0) or 0
+        away_score = game_data.get('awayPoints', 0) or 0
 
         # Check if game is completed (has actual scores)
         is_future_game = (home_score == 0 and away_score == 0)
