@@ -52,10 +52,11 @@ def recalculate_2025_rankings():
     print("Step 3: Processing games in chronological order...")
 
     # Get all games that have scores (completed)
+    # Note: A game is completed if EITHER team scored, or if both are 0 but marked as played
+    # We use home_score + away_score > 0 to catch shutouts (like Wisconsin 0, OSU 34)
     completed_games = db.query(Game).filter(
         Game.season == season,
-        Game.home_score > 0,  # Assume completed if there are scores
-        Game.away_score >= 0
+        (Game.home_score + Game.away_score) > 0  # At least one team scored
     ).order_by(Game.week, Game.id).all()
 
     print(f"  Found {len(completed_games)} completed games to process")

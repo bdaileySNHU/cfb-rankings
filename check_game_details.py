@@ -36,7 +36,6 @@ def check_game_details(game_id):
     print(f"Game Type: {game.game_type}")
     print(f"Excluded from Rankings: {game.excluded_from_rankings}")
     print()
-    print(f"API Game ID: {game.api_game_id}")
     print(f"Home Rating Change: {game.home_rating_change}")
     print(f"Away Rating Change: {game.away_rating_change}")
     print()
