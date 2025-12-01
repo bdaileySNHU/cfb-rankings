@@ -856,18 +856,22 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
     for game_data in playoff_games:
         home_team_name = game_data.get('homeTeam')
         away_team_name = game_data.get('awayTeam')
-        week = game_data.get('week', 17)  # Playoff games typically week 17+
         notes = game_data.get('notes', '') or 'CFP Game'
 
         # Determine playoff round from notes
         playoff_round = 'CFP Game'  # Default
         notes_lower = notes.lower()
 
+        # Assign week numbers based on playoff round
+        # 12-team format (2024+): First Round (16), Quarterfinals (17), Semifinals (18), Championship (19)
+        # 4-team format (2014-2023): Semifinals (17), Championship (18)
         if 'national championship' in notes_lower:
             playoff_round = 'CFP National Championship'
+            week = 19 if year >= 2024 else 18
         elif 'semifinal' in notes_lower:
             # Extract bowl name if present (e.g., "CFP Semifinal - Rose Bowl")
             playoff_round = 'CFP Semifinal'
+            week = 18 if year >= 2024 else 17
             if 'rose' in notes_lower:
                 playoff_round = 'CFP Semifinal - Rose Bowl'
             elif 'sugar' in notes_lower:
@@ -883,9 +887,14 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
         elif 'quarterfinal' in notes_lower:
             # 12-team format has quarterfinals
             playoff_round = 'CFP Quarterfinal'
+            week = 17
         elif 'first round' in notes_lower:
             # 12-team format has first round
             playoff_round = 'CFP First Round'
+            week = 16
+        else:
+            # Fallback - use API week or default
+            week = game_data.get('week', 17)
 
         # Skip if teams not found
         if home_team_name not in team_objects or away_team_name not in team_objects:
