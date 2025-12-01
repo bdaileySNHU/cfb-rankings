@@ -625,6 +625,175 @@ def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, ye
     return imported
 
 
+def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranking_service):
+    """
+    Import bowl games from CFBD API.
+
+    EPIC-023: Fetches postseason games and filters for bowl games (excluding conference championships and playoffs).
+    Bowl games are typically played in December-January after the regular season.
+
+    Args:
+        cfbd: CFBD API client
+        db: Database session
+        team_objects: Dictionary of team objects by name
+        year: Season year
+        ranking_service: Ranking service instance for processing games
+
+    Returns:
+        int: Number of bowl games imported
+    """
+    print(f"\nImporting bowl games for {year}...")
+    print("="*80)
+
+    # Fetch postseason games from CFBD API
+    postseason_games = cfbd.get_games(year, season_type='postseason', classification='fbs')
+
+    if not postseason_games:
+        print("No postseason games found")
+        return 0
+
+    # Filter for bowl games only (exclude conference championships and playoffs)
+    bowl_games = []
+
+    for game in postseason_games:
+        notes = game.get('notes', '') or ''
+
+        # Skip conference championships (already imported in EPIC-022)
+        if 'Championship' in notes or 'championship' in notes:
+            # Check if it's a CONFERENCE championship (not bowl championship)
+            # Conference championships have "ACC Championship", "Big Ten Championship", etc.
+            conference_keywords = ['ACC', 'Big Ten', 'Big 12', 'SEC', 'Pac-12',
+                                   'American', 'Conference USA', 'MAC', 'Mountain West', 'Sun Belt']
+            is_conf_champ = any(conf in notes for conf in conference_keywords)
+
+            if is_conf_champ:
+                continue  # Skip conference championships
+
+        # Skip playoff games (will be handled in Story 23.2)
+        is_playoff = any(keyword in notes.lower() for keyword in
+                        ['playoff', 'semifinal', 'national championship'])
+
+        if is_playoff:
+            continue  # Skip playoff games for now
+
+        # This is a bowl game!
+        bowl_games.append(game)
+
+    if not bowl_games:
+        print("No bowl games found")
+        return 0
+
+    print(f"Found {len(bowl_games)} bowl games")
+
+    # Import each bowl game
+    imported = 0
+    skipped = 0
+    processed = 0
+
+    for game_data in bowl_games:
+        home_team_name = game_data.get('homeTeam')
+        away_team_name = game_data.get('awayTeam')
+        week = game_data.get('week', 16)  # Bowl games typically week 16+
+        notes = game_data.get('notes', '') or 'Bowl Game'
+
+        # Extract bowl name from notes (e.g., "Rose Bowl Game", "Sugar Bowl")
+        bowl_name = notes if notes else 'Bowl Game'
+
+        # Skip if teams not found
+        if home_team_name not in team_objects or away_team_name not in team_objects:
+            print(f"  ⚠️  Skipping {bowl_name}: Teams not found ({home_team_name} vs {away_team_name})")
+            skipped += 1
+            continue
+
+        home_team = team_objects[home_team_name]
+        away_team = team_objects[away_team_name]
+
+        # Check for duplicate
+        existing_game = db.query(Game).filter(
+            Game.home_team_id == home_team.id,
+            Game.away_team_id == away_team.id,
+            Game.season == year,
+            Game.week == week
+        ).first()
+
+        if existing_game:
+            # Update game_type and postseason_name if not set
+            if not existing_game.game_type or not existing_game.postseason_name:
+                existing_game.game_type = 'bowl'
+                existing_game.postseason_name = bowl_name
+                db.commit()
+                print(f"  ✓ Updated: {bowl_name} (Week {week})")
+                imported += 1
+            else:
+                print(f"  ⚠️  {bowl_name}: Already exists (Week {week})")
+                skipped += 1
+            continue
+
+        # Get scores
+        home_score = game_data.get('homePoints', 0) or 0
+        away_score = game_data.get('awayPoints', 0) or 0
+
+        # Check if game is completed
+        is_future_game = (home_score == 0 and away_score == 0)
+
+        # EPIC-021: Fetch quarter scores if game is completed
+        line_scores = None
+        if not is_future_game:
+            line_scores = cfbd.get_game_line_scores(
+                game_id=game_data.get('id', 0),
+                home_team=home_team_name,
+                away_team=away_team_name
+            )
+
+        # Create game with game_type='bowl' and postseason_name
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=home_score,
+            away_score=away_score,
+            week=week,
+            season=year,
+            is_neutral_site=game_data.get('neutralSite', True),  # Bowl games usually neutral
+            game_type='bowl',  # EPIC-023: Mark as bowl game
+            postseason_name=bowl_name,  # EPIC-023: Store bowl name
+            game_date=parse_game_date(game_data),
+            # EPIC-021: Quarter scores (if available)
+            q1_home=line_scores['home'][0] if line_scores else None,
+            q1_away=line_scores['away'][0] if line_scores else None,
+            q2_home=line_scores['home'][1] if line_scores else None,
+            q2_away=line_scores['away'][1] if line_scores else None,
+            q3_home=line_scores['home'][2] if line_scores else None,
+            q3_away=line_scores['away'][2] if line_scores else None,
+            q4_home=line_scores['home'][3] if line_scores else None,
+            q4_away=line_scores['away'][3] if line_scores else None,
+        )
+        db.add(game)
+        db.commit()
+
+        # Process game if completed
+        if not is_future_game:
+            try:
+                ranking_service.process_game(game)
+                processed += 1
+                print(f"  ✓ Imported & processed: {bowl_name} - {away_team_name} vs {home_team_name} ({away_score}-{home_score})")
+            except Exception as e:
+                print(f"  ⚠️  Imported but not processed: {bowl_name} - {str(e)}")
+        else:
+            print(f"  ✓ Imported (scheduled): {bowl_name} - {away_team_name} @ {home_team_name}")
+
+        imported += 1
+
+    print()
+    print(f"Imported: {imported}")
+    print(f"Processed: {processed}")
+    if skipped > 0:
+        print(f"Skipped: {skipped}")
+    print("="*80)
+    print()
+
+    return imported
+
+
 def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: int = None, validate_only: bool = False, strict: bool = False):
     """
     Import games for the season with validation and completeness reporting.
@@ -1136,14 +1305,22 @@ Examples:
         strict=args.strict
     )
 
-    # EPIC-022: Import conference championship games (postseason)
+    # EPIC-022: Import conference championship games
+    # EPIC-023: Import bowl games
     if not args.validate_only:
         ranking_service = RankingService(db)
+
+        # Import conference championships
         conf_champ_count = import_conference_championships(
             cfbd, db, team_objects, season, ranking_service
         )
-        # Add to import stats
         import_stats['conf_championships_imported'] = conf_champ_count
+
+        # Import bowl games
+        bowl_count = import_bowl_games(
+            cfbd, db, team_objects, season, ranking_service
+        )
+        import_stats['bowl_games_imported'] = bowl_count
 
     # Skip remaining steps if validate-only mode
     if args.validate_only:
@@ -1198,6 +1375,8 @@ Examples:
         print(f"  - {import_stats['fcs_imported']} FCS games imported (not ranked)")
     if import_stats.get('conf_championships_imported', 0) > 0:
         print(f"  - {import_stats['conf_championships_imported']} conference championships imported")
+    if import_stats.get('bowl_games_imported', 0) > 0:
+        print(f"  - {import_stats['bowl_games_imported']} bowl games imported")
     if import_stats['skipped'] > 0:
         print(f"  - {import_stats['skipped']} games skipped")
     print(f"  - Rankings calculated through Week {final_week}")
