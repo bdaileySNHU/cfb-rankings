@@ -1154,14 +1154,26 @@ Examples:
     # EPIC-008 Story 003: Validate import results
     validate_import_results(db, import_stats, season)
 
-    # Update season current week
-    season_obj.current_week = max_week
+    # EPIC-022: Determine actual max week including championship games
+    # Conference championships may be in Week 15, even if max_week was 14
+    actual_max_week = db.query(Game).filter(
+        Game.season == season,
+        Game.is_processed == True
+    ).order_by(Game.week.desc()).first()
+
+    if actual_max_week:
+        final_week = actual_max_week.week
+    else:
+        final_week = max_week
+
+    # Update season current week to actual max
+    season_obj.current_week = final_week
     db.commit()
 
-    # Save rankings
-    print("\nSaving final rankings...")
+    # Save rankings through actual max week (including championship week if present)
+    print(f"\nSaving final rankings through Week {final_week}...")
     # ranking_service already created above for conference championships
-    for week in range(1, max_week + 1):
+    for week in range(1, final_week + 1):
         ranking_service.save_weekly_rankings(season, week)
 
     # Show final rankings
@@ -1188,7 +1200,7 @@ Examples:
         print(f"  - {import_stats['conf_championships_imported']} conference championships imported")
     if import_stats['skipped'] > 0:
         print(f"  - {import_stats['skipped']} games skipped")
-    print(f"  - Rankings calculated through Week {max_week}")
+    print(f"  - Rankings calculated through Week {final_week}")
     print("="*80)
 
     db.close()
