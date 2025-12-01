@@ -81,50 +81,56 @@ def recalculate_2024_rankings():
     print(f"  ✓ Marked {len(games_2024)} games as unprocessed")
     print()
 
-    # Step 5: Process all 2024 games in chronological order
-    print("Step 5: Processing 2024 games in chronological order...")
+    # Step 5: Process games week-by-week and save rankings after each week
+    print("Step 5: Processing games week-by-week...")
 
-    # Get all completed games (including shutouts)
+    # Get all completed games grouped by week
     completed_games = db.query(Game).filter(
         Game.season == season,
         (Game.home_score + Game.away_score) > 0
     ).order_by(Game.week, Game.id).all()
 
-    print(f"  Found {len(completed_games)} completed games to process")
+    print(f"  Found {len(completed_games)} completed games")
     print()
 
-    processed_count = 0
-    max_week = 0
-
+    # Group games by week
+    games_by_week = {}
     for game in completed_games:
-        try:
-            result = ranking_service.process_game(game)
-            processed_count += 1
-            max_week = max(max_week, game.week)
+        if game.week not in games_by_week:
+            games_by_week[game.week] = []
+        games_by_week[game.week].append(game)
 
-            if processed_count % 100 == 0:
-                print(f"    Processed {processed_count}/{len(completed_games)} games...")
+    max_week = max(games_by_week.keys()) if games_by_week else 0
 
-        except Exception as e:
-            print(f"    Error processing game {game.id}: {e}")
+    # Process and save week by week
+    total_processed = 0
+    for week in range(1, max_week + 1):
+        if week not in games_by_week:
             continue
 
-    print(f"  ✓ Processed {processed_count} games through Week {max_week}")
-    print()
+        week_games = games_by_week[week]
 
-    # Step 6: Save ranking history for all weeks
-    print(f"Step 6: Saving ranking history for Weeks 1-{max_week}...")
+        # Process all games in this week
+        for game in week_games:
+            try:
+                result = ranking_service.process_game(game)
+                total_processed += 1
+            except Exception as e:
+                print(f"    Error processing game {game.id}: {e}")
+                continue
 
-    for week in range(1, max_week + 1):
+        # Save rankings after this week's games
         ranking_service.save_weekly_rankings(season, week)
-        if week % 5 == 0:
-            print(f"    Saved Week {week}...")
 
+        print(f"    Week {week}: Processed {len(week_games)} games, saved rankings")
+
+    print()
+    print(f"  ✓ Processed {total_processed} games through Week {max_week}")
     print(f"  ✓ Saved ranking history for {max_week} weeks")
     print()
 
-    # Step 7: Restore 2025 team state
-    print("Step 7: Restoring current (2025) team state...")
+    # Step 6: Restore 2025 team state
+    print("Step 6: Restoring current (2025) team state...")
     for team in teams:
         if team.id in team_state_backup:
             backup = team_state_backup[team.id]
