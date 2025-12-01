@@ -396,6 +396,10 @@ class RankingService:
         """
         Get current rankings sorted by ELO rating
 
+        EPIC-024: Now uses ranking_history for season-specific data instead of
+        cumulative team records. This ensures each season's rankings are independent
+        and historical seasons can be browsed accurately.
+
         Args:
             season: Season year
             limit: Optional limit on number of teams to return
@@ -403,39 +407,42 @@ class RankingService:
         Returns:
             List of ranking dictionaries
         """
-        # Get all teams sorted by ELO rating
-        query = self.db.query(Team).order_by(Team.elo_rating.desc())
+        # EPIC-024: Get current week for this season
+        season_obj = self.db.query(Season).filter(Season.year == season).first()
+        if not season_obj:
+            # No season found - return empty rankings
+            return []
+
+        current_week = season_obj.current_week
+
+        # EPIC-024: Query ranking_history instead of teams table for season-specific data
+        query = self.db.query(RankingHistory).filter(
+            RankingHistory.season == season,
+            RankingHistory.week == current_week
+        ).order_by(RankingHistory.elo_rating.desc())
 
         if limit:
             query = query.limit(limit)
 
-        teams = query.all()
+        ranking_records = query.all()
 
         rankings = []
-        for rank, team in enumerate(teams, start=1):
-            sos = self.calculate_sos(team.id, season)
+        for rank, record in enumerate(ranking_records, start=1):
+            # Get team info (name, conference) from Team table
+            team = record.team
 
             rankings.append({
                 'rank': rank,
-                'team_id': team.id,
+                'team_id': record.team_id,
                 'team_name': team.name,
                 'conference': team.conference,
                 'conference_name': team.conference_name,  # EPIC-012: Add actual conference name
-                'elo_rating': round(team.elo_rating, 2),
-                'wins': team.wins,
-                'losses': team.losses,
-                'sos': round(sos, 2),
-                'sos_rank': None  # Will calculate after all SOS values are known
+                'elo_rating': round(record.elo_rating, 2),  # EPIC-024: From ranking_history
+                'wins': record.wins,  # EPIC-024: Season-specific wins from ranking_history
+                'losses': record.losses,  # EPIC-024: Season-specific losses from ranking_history
+                'sos': round(record.sos, 2),  # EPIC-024: Use saved SOS from ranking_history
+                'sos_rank': record.sos_rank  # EPIC-024: Use saved SOS rank
             })
-
-        # Calculate SOS ranks
-        sos_sorted = sorted(rankings, key=lambda x: x['sos'], reverse=True)
-        for sos_rank, entry in enumerate(sos_sorted, start=1):
-            # Find the entry in original rankings and update SOS rank
-            for ranking in rankings:
-                if ranking['team_id'] == entry['team_id']:
-                    ranking['sos_rank'] = sos_rank
-                    break
 
         return rankings
 

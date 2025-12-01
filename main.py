@@ -99,29 +99,31 @@ async def get_team(team_id: int, db: Session = Depends(get_db)):
     season = db.query(Season).filter(Season.is_active == True).first()
     season_year = season.year if season else datetime.now().year
 
-    # Calculate SOS and rank
+    # EPIC-024: Get season-specific data from rankings
     ranking_service = RankingService(db)
-    sos = ranking_service.calculate_sos(team_id, season_year)
     rankings = ranking_service.get_current_rankings(season_year)
 
-    rank = next((r['rank'] for r in rankings if r['team_id'] == team_id), None)
+    # Find this team's ranking data (includes season-specific wins/losses)
+    team_ranking = next((r for r in rankings if r['team_id'] == team_id), None)
 
     # Convert to TeamDetail schema
     team_dict = {
         "id": team.id,
         "name": team.name,
         "conference": team.conference,
+        "conference_name": team.conference_name,  # EPIC-012: Include conference name
         "recruiting_rank": team.recruiting_rank,
         "transfer_rank": team.transfer_rank,
         "returning_production": team.returning_production,
-        "elo_rating": team.elo_rating,
+        "elo_rating": team_ranking['elo_rating'] if team_ranking else team.elo_rating,  # EPIC-024: Season-specific ELO
         "initial_rating": team.initial_rating,
-        "wins": team.wins,
-        "losses": team.losses,
+        "wins": team_ranking['wins'] if team_ranking else 0,  # EPIC-024: Season-specific wins
+        "losses": team_ranking['losses'] if team_ranking else 0,  # EPIC-024: Season-specific losses
         "created_at": team.created_at,
         "updated_at": team.updated_at,
-        "sos": sos,
-        "rank": rank
+        "sos": team_ranking['sos'] if team_ranking else None,  # EPIC-024: From ranking_history
+        "rank": team_ranking['rank'] if team_ranking else None,  # EPIC-024: From ranking_history
+        "sos_rank": team_ranking['sos_rank'] if team_ranking else None  # EPIC-024: From ranking_history
     }
 
     return team_dict
