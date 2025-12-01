@@ -354,6 +354,40 @@ class RankingService:
             'mov_multiplier': round(mov_multiplier, 2)
         }
 
+    def get_season_record(self, team_id: int, season: int) -> tuple[int, int]:
+        """
+        Calculate season-specific wins and losses for a team
+
+        EPIC-024: Query games table for accurate season-specific records instead
+        of using cumulative wins/losses from teams table.
+
+        Args:
+            team_id: Team ID
+            season: Season year
+
+        Returns:
+            Tuple of (wins, losses) for the season
+        """
+        from models import Game
+
+        # Count wins (games where team won and game is completed)
+        wins = self.db.query(Game).filter(
+            Game.season == season,
+            Game.completed == True,
+            ((Game.home_team_id == team_id) & (Game.home_score > Game.away_score)) |
+            ((Game.away_team_id == team_id) & (Game.away_score > Game.home_score))
+        ).count()
+
+        # Count losses (games where team lost and game is completed)
+        losses = self.db.query(Game).filter(
+            Game.season == season,
+            Game.completed == True,
+            ((Game.home_team_id == team_id) & (Game.home_score < Game.away_score)) |
+            ((Game.away_team_id == team_id) & (Game.away_score < Game.home_score))
+        ).count()
+
+        return wins, losses
+
     def calculate_sos(self, team_id: int, season: int) -> float:
         """
         Calculate strength of schedule as average opponent ELO rating
@@ -450,25 +484,54 @@ class RankingService:
         """
         Save current rankings to history
 
+        EPIC-024 FIX: After refactoring get_current_rankings() to read from ranking_history,
+        this method needs to build rankings from the teams table (current ELO state) instead
+        of calling get_current_rankings() which would create circular logic.
+
         Args:
             season: Season year
             week: Week number
         """
-        rankings = self.get_current_rankings(season)
+        # Delete existing entries for this season/week to prevent duplicates
+        # (handles case where weekly update runs multiple times)
+        self.db.query(RankingHistory).filter(
+            RankingHistory.season == season,
+            RankingHistory.week == week
+        ).delete()
 
-        for ranking in rankings:
+        # Build rankings from current teams table state (not from ranking_history)
+        teams = self.db.query(Team).order_by(Team.elo_rating.desc()).all()
+
+        for rank, team in enumerate(teams, start=1):
+            # Calculate season-specific wins/losses
+            wins, losses = self.get_season_record(team.id, season)
+
+            # Calculate SOS for this team
+            sos = self.calculate_sos(team.id, season)
+
             history = RankingHistory(
-                team_id=ranking['team_id'],
+                team_id=team.id,
                 week=week,
                 season=season,
-                rank=ranking['rank'],
-                elo_rating=ranking['elo_rating'],
-                wins=ranking['wins'],
-                losses=ranking['losses'],
-                sos=ranking['sos'],
-                sos_rank=ranking['sos_rank']
+                rank=rank,
+                elo_rating=team.elo_rating,
+                wins=wins,  # Season-specific wins
+                losses=losses,  # Season-specific losses
+                sos=sos,
+                sos_rank=None  # Will be calculated after all teams are saved
             )
             self.db.add(history)
+
+        self.db.commit()
+
+        # Calculate and save SOS ranks
+        rankings = self.db.query(RankingHistory).filter(
+            RankingHistory.season == season,
+            RankingHistory.week == week
+        ).order_by(RankingHistory.sos.desc()).all()
+
+        for sos_rank, ranking in enumerate(rankings, start=1):
+            ranking.sos_rank = sos_rank
 
         self.db.commit()
 

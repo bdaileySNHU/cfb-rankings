@@ -159,6 +159,10 @@ class Game(Base):
 class RankingHistory(Base):
     """Historical rankings by week"""
     __tablename__ = "ranking_history"
+    __table_args__ = (
+        # EPIC-024 FIX: Prevent duplicate entries for same team/season/week
+        Index('idx_ranking_history_unique', 'team_id', 'season', 'week', unique=True),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
 
