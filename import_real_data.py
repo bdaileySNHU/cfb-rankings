@@ -741,6 +741,8 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
         if not is_future_game:
             line_scores = cfbd.get_game_line_scores(
                 game_id=game_data.get('id', 0),
+                year=year,
+                week=week,
                 home_team=home_team_name,
                 away_team=away_team_name
             )
