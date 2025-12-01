@@ -174,6 +174,9 @@ class ScheduleGame(BaseModel):
     # EPIC-022: Game type classification
     game_type: Optional[str] = Field(None, description="Game type: NULL (regular), 'conference_championship', 'bowl', 'playoff'")
 
+    # EPIC-023: Postseason game name
+    postseason_name: Optional[str] = Field(None, description="Bowl name or playoff round (e.g., 'Rose Bowl Game', 'CFP Semifinal')")
+
 
 class TeamSchedule(BaseModel):
     """Team's full schedule"""

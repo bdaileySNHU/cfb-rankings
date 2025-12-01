@@ -707,6 +707,94 @@ footer {
   }
 }
 
+/* EPIC-023: Bowl Game Badge */
+.bowl-badge {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 3px;
+
+  /* Blue color to indicate bowl game */
+  background-color: #4A90E2;  /* Medium blue */
+  color: white;
+
+  /* Subtle border for definition */
+  border: 1px solid #357ABD;  /* Darker blue */
+
+  /* Spacing */
+  margin-left: 0.5rem;
+  vertical-align: middle;
+
+  /* Visual emphasis */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effect for tooltip visibility */
+.bowl-badge:hover {
+  background-color: #5BA3F5;  /* Lighter blue on hover */
+  cursor: help;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .bowl-badge {
+    background-color: #357ABD;  /* Darker blue for dark mode */
+    color: white;
+    border-color: #2A5F8F;  /* Even darker border */
+  }
+
+  .bowl-badge:hover {
+    background-color: #4A90E2;  /* Brighter on hover */
+  }
+}
+
+/* EPIC-023: Playoff Game Badge */
+.playoff-badge {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 3px;
+
+  /* Red/crimson color to indicate CFP playoff significance */
+  background-color: #DC143C;  /* Crimson */
+  color: white;
+
+  /* Subtle border for definition */
+  border: 1px solid #B21030;  /* Darker crimson */
+
+  /* Spacing */
+  margin-left: 0.5rem;
+  vertical-align: middle;
+
+  /* Visual emphasis */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effect for tooltip visibility */
+.playoff-badge:hover {
+  background-color: #FF1744;  /* Brighter red on hover */
+  cursor: help;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .playoff-badge {
+    background-color: #B21030;  /* Darker crimson for dark mode */
+    color: white;
+    border-color: #8B0A24;  /* Even darker border */
+  }
+
+  .playoff-badge:hover {
+    background-color: #DC143C;  /* Brighter on hover */
+  }
+}
+
 /* Team Record Note */
 .record-note {
   font-size: 0.75rem;

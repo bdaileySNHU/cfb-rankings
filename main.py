@@ -214,7 +214,8 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
             "is_played": game.is_processed,
             "excluded_from_rankings": game.excluded_from_rankings,
             "is_fcs": opponent.is_fcs,
-            "game_type": game.game_type  # EPIC-022: Include game type for frontend badge display
+            "game_type": game.game_type,  # EPIC-022: Include game type for frontend badge display
+            "postseason_name": game.postseason_name  # EPIC-023: Include bowl/playoff name
         })
 
     return {

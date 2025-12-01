@@ -4,6 +4,7 @@ let teamId = null;
 let teamData = null;
 let season = null; // Season from URL parameter
 let predictionData = {}; // EPIC-009: Store predictions by game_id
+let allGames = []; // EPIC-023: Store all games for filtering
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -21,6 +22,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   loadTeamDetails();
+
+  // EPIC-023: Add event listener for game type filter
+  const filterDropdown = document.getElementById('game-type-filter');
+  if (filterDropdown) {
+    filterDropdown.addEventListener('change', () => {
+      filterAndDisplayGames(filterDropdown.value);
+    });
+  }
 });
 
 // Load Team Details
@@ -225,14 +234,11 @@ async function loadSchedule() {
       return;
     }
 
-    // Clear existing rows
-    tbody.innerHTML = '';
+    // EPIC-023: Store all games for filtering
+    allGames = schedule.games;
 
-    // Populate schedule
-    schedule.games.forEach(game => {
-      const row = createScheduleRow(game);
-      tbody.appendChild(row);
-    });
+    // Display all games initially
+    filterAndDisplayGames('all');
 
     scheduleLoading.classList.add('hidden');
     scheduleContainer.classList.remove('hidden');
@@ -241,6 +247,48 @@ async function loadSchedule() {
     scheduleLoading.classList.add('hidden');
     noSchedule.classList.remove('hidden');
   }
+}
+
+// EPIC-023: Filter and Display Games
+function filterAndDisplayGames(filterType) {
+  const tbody = document.getElementById('schedule-tbody');
+  const noSchedule = document.getElementById('no-schedule');
+  const scheduleContainer = document.getElementById('schedule-container');
+
+  // Filter games based on selected type
+  let filteredGames = allGames;
+
+  if (filterType !== 'all') {
+    filteredGames = allGames.filter(game => {
+      if (filterType === 'regular') {
+        // Regular season games are those without a game_type (NULL)
+        return !game.game_type;
+      } else {
+        // For other types, match exactly
+        return game.game_type === filterType;
+      }
+    });
+  }
+
+  // Clear existing rows
+  tbody.innerHTML = '';
+
+  // Check if we have any games to display
+  if (filteredGames.length === 0) {
+    scheduleContainer.classList.add('hidden');
+    noSchedule.classList.remove('hidden');
+    noSchedule.textContent = 'No games match the selected filter.';
+    return;
+  }
+
+  // Populate schedule with filtered games
+  filteredGames.forEach(game => {
+    const row = createScheduleRow(game);
+    tbody.appendChild(row);
+  });
+
+  scheduleContainer.classList.remove('hidden');
+  noSchedule.classList.add('hidden');
 }
 
 // Create Schedule Row
@@ -302,6 +350,26 @@ function createScheduleRow(game) {
       oppCell.appendChild(document.createTextNode(' '));
       oppCell.appendChild(confChampBadge);
     }
+
+    // EPIC-023: Add bowl game badge if applicable
+    if (game.game_type === 'bowl') {
+      const bowlBadge = document.createElement('span');
+      bowlBadge.className = 'bowl-badge';
+      bowlBadge.textContent = 'BOWL';
+      bowlBadge.title = game.postseason_name || 'Bowl Game';
+      oppCell.appendChild(document.createTextNode(' '));
+      oppCell.appendChild(bowlBadge);
+    }
+
+    // EPIC-023: Add playoff game badge if applicable
+    if (game.game_type === 'playoff') {
+      const playoffBadge = document.createElement('span');
+      playoffBadge.className = 'playoff-badge';
+      playoffBadge.textContent = 'PLAYOFF';
+      playoffBadge.title = game.postseason_name || 'CFP Playoff Game';
+      oppCell.appendChild(document.createTextNode(' '));
+      oppCell.appendChild(playoffBadge);
+    }
   } else {
     // Future FBS game - grayed out
     oppLink.style.color = 'var(--text-secondary)';
@@ -316,6 +384,26 @@ function createScheduleRow(game) {
       confChampBadge.title = 'Conference Championship Game';
       oppCell.appendChild(document.createTextNode(' '));
       oppCell.appendChild(confChampBadge);
+    }
+
+    // EPIC-023: Add bowl game badge for scheduled bowl games
+    if (game.game_type === 'bowl') {
+      const bowlBadge = document.createElement('span');
+      bowlBadge.className = 'bowl-badge';
+      bowlBadge.textContent = 'BOWL';
+      bowlBadge.title = game.postseason_name || 'Bowl Game';
+      oppCell.appendChild(document.createTextNode(' '));
+      oppCell.appendChild(bowlBadge);
+    }
+
+    // EPIC-023: Add playoff game badge for scheduled playoff games
+    if (game.game_type === 'playoff') {
+      const playoffBadge = document.createElement('span');
+      playoffBadge.className = 'playoff-badge';
+      playoffBadge.textContent = 'PLAYOFF';
+      playoffBadge.title = game.postseason_name || 'CFP Playoff Game';
+      oppCell.appendChild(document.createTextNode(' '));
+      oppCell.appendChild(playoffBadge);
     }
   }
 

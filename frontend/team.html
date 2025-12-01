@@ -121,6 +121,18 @@
           </span>
         </div>
 
+        <!-- EPIC-023: Game Type Filter -->
+        <div style="margin: 1rem 0; display: flex; align-items: center; gap: 0.75rem;">
+          <label for="game-type-filter" style="font-weight: 600; color: var(--text-primary);">Filter:</label>
+          <select id="game-type-filter" style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--bg-primary); color: var(--text-primary); font-size: 0.875rem; cursor: pointer;">
+            <option value="all">All Games</option>
+            <option value="regular">Regular Season</option>
+            <option value="conference_championship">Conference Championship</option>
+            <option value="bowl">Bowl Games</option>
+            <option value="playoff">Playoff Games</option>
+          </select>
+        </div>
+
         <div id="schedule-loading" class="loading">
           <div class="spinner"></div>
           <span>Loading schedule...</span>
