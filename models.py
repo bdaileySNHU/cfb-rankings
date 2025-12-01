@@ -94,6 +94,12 @@ class Game(Base):
     # 'playoff' = playoff game (EPIC-023)
     game_type = Column(String(50), nullable=True)
 
+    # EPIC-023: Postseason game name
+    # NULL = regular season or unnamed game
+    # Bowl games: "Rose Bowl Game", "Sugar Bowl", etc.
+    # Playoff games: "CFP Semifinal", "CFP Championship", etc.
+    postseason_name = Column(String(100), nullable=True)
+
     # Game processed flag
     is_processed = Column(Boolean, default=False)
 
