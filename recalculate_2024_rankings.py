@@ -150,7 +150,6 @@ def recalculate_2024_rankings():
     print()
 
     # Show Oregon's correct 2024 record
-    from models import RankingHistory
     oregon_week_15 = db.query(RankingHistory).filter(
         RankingHistory.team_id == 87,  # Oregon
         RankingHistory.season == season,
