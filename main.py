@@ -655,6 +655,34 @@ async def get_active_season(db: Session = Depends(get_db)):
     }
 
 
+@app.get("/api/seasons/{year}", tags=["Seasons"])
+async def get_season(year: int, db: Session = Depends(get_db)):
+    """
+    Get a specific season by year.
+
+    EPIC-024 Story 24.3: Expose season status for management and UI
+
+    Args:
+        year: Season year
+
+    Returns:
+        dict: Season data with year, current_week, is_active
+
+    Raises:
+        HTTPException: 404 if season not found
+    """
+    season = db.query(Season).filter(Season.year == year).first()
+
+    if not season:
+        raise HTTPException(status_code=404, detail=f"Season {year} not found")
+
+    return {
+        "year": season.year,
+        "current_week": season.current_week,
+        "is_active": season.is_active
+    }
+
+
 # ============================================================================
 # STATS ENDPOINTS
 # ============================================================================
