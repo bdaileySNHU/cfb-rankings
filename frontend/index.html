@@ -58,11 +58,22 @@
       <div class="accuracy-subtext" id="accuracy-details">--</div>
     </div>
 
+    <!-- EPIC-024: Historical Season Indicator -->
+    <div id="historical-banner" class="historical-banner" style="display: none;">
+      <span class="historical-icon">📅</span>
+      <span class="historical-text">Viewing Historical Season: <strong id="historical-season-year"></strong></span>
+      <button id="return-to-current" class="historical-return-btn">Return to Current Season</button>
+    </div>
+
     <!-- Rankings Card -->
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">Current Rankings</h2>
         <div class="filters">
+          <!-- EPIC-024: Season Selector -->
+          <select class="filter-select" id="season-select">
+            <option value="">Loading seasons...</option>
+          </select>
           <select class="filter-select" id="limit-select">
             <option value="10">Top 10</option>
             <option value="25" selected>Top 25</option>

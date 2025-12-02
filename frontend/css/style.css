@@ -1116,3 +1116,48 @@ footer {
   font-size: 1rem;
   opacity: 0.9;
 }
+
+/* EPIC-024: Historical Season Indicator */
+.historical-banner {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.historical-icon {
+  font-size: 1.5rem;
+}
+
+.historical-text {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.historical-text strong {
+  font-weight: 700;
+}
+
+.historical-return-btn {
+  background: white;
+  color: #d97706;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+
+.historical-return-btn:hover {
+  background: #fffbeb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}

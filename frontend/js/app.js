@@ -2,14 +2,16 @@
 
 // State
 let currentLimit = 25;
+let currentSeason = null;  // EPIC-024: Selected season
+let activeSeason = null;   // EPIC-024: Current active season
 let rankingsData = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+  loadSeasons();  // EPIC-024: Load seasons first
   loadStats();
   loadPredictionAccuracy(); // EPIC-009
   loadPredictions();
-  loadRankings();
   setupEventListeners();
   setupPredictionListeners();
 });
@@ -22,6 +24,77 @@ function setupEventListeners() {
       currentLimit = parseInt(e.target.value);
       loadRankings();
     });
+  }
+
+  // EPIC-024: Season selector
+  const seasonSelect = document.getElementById('season-select');
+  if (seasonSelect) {
+    seasonSelect.addEventListener('change', (e) => {
+      currentSeason = e.target.value ? parseInt(e.target.value) : activeSeason;
+      updateHistoricalBanner();
+      loadRankings();
+    });
+  }
+
+  // EPIC-024: Return to current season button
+  const returnBtn = document.getElementById('return-to-current');
+  if (returnBtn) {
+    returnBtn.addEventListener('click', () => {
+      currentSeason = activeSeason;
+      document.getElementById('season-select').value = activeSeason;
+      updateHistoricalBanner();
+      loadRankings();
+    });
+  }
+}
+
+// EPIC-024: Load available seasons
+async function loadSeasons() {
+  try {
+    const seasonsResponse = await fetch('/api/seasons');
+    const seasons = await seasonsResponse.json();
+
+    // Get active season
+    const activeResponse = await fetch('/api/seasons/active');
+    const activeSeasonData = await activeResponse.json();
+    activeSeason = activeSeasonData.year;
+    currentSeason = activeSeason;  // Default to active season
+
+    // Populate season selector
+    const seasonSelect = document.getElementById('season-select');
+    seasonSelect.innerHTML = '';
+
+    seasons.forEach(season => {
+      const option = document.createElement('option');
+      option.value = season.year;
+      option.textContent = `${season.year} Season${season.is_active ? ' (Current)' : ''}`;
+      if (season.year === activeSeason) {
+        option.selected = true;
+      }
+      seasonSelect.appendChild(option);
+    });
+
+    // Load rankings after seasons are loaded
+    loadRankings();
+  } catch (error) {
+    console.error('Error loading seasons:', error);
+    // Fallback: load rankings anyway
+    loadRankings();
+  }
+}
+
+// EPIC-024: Update historical season banner
+function updateHistoricalBanner() {
+  const banner = document.getElementById('historical-banner');
+  const seasonYear = document.getElementById('historical-season-year');
+
+  if (currentSeason && currentSeason !== activeSeason) {
+    // Show historical banner
+    seasonYear.textContent = currentSeason;
+    banner.style.display = 'flex';
+  } else {
+    // Hide historical banner
+    banner.style.display = 'none';
   }
 }
 
@@ -55,7 +128,8 @@ async function loadRankings() {
   container.classList.add('hidden');
 
   try {
-    const data = await api.getRankings(currentLimit);
+    // EPIC-024: Pass season parameter
+    const data = await api.getRankings(currentLimit, currentSeason);
     rankingsData = data;
 
     // Clear existing rows
