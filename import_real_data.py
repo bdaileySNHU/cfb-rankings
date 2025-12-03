@@ -138,20 +138,22 @@ def import_teams(cfbd: CFBDClient, db, year: int):
     talent_data = cfbd.get_team_talent(year) or []
     talent_map = {t['school']: t['talent'] for t in talent_data if 'school' in t and 'talent' in t}
 
-    # Fetch returning production
+    # Fetch returning production (EPIC-025)
+    # API returns percentPPA (decimal 0.0-1.0) for overall returning production
     print("Fetching returning production...")
     returning_data = cfbd.get_returning_production(year) or []
     returning_map = {}
     for r in returning_data:
-        if 'team' in r and 'returningProduction' in r:
+        if 'team' in r and 'percentPPA' in r:
             team = r['team']
-            prod = r['returningProduction']
-            # Average the returning production percentage
-            if isinstance(prod, dict):
-                values = [v for v in prod.values() if isinstance(v, (int, float))]
-                returning_map[team] = sum(values) / len(values) / 100 if values else 0.5
-            elif isinstance(prod, (int, float)):
-                returning_map[team] = prod / 100
+            prod = r['percentPPA']
+            # Validate and store (API returns decimal, no conversion needed)
+            if isinstance(prod, (int, float)) and 0.0 <= prod <= 1.0:
+                returning_map[team] = prod
+            else:
+                print(f"  Warning: Invalid returning production for {team}: {prod}")
+
+    print(f"  Loaded returning production for {len(returning_map)} teams")
 
     team_objects = {}
     ranking_service = RankingService(db)
