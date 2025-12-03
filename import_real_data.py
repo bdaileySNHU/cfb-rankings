@@ -168,7 +168,15 @@ def import_teams(cfbd: CFBDClient, db, year: int):
         existing_team = db.query(Team).filter(Team.name == team_name).first()
 
         if existing_team:
-            # Reuse existing team
+            # Reuse existing team, but update preseason data
+            recruiting_rank = recruiting_map.get(team_name, 999)
+            returning_prod = returning_map.get(team_name, 0.5)
+
+            # Update preseason factors
+            existing_team.recruiting_rank = recruiting_rank
+            existing_team.returning_production = returning_prod
+            # Note: transfer_rank stays as is (999) - see EPIC-026
+
             team_objects[team_name] = existing_team
             teams_reused += 1
         else:
