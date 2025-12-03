@@ -35,8 +35,13 @@ class Team(Base):
 
     # Preseason factors
     recruiting_rank = Column(Integer, default=999)
-    transfer_rank = Column(Integer, default=999)
+    transfer_rank = Column(Integer, default=999)  # DEPRECATED: Use transfer_portal_rank instead
     returning_production = Column(Float, default=0.5)
+
+    # EPIC-026: Transfer portal metrics (calculated from player transfers)
+    transfer_portal_points = Column(Integer, default=0)  # Total star points from transfers
+    transfer_portal_rank = Column(Integer, default=999)  # National rank (1 = best)
+    transfer_count = Column(Integer, default=0)  # Number of incoming transfers
 
     # Current season stats
     elo_rating = Column(Float, default=1500.0)

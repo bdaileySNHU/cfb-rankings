@@ -155,6 +155,17 @@ def import_teams(cfbd: CFBDClient, db, year: int):
 
     print(f"  Loaded returning production for {len(returning_map)} teams")
 
+    # EPIC-026: Fetch and calculate transfer portal rankings
+    print("Fetching transfer portal data...")
+    transfer_data = cfbd.get_transfer_portal(year) or []
+    print(f"  Retrieved {len(transfer_data)} transfers")
+
+    print("Calculating transfer portal rankings...")
+    from transfer_portal_service import TransferPortalService
+    tp_service = TransferPortalService()
+    team_scores, team_ranks = tp_service.get_team_stats(transfer_data)
+    print(f"  Calculated rankings for {len(team_ranks)} teams")
+
     team_objects = {}
     ranking_service = RankingService(db)
     teams_created = 0
@@ -172,10 +183,17 @@ def import_teams(cfbd: CFBDClient, db, year: int):
             recruiting_rank = recruiting_map.get(team_name, 999)
             returning_prod = returning_map.get(team_name, 0.5)
 
+            # EPIC-026: Get transfer portal data
+            transfer_portal_rank = team_ranks.get(team_name, 999)
+            transfer_portal_points = team_scores.get(team_name, {}).get('points', 0)
+            transfer_portal_count = team_scores.get(team_name, {}).get('count', 0)
+
             # Update preseason factors
             existing_team.recruiting_rank = recruiting_rank
             existing_team.returning_production = returning_prod
-            # Note: transfer_rank stays as is (999) - see EPIC-026
+            existing_team.transfer_portal_rank = transfer_portal_rank
+            existing_team.transfer_portal_points = transfer_portal_points
+            existing_team.transfer_count = transfer_portal_count
 
             team_objects[team_name] = existing_team
             teams_reused += 1
@@ -186,8 +204,13 @@ def import_teams(cfbd: CFBDClient, db, year: int):
 
             # Get preseason data
             recruiting_rank = recruiting_map.get(team_name, 999)
-            transfer_rank = 999  # CFBD doesn't have transfer portal rankings easily accessible
+            transfer_rank = 999  # DEPRECATED: Use transfer_portal_rank instead
             returning_prod = returning_map.get(team_name, 0.5)
+
+            # EPIC-026: Get transfer portal data
+            transfer_portal_rank = team_ranks.get(team_name, 999)
+            transfer_portal_points = team_scores.get(team_name, {}).get('points', 0)
+            transfer_portal_count = team_scores.get(team_name, {}).get('count', 0)
 
             # EPIC-012: Create team with BOTH conference tier and name
             team = Team(
@@ -196,7 +219,10 @@ def import_teams(cfbd: CFBDClient, db, year: int):
                 conference_name=conference_name,      # "Big Ten", "SEC", etc. (for display)
                 recruiting_rank=recruiting_rank,
                 transfer_rank=transfer_rank,
-                returning_production=returning_prod
+                returning_production=returning_prod,
+                transfer_portal_rank=transfer_portal_rank,
+                transfer_portal_points=transfer_portal_points,
+                transfer_count=transfer_portal_count
             )
 
             ranking_service.initialize_team_rating(team)
@@ -204,7 +230,7 @@ def import_teams(cfbd: CFBDClient, db, year: int):
             team_objects[team_name] = team
             teams_created += 1
 
-            print(f"  Added: {team_name} - {conference_name} ({conference_tier.value}) - Recruiting: #{recruiting_rank}, Returning: {returning_prod*100:.0f}%")
+            print(f"  Added: {team_name} - {conference_name} ({conference_tier.value}) - Recruiting: #{recruiting_rank}, Returning: {returning_prod*100:.0f}%, Portal: #{transfer_portal_rank}")
 
     db.commit()
 
