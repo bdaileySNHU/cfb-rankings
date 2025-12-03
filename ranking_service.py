@@ -370,18 +370,18 @@ class RankingService:
         """
         from models import Game
 
-        # Count wins (games where team won and game is completed)
+        # Count wins (games where team won and game is processed)
         wins = self.db.query(Game).filter(
             Game.season == season,
-            Game.completed == True,
+            Game.is_processed == True,
             ((Game.home_team_id == team_id) & (Game.home_score > Game.away_score)) |
             ((Game.away_team_id == team_id) & (Game.away_score > Game.home_score))
         ).count()
 
-        # Count losses (games where team lost and game is completed)
+        # Count losses (games where team lost and game is processed)
         losses = self.db.query(Game).filter(
             Game.season == season,
-            Game.completed == True,
+            Game.is_processed == True,
             ((Game.home_team_id == team_id) & (Game.home_score < Game.away_score)) |
             ((Game.away_team_id == team_id) & (Game.away_score < Game.home_score))
         ).count()
