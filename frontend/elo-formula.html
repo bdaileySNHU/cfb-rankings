@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ELO Formula Visualization - College Football Rankings</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .formula-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    .formula-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .formula-box {
+      background: var(--bg-secondary);
+      border-left: 4px solid var(--primary-color);
+      padding: 1.5rem;
+      margin: 1rem 0;
+      font-family: 'Courier New', monospace;
+      font-size: 1.1rem;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+
+    .formula-explanation {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin: 1rem 0;
+    }
+
+    .variable {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .constant {
+      color: #e74c3c;
+      font-weight: 600;
+    }
+
+    .flow-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+
+    .flow-step {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      position: relative;
+    }
+
+    .flow-step::after {
+      content: '↓';
+      display: block;
+      text-align: center;
+      font-size: 2rem;
+      color: var(--primary-color);
+      margin: 0.5rem 0;
+    }
+
+    .flow-step:last-child::after {
+      display: none;
+    }
+
+    .flow-step-title {
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .example-box {
+      background: #f0f8ff;
+      border: 1px solid #3498db;
+      border-radius: 4px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .example-title {
+      font-weight: 700;
+      color: #2980b9;
+      margin-bottom: 0.5rem;
+    }
+
+    .constants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .constant-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 1rem;
+    }
+
+    .constant-name {
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 0.9rem;
+    }
+
+    .constant-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0.5rem 0;
+    }
+
+    .constant-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .chart-container {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .visual-formula {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.2rem;
+      margin: 1rem 0;
+      padding: 1rem;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+    }
+
+    .formula-part {
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .operator {
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <h1>College Football Rankings</h1>
+      <p class="subtitle">ELO Formula Visualization</p>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="nav-link">Rankings</a>
+      <a href="teams.html" class="nav-link">All Teams</a>
+      <a href="games.html" class="nav-link">Games</a>
+      <a href="comparison.html" class="nav-link">Prediction Comparison</a>
+      <a href="elo-formula.html" class="nav-link active">ELO Formula</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Introduction -->
+    <div class="card">
+      <h1 style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 1rem;">
+        How Our ELO Rating Works
+      </h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); line-height: 1.6;">
+        Our college football ranking system uses a <strong>modified ELO algorithm</strong> with enhancements for:
+      </p>
+      <ul style="font-size: 1.05rem; line-height: 1.8; margin-left: 2rem; color: var(--text-secondary);">
+        <li><strong>Preseason factors</strong> - Recruiting, transfers, returning production</li>
+        <li><strong>Margin of victory</strong> - Bigger wins matter more (with diminishing returns)</li>
+        <li><strong>Garbage time adjustment</strong> - Reduces weight of 4th quarter scoring in blowouts</li>
+        <li><strong>Conference strength</strong> - P5, G5, and FCS matchups weighted differently</li>
+        <li><strong>Home field advantage</strong> - 65-point bonus for home teams</li>
+      </ul>
+    </div>
+
+    <!-- System Constants -->
+    <div class="formula-card">
+      <div class="formula-title">
+        ⚙️ System Constants
+      </div>
+      <div class="constants-grid">
+        <div class="constant-card">
+          <div class="constant-name">K-FACTOR</div>
+          <div class="constant-value">32</div>
+          <div class="constant-desc">Maximum rating change per game</div>
+        </div>
+        <div class="constant-card">
+          <div class="constant-name">RATING SCALE</div>
+          <div class="constant-value">400</div>
+          <div class="constant-desc">ELO rating scale divisor</div>
+        </div>
+        <div class="constant-card">
+          <div class="constant-name">HOME FIELD</div>
+          <div class="constant-value">65</div>
+          <div class="constant-desc">Home field advantage points</div>
+        </div>
+        <div class="constant-card">
+          <div class="constant-name">MAX MOV</div>
+          <div class="constant-value">2.5x</div>
+          <div class="constant-desc">Maximum margin of victory multiplier</div>
+        </div>
+        <div class="constant-card">
+          <div class="constant-name">GARBAGE TIME</div>
+          <div class="constant-value">21 pts</div>
+          <div class="constant-desc">Threshold for garbage time detection</div>
+        </div>
+        <div class="constant-card">
+          <div class="constant-name">Q4 WEIGHT</div>
+          <div class="constant-value">25%</div>
+          <div class="constant-desc">4th quarter weight in garbage time</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preseason Rating -->
+    <div class="formula-card">
+      <div class="formula-title">
+        🎯 Step 1: Preseason Rating
+      </div>
+      <p class="formula-explanation">
+        Each team starts with a calculated preseason rating based on recruiting, transfers, and returning production.
+      </p>
+
+      <div class="formula-box">
+Preseason Rating = <span class="constant">1500</span> (base)
+                 + Recruiting Bonus
+                 + Transfer Bonus
+                 + Returning Production Bonus
+      </div>
+
+      <div class="example-box">
+        <div class="example-title">📊 Bonus Calculations:</div>
+        <strong>Recruiting Rank Bonus:</strong><br>
+        • Top 5: +100 points<br>
+        • Top 10: +75 points<br>
+        • Top 25: +50 points<br>
+        • Top 50: +25 points<br><br>
+
+        <strong>Transfer Portal Rank Bonus:</strong><br>
+        • Top 10: +75 points<br>
+        • Top 25: +50 points<br>
+        • Top 50: +25 points<br><br>
+
+        <strong>Returning Production Bonus:</strong><br>
+        • ≥80%: +40 points<br>
+        • ≥60%: +25 points<br>
+        • ≥40%: +10 points
+      </div>
+
+      <div class="example-box">
+        <div class="example-title">💡 Example: Elite Team</div>
+        Base: <strong>1500</strong><br>
+        + Recruiting (Top 5): <strong>+100</strong><br>
+        + Transfers (Top 10): <strong>+75</strong><br>
+        + Returning (75%): <strong>+25</strong><br>
+        = <strong style="color: var(--primary-color); font-size: 1.3rem;">1700 Rating</strong>
+      </div>
+    </div>
+
+    <!-- Win Probability -->
+    <div class="formula-card">
+      <div class="formula-title">
+        📈 Step 2: Win Probability
+      </div>
+      <p class="formula-explanation">
+        Before each game, we calculate the expected win probability for each team using the logistic curve.
+      </p>
+
+      <div class="formula-box">
+Expected Win % = 1 / (1 + 10<sup>(OpponentRating - YourRating) / 400</sup>)
+      </div>
+
+      <div class="formula-explanation">
+        <strong>With Home Field Advantage:</strong> Add 65 points to the home team's rating before calculating.
+      </div>
+
+      <div class="example-box">
+        <div class="example-title">💡 Example: Home Game</div>
+        <strong>Team A (Home):</strong> 1600 rating + 65 (home) = <strong>1665 effective</strong><br>
+        <strong>Team B (Away):</strong> 1500 rating<br><br>
+
+        Calculation:<br>
+        Expected = 1 / (1 + 10<sup>(1500 - 1665) / 400</sup>)<br>
+        Expected = 1 / (1 + 10<sup>-0.4125</sup>)<br>
+        Expected = 1 / (1 + 0.387)<br>
+        Expected = <strong style="color: var(--primary-color); font-size: 1.2rem;">72%</strong> chance to win
+      </div>
+    </div>
+
+    <!-- Margin of Victory -->
+    <div class="formula-card">
+      <div class="formula-title">
+        🎯 Step 3: Margin of Victory Multiplier
+      </div>
+      <p class="formula-explanation">
+        Wins by larger margins earn more rating points, but with diminishing returns to prevent blowout inflation.
+      </p>
+
+      <div class="formula-box">
+MOV Multiplier = log(Point Differential + 1)
+Capped at: <span class="constant">2.5</span>
+      </div>
+
+      <div class="chart-container">
+        <div style="font-weight: 700; margin-bottom: 1rem; color: var(--primary-color);">MOV Multiplier by Point Differential</div>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border-color);">
+              <th style="padding: 0.5rem; text-align: left;">Point Diff</th>
+              <th style="padding: 0.5rem; text-align: right;">Multiplier</th>
+              <th style="padding: 0.5rem; text-align: left;">Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 0.5rem;">1-2 points</td>
+              <td style="padding: 0.5rem; text-align: right; font-weight: 700;">1.0x</td>
+              <td style="padding: 0.5rem; color: var(--text-secondary);">Close game</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem;">7 points</td>
+              <td style="padding: 0.5rem; text-align: right; font-weight: 700;">1.4x</td>
+              <td style="padding: 0.5rem; color: var(--text-secondary);">One-score game</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem;">14 points</td>
+              <td style="padding: 0.5rem; text-align: right; font-weight: 700;">1.7x</td>
+              <td style="padding: 0.5rem; color: var(--text-secondary);">Two-score game</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem;">21 points</td>
+              <td style="padding: 0.5rem; text-align: right; font-weight: 700;">1.9x</td>
+              <td style="padding: 0.5rem; color: var(--text-secondary);">Three-score game</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem;">35+ points</td>
+              <td style="padding: 0.5rem; text-align: right; font-weight: 700;">2.5x</td>
+              <td style="padding: 0.5rem; color: var(--text-secondary);">Blowout (capped)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 1rem; margin: 1rem 0;">
+        <strong style="color: #856404;">⚠️ Garbage Time Adjustment (EPIC-021)</strong><br>
+        <span style="color: #856404;">If point differential > 21 after Q3, the 4th quarter is weighted at only 25% to reduce garbage time inflation.</span>
+      </div>
+    </div>
+
+    <!-- Quarter-Weighted MOV -->
+    <div class="formula-card">
+      <div class="formula-title">
+        🏈 Quarter-Weighted MOV (Advanced)
+      </div>
+      <p class="formula-explanation">
+        When quarter-by-quarter scores are available, we process each quarter separately with garbage time detection.
+      </p>
+
+      <div class="flow-diagram">
+        <div class="flow-step">
+          <div class="flow-step-title">Q1 - Q3: Full Weight</div>
+          <div>Process first 3 quarters normally with 100% weight</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-title">Check Garbage Time</div>
+          <div>Is |differential after Q3| > 21 points?</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-title">Q4 Weight</div>
+          <div>
+            <strong>Close game:</strong> 100% weight<br>
+            <strong>Garbage time:</strong> 25% weight
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-title">Final MOV</div>
+          <div>Combine weighted quarters, cap at 2.5x</div>
+        </div>
+      </div>
+
+      <div class="example-box">
+        <div class="example-title">💡 Example: Garbage Time Game</div>
+        <strong>After Q3:</strong> 42-14 (28-point lead) → Garbage time detected!<br><br>
+
+        <strong>Final Score:</strong> 56-21 (35-point win)<br>
+        <strong>Q4 scoring:</strong> 14-7 (weighted at 25%)<br><br>
+
+        Without adjustment: <strong>2.5x multiplier</strong> (capped)<br>
+        With adjustment: <strong>2.2x multiplier</strong> (reduced)<br><br>
+
+        <span style="color: var(--success-color);">✓ Prevents garbage time inflation!</span>
+      </div>
+    </div>
+
+    <!-- Conference Multipliers -->
+    <div class="formula-card">
+      <div class="formula-title">
+        🏆 Step 4: Conference Multipliers
+      </div>
+      <p class="formula-explanation">
+        Rating changes are adjusted based on the strength of competition (conference matchups).
+      </p>
+
+      <div class="chart-container">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border-color);">
+              <th style="padding: 0.5rem; text-align: left;">Matchup</th>
+              <th style="padding: 0.5rem; text-align: center;">Winner Mult</th>
+              <th style="padding: 0.5rem; text-align: center;">Loser Mult</th>
+              <th style="padding: 0.5rem; text-align: left;">Rationale</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 0.5rem;">P5 vs P5</td>
+              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.0x</td>
+              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.0x</td>
+              <td style="padding: 0.5rem; color: var(--text-secondary);">Equal competition</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem;">G5 vs G5</td>
+              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.0x</td>
+              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.0x</td>
+              <td style="padding: 0.5rem; color: var(--text-secondary);">Equal competition</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem;">P5 beats G5</td>
+              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">0.8x</td>
+              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.2x</td>
+              <td style="padding: 0.5rem; color: var(--text-secondary);">Expected result</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem;">G5 beats P5</td>
+              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.5x</td>
+              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">0.8x</td>
+              <td style="padding: 0.5rem; color: var(--text-secondary);">Upset! Reward G5</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem;">FBS vs FCS</td>
+              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">0.0x</td>
+              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">0.0x</td>
+              <td style="padding: 0.5rem; color: var(--text-secondary);">Excluded from rankings</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Final Rating Change -->
+    <div class="formula-card">
+      <div class="formula-title">
+        🎯 Step 5: Final Rating Change
+      </div>
+      <p class="formula-explanation">
+        Combining all factors, here's the complete formula for rating changes after a game:
+      </p>
+
+      <div class="formula-box">
+Rating Change = <span class="constant">K-Factor (32)</span>
+              × (Actual Result - Expected Result)
+              × MOV Multiplier
+              × Conference Multiplier
+      </div>
+
+      <div class="visual-formula">
+        <span class="formula-part"><span class="constant">32</span></span>
+        <span class="operator">×</span>
+        <span class="formula-part">(1.0 - 0.72)</span>
+        <span class="operator">×</span>
+        <span class="formula-part">1.7</span>
+        <span class="operator">×</span>
+        <span class="formula-part">1.0</span>
+        <span class="operator">=</span>
+        <span class="formula-part" style="background: var(--success-color); color: white;"><strong>+15.2</strong></span>
+      </div>
+
+      <div class="example-box">
+        <div class="example-title">💡 Complete Example: Upset Win</div>
+        <strong>Setup:</strong><br>
+        • Underdog (1550) beats Favorite (1650) at home<br>
+        • Final score: 31-24 (7-point win)<br>
+        • Both P5 teams<br><br>
+
+        <strong>Step 1: Expected Win %</strong><br>
+        Underdog + Home (65) = 1615 effective<br>
+        Expected = 1 / (1 + 10<sup>(1650-1615)/400</sup>) = <strong>43%</strong><br><br>
+
+        <strong>Step 2: MOV Multiplier</strong><br>
+        log(7 + 1) = <strong>1.4x</strong><br><br>
+
+        <strong>Step 3: Conference Multiplier</strong><br>
+        P5 vs P5 = <strong>1.0x</strong> for both<br><br>
+
+        <strong>Step 4: Rating Changes</strong><br>
+        Winner: 32 × (1.0 - 0.43) × 1.4 × 1.0 = <strong style="color: var(--success-color);">+25.5</strong><br>
+        Loser: 32 × (0.0 - 0.57) × 1.4 × 1.0 = <strong style="color: var(--danger-color);">-25.5</strong><br><br>
+
+        <strong>Final Ratings:</strong><br>
+        Winner: 1550 → <strong>1575.5</strong><br>
+        Loser: 1650 → <strong>1624.5</strong>
+      </div>
+    </div>
+
+    <!-- Summary Flow -->
+    <div class="card">
+      <h2 class="card-title">Complete Process Flow</h2>
+      <div class="flow-diagram">
+        <div class="flow-step">
+          <div class="flow-step-title">🎯 Preseason Initialization</div>
+          <div>Calculate initial ratings based on recruiting, transfers, returning production</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-title">📊 Game Setup</div>
+          <div>Apply home field advantage (+65), calculate expected win probabilities</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-title">🏈 Game Result</div>
+          <div>Determine winner, calculate point differential</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-title">📈 MOV Calculation</div>
+          <div>Use quarter-weighted or legacy MOV multiplier (with garbage time adjustment)</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-title">🏆 Conference Adjustment</div>
+          <div>Apply conference multipliers based on matchup type</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-title">✨ Update Ratings</div>
+          <div>Calculate final rating changes, update team ratings and records</div>
+        </div>
+        <div class="flow-step" style="border: 3px solid var(--success-color); background: #f0fff4;">
+          <div class="flow-step-title" style="color: var(--success-color);">🎉 New Rankings</div>
+          <div>Teams sorted by updated ELO ratings</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Features -->
+    <div class="card">
+      <h2 class="card-title">🌟 Key Features</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+        <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 4px;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📊</div>
+          <strong>Preseason Context</strong>
+          <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+            Teams start with ratings based on recruiting, transfers, and returning production rather than arbitrary values.
+          </p>
+        </div>
+        <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 4px;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎯</div>
+          <strong>Smart MOV</strong>
+          <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+            Logarithmic scaling rewards wins but prevents blowout inflation. Garbage time detection reduces impact of meaningless scoring.
+          </p>
+        </div>
+        <div style="padding: 1rem; background: var(--bg-secondary); border-radius: 4px;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🏆</div>
+          <strong>Conference Aware</strong>
+          <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+            P5 vs G5 matchups are weighted appropriately, rewarding upsets and adjusting for expected outcomes.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2024 College Football Ranking System</p>
+      <p style="margin-top: 0.5rem; opacity: 0.8;">
+        Modified ELO Algorithm with Quarter-Weighted MOV | Data updates in real-time
+      </p>
+    </div>
+  </footer>
+</body>
+</html>
