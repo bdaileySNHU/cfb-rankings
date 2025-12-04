@@ -54,10 +54,16 @@ async function loadComparisonData() {
 }
 
 /**
- * Display hero stats (overall accuracy)
+ * Display hero stats (overall accuracy and comparison)
  */
 function displayHeroStats(comparison) {
-  // ELO Accuracy
+  // Overall ELO Accuracy (all games)
+  const overallEloAccuracy = (comparison.overall_elo_accuracy * 100).toFixed(1);
+  document.getElementById('overall-elo-accuracy-pct').textContent = `${overallEloAccuracy}%`;
+  document.getElementById('overall-elo-correct-count').textContent =
+    `${comparison.overall_elo_correct} of ${comparison.overall_elo_total} games predicted correctly`;
+
+  // ELO Accuracy (vs AP Poll subset)
   const eloAccuracy = (comparison.elo_accuracy * 100).toFixed(1);
   document.getElementById('elo-accuracy-pct').textContent = `${eloAccuracy}%`;
   document.getElementById('elo-correct-count').textContent =

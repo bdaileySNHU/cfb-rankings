@@ -37,21 +37,38 @@
       <!-- Hero Stats: Overall Accuracy -->
       <div class="card" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); color: white; margin-bottom: 2rem;">
         <div class="card-header">
-          <h2 class="card-title" style="color: white; font-size: 1.5rem;">Overall Prediction Accuracy</h2>
+          <h2 class="card-title" style="color: white; font-size: 1.5rem;">Prediction Accuracy Comparison</h2>
+        </div>
+
+        <!-- Overall ELO Accuracy (All Games) -->
+        <div style="background: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+          <div style="text-align: center;">
+            <div style="font-size: 2.5rem; font-weight: bold;" id="overall-elo-accuracy-pct">--</div>
+            <div style="opacity: 0.9; margin-top: 0.5rem; font-size: 1.1rem;">Overall ELO Accuracy</div>
+            <div style="opacity: 0.7; font-size: 0.9rem; margin-top: 0.25rem;" id="overall-elo-correct-count">--</div>
+            <div style="opacity: 0.6; font-size: 0.85rem; margin-top: 0.5rem; font-style: italic;">
+              ↑ Accuracy across all predicted games
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparison (ELO vs AP Poll) -->
+        <div style="opacity: 0.9; font-size: 0.95rem; text-align: center; margin-bottom: 1rem;">
+          When compared on games with AP Poll rankings:
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; padding: 1rem 0;">
           <div style="text-align: center;">
-            <div style="font-size: 3rem; font-weight: bold;" id="elo-accuracy-pct">--</div>
+            <div style="font-size: 2.5rem; font-weight: bold;" id="elo-accuracy-pct">--</div>
             <div style="opacity: 0.9; margin-top: 0.5rem;">ELO System</div>
             <div style="opacity: 0.7; font-size: 0.9rem; margin-top: 0.25rem;" id="elo-correct-count">--</div>
           </div>
           <div style="text-align: center;">
-            <div style="font-size: 3rem; font-weight: bold;" id="ap-accuracy-pct">--</div>
+            <div style="font-size: 2.5rem; font-weight: bold;" id="ap-accuracy-pct">--</div>
             <div style="opacity: 0.9; margin-top: 0.5rem;">AP Poll</div>
             <div style="opacity: 0.7; font-size: 0.9rem; margin-top: 0.25rem;" id="ap-correct-count">--</div>
           </div>
           <div style="text-align: center;">
-            <div style="font-size: 3rem; font-weight: bold;" id="elo-advantage">--</div>
+            <div style="font-size: 2.5rem; font-weight: bold;" id="elo-advantage">--</div>
             <div style="opacity: 0.9; margin-top: 0.5rem;">ELO Advantage</div>
             <div style="opacity: 0.7; font-size: 0.9rem; margin-top: 0.25rem;" id="games-compared">--</div>
           </div>

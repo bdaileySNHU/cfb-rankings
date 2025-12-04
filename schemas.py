@@ -445,11 +445,11 @@ class ComparisonStats(BaseModel):
     Part of EPIC-010: AP Poll Prediction Comparison
     """
     season: int
-    elo_accuracy: float = Field(..., description="ELO prediction accuracy (0-1)", ge=0, le=1.0)
+    elo_accuracy: float = Field(..., description="ELO prediction accuracy vs AP Poll (0-1)", ge=0, le=1.0)
     ap_accuracy: float = Field(..., description="AP Poll prediction accuracy (0-1)", ge=0, le=1.0)
     elo_advantage: float = Field(..., description="ELO advantage over AP (can be negative)")
     total_games_compared: int = Field(..., description="Total games with both ELO and AP predictions", ge=0)
-    elo_correct: int = Field(..., description="Games ELO predicted correctly", ge=0)
+    elo_correct: int = Field(..., description="Games ELO predicted correctly (compared subset)", ge=0)
     ap_correct: int = Field(..., description="Games AP predicted correctly", ge=0)
     both_correct: int = Field(..., description="Games both systems predicted correctly", ge=0)
     elo_only_correct: int = Field(..., description="Games only ELO predicted correctly", ge=0)
@@ -457,3 +457,7 @@ class ComparisonStats(BaseModel):
     both_wrong: int = Field(..., description="Games both systems predicted incorrectly", ge=0)
     by_week: List[WeeklyComparisonStats] = Field(default_factory=list, description="Weekly breakdown")
     disagreements: List[DisagreementDetail] = Field(default_factory=list, description="Games where systems disagreed")
+    # Overall ELO accuracy (all predictions, not just compared)
+    overall_elo_accuracy: float = Field(..., description="Overall ELO prediction accuracy across ALL games (0-1)", ge=0, le=1.0)
+    overall_elo_total: int = Field(..., description="Total ELO predictions evaluated", ge=0)
+    overall_elo_correct: int = Field(..., description="Total ELO predictions correct", ge=0)

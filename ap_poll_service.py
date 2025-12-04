@@ -245,9 +245,19 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
             "games": games_count
         })
 
+    # Calculate OVERALL ELO accuracy (all predictions, not just compared ones)
+    all_predictions = db.query(Prediction).join(Game).filter(
+        Game.season == season,
+        Prediction.was_correct.isnot(None)
+    ).all()
+
+    overall_elo_total = len(all_predictions)
+    overall_elo_correct = sum(1 for p in all_predictions if p.was_correct)
+    overall_elo_accuracy = overall_elo_correct / overall_elo_total if overall_elo_total > 0 else 0.0
+
     return {
         "season": season,
-        "elo_accuracy": round(elo_accuracy, 4),
+        "elo_accuracy": round(elo_accuracy, 4),  # Accuracy when compared to AP Poll
         "ap_accuracy": round(ap_accuracy, 4),
         "elo_advantage": round(elo_advantage, 4),
         "total_games_compared": total_games_compared,
@@ -258,5 +268,9 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
         "ap_only_correct": ap_only_correct_count,
         "both_wrong": both_wrong_count,
         "by_week": by_week,
-        "disagreements": disagreements
+        "disagreements": disagreements,
+        # New fields for overall ELO accuracy
+        "overall_elo_accuracy": round(overall_elo_accuracy, 4),
+        "overall_elo_total": overall_elo_total,
+        "overall_elo_correct": overall_elo_correct
     }
