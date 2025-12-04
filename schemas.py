@@ -15,8 +15,13 @@ class TeamBase(BaseModel):
     conference: ConferenceType = Field(..., description="Conference type (P5, G5, FCS)")
     conference_name: Optional[str] = Field(None, description="Actual conference name (Big Ten, SEC, etc.)", max_length=50)
     recruiting_rank: Optional[int] = Field(999, description="247Sports recruiting rank", ge=1)
-    transfer_rank: Optional[int] = Field(999, description="247Sports transfer portal rank", ge=1)
+    transfer_rank: Optional[int] = Field(999, description="DEPRECATED: Use transfer_portal_rank instead", ge=1)
     returning_production: Optional[float] = Field(0.5, description="Returning production percentage", ge=0.0, le=1.0)
+
+    # EPIC-026: Transfer portal metrics (calculated from player transfers)
+    transfer_portal_points: Optional[int] = Field(0, description="Total star points from incoming transfers", ge=0)
+    transfer_portal_rank: Optional[int] = Field(999, description="Transfer portal national rank (1=best, 999=N/A)", ge=1)
+    transfer_count: Optional[int] = Field(0, description="Number of incoming transfers", ge=0)
 
 
 class TeamCreate(TeamBase):
@@ -32,6 +37,11 @@ class TeamUpdate(BaseModel):
     recruiting_rank: Optional[int] = Field(None, ge=1)
     transfer_rank: Optional[int] = Field(None, ge=1)
     returning_production: Optional[float] = Field(None, ge=0.0, le=1.0)
+
+    # EPIC-026: Transfer portal metrics
+    transfer_portal_points: Optional[int] = Field(None, ge=0)
+    transfer_portal_rank: Optional[int] = Field(None, ge=1)
+    transfer_count: Optional[int] = Field(None, ge=0)
 
 
 class Team(TeamBase):
@@ -106,6 +116,10 @@ class RankingEntry(BaseModel):
     losses: int
     sos: float
     sos_rank: Optional[int] = None
+
+    # EPIC-026: Transfer portal metrics
+    transfer_portal_rank: Optional[int] = Field(None, description="Transfer portal national rank (1=best, 999=N/A)")
+    recruiting_rank: Optional[int] = Field(None, description="247Sports recruiting rank")
 
 
 class RankingsResponse(BaseModel):

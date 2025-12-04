@@ -115,6 +115,9 @@ async def get_team(team_id: int, db: Session = Depends(get_db)):
         "recruiting_rank": team.recruiting_rank,
         "transfer_rank": team.transfer_rank,
         "returning_production": team.returning_production,
+        "transfer_portal_points": team.transfer_portal_points,  # EPIC-026: Transfer portal points
+        "transfer_portal_rank": team.transfer_portal_rank,  # EPIC-026: Transfer portal rank
+        "transfer_count": team.transfer_count,  # EPIC-026: Transfer count
         "elo_rating": team_ranking['elo_rating'] if team_ranking else team.elo_rating,  # EPIC-024: Season-specific ELO
         "initial_rating": team.initial_rating,
         "wins": team_ranking['wins'] if team_ranking else 0,  # EPIC-024: Season-specific wins
@@ -165,7 +168,9 @@ async def update_team(team_id: int, team_update: schemas.TeamUpdate, db: Session
         setattr(team, field, value)
 
     # Recalculate rating if preseason factors changed
-    if any(field in update_data for field in ['recruiting_rank', 'transfer_rank', 'returning_production']):
+    # EPIC-026: Added transfer portal fields to trigger recalculation
+    if any(field in update_data for field in ['recruiting_rank', 'transfer_rank', 'returning_production',
+                                                'transfer_portal_rank', 'transfer_portal_points', 'transfer_count']):
         ranking_service = RankingService(db)
         team.elo_rating = ranking_service.calculate_preseason_rating(team)
         team.initial_rating = team.elo_rating

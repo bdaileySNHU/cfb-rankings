@@ -475,7 +475,9 @@ class RankingService:
                 'wins': record.wins,  # EPIC-024: Season-specific wins from ranking_history
                 'losses': record.losses,  # EPIC-024: Season-specific losses from ranking_history
                 'sos': round(record.sos, 2),  # EPIC-024: Use saved SOS from ranking_history
-                'sos_rank': record.sos_rank  # EPIC-024: Use saved SOS rank
+                'sos_rank': record.sos_rank,  # EPIC-024: Use saved SOS rank
+                'transfer_portal_rank': team.transfer_portal_rank,  # EPIC-026: Transfer portal rank
+                'recruiting_rank': team.recruiting_rank  # EPIC-026: Recruiting rank for comparison
             })
 
         return rankings
