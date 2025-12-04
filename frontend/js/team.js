@@ -193,7 +193,18 @@ function populateTeamInfo(team) {
 
   // Preseason Factors
   document.getElementById('recruiting-rank').textContent = team.recruiting_rank === 999 ? 'N/A' : `#${team.recruiting_rank}`;
-  document.getElementById('transfer-rank').textContent = team.transfer_rank === 999 ? 'N/A' : `#${team.transfer_rank}`;
+
+  // EPIC-026: Transfer Portal Rank (volume-based)
+  const portalRankEl = document.getElementById('transfer-portal-rank');
+  const portalDetailsEl = document.getElementById('transfer-portal-details');
+  if (team.transfer_portal_rank && team.transfer_portal_rank !== 999) {
+    portalRankEl.textContent = `#${team.transfer_portal_rank}`;
+    portalDetailsEl.textContent = `${team.transfer_count} transfers, ${team.transfer_portal_points} pts`;
+  } else {
+    portalRankEl.textContent = 'N/A';
+    portalDetailsEl.textContent = 'No portal data';
+  }
+
   document.getElementById('returning-production').textContent = `${(team.returning_production * 100).toFixed(0)}%`;
 }
 
