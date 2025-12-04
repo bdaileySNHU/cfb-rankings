@@ -202,6 +202,10 @@ def import_teams(cfbd: CFBDClient, db, year: int):
             # Map conference to tier (P5/G5/FCS)
             conference_tier = CONFERENCE_MAP.get(conference_name, ConferenceType.GROUP_5)
 
+            # Special case: Notre Dame is P5 Independent
+            if team_name == 'Notre Dame':
+                conference_tier = ConferenceType.POWER_5
+
             # Get preseason data
             recruiting_rank = recruiting_map.get(team_name, 999)
             transfer_rank = 999  # DEPRECATED: Use transfer_portal_rank instead
