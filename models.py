@@ -1,6 +1,32 @@
-"""
-Database models for College Football Ranking System
-Using SQLAlchemy ORM
+"""Database Models - College Football Ranking System
+
+This module defines all SQLAlchemy ORM models for the ranking system,
+including teams, games, rankings, predictions, and metadata tracking.
+
+The database schema supports:
+    - Team data with preseason factors (recruiting, transfers, returning production)
+    - Game records with quarter-by-quarter scoring and postseason classification
+    - Weekly ranking snapshots for historical tracking
+    - Prediction storage and accuracy tracking
+    - API usage monitoring and update task management
+    - AP Poll integration for comparison analysis
+
+Models:
+    Team: College football team with ELO rating and preseason factors
+    Game: Individual game with scores, quarter data, and processing status
+    RankingHistory: Weekly ranking snapshots for historical analysis
+    Season: Season metadata with current week tracking
+    APIUsage: CFBD API call tracking for quota management
+    UpdateTask: Manual and automated update task tracking
+    Prediction: Stored game predictions for accuracy analysis
+    APPollRanking: AP Poll rankings for comparison with ELO
+
+Example:
+    Create a team and initialize rating:
+        >>> team = Team(name="Georgia", conference=ConferenceType.POWER_5,
+        ...             recruiting_rank=3, returning_production=0.85)
+        >>> session.add(team)
+        >>> session.commit()
 """
 
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, Enum, Index, UniqueConstraint
@@ -13,14 +39,64 @@ Base = declarative_base()
 
 
 class ConferenceType(str, enum.Enum):
-    """Conference types"""
+    """Conference classification for college football teams.
+
+    Defines the three major tiers of college football conferences used
+    for ELO calculations and matchup multipliers:
+
+    Attributes:
+        POWER_5: Power 5 conferences (SEC, Big Ten, Big 12, ACC, Pac-12)
+        GROUP_5: Group of 5 conferences (AAC, C-USA, MAC, MWC, Sun Belt)
+        FCS: Football Championship Subdivision (lower division)
+
+    Note:
+        Conference tier affects base ELO rating and cross-tier matchup
+        multipliers. FCS teams start at 1300 ELO vs 1500 for FBS teams.
+    """
     POWER_5 = "P5"
     GROUP_5 = "G5"
     FCS = "FCS"
 
 
 class Team(Base):
-    """Team model"""
+    """SQLAlchemy ORM model representing a college football team.
+
+    Stores team information including name, conference, preseason metrics,
+    and current ELO rating. Preseason factors (recruiting, transfers, returning
+    production) are used to calculate initial ratings at season start.
+
+    Attributes:
+        id: Unique team identifier (primary key)
+        name: Official team name (e.g., "Georgia", "Ohio State")
+        conference: Conference tier (P5, G5, or FCS)
+        conference_name: Actual conference name (e.g., "SEC", "Big Ten")
+        is_fcs: Boolean flag indicating FCS division
+        recruiting_rank: 247Sports recruiting class rank (1-133)
+        transfer_rank: DEPRECATED - Legacy transfer rank field
+        returning_production: Percentage of returning production (0.0-1.0)
+        transfer_portal_points: Total star points from incoming transfers
+        transfer_portal_rank: National transfer portal rank (1=best)
+        transfer_count: Number of incoming transfer players
+        elo_rating: Current Modified ELO rating
+        initial_rating: Preseason ELO rating (before any games)
+        wins: Cumulative win count (all seasons)
+        losses: Cumulative loss count (all seasons)
+        created_at: Record creation timestamp
+        updated_at: Last modification timestamp
+
+    Relationships:
+        home_games: Games where this team is the home team
+        away_games: Games where this team is the away team
+        ranking_history: Historical ranking snapshots by week
+
+    Example:
+        >>> team = Team(name="Georgia", conference=ConferenceType.POWER_5,
+        ...             recruiting_rank=3, transfer_portal_rank=5,
+        ...             returning_production=0.85)
+        >>> team.elo_rating = 1850.0
+        >>> db.add(team)
+        >>> db.commit()
+    """
     __tablename__ = "teams"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -63,7 +139,50 @@ class Team(Base):
 
 
 class Game(Base):
-    """Game model"""
+    """SQLAlchemy ORM model representing a college football game.
+
+    Stores comprehensive game information including teams, scores, quarter-by-
+    quarter data, game metadata, and ELO rating changes from processing.
+
+    Supports regular season, conference championship, bowl, and playoff games
+    with optional quarter-level scoring for garbage time detection.
+
+    Attributes:
+        id: Unique game identifier (primary key)
+        home_team_id: Foreign key to home team
+        away_team_id: Foreign key to away team
+        home_score: Final home team score
+        away_score: Final away team score
+        q1_home, q2_home, q3_home, q4_home: Quarter scores for home team
+        q1_away, q2_away, q3_away, q4_away: Quarter scores for away team
+        week: Week number (0=preseason, 1-15=regular/postseason)
+        season: Season year (e.g., 2024)
+        is_neutral_site: Boolean indicating neutral site game
+        game_date: Date and time of game
+        game_type: Game classification ('conference_championship', 'bowl', 'playoff', or None)
+        postseason_name: Bowl/playoff name (e.g., "Rose Bowl Game", "CFP Semifinal")
+        is_processed: Boolean indicating if ELO has been updated
+        excluded_from_rankings: Boolean to exclude FCS or exhibition games
+        home_rating_change: ELO points gained/lost by home team
+        away_rating_change: ELO points gained/lost by away team
+        created_at: Record creation timestamp
+
+    Relationships:
+        home_team: Team object for home team
+        away_team: Team object for away team
+        prediction: Associated prediction (if exists)
+
+    Properties:
+        winner_id: ID of winning team
+        loser_id: ID of losing team
+
+    Example:
+        >>> game = Game(home_team_id=1, away_team_id=2,
+        ...             home_score=35, away_score=28,
+        ...             week=5, season=2024, is_neutral_site=False)
+        >>> db.add(game)
+        >>> db.commit()
+    """
     __tablename__ = "games"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -162,7 +281,38 @@ class Game(Base):
 
 
 class RankingHistory(Base):
-    """Historical rankings by week"""
+    """SQLAlchemy ORM model for weekly ranking snapshots.
+
+    Stores historical rankings for each team at each week, enabling
+    week-by-week tracking of ELO ratings, win/loss records, and strength
+    of schedule over time. Used for ranking charts and historical analysis.
+
+    Attributes:
+        id: Unique record identifier (primary key)
+        team_id: Foreign key to team
+        week: Week number (0-15)
+        season: Season year (e.g., 2024)
+        rank: National rank for this team this week (1=best)
+        elo_rating: ELO rating snapshot at this week
+        wins: Season wins through this week
+        losses: Season losses through this week
+        sos: Strength of schedule (average opponent ELO)
+        sos_rank: National SOS rank (1=hardest schedule)
+        created_at: Record creation timestamp
+
+    Relationships:
+        team: Team object for this ranking
+
+    Note:
+        Unique constraint on (team_id, season, week) prevents duplicate entries.
+
+    Example:
+        >>> history = RankingHistory(team_id=1, week=5, season=2024,
+        ...                          rank=3, elo_rating=1850.5,
+        ...                          wins=4, losses=1, sos=1650.2)
+        >>> db.add(history)
+        >>> db.commit()
+    """
     __tablename__ = "ranking_history"
     __table_args__ = (
         # EPIC-024 FIX: Prevent duplicate entries for same team/season/week
@@ -196,7 +346,30 @@ class RankingHistory(Base):
 
 
 class Season(Base):
-    """Season metadata"""
+    """SQLAlchemy ORM model for season metadata and current week tracking.
+
+    Stores configuration and state for each football season, including
+    the current week number and active status. Used by the weekly update
+    system to track progress through the season.
+
+    Attributes:
+        id: Unique record identifier (primary key)
+        year: Season year (e.g., 2024) - unique constraint
+        current_week: Current week number (0-15)
+        is_active: Boolean indicating if this is the active season
+        created_at: Record creation timestamp
+        updated_at: Last modification timestamp
+
+    Note:
+        Only one season should have is_active=True at a time. Week 0
+        indicates preseason, weeks 1-14 are regular season, week 15+ is
+        postseason/playoffs.
+
+    Example:
+        >>> season = Season(year=2024, current_week=5, is_active=True)
+        >>> db.add(season)
+        >>> db.commit()
+    """
     __tablename__ = "seasons"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -212,7 +385,31 @@ class Season(Base):
 
 
 class APIUsage(Base):
-    """API usage tracking for CFBD API calls"""
+    """SQLAlchemy ORM model for tracking CFBD API call usage.
+
+    Records every API call made to the College Football Data API for
+    quota monitoring and usage analysis. Enables monthly usage tracking
+    to prevent exceeding the API limit.
+
+    Attributes:
+        id: Unique record identifier (primary key)
+        endpoint: API endpoint called (e.g., "/games")
+        timestamp: Date and time of API call (indexed)
+        status_code: HTTP status code returned
+        response_time_ms: Response time in milliseconds
+        month: Month of call in YYYY-MM format (indexed for aggregation)
+        created_at: Record creation timestamp
+
+    Note:
+        The month field is indexed for fast monthly usage queries.
+        Default CFBD API limit is 1000 calls/month.
+
+    Example:
+        >>> usage = APIUsage(endpoint="/games", status_code=200,
+        ...                  response_time_ms=250.5, month="2024-09")
+        >>> db.add(usage)
+        >>> db.commit()
+    """
     __tablename__ = "api_usage"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -228,7 +425,35 @@ class APIUsage(Base):
 
 
 class UpdateTask(Base):
-    """Track manual and automated update tasks"""
+    """SQLAlchemy ORM model for tracking weekly update task execution.
+
+    Records status and results of manual and automated weekly update tasks
+    that fetch new game data from CFBD API and update rankings. Used for
+    monitoring update success and debugging failures.
+
+    Attributes:
+        id: Unique record identifier (primary key)
+        task_id: Unique task identifier string (e.g., "update-20240915-120000")
+        status: Task status ("started", "running", "completed", "failed")
+        trigger_type: How task was initiated ("manual" or "automated")
+        started_at: Task start timestamp
+        completed_at: Task completion timestamp (None if still running)
+        duration_seconds: Total execution time in seconds
+        result_json: JSON string containing task result details
+        created_at: Record creation timestamp
+        updated_at: Last modification timestamp
+
+    Note:
+        The task_id field is unique and indexed for fast status lookups.
+        result_json contains stdout/stderr and error messages for debugging.
+
+    Example:
+        >>> task = UpdateTask(task_id="update-20240915-120000",
+        ...                   status="started", trigger_type="manual",
+        ...                   started_at=datetime.utcnow())
+        >>> db.add(task)
+        >>> db.commit()
+    """
     __tablename__ = "update_tasks"
 
     id = Column(Integer, primary_key=True, index=True)

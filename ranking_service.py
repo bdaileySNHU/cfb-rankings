@@ -1,5 +1,35 @@
-"""
-Ranking service that integrates ELO calculations with database
+"""Ranking Service - Modified ELO Algorithm Implementation
+
+This module implements the core Modified ELO ranking algorithm for college
+football, integrating preseason factors (recruiting, transfers, returning
+production) with game-by-game rating updates.
+
+The service handles:
+    - Preseason rating calculation from recruiting and transfer data
+    - Game processing with ELO updates (including progressive K-factor)
+    - Margin of victory adjustments with garbage time detection
+    - Conference-based multipliers for cross-tier matchups
+    - Strength of schedule calculations
+    - Weekly ranking snapshots and historical tracking
+    - Season resets and recalculations
+
+Key Components:
+    RankingService: Main service class with database integration
+    Prediction Functions: Standalone functions for game predictions and accuracy tracking
+
+Example:
+    Initialize service and process a game:
+        >>> from database import get_db
+        >>> from ranking_service import RankingService
+        >>> db = next(get_db())
+        >>> service = RankingService(db)
+        >>> result = service.process_game(game)
+        >>> print(f"Winner gained {result['winner_rating_change']} points")
+
+Note:
+    This implementation uses a progressive K-factor system (EPIC-027) that
+    applies higher volatility early in the season (K=64) and stabilizes
+    later (K=32) for improved preseason rating correction.
 """
 
 import math
@@ -11,7 +41,37 @@ from datetime import datetime
 
 
 class RankingService:
-    """Service for calculating and managing ELO rankings"""
+    """Service for calculating and managing Modified ELO rankings.
+
+    Provides comprehensive ranking functionality including preseason rating
+    initialization, game processing with ELO updates, strength of schedule
+    calculations, and historical ranking management.
+
+    The service uses a Modified ELO algorithm that incorporates:
+        - Preseason factors (recruiting rank, transfer portal, returning production)
+        - Progressive K-factor (64→48→32 across season for optimal calibration)
+        - Margin of victory with garbage time detection
+        - Conference-based multipliers (FBS/FCS, P5/G5)
+        - Home field advantage (65 ELO points)
+
+    Attributes:
+        db: SQLAlchemy database session for persistence
+        K_FACTOR: Base K-factor for rating volatility (32, used weeks 9+)
+        RATING_SCALE: ELO scale parameter (400)
+        HOME_FIELD_ADVANTAGE: Home advantage in ELO points (65)
+        MAX_MOV_MULTIPLIER: Maximum margin of victory multiplier (2.5)
+        K_FACTOR_EARLY: K-factor for weeks 1-4 (64)
+        K_FACTOR_MID: K-factor for weeks 5-8 (48)
+        K_FACTOR_LATE: K-factor for weeks 9+ (32)
+        GARBAGE_TIME_THRESHOLD: Point differential triggering garbage time (21)
+        GARBAGE_TIME_Q4_WEIGHT: Weight for Q4 scoring in garbage time (0.25)
+
+    Example:
+        >>> service = RankingService(db)
+        >>> service.initialize_team_rating(new_team)
+        >>> result = service.process_game(game)
+        >>> rankings = service.get_current_rankings(season=2024, limit=25)
+    """
 
     # ELO Constants
     K_FACTOR = 32  # Default K-factor (used for weeks 9+)
@@ -30,6 +90,11 @@ class RankingService:
     GARBAGE_TIME_Q4_WEIGHT = 0.25  # Weight applied to Q4 in garbage time (25% of normal)
 
     def __init__(self, db: Session):
+        """Initialize the ranking service with a database session.
+
+        Args:
+            db: SQLAlchemy session for database operations
+        """
         self.db = db
 
     def get_k_factor(self, week: int) -> float:
@@ -573,11 +638,32 @@ class RankingService:
         self.db.commit()
 
     def reset_season(self, season_year: int) -> None:
-        """
-        Reset all teams for a new season
+        """Reset all teams to preseason ratings for a new season.
+
+        Recalculates each team's initial ELO rating based on current preseason
+        factors (recruiting, transfers, returning production) and resets all
+        win/loss records to 0. Use this at the beginning of a new season or
+        when preseason data has been updated.
+
+        The reset process:
+            1. Query all teams from database
+            2. Recalculate preseason rating for each team
+            3. Set elo_rating and initial_rating to preseason value
+            4. Reset wins and losses to 0
+            5. Commit all changes to database
 
         Args:
-            season_year: Year of the season to reset
+            season_year: Year of the season to reset (e.g., 2024)
+
+        Note:
+            This operation affects ALL teams in the database regardless of
+            the season_year parameter. The season_year is primarily for
+            logging/tracking purposes.
+
+        Example:
+            >>> service = RankingService(db)
+            >>> service.reset_season(2025)
+            # All teams now have fresh preseason ratings
         """
         teams = self.db.query(Team).all()
 

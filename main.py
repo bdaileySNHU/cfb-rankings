@@ -1,5 +1,34 @@
-"""
-FastAPI main application for College Football Ranking System
+"""College Football Ranking API - Main Application
+
+This module provides the FastAPI application with all REST API endpoints
+for the Modified ELO ranking system for college football.
+
+The system tracks team rankings using a Modified ELO algorithm that incorporates
+recruiting rankings, transfer portal data, and returning production. It provides
+comprehensive prediction capabilities and historical ranking tracking.
+
+Key Endpoint Categories:
+    - Teams: CRUD operations for college football teams
+    - Games: Game management and automatic ranking updates
+    - Predictions: Generate predictions and track accuracy
+    - Rankings: Current rankings and historical data
+    - Seasons: Season management and configuration
+    - Stats: System-wide statistics
+    - Admin: API usage monitoring and manual updates
+
+Example:
+    Run the application with uvicorn:
+        $ uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+    Access the interactive API documentation:
+        http://localhost:8000/docs
+
+    Check system health:
+        $ curl http://localhost:8000/
+
+Note:
+    This application requires a configured database (SQLite by default)
+    and optional CFBD API key for data imports.
 """
 
 from fastapi import FastAPI, Depends, HTTPException, Query
@@ -51,14 +80,39 @@ app.add_middleware(
 # Startup event
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database on startup"""
+    """Initialize database on application startup.
+
+    Creates all database tables if they don't exist using SQLAlchemy's
+    create_all() method. This is safe to run multiple times as it only
+    creates missing tables.
+
+    Note:
+        This runs automatically when FastAPI starts. For production
+        deployments, consider using Alembic migrations instead.
+    """
     init_db()
 
 
 # Health check endpoint
 @app.get("/", tags=["Health"])
 async def root():
-    """Health check endpoint"""
+    """Health check endpoint for service monitoring.
+
+    Returns basic service information to verify the API is running and
+    responsive. Use this endpoint for load balancer health checks.
+
+    Returns:
+        dict: Service status information including:
+            - status: "healthy" if service is operational
+            - service: Service name
+            - version: Current API version
+
+    Example:
+        >>> import requests
+        >>> response = requests.get("http://localhost:8000/")
+        >>> response.json()
+        {'status': 'healthy', 'service': 'College Football Ranking API', 'version': '1.0.0'}
+    """
     return {
         "status": "healthy",
         "service": "College Football Ranking API",
@@ -77,7 +131,27 @@ async def get_teams(
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db)
 ):
-    """Get all teams with optional filtering"""
+    """Get all teams with optional filtering by conference.
+
+    Retrieves a paginated list of college football teams. Supports filtering
+    by conference type (P5, G5, FCS) and pagination for large result sets.
+
+    Args:
+        conference: Optional conference filter (P5, G5, or FCS)
+        skip: Number of records to skip for pagination (default: 0)
+        limit: Maximum number of records to return (default: 100, max: 500)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        List[schemas.Team]: List of team objects with basic information
+
+    Example:
+        Get all Power 5 teams:
+            GET /api/teams?conference=P5
+
+        Get teams with pagination:
+            GET /api/teams?skip=0&limit=50
+    """
     query = db.query(Team)
 
     if conference:
@@ -89,7 +163,28 @@ async def get_teams(
 
 @app.get("/api/teams/{team_id}", response_model=schemas.TeamDetail, tags=["Teams"])
 async def get_team(team_id: int, db: Session = Depends(get_db)):
-    """Get a specific team by ID with detailed stats"""
+    """Get a specific team by ID with detailed season statistics.
+
+    Retrieves comprehensive team information including current ELO rating,
+    season-specific wins/losses, and strength of schedule data from the
+    current active season.
+
+    Args:
+        team_id: Unique team identifier
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.TeamDetail: Detailed team object with:
+            - Basic info (name, conference, recruiting/transfer data)
+            - Season-specific stats (wins, losses, current ELO)
+            - Ranking data (rank, SOS, SOS rank)
+
+    Raises:
+        HTTPException: 404 if team not found
+
+    Example:
+        GET /api/teams/42
+    """
     team = db.query(Team).filter(Team.id == team_id).first()
 
     if not team:
@@ -134,7 +229,32 @@ async def get_team(team_id: int, db: Session = Depends(get_db)):
 
 @app.post("/api/teams", response_model=schemas.Team, status_code=201, tags=["Teams"])
 async def create_team(team: schemas.TeamCreate, db: Session = Depends(get_db)):
-    """Create a new team"""
+    """Create a new team with initialized ELO rating.
+
+    Creates a team record and automatically calculates its initial ELO rating
+    based on conference type, recruiting rank, transfer portal data, and
+    returning production using the Modified ELO algorithm.
+
+    Args:
+        team: Team creation data (name, conference, recruiting metrics)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.Team: Created team object with initialized ELO rating
+
+    Raises:
+        HTTPException: 400 if team name already exists
+
+    Example:
+        POST /api/teams
+        {
+            "name": "Georgia",
+            "conference": "P5",
+            "recruiting_rank": 3,
+            "transfer_rank": 5,
+            "returning_production": 85.2
+        }
+    """
     # Check if team already exists
     existing = db.query(Team).filter(Team.name == team.name).first()
     if existing:
@@ -156,7 +276,35 @@ async def create_team(team: schemas.TeamCreate, db: Session = Depends(get_db)):
 
 @app.put("/api/teams/{team_id}", response_model=schemas.Team, tags=["Teams"])
 async def update_team(team_id: int, team_update: schemas.TeamUpdate, db: Session = Depends(get_db)):
-    """Update team information"""
+    """Update team information and recalculate rating if needed.
+
+    Updates team fields with provided data. If preseason factors (recruiting,
+    transfer portal, or returning production) are modified, automatically
+    recalculates the team's ELO rating using the Modified ELO algorithm.
+
+    Args:
+        team_id: Unique team identifier
+        team_update: Fields to update (only provided fields are updated)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.Team: Updated team object with potentially recalculated rating
+
+    Raises:
+        HTTPException: 404 if team not found
+
+    Note:
+        Updating recruiting_rank, transfer_rank, returning_production,
+        transfer_portal_rank, transfer_portal_points, or transfer_count
+        will trigger automatic ELO rating recalculation.
+
+    Example:
+        PUT /api/teams/42
+        {
+            "recruiting_rank": 5,
+            "returning_production": 82.5
+        }
+    """
     team = db.query(Team).filter(Team.id == team_id).first()
 
     if not team:
@@ -183,7 +331,28 @@ async def update_team(team_id: int, team_update: schemas.TeamUpdate, db: Session
 
 @app.get("/api/teams/{team_id}/schedule", response_model=schemas.TeamSchedule, tags=["Teams"])
 async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get_db)):
-    """Get a team's schedule for a season"""
+    """Get a team's complete schedule for a specific season.
+
+    Retrieves all games (home and away) for a team in a given season,
+    including completed games with scores and upcoming games. Supports
+    FCS opponents, neutral site games, and postseason games.
+
+    Args:
+        team_id: Unique team identifier
+        season: Season year (e.g., 2024)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.TeamSchedule: Schedule object containing:
+            - team_id, team_name, season
+            - games: List of schedule games with opponent info and results
+
+    Raises:
+        HTTPException: 404 if team not found
+
+    Example:
+        GET /api/teams/42/schedule?season=2024
+    """
     team = db.query(Team).filter(Team.id == team_id).first()
 
     if not team:
@@ -247,7 +416,31 @@ async def get_games(
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db)
 ):
-    """Get games with optional filtering"""
+    """Get games with flexible filtering options.
+
+    Retrieves a paginated list of games with support for filtering by season,
+    week, team, and processing status. Results are sorted by week (descending)
+    and game ID (descending) to show most recent games first.
+
+    Args:
+        season: Filter by season year (e.g., 2024)
+        week: Filter by specific week number (0-15)
+        team_id: Filter games involving specific team (home or away)
+        processed: Filter by processing status (True=completed, False=scheduled)
+        skip: Number of records to skip for pagination (default: 0)
+        limit: Maximum number of records to return (default: 100, max: 500)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        List[schemas.Game]: List of game objects matching filters
+
+    Example:
+        Get all Week 5 games in 2024:
+            GET /api/games?season=2024&week=5
+
+        Get unprocessed games for team 42:
+            GET /api/games?team_id=42&processed=false
+    """
     query = db.query(Game)
 
     if season:
@@ -265,7 +458,27 @@ async def get_games(
 
 @app.get("/api/games/{game_id}", response_model=schemas.GameDetail, tags=["Games"])
 async def get_game(game_id: int, db: Session = Depends(get_db)):
-    """Get a specific game with details"""
+    """Get a specific game with comprehensive details.
+
+    Retrieves detailed game information including team names, scores,
+    winner/loser, and point differential for easy display.
+
+    Args:
+        game_id: Unique game identifier
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.GameDetail: Game object enriched with:
+            - home_team_name, away_team_name
+            - winner_name, loser_name
+            - point_differential
+
+    Raises:
+        HTTPException: 404 if game not found
+
+    Example:
+        GET /api/games/123
+    """
     game = db.query(Game).filter(Game.id == game_id).first()
 
     if not game:
@@ -286,7 +499,35 @@ async def get_game(game_id: int, db: Session = Depends(get_db)):
 
 @app.post("/api/games", response_model=schemas.GameResult, status_code=201, tags=["Games"])
 async def create_game(game: schemas.GameCreate, db: Session = Depends(get_db)):
-    """Create a new game and process it (updates rankings immediately)"""
+    """Create a new game and immediately update ELO rankings.
+
+    Creates a game record and automatically processes it through the Modified
+    ELO algorithm, updating both teams' ratings based on the outcome, score
+    differential, and game context (home advantage, neutral site, etc.).
+
+    Args:
+        game: Game creation data including teams, scores, week, and season
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.GameResult: Processing result with ELO changes for both teams
+
+    Raises:
+        HTTPException: 404 if one or both teams not found
+        HTTPException: 400 if team tries to play itself
+
+    Example:
+        POST /api/games
+        {
+            "home_team_id": 42,
+            "away_team_id": 57,
+            "home_score": 35,
+            "away_score": 28,
+            "season": 2024,
+            "week": 5,
+            "is_neutral_site": false
+        }
+    """
     # Verify teams exist
     home_team = db.query(Team).filter(Team.id == game.home_team_id).first()
     away_team = db.query(Team).filter(Team.id == game.away_team_id).first()
@@ -546,7 +787,28 @@ async def get_rankings(
     limit: Optional[int] = Query(25, ge=1, le=200),
     db: Session = Depends(get_db)
 ):
-    """Get current rankings"""
+    """Get current team rankings sorted by ELO rating.
+
+    Retrieves the current rankings for a specified season (or active season
+    if not specified). Rankings include ELO rating, wins/losses, strength of
+    schedule, and rank information for each team.
+
+    Args:
+        season: Season year (defaults to active season)
+        limit: Maximum number of teams to return (default: 25, max: 200)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.RankingsResponse: Rankings data including:
+            - week: Current week number
+            - season: Season year
+            - rankings: List of team ranking objects
+            - total_teams: Count of teams in rankings
+
+    Example:
+        Get top 25 teams for 2024:
+            GET /api/rankings?season=2024&limit=25
+    """
     # Get current season if not specified
     if not season:
         active_season = db.query(Season).filter(Season.is_active == True).first()
@@ -574,7 +836,23 @@ async def get_ranking_history(
     season: int,
     db: Session = Depends(get_db)
 ):
-    """Get historical rankings for a specific team"""
+    """Get historical rankings for a specific team across a season.
+
+    Retrieves week-by-week ranking snapshots for a team, showing how their
+    ELO rating, rank, wins/losses, and strength of schedule evolved throughout
+    the season. Useful for generating ranking charts and tracking team progress.
+
+    Args:
+        team_id: Unique team identifier
+        season: Season year (e.g., 2024)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        List[schemas.RankingHistory]: Ordered list of weekly ranking snapshots
+
+    Example:
+        GET /api/rankings/history?team_id=42&season=2024
+    """
     history = db.query(RankingHistory).filter(
         (RankingHistory.team_id == team_id) &
         (RankingHistory.season == season)
@@ -589,7 +867,23 @@ async def save_rankings(
     week: int,
     db: Session = Depends(get_db)
 ):
-    """Save current rankings to history"""
+    """Save current rankings to historical snapshots.
+
+    Creates a snapshot of current rankings for all teams at a specific week,
+    storing ELO ratings, ranks, wins/losses, and strength of schedule data
+    in the ranking_history table for future reference and charting.
+
+    Args:
+        season: Season year (e.g., 2024)
+        week: Week number to save (0-15)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.SuccessResponse: Confirmation message with saved week info
+
+    Example:
+        POST /api/rankings/save?season=2024&week=5
+    """
     ranking_service = RankingService(db)
     ranking_service.save_weekly_rankings(season, week)
 
@@ -605,14 +899,44 @@ async def save_rankings(
 
 @app.get("/api/seasons", response_model=List[schemas.SeasonResponse], tags=["Seasons"])
 async def get_seasons(db: Session = Depends(get_db)):
-    """Get all seasons"""
+    """Get all seasons sorted by year (most recent first).
+
+    Retrieves a list of all seasons in the system with their year, current
+    week, and active status. Used for season selection in the UI.
+
+    Args:
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        List[schemas.SeasonResponse]: List of season objects
+
+    Example:
+        GET /api/seasons
+    """
     seasons = db.query(Season).order_by(Season.year.desc()).all()
     return seasons
 
 
 @app.post("/api/seasons", response_model=schemas.SeasonResponse, status_code=201, tags=["Seasons"])
 async def create_season(year: int, db: Session = Depends(get_db)):
-    """Create a new season"""
+    """Create a new season with initial configuration.
+
+    Creates a new season record with current_week set to 0 and is_active
+    set to True. Use this at the start of each new football season.
+
+    Args:
+        year: Season year (e.g., 2024)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.SeasonResponse: Created season object
+
+    Raises:
+        HTTPException: 400 if season already exists for that year
+
+    Example:
+        POST /api/seasons?year=2025
+    """
     existing = db.query(Season).filter(Season.year == year).first()
     if existing:
         raise HTTPException(status_code=400, detail="Season already exists")
@@ -627,7 +951,26 @@ async def create_season(year: int, db: Session = Depends(get_db)):
 
 @app.post("/api/seasons/{year}/reset", response_model=schemas.SuccessResponse, tags=["Seasons"])
 async def reset_season(year: int, db: Session = Depends(get_db)):
-    """Reset all teams for a new season"""
+    """Reset all team ratings for a new season.
+
+    Recalculates initial ELO ratings for all teams based on their preseason
+    factors (recruiting, transfers, returning production). Use this at the
+    start of a new season before processing any games.
+
+    Args:
+        year: Season year to reset (e.g., 2024)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.SuccessResponse: Confirmation message
+
+    Note:
+        This resets all teams' ELO ratings to their calculated preseason
+        values. Any in-season rating changes will be lost.
+
+    Example:
+        POST /api/seasons/2024/reset
+    """
     ranking_service = RankingService(db)
     ranking_service.reset_season(year)
 
@@ -694,7 +1037,27 @@ async def get_season(year: int, db: Session = Depends(get_db)):
 
 @app.get("/api/stats", response_model=schemas.SystemStats, tags=["Stats"])
 async def get_stats(db: Session = Depends(get_db)):
-    """Get overall system statistics"""
+    """Get overall system statistics and status.
+
+    Retrieves high-level statistics about the ranking system including total
+    teams, games, current season information, and last update timestamp.
+    Useful for system monitoring and dashboard displays.
+
+    Args:
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.SystemStats: System statistics including:
+            - total_teams: Total number of teams in database
+            - total_games: Total number of games (all seasons)
+            - total_games_processed: Number of processed games
+            - current_season: Active season year
+            - current_week: Current week number
+            - last_updated: Timestamp of this request
+
+    Example:
+        GET /api/stats
+    """
     total_teams = db.query(Team).count()
     total_games = db.query(Game).count()
     total_processed = db.query(Game).filter(Game.is_processed == True).count()
@@ -717,7 +1080,32 @@ async def get_stats(db: Session = Depends(get_db)):
 
 @app.post("/api/calculate", response_model=schemas.SuccessResponse, tags=["Utility"])
 async def recalculate_rankings(season: int, db: Session = Depends(get_db)):
-    """Recalculate all rankings from scratch for a season"""
+    """Recalculate all rankings from scratch for a season.
+
+    Resets all team ratings to preseason values and reprocesses all games
+    in chronological order. Use this to fix ranking inconsistencies or apply
+    algorithm changes retroactively.
+
+    The process:
+    1. Reset all teams to preseason ELO ratings
+    2. Mark all games as unprocessed
+    3. Reprocess games in week/ID order
+    4. Update all ELO ratings and rating changes
+
+    Args:
+        season: Season year to recalculate (e.g., 2024)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.SuccessResponse: Confirmation with games processed count
+
+    Warning:
+        This operation can take several seconds for a full season
+        (100+ games). All existing rating changes will be recalculated.
+
+    Example:
+        POST /api/calculate?season=2024
+    """
     # Reset all teams
     ranking_service = RankingService(db)
     ranking_service.reset_season(season)
@@ -805,7 +1193,21 @@ _running_updates = {}
 
 
 def run_weekly_update_task(task_id: str, db_session):
-    """Execute weekly update script as background task"""
+    """Execute weekly update script as background task.
+
+    Runs the weekly_update.py script in a subprocess to fetch new game data
+    from the CFBD API, process games, update rankings, and save weekly
+    snapshots. Tracks execution status in the UpdateTask table.
+
+    Args:
+        task_id: Unique task identifier for tracking
+        db_session: Database session for updating task status
+
+    Note:
+        This function is executed asynchronously by FastAPI BackgroundTasks.
+        It has a 30-minute timeout and captures stdout/stderr for debugging.
+        Task status is updated to "running", "completed", or "failed".
+    """
     import logging
     logger = logging.getLogger(__name__)
 
