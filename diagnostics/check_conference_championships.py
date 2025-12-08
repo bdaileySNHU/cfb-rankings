@@ -4,6 +4,13 @@ Check conference championship games in database for Story 22.3
 """
 
 import sys
+from pathlib import Path
+
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+
+import sys
 
 from database import SessionLocal
 from models import Game

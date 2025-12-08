@@ -339,28 +339,38 @@ All endpoints are documented in the interactive API docs at `http://localhost:80
 
 ```
 .
-├── cfb_elo_ranking.py    # Core ELO ranking algorithm (standalone)
 ├── main.py               # FastAPI application with all endpoints
-├── cfbd_client.py        # CollegeFootballData API client
-├── import_real_data.py   # Import real teams & games
 ├── models.py             # SQLAlchemy database models
 ├── schemas.py            # Pydantic schemas for API validation
 ├── database.py           # Database configuration
 ├── ranking_service.py    # Service layer integrating ELO with database
+├── cfbd_client.py        # CollegeFootballData API client
+├── cfb_elo_ranking.py    # Core ELO ranking algorithm (standalone)
+├── import_real_data.py   # Import real teams & games
 ├── seed_data.py          # Sample data population script
 ├── demo.py               # Standalone demo of ranking algorithm
 ├── requirements.txt      # Python dependencies
 ├── requirements-dev.txt  # Development & testing dependencies
 ├── Makefile              # Convenient test commands
 ├── cfb_rankings.db       # SQLite database (created on first run)
-├── scripts/              # Utility and maintenance scripts
+├── migrations/           # Database schema migration scripts
+│   ├── README.md         # Migration documentation and history
+│   ├── migrate_add_*.py  # Python migration scripts
+│   └── run_migration_*.py  # Migration orchestration scripts
+├── diagnostics/          # Diagnostic and debugging scripts
+│   ├── README.md         # Diagnostic script documentation
+│   ├── check_*.py        # Data verification scripts
+│   ├── debug_*.py        # Interactive debugging tools
+│   └── diagnose_*.py     # Problem identification scripts
+├── scripts/              # Operational and maintenance scripts
 │   ├── weekly_update.py  # Automated weekly data import
 │   ├── generate_predictions.py  # Generate predictions for upcoming games
-│   └── backfill_historical_predictions.py  # One-time historical prediction backfill
-└── tests/                # Comprehensive test suite
-    ├── unit/             # Unit tests (149 tests)
-    ├── integration/      # Integration tests (87 tests)
-    └── e2e/              # End-to-end tests (21 tests)
+│   ├── backfill_*.py     # Historical data backfill scripts
+│   └── check_*.py        # Operational checks and reports
+└── tests/                # Comprehensive test suite (124 tests)
+    ├── unit/             # Unit tests
+    ├── integration/      # Integration tests
+    └── e2e/              # End-to-end tests
 ```
 
 ## Installation
