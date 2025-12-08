@@ -45,25 +45,26 @@ def main():
 
     for game in week11_games:
         # Check BOTH field name formats
-        home_score_camel = game.get('homePoints')
-        away_score_camel = game.get('awayPoints')
-        home_score_snake = game.get('home_points')
-        away_score_snake = game.get('away_points')
+        home_score_camel = game.get("homePoints")
+        away_score_camel = game.get("awayPoints")
+        home_score_snake = game.get("home_points")
+        away_score_snake = game.get("away_points")
 
-        home_team = game.get('homeTeam') or game.get('home_team')
-        away_team = game.get('awayTeam') or game.get('away_team')
+        home_team = game.get("homeTeam") or game.get("home_team")
+        away_team = game.get("awayTeam") or game.get("away_team")
 
         game_info = {
-            'matchup': f"{away_team} @ {home_team}",
-            'homePoints_camelCase': home_score_camel,
-            'awayPoints_camelCase': away_score_camel,
-            'home_points_snake_case': home_score_snake,
-            'away_points_snake_case': away_score_snake,
+            "matchup": f"{away_team} @ {home_team}",
+            "homePoints_camelCase": home_score_camel,
+            "awayPoints_camelCase": away_score_camel,
+            "home_points_snake_case": home_score_snake,
+            "away_points_snake_case": away_score_snake,
         }
 
         # Determine if completed (check both formats)
-        has_scores = (home_score_camel is not None and away_score_camel is not None) or \
-                    (home_score_snake is not None and away_score_snake is not None)
+        has_scores = (home_score_camel is not None and away_score_camel is not None) or (
+            home_score_snake is not None and away_score_snake is not None
+        )
 
         if has_scores:
             completed.append(game_info)
@@ -99,6 +100,7 @@ def main():
 
     print("\n" + "=" * 80)
     print("Diagnostic complete!")
+
 
 if __name__ == "__main__":
     main()

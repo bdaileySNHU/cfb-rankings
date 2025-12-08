@@ -67,7 +67,8 @@ try:
 
     # Games by Week
     print(f"\n=== GAMES BY WEEK (Season {active_season}) ===")
-    cursor.execute(f"""
+    cursor.execute(
+        f"""
         SELECT
             week,
             COUNT(*) as total,
@@ -77,7 +78,8 @@ try:
         WHERE season={active_season}
         GROUP BY week
         ORDER BY week
-    """)
+    """
+    )
 
     week_data = cursor.fetchall()
     if week_data:
@@ -107,12 +109,14 @@ try:
     task_count = cursor.fetchone()[0]
 
     if task_count > 0:
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT task_id, status, trigger_type, started_at, completed_at
             FROM update_tasks
             ORDER BY started_at DESC
             LIMIT 5
-        """)
+        """
+        )
         tasks = cursor.fetchall()
         print(f"Recent update tasks (last 5 of {task_count}):")
         print(f"{'Task ID':<25} {'Status':<12} {'Type':<10} {'Started':<20}")

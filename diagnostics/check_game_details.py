@@ -27,9 +27,9 @@ def check_game_details(game_id):
         print(f"Game ID {game_id} not found")
         return 1
 
-    print("="*80)
+    print("=" * 80)
     print("GAME DETAILS")
-    print("="*80)
+    print("=" * 80)
     print()
     print(f"Game ID: {game.id}")
     print(f"Season: {game.season}")
@@ -49,15 +49,19 @@ def check_game_details(game_id):
     print()
 
     # Check if this game should have been played
-    max_week_game = db.query(Game).filter(
-        Game.season == game.season,
-        Game.is_processed == True
-    ).order_by(Game.week.desc()).first()
+    max_week_game = (
+        db.query(Game)
+        .filter(Game.season == game.season, Game.is_processed == True)
+        .order_by(Game.week.desc())
+        .first()
+    )
 
     if max_week_game:
         print(f"Latest processed week in {game.season}: {max_week_game.week}")
         if game.week < max_week_game.week:
-            print(f"⚠️  This game is in Week {game.week}, but Week {max_week_game.week} has been processed")
+            print(
+                f"⚠️  This game is in Week {game.week}, but Week {max_week_game.week} has been processed"
+            )
             print(f"   This game should probably be marked as processed")
 
     print()

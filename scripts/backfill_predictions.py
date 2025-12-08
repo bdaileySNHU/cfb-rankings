@@ -26,11 +26,15 @@ def backfill_predictions(db, season: int):
         season: Season year
     """
     # Get all completed games without predictions
-    games = db.query(Game).filter(
-        Game.season == season,
-        Game.is_processed == True,
-        Game.excluded_from_rankings == False  # Only FBS vs FBS games
-    ).all()
+    games = (
+        db.query(Game)
+        .filter(
+            Game.season == season,
+            Game.is_processed == True,
+            Game.excluded_from_rankings == False,  # Only FBS vs FBS games
+        )
+        .all()
+    )
 
     total_games = len(games)
     games_with_predictions = 0
@@ -63,10 +67,10 @@ def backfill_predictions(db, season: int):
 
 def main():
     """Main backfill function"""
-    print("="*80)
+    print("=" * 80)
     print("BACKFILL PREDICTIONS FOR COMPLETED GAMES")
     print("EPIC-010: AP Poll Prediction Comparison")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Get database session

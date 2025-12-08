@@ -26,7 +26,9 @@ from src.models.models import ConferenceType, Game, Season, Team
 class TestPredictionsEndpoint:
     """Tests for GET /api/predictions endpoint"""
 
-    def test_predictions_empty_when_no_unprocessed_games(self, test_client: TestClient, test_db: Session):
+    def test_predictions_empty_when_no_unprocessed_games(
+        self, test_client: TestClient, test_db: Session
+    ):
         """Test endpoint returns empty array when no unprocessed games exist"""
         # Arrange - create only processed games
         configure_factories(test_db)
@@ -34,11 +36,7 @@ class TestPredictionsEndpoint:
         team1 = TeamFactory(elo_rating=1600)
         team2 = TeamFactory(elo_rating=1500)
         game = GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=datetime.now().year,
-            week=2,
-            is_processed=True
+            home_team=team1, away_team=team2, season=datetime.now().year, week=2, is_processed=True
         )
         test_db.commit()
 
@@ -61,18 +59,10 @@ class TestPredictionsEndpoint:
 
         # Create unprocessed games for different weeks
         game_week4 = GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=current_year,
-            week=4,
-            is_processed=False
+            home_team=team1, away_team=team2, season=current_year, week=4, is_processed=False
         )
         game_week5 = GameFactory(
-            home_team=team2,
-            away_team=team3,
-            season=current_year,
-            week=5,
-            is_processed=False
+            home_team=team2, away_team=team3, season=current_year, week=5, is_processed=False
         )
         test_db.commit()
 
@@ -97,18 +87,10 @@ class TestPredictionsEndpoint:
 
         # Create unprocessed games for different weeks
         game_week2 = GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=current_year,
-            week=2,
-            is_processed=False
+            home_team=team1, away_team=team2, season=current_year, week=2, is_processed=False
         )
         game_week5 = GameFactory(
-            home_team=team2,
-            away_team=team3,
-            season=current_year,
-            week=5,
-            is_processed=False
+            home_team=team2, away_team=team3, season=current_year, week=5, is_processed=False
         )
         test_db.commit()
 
@@ -133,18 +115,10 @@ class TestPredictionsEndpoint:
 
         # Create unprocessed games
         game1 = GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=current_year,
-            week=2,
-            is_processed=False
+            home_team=team1, away_team=team2, season=current_year, week=2, is_processed=False
         )
         game2 = GameFactory(
-            home_team=team2,
-            away_team=team3,
-            season=current_year,
-            week=2,
-            is_processed=False
+            home_team=team2, away_team=team3, season=current_year, week=2, is_processed=False
         )
         test_db.commit()
 
@@ -172,7 +146,7 @@ class TestPredictionsEndpoint:
             season=current_year,
             week=2,
             is_processed=False,
-            is_neutral_site=False
+            is_neutral_site=False,
         )
         test_db.commit()
 
@@ -187,11 +161,24 @@ class TestPredictionsEndpoint:
         prediction = predictions[0]
         # Check all required fields
         required_fields = [
-            "game_id", "home_team_id", "home_team", "away_team_id", "away_team",
-            "week", "season", "game_date", "is_neutral_site", "predicted_winner",
-            "predicted_winner_id", "predicted_home_score", "predicted_away_score",
-            "home_win_probability", "away_win_probability", "confidence",
-            "home_team_rating", "away_team_rating"
+            "game_id",
+            "home_team_id",
+            "home_team",
+            "away_team_id",
+            "away_team",
+            "week",
+            "season",
+            "game_date",
+            "is_neutral_site",
+            "predicted_winner",
+            "predicted_winner_id",
+            "predicted_home_score",
+            "predicted_away_score",
+            "home_win_probability",
+            "away_win_probability",
+            "confidence",
+            "home_team_rating",
+            "away_team_rating",
         ]
         for field in required_fields:
             assert field in prediction, f"Missing field: {field}"
@@ -215,11 +202,7 @@ class TestPredictionsEndpoint:
         team1 = TeamFactory(elo_rating=1600)
         team2 = TeamFactory(elo_rating=1500)
         game = GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=current_year,
-            week=2,
-            is_processed=False
+            home_team=team1, away_team=team2, season=current_year, week=2, is_processed=False
         )
         test_db.commit()
 
@@ -248,11 +231,7 @@ class TestPredictionsEndpoint:
         team1 = TeamFactory(elo_rating=1600)
         team2 = TeamFactory(elo_rating=1500)
         game = GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=current_year,
-            week=2,
-            is_processed=False
+            home_team=team1, away_team=team2, season=current_year, week=2, is_processed=False
         )
         test_db.commit()
 
@@ -283,7 +262,7 @@ class TestPredictionsEndpoint:
             season=current_year,
             week=2,
             is_processed=False,
-            is_neutral_site=False
+            is_neutral_site=False,
         )
         test_db.commit()
 
@@ -314,7 +293,7 @@ class TestPredictionsEndpoint:
             season=current_year,
             week=2,
             is_processed=False,
-            is_neutral_site=True
+            is_neutral_site=True,
         )
         test_db.commit()
 
@@ -345,11 +324,7 @@ class TestPredictionsEndpoint:
         team1 = TeamFactory(elo_rating=1600)
         team2 = TeamFactory(elo_rating=1500)
         game = GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=datetime.now().year,
-            week=2,
-            is_processed=False
+            home_team=team1, away_team=team2, season=datetime.now().year, week=2, is_processed=False
         )
         test_db.commit()
 
@@ -373,18 +348,10 @@ class TestPredictionsEndpoint:
 
         # Create multiple unprocessed games for next week
         game1 = GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=current_year,
-            week=2,
-            is_processed=False
+            home_team=team1, away_team=team2, season=current_year, week=2, is_processed=False
         )
         game2 = GameFactory(
-            home_team=team3,
-            away_team=team4,
-            season=current_year,
-            week=2,
-            is_processed=False
+            home_team=team3, away_team=team4, season=current_year, week=2, is_processed=False
         )
         test_db.commit()
 
@@ -396,7 +363,9 @@ class TestPredictionsEndpoint:
         predictions = response.json()
         assert len(predictions) == 2
 
-    def test_predictions_skips_teams_with_zero_rating(self, test_client: TestClient, test_db: Session):
+    def test_predictions_skips_teams_with_zero_rating(
+        self, test_client: TestClient, test_db: Session
+    ):
         """Test that predictions skip games with invalid team ratings"""
         # Arrange
         configure_factories(test_db)
@@ -405,11 +374,7 @@ class TestPredictionsEndpoint:
         team1 = TeamFactory(elo_rating=1600)
         team2 = TeamFactory(elo_rating=0)  # Invalid rating
         game = GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=current_year,
-            week=2,
-            is_processed=False
+            home_team=team1, away_team=team2, season=current_year, week=2, is_processed=False
         )
         test_db.commit()
 
@@ -431,18 +396,10 @@ class TestPredictionsEndpoint:
         team2 = TeamFactory(elo_rating=1500)
 
         game_2024 = GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=2024,
-            week=2,
-            is_processed=False
+            home_team=team1, away_team=team2, season=2024, week=2, is_processed=False
         )
         game_2025 = GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=2025,
-            week=2,
-            is_processed=False
+            home_team=team1, away_team=team2, season=2025, week=2, is_processed=False
         )
         test_db.commit()
 

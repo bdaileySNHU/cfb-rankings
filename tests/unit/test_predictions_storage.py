@@ -16,19 +16,20 @@ from src.core.ranking_service import create_and_store_prediction
 def test_teams(test_db):
     """Create test teams with ELO ratings"""
     import random
+
     unique_id = random.randint(10000, 99999)
 
     home_team = Team(
         name=f"Test Home Team {unique_id}",
         conference=ConferenceType.POWER_5,
         is_fcs=False,
-        elo_rating=1650.0
+        elo_rating=1650.0,
     )
     away_team = Team(
         name=f"Test Away Team {unique_id}",
         conference=ConferenceType.POWER_5,
         is_fcs=False,
-        elo_rating=1550.0
+        elo_rating=1550.0,
     )
 
     test_db.add(home_team)
@@ -57,7 +58,7 @@ class TestPredictionStorage:
             week=10,
             season=2024,
             is_processed=False,
-            excluded_from_rankings=False
+            excluded_from_rankings=False,
         )
         test_db.add(game)
         test_db.commit()
@@ -89,7 +90,7 @@ class TestPredictionStorage:
             away_score=0,
             week=11,
             season=2024,
-            is_processed=False
+            is_processed=False,
         )
         test_db.add(game)
         test_db.commit()
@@ -122,7 +123,7 @@ class TestPredictionStorage:
             away_score=28,
             week=12,
             season=2024,
-            is_processed=True
+            is_processed=True,
         )
         test_db.add(game)
         test_db.commit()
@@ -146,7 +147,7 @@ class TestPredictionStorage:
             away_score=0,
             week=13,
             season=2024,
-            is_processed=False
+            is_processed=False,
         )
         test_db.add(game)
         test_db.commit()
@@ -159,7 +160,7 @@ class TestPredictionStorage:
             predicted_away_score=24,
             win_probability=0.65,
             home_elo_at_prediction=1650.0,
-            away_elo_at_prediction=1550.0
+            away_elo_at_prediction=1550.0,
         )
         test_db.add(prediction)
         test_db.commit()

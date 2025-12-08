@@ -56,9 +56,9 @@ logger = logging.getLogger(__name__)
 
 # Warning thresholds tracking (to prevent log spam)
 _warning_thresholds_logged = {
-    '80%': set(),   # Set of months where 80% warning was logged
-    '90%': set(),   # Set of months where 90% warning was logged
-    '95%': set()    # Set of months where 95% warning was logged
+    "80%": set(),  # Set of months where 80% warning was logged
+    "90%": set(),  # Set of months where 90% warning was logged
+    "95%": set(),  # Set of months where 95% warning was logged
 }
 
 
@@ -69,6 +69,7 @@ def track_api_usage(func):
     Logs endpoint, timestamp, status code, and response time for each API call.
     Checks usage thresholds and logs warnings when approaching monthly limit.
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         start_time = datetime.now()
@@ -100,7 +101,7 @@ def track_api_usage(func):
                     timestamp=start_time,
                     status_code=status_code,
                     response_time_ms=response_time_ms,
-                    month=month
+                    month=month,
                 )
                 db.add(usage_record)
                 db.commit()
@@ -117,7 +118,7 @@ def track_api_usage(func):
 
         except Exception as e:
             # If API call fails, still try to track it
-            status_code = getattr(e, 'status_code', 500)
+            status_code = getattr(e, "status_code", 500)
             raise
 
     return wrapper
@@ -159,7 +160,7 @@ def get_monthly_usage(month: str = None, db: "Session" = None) -> dict:
         remaining_calls = max(0, monthly_limit - total_calls)
 
         # Average calls per day (based on days elapsed in month)
-        year, month_num = map(int, month.split('-'))
+        year, month_num = map(int, month.split("-"))
         current_date = datetime.now()
 
         if year == current_date.year and month_num == current_date.month:
@@ -167,13 +168,14 @@ def get_monthly_usage(month: str = None, db: "Session" = None) -> dict:
         else:
             # For past months, use full month
             import calendar
+
             days_elapsed = calendar.monthrange(year, month_num)[1]
 
         avg_per_day = total_calls / days_elapsed if days_elapsed > 0 else 0
 
         # Top endpoints
         top_endpoints = (
-            db.query(APIUsage.endpoint, func.count(APIUsage.id).label('count'))
+            db.query(APIUsage.endpoint, func.count(APIUsage.id).label("count"))
             .filter(APIUsage.month == month)
             .group_by(APIUsage.endpoint)
             .order_by(func.count(APIUsage.id).desc())
@@ -199,9 +201,13 @@ def get_monthly_usage(month: str = None, db: "Session" = None) -> dict:
             "average_calls_per_day": round(avg_per_day, 2),
             "warning_level": warning_level,
             "top_endpoints": [
-                {"endpoint": ep, "count": cnt, "percentage": round((cnt / total_calls) * 100, 1) if total_calls > 0 else 0}
+                {
+                    "endpoint": ep,
+                    "count": cnt,
+                    "percentage": round((cnt / total_calls) * 100, 1) if total_calls > 0 else 0,
+                }
                 for ep, cnt in top_endpoints
-            ]
+            ],
         }
 
     finally:
@@ -220,20 +226,20 @@ def check_usage_warnings(month: str):
         month: Month in YYYY-MM format
     """
     usage = get_monthly_usage(month)
-    percentage = usage['percentage_used']
-    total_calls = usage['total_calls']
-    limit = usage['monthly_limit']
+    percentage = usage["percentage_used"]
+    total_calls = usage["total_calls"]
+    limit = usage["monthly_limit"]
 
     # Check thresholds and log if not already logged for this month
-    if percentage >= 95 and month not in _warning_thresholds_logged['95%']:
+    if percentage >= 95 and month not in _warning_thresholds_logged["95%"]:
         logger.critical(f"CFBD API usage at 95% ({total_calls}/{limit} calls) - Month: {month}")
-        _warning_thresholds_logged['95%'].add(month)
-    elif percentage >= 90 and month not in _warning_thresholds_logged['90%']:
+        _warning_thresholds_logged["95%"].add(month)
+    elif percentage >= 90 and month not in _warning_thresholds_logged["90%"]:
         logger.warning(f"CFBD API usage at 90% ({total_calls}/{limit} calls) - Month: {month}")
-        _warning_thresholds_logged['90%'].add(month)
-    elif percentage >= 80 and month not in _warning_thresholds_logged['80%']:
+        _warning_thresholds_logged["90%"].add(month)
+    elif percentage >= 80 and month not in _warning_thresholds_logged["80%"]:
         logger.warning(f"CFBD API usage at 80% ({total_calls}/{limit} calls) - Month: {month}")
-        _warning_thresholds_logged['80%'].add(month)
+        _warning_thresholds_logged["80%"].add(month)
 
 
 class CFBDClient:
@@ -268,10 +274,10 @@ class CFBDClient:
             api_key: API key from collegefootballdata.com
                      If not provided, will look for CFBD_API_KEY env variable
         """
-        self.api_key = api_key or os.getenv('CFBD_API_KEY')
+        self.api_key = api_key or os.getenv("CFBD_API_KEY")
         self.headers = {}
         if self.api_key:
-            self.headers['Authorization'] = f'Bearer {self.api_key}'
+            self.headers["Authorization"] = f"Bearer {self.api_key}"
 
     @track_api_usage
     def _get(self, endpoint: str, params: dict = None) -> dict:
@@ -327,7 +333,7 @@ class CFBDClient:
         """
         try:
             # Query all regular season games for the year
-            games = self.get_games(season, season_type='regular')
+            games = self.get_games(season, season_type="regular")
 
             if not games:
                 return None
@@ -337,14 +343,17 @@ class CFBDClient:
             for game in games:
                 # Check if game has been played (has scores)
                 # FIX: API uses camelCase field names
-                home_points = game.get('homePoints')
-                away_points = game.get('awayPoints')
+                home_points = game.get("homePoints")
+                away_points = game.get("awayPoints")
 
                 # Exclude future games (0-0 placeholder scores from EPIC-008)
                 # College football games cannot end 0-0 due to overtime rules
-                if (home_points is not None and away_points is not None and
-                    not (home_points == 0 and away_points == 0)):
-                    week = game.get('week', 0)
+                if (
+                    home_points is not None
+                    and away_points is not None
+                    and not (home_points == 0 and away_points == 0)
+                ):
+                    week = game.get("week", 0)
                     if week > max_week:
                         max_week = week
 
@@ -443,11 +452,16 @@ class CFBDClient:
         Returns:
             List of team dictionaries
         """
-        return self._get('/teams/fbs', params={'year': year})
+        return self._get("/teams/fbs", params={"year": year})
 
-    def get_games(self, year: int, week: Optional[int] = None,
-                  team: Optional[str] = None, season_type: str = 'regular',
-                  classification: Optional[str] = None) -> List[Dict]:
+    def get_games(
+        self,
+        year: int,
+        week: Optional[int] = None,
+        team: Optional[str] = None,
+        season_type: str = "regular",
+        classification: Optional[str] = None,
+    ) -> List[Dict]:
         """
         Get games for a season
 
@@ -461,18 +475,15 @@ class CFBDClient:
         Returns:
             List of game dictionaries
         """
-        params = {
-            'year': year,
-            'seasonType': season_type
-        }
+        params = {"year": year, "seasonType": season_type}
         if week:
-            params['week'] = week
+            params["week"] = week
         if team:
-            params['team'] = team
+            params["team"] = team
         if classification:
-            params['classification'] = classification
+            params["classification"] = classification
 
-        return self._get('/games', params=params)
+        return self._get("/games", params=params)
 
     def get_recruiting_rankings(self, year: int) -> List[Dict]:
         """
@@ -484,7 +495,7 @@ class CFBDClient:
         Returns:
             List of team recruiting rankings
         """
-        return self._get('/recruiting/teams', params={'year': year})
+        return self._get("/recruiting/teams", params={"year": year})
 
     def get_team_talent(self, year: int) -> List[Dict]:
         """
@@ -496,7 +507,7 @@ class CFBDClient:
         Returns:
             List of team talent rankings
         """
-        return self._get('/talent', params={'year': year})
+        return self._get("/talent", params={"year": year})
 
     def get_returning_production(self, year: int, team: Optional[str] = None) -> List[Dict]:
         """
@@ -509,11 +520,11 @@ class CFBDClient:
         Returns:
             List of returning production data
         """
-        params = {'year': year}
+        params = {"year": year}
         if team:
-            params['team'] = team
+            params["team"] = team
 
-        return self._get('/player/returning', params=params)
+        return self._get("/player/returning", params=params)
 
     def get_transfer_portal(self, year: int) -> List[Dict]:
         """
@@ -525,7 +536,7 @@ class CFBDClient:
         Returns:
             List of transfer portal rankings
         """
-        return self._get('/player/portal', params={'year': year})
+        return self._get("/player/portal", params={"year": year})
 
     def get_ap_poll(self, year: int, week: Optional[int] = None) -> List[Dict]:
         """
@@ -565,14 +576,11 @@ class CFBDClient:
                 ...
             ]
         """
-        params = {
-            'year': year,
-            'seasonType': 'regular'
-        }
+        params = {"year": year, "seasonType": "regular"}
         if week:
-            params['week'] = week
+            params["week"] = week
 
-        rankings = self._get('/rankings', params=params)
+        rankings = self._get("/rankings", params=params)
 
         # Filter to only AP Poll rankings
         # CFBD API returns multiple polls (AP, Coaches, etc.)
@@ -582,26 +590,29 @@ class CFBDClient:
 
         ap_rankings = []
         for poll_week in rankings:
-            for poll in poll_week.get('polls', []):
-                if poll.get('poll') == 'AP Top 25':
+            for poll in poll_week.get("polls", []):
+                if poll.get("poll") == "AP Top 25":
                     # Extract rankings with metadata
-                    for team_ranking in poll.get('ranks', []):
-                        ap_rankings.append({
-                            'season': poll_week.get('season'),
-                            'seasonType': poll_week.get('seasonType'),
-                            'week': poll_week.get('week'),
-                            'poll': poll.get('poll'),
-                            'rank': team_ranking.get('rank'),
-                            'school': team_ranking.get('school'),
-                            'conference': team_ranking.get('conference'),
-                            'firstPlaceVotes': team_ranking.get('firstPlaceVotes', 0),
-                            'points': team_ranking.get('points', 0)
-                        })
+                    for team_ranking in poll.get("ranks", []):
+                        ap_rankings.append(
+                            {
+                                "season": poll_week.get("season"),
+                                "seasonType": poll_week.get("seasonType"),
+                                "week": poll_week.get("week"),
+                                "poll": poll.get("poll"),
+                                "rank": team_ranking.get("rank"),
+                                "school": team_ranking.get("school"),
+                                "conference": team_ranking.get("conference"),
+                                "firstPlaceVotes": team_ranking.get("firstPlaceVotes", 0),
+                                "points": team_ranking.get("points", 0),
+                            }
+                        )
 
         return ap_rankings
 
-    def get_game_line_scores(self, game_id: int, year: int, week: int,
-                            home_team: str, away_team: str) -> Optional[Dict[str, List[int]]]:
+    def get_game_line_scores(
+        self, game_id: int, year: int, week: int, home_team: str, away_team: str
+    ) -> Optional[Dict[str, List[int]]]:
         """
         Fetch quarter-by-quarter line scores for a game from CFBD API.
 
@@ -625,12 +636,12 @@ class CFBDClient:
         try:
             # Fetch game data with team stats (includes line scores)
             params = {
-                'year': year,
-                'week': week,
-                'team': home_team  # Filter to games involving home team
+                "year": year,
+                "week": week,
+                "team": home_team,  # Filter to games involving home team
             }
 
-            games = self._get('/games/teams', params=params)
+            games = self._get("/games/teams", params=params)
 
             if not games:
                 logger.debug(f"No game data for {home_team} vs {away_team}, Week {week}, {year}")
@@ -638,7 +649,7 @@ class CFBDClient:
 
             # Find the specific game matching both teams
             for game_data in games:
-                game_teams = game_data.get('teams', [])
+                game_teams = game_data.get("teams", [])
                 if len(game_teams) < 2:
                     continue
 
@@ -646,14 +657,15 @@ class CFBDClient:
                 team2 = game_teams[1]
 
                 # Check if this is the game we're looking for
-                team1_name = team1.get('school', '')
-                team2_name = team2.get('school', '')
+                team1_name = team1.get("school", "")
+                team2_name = team2.get("school", "")
 
-                if (team1_name == home_team and team2_name == away_team) or \
-                   (team1_name == away_team and team2_name == home_team):
+                if (team1_name == home_team and team2_name == away_team) or (
+                    team1_name == away_team and team2_name == home_team
+                ):
 
                     # Determine which team is home
-                    if team1.get('homeAway') == 'home':
+                    if team1.get("homeAway") == "home":
                         home_data = team1
                         away_data = team2
                     else:
@@ -661,15 +673,15 @@ class CFBDClient:
                         away_data = team1
 
                     # Extract line scores
-                    home_line = home_data.get('lineScores', [])
-                    away_line = away_data.get('lineScores', [])
+                    home_line = home_data.get("lineScores", [])
+                    away_line = away_data.get("lineScores", [])
 
                     # Verify we have at least 4 quarters
                     if len(home_line) >= 4 and len(away_line) >= 4:
                         logger.debug(f"✓ Line scores found for {home_team} vs {away_team}")
                         return {
-                            'home': home_line[:4],  # First 4 quarters only
-                            'away': away_line[:4]
+                            "home": home_line[:4],  # First 4 quarters only
+                            "away": away_line[:4],
                         }
                     else:
                         logger.debug(f"Line scores incomplete for {home_team} vs {away_team}")

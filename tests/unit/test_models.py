@@ -25,10 +25,7 @@ class TestTeamModel:
     def test_create_team_with_minimal_data(self, test_db: Session):
         """Test creating team with only required fields"""
         # Arrange & Act
-        team = Team(
-            name="Alabama",
-            conference=ConferenceType.POWER_5
-        )
+        team = Team(name="Alabama", conference=ConferenceType.POWER_5)
         test_db.add(team)
         test_db.commit()
         test_db.refresh(team)
@@ -41,10 +38,7 @@ class TestTeamModel:
     def test_team_default_values(self, test_db: Session):
         """Test that Team model sets correct default values"""
         # Arrange & Act
-        team = Team(
-            name="Georgia",
-            conference=ConferenceType.POWER_5
-        )
+        team = Team(name="Georgia", conference=ConferenceType.POWER_5)
         test_db.add(team)
         test_db.commit()
         test_db.refresh(team)
@@ -84,7 +78,7 @@ class TestTeamModel:
             elo_rating=1750.0,
             initial_rating=1700.0,
             wins=8,
-            losses=2
+            losses=2,
         )
         test_db.add(team)
         test_db.commit()
@@ -131,11 +125,7 @@ class TestTeamModel:
         """Test Team string representation"""
         # Arrange
         team = Team(
-            name="Texas",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1650.5,
-            wins=9,
-            losses=3
+            name="Texas", conference=ConferenceType.POWER_5, elo_rating=1650.5, wins=9, losses=3
         )
         test_db.add(team)
         test_db.commit()
@@ -190,7 +180,7 @@ class TestGameModel:
             home_score=35,
             away_score=28,
             week=5,
-            season=2024
+            season=2024,
         )
         test_db.add(game)
         test_db.commit()
@@ -220,7 +210,7 @@ class TestGameModel:
             home_score=21,
             away_score=17,
             week=1,
-            season=2024
+            season=2024,
         )
         test_db.add(game)
         test_db.commit()
@@ -247,13 +237,15 @@ class TestGameModel:
             home_score=42,
             away_score=21,
             week=1,
-            season=2024
+            season=2024,
         )
         test_db.add(game)
         test_db.commit()
 
         # Act & Assert
-        assert game.winner_id == home_team.id, "winner_id should be home_team_id when home team wins"
+        assert (
+            game.winner_id == home_team.id
+        ), "winner_id should be home_team_id when home team wins"
         assert game.loser_id == away_team.id, "loser_id should be away_team_id when home team wins"
 
     def test_game_winner_id_property_away_wins(self, test_db: Session):
@@ -270,13 +262,15 @@ class TestGameModel:
             home_score=14,
             away_score=28,
             week=1,
-            season=2024
+            season=2024,
         )
         test_db.add(game)
         test_db.commit()
 
         # Act & Assert
-        assert game.winner_id == away_team.id, "winner_id should be away_team_id when away team wins"
+        assert (
+            game.winner_id == away_team.id
+        ), "winner_id should be away_team_id when away team wins"
         assert game.loser_id == home_team.id, "loser_id should be home_team_id when away team wins"
 
     def test_game_winner_id_tie_score(self, test_db: Session):
@@ -293,7 +287,7 @@ class TestGameModel:
             home_score=21,
             away_score=21,  # Tied
             week=1,
-            season=2024
+            season=2024,
         )
         test_db.add(game)
         test_db.commit()
@@ -319,7 +313,7 @@ class TestGameModel:
             away_score=28,
             week=1,
             season=2024,
-            is_neutral_site=True
+            is_neutral_site=True,
         )
         test_db.add(game)
         test_db.commit()
@@ -342,7 +336,7 @@ class TestGameModel:
             home_score=27,
             away_score=24,
             week=1,
-            season=2025
+            season=2025,
         )
         test_db.add(game)
         test_db.commit()
@@ -367,7 +361,7 @@ class TestGameModel:
             away_score=0,
             week=2,
             season=2025,
-            excluded_from_rankings=True
+            excluded_from_rankings=True,
         )
         test_db.add(game)
         test_db.commit()
@@ -395,7 +389,7 @@ class TestGameTeamRelationships:
             home_score=24,
             away_score=21,
             week=1,
-            season=2024
+            season=2024,
         )
         test_db.add(game)
         test_db.commit()
@@ -419,7 +413,7 @@ class TestGameTeamRelationships:
             home_score=17,
             away_score=14,
             week=1,
-            season=2024
+            season=2024,
         )
         test_db.add(game)
         test_db.commit()
@@ -438,10 +432,22 @@ class TestGameTeamRelationships:
         test_db.add_all([team, opponent1, opponent2])
         test_db.commit()
 
-        game1 = Game(home_team_id=team.id, away_team_id=opponent1.id,
-                    home_score=35, away_score=28, week=1, season=2024)
-        game2 = Game(home_team_id=team.id, away_team_id=opponent2.id,
-                    home_score=42, away_score=21, week=3, season=2024)
+        game1 = Game(
+            home_team_id=team.id,
+            away_team_id=opponent1.id,
+            home_score=35,
+            away_score=28,
+            week=1,
+            season=2024,
+        )
+        game2 = Game(
+            home_team_id=team.id,
+            away_team_id=opponent2.id,
+            home_score=42,
+            away_score=21,
+            week=3,
+            season=2024,
+        )
         test_db.add_all([game1, game2])
         test_db.commit()
         test_db.refresh(team)
@@ -460,10 +466,22 @@ class TestGameTeamRelationships:
         test_db.add_all([team, opponent1, opponent2])
         test_db.commit()
 
-        game1 = Game(home_team_id=opponent1.id, away_team_id=team.id,
-                    home_score=21, away_score=24, week=2, season=2024)
-        game2 = Game(home_team_id=opponent2.id, away_team_id=team.id,
-                    home_score=14, away_score=17, week=4, season=2024)
+        game1 = Game(
+            home_team_id=opponent1.id,
+            away_team_id=team.id,
+            home_score=21,
+            away_score=24,
+            week=2,
+            season=2024,
+        )
+        game2 = Game(
+            home_team_id=opponent2.id,
+            away_team_id=team.id,
+            home_score=14,
+            away_score=17,
+            week=4,
+            season=2024,
+        )
         test_db.add_all([game1, game2])
         test_db.commit()
         test_db.refresh(team)
@@ -483,10 +501,22 @@ class TestGameTeamRelationships:
         test_db.commit()
 
         # 1 home game, 1 away game
-        home_game = Game(home_team_id=team.id, away_team_id=opp1.id,
-                        home_score=28, away_score=24, week=1, season=2024)
-        away_game = Game(home_team_id=opp2.id, away_team_id=team.id,
-                        home_score=21, away_score=31, week=2, season=2024)
+        home_game = Game(
+            home_team_id=team.id,
+            away_team_id=opp1.id,
+            home_score=28,
+            away_score=24,
+            week=1,
+            season=2024,
+        )
+        away_game = Game(
+            home_team_id=opp2.id,
+            away_team_id=team.id,
+            home_score=21,
+            away_score=31,
+            week=2,
+            season=2024,
+        )
         test_db.add_all([home_game, away_game])
         test_db.commit()
         test_db.refresh(team)
@@ -519,7 +549,7 @@ class TestRankingHistoryModel:
             wins=5,
             losses=0,
             sos=1680.2,
-            sos_rank=10
+            sos_rank=10,
         )
         test_db.add(history)
         test_db.commit()
@@ -544,13 +574,7 @@ class TestRankingHistoryModel:
         test_db.add(team)
         test_db.commit()
 
-        history = RankingHistory(
-            team_id=team.id,
-            week=1,
-            season=2024,
-            rank=5,
-            elo_rating=1650.0
-        )
+        history = RankingHistory(team_id=team.id, week=1, season=2024, rank=5, elo_rating=1650.0)
         test_db.add(history)
         test_db.commit()
 
@@ -569,11 +593,7 @@ class TestRankingHistoryModel:
         # Create history for multiple weeks
         for week in range(1, 6):
             history = RankingHistory(
-                team_id=team.id,
-                week=week,
-                season=2024,
-                rank=week,
-                elo_rating=1500.0 + (week * 10)
+                team_id=team.id, week=week, season=2024, rank=week, elo_rating=1500.0 + (week * 10)
             )
             test_db.add(history)
         test_db.commit()
@@ -593,13 +613,7 @@ class TestRankingHistoryModel:
         test_db.commit()
 
         # Act
-        history = RankingHistory(
-            team_id=team.id,
-            week=1,
-            season=2024,
-            rank=10,
-            elo_rating=1550.0
-        )
+        history = RankingHistory(team_id=team.id, week=1, season=2024, rank=10, elo_rating=1550.0)
         test_db.add(history)
         test_db.commit()
         test_db.refresh(history)
@@ -658,11 +672,7 @@ class TestSeasonModel:
     def test_season_custom_values(self, test_db: Session):
         """Test creating season with custom values"""
         # Arrange & Act
-        season = Season(
-            year=2023,
-            current_week=12,
-            is_active=False
-        )
+        season = Season(year=2023, current_week=12, is_active=False)
         test_db.add(season)
         test_db.commit()
         test_db.refresh(season)
@@ -724,10 +734,14 @@ class TestGameQuarterScores:
             away_score=21,
             week=1,
             season=2024,
-            q1_home=7, q1_away=7,
-            q2_home=7, q2_away=7,
-            q3_home=7, q3_away=0,
-            q4_home=7, q4_away=7
+            q1_home=7,
+            q1_away=7,
+            q2_home=7,
+            q2_away=7,
+            q3_home=7,
+            q3_away=0,
+            q4_home=7,
+            q4_away=7,
         )
         test_db.add(game)
         test_db.commit()
@@ -761,7 +775,7 @@ class TestGameQuarterScores:
             home_score=35,
             away_score=28,
             week=1,
-            season=2024
+            season=2024,
             # No quarter scores specified
         )
         test_db.add(game)
@@ -797,10 +811,14 @@ class TestGameQuarterScores:
             away_score=21,
             week=1,
             season=2024,
-            q1_home=7, q1_away=7,
-            q2_home=7, q2_away=7,
-            q3_home=7, q3_away=0,
-            q4_home=14, q4_away=7  # Sum: 35 != 28 final score
+            q1_home=7,
+            q1_away=7,
+            q2_home=7,
+            q2_away=7,
+            q3_home=7,
+            q3_away=0,
+            q4_home=14,
+            q4_away=7,  # Sum: 35 != 28 final score
         )
 
         # Assert
@@ -825,10 +843,14 @@ class TestGameQuarterScores:
             away_score=21,  # Final score
             week=1,
             season=2024,
-            q1_home=7, q1_away=3,
-            q2_home=7, q2_away=7,
-            q3_home=7, q3_away=7,
-            q4_home=7, q4_away=7  # Away sum: 24 != 21 final score
+            q1_home=7,
+            q1_away=3,
+            q2_home=7,
+            q2_away=7,
+            q3_home=7,
+            q3_away=7,
+            q4_home=7,
+            q4_away=7,  # Away sum: 24 != 21 final score
         )
 
         # Assert
@@ -853,10 +875,14 @@ class TestGameQuarterScores:
             away_score=21,
             week=1,
             season=2024,
-            q1_home=7, q1_away=7,
-            q2_home=7, q2_away=7,
-            q3_home=None, q3_away=None,  # Missing data
-            q4_home=None, q4_away=None   # Missing data
+            q1_home=7,
+            q1_away=7,
+            q2_home=7,
+            q2_away=7,
+            q3_home=None,
+            q3_away=None,  # Missing data
+            q4_home=None,
+            q4_away=None,  # Missing data
         )
 
         # Assert - Validation should pass (partial data bypasses validation)
@@ -878,10 +904,14 @@ class TestGameQuarterScores:
             away_score=3,
             week=1,
             season=2024,
-            q1_home=0, q1_away=0,  # 0-0 Q1
-            q2_home=3, q2_away=3,  # 3-3 Q2
-            q3_home=7, q3_away=0,  # 7-0 Q3
-            q4_home=0, q4_away=0   # 0-0 Q4
+            q1_home=0,
+            q1_away=0,  # 0-0 Q1
+            q2_home=3,
+            q2_away=3,  # 3-3 Q2
+            q3_home=7,
+            q3_away=0,  # 7-0 Q3
+            q4_home=0,
+            q4_away=0,  # 0-0 Q4
         )
         test_db.add(game)
         test_db.commit()
@@ -907,10 +937,14 @@ class TestGameQuarterScores:
             away_score=56,
             week=1,
             season=2024,
-            q1_home=21, q1_away=14,
-            q2_home=14, q2_away=21,
-            q3_home=14, q3_away=14,
-            q4_home=14, q4_away=7
+            q1_home=21,
+            q1_away=14,
+            q2_home=14,
+            q2_away=21,
+            q3_home=14,
+            q3_away=14,
+            q4_home=14,
+            q4_away=7,
         )
         test_db.add(game)
         test_db.commit()

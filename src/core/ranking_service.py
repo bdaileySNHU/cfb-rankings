@@ -84,8 +84,8 @@ class RankingService:
     # Progressive K-factor (EPIC-027: Improve preseason rating adjustment)
     # Optimized through backtesting: 64→48→32 provides best accuracy & calibration
     K_FACTOR_EARLY = 64  # Weeks 1-4: Aggressive K for rapid preseason correction
-    K_FACTOR_MID = 48    # Weeks 5-8: Higher K for continued adjustment
-    K_FACTOR_LATE = 32   # Weeks 9+: Standard K for stable ratings
+    K_FACTOR_MID = 48  # Weeks 5-8: Higher K for continued adjustment
+    K_FACTOR_LATE = 32  # Weeks 9+: Standard K for stable ratings
 
     # EPIC-021: Garbage Time Configuration
     GARBAGE_TIME_THRESHOLD = 21  # Point differential entering Q4 that triggers reduced weighting
@@ -121,9 +121,9 @@ class RankingService:
         if week <= 4:
             return self.K_FACTOR_EARLY  # 64: Aggressive adjustment from preseason
         elif week <= 8:
-            return self.K_FACTOR_MID    # 48: Continued adjustment
+            return self.K_FACTOR_MID  # 48: Continued adjustment
         else:
-            return self.K_FACTOR_LATE   # 32: Stable ratings
+            return self.K_FACTOR_LATE  # 32: Stable ratings
 
     def calculate_preseason_rating(self, team: Team) -> float:
         """
@@ -242,8 +242,19 @@ class RankingService:
             4. Combine quarters into overall MOV multiplier
         """
         # Ensure quarter data exists
-        if any(q is None for q in [game.q1_home, game.q1_away, game.q2_home, game.q2_away,
-                                     game.q3_home, game.q3_away, game.q4_home, game.q4_away]):
+        if any(
+            q is None
+            for q in [
+                game.q1_home,
+                game.q1_away,
+                game.q2_home,
+                game.q2_away,
+                game.q3_home,
+                game.q3_away,
+                game.q4_home,
+                game.q4_away,
+            ]
+        ):
             # Fall back to legacy MOV if any quarter missing
             point_diff = abs(game.home_score - game.away_score)
             return self.calculate_mov_multiplier(point_diff)
@@ -289,8 +300,9 @@ class RankingService:
         # Cap at maximum
         return min(combined_mov, self.MAX_MOV_MULTIPLIER)
 
-    def get_conference_multiplier(self, winner_conf: ConferenceType,
-                                  loser_conf: ConferenceType) -> Tuple[float, float]:
+    def get_conference_multiplier(
+        self, winner_conf: ConferenceType, loser_conf: ConferenceType
+    ) -> Tuple[float, float]:
         """
         Get rating change multipliers based on conference matchup
 
@@ -395,10 +407,18 @@ class RankingService:
 
         # Calculate margin of victory multiplier
         # EPIC-021: Use quarter-weighted calculation if quarter data available
-        if all([game.q1_home is not None, game.q1_away is not None,
-                game.q2_home is not None, game.q2_away is not None,
-                game.q3_home is not None, game.q3_away is not None,
-                game.q4_home is not None, game.q4_away is not None]):
+        if all(
+            [
+                game.q1_home is not None,
+                game.q1_away is not None,
+                game.q2_home is not None,
+                game.q2_away is not None,
+                game.q3_home is not None,
+                game.q3_away is not None,
+                game.q4_home is not None,
+                game.q4_away is not None,
+            ]
+        ):
             # Quarter data available - use new algorithm
             mov_multiplier = self.calculate_quarter_weighted_mov(game, is_home_win)
         else:
@@ -444,16 +464,16 @@ class RankingService:
         self.db.commit()
 
         return {
-            'game_id': game.id,
-            'winner_name': winner.name,
-            'loser_name': loser.name,
-            'score': f"{winner_score}-{loser_score}",
-            'winner_rating_change': round(winner_change, 2),
-            'loser_rating_change': round(loser_change, 2),
-            'winner_new_rating': round(winner.elo_rating, 2),
-            'loser_new_rating': round(loser.elo_rating, 2),
-            'winner_expected_probability': round(winner_expected, 3),
-            'mov_multiplier': round(mov_multiplier, 2)
+            "game_id": game.id,
+            "winner_name": winner.name,
+            "loser_name": loser.name,
+            "score": f"{winner_score}-{loser_score}",
+            "winner_rating_change": round(winner_change, 2),
+            "loser_rating_change": round(loser_change, 2),
+            "winner_new_rating": round(winner.elo_rating, 2),
+            "loser_new_rating": round(loser.elo_rating, 2),
+            "winner_expected_probability": round(winner_expected, 3),
+            "mov_multiplier": round(mov_multiplier, 2),
         }
 
     def get_season_record(self, team_id: int, season: int) -> tuple[int, int]:
@@ -473,20 +493,28 @@ class RankingService:
         from models import Game
 
         # Count wins (games where team won and game is processed)
-        wins = self.db.query(Game).filter(
-            Game.season == season,
-            Game.is_processed == True,
-            ((Game.home_team_id == team_id) & (Game.home_score > Game.away_score)) |
-            ((Game.away_team_id == team_id) & (Game.away_score > Game.home_score))
-        ).count()
+        wins = (
+            self.db.query(Game)
+            .filter(
+                Game.season == season,
+                Game.is_processed == True,
+                ((Game.home_team_id == team_id) & (Game.home_score > Game.away_score))
+                | ((Game.away_team_id == team_id) & (Game.away_score > Game.home_score)),
+            )
+            .count()
+        )
 
         # Count losses (games where team lost and game is processed)
-        losses = self.db.query(Game).filter(
-            Game.season == season,
-            Game.is_processed == True,
-            ((Game.home_team_id == team_id) & (Game.home_score < Game.away_score)) |
-            ((Game.away_team_id == team_id) & (Game.away_score < Game.home_score))
-        ).count()
+        losses = (
+            self.db.query(Game)
+            .filter(
+                Game.season == season,
+                Game.is_processed == True,
+                ((Game.home_team_id == team_id) & (Game.home_score < Game.away_score))
+                | ((Game.away_team_id == team_id) & (Game.away_score < Game.home_score)),
+            )
+            .count()
+        )
 
         return wins, losses
 
@@ -503,12 +531,16 @@ class RankingService:
         """
         # Get all games for this team in this season
         # CRITICAL: Only include games that count toward rankings
-        games = self.db.query(Game).filter(
-            ((Game.home_team_id == team_id) | (Game.away_team_id == team_id)) &
-            (Game.season == season) &
-            (Game.is_processed == True) &
-            (Game.excluded_from_rankings == False)
-        ).all()
+        games = (
+            self.db.query(Game)
+            .filter(
+                ((Game.home_team_id == team_id) | (Game.away_team_id == team_id))
+                & (Game.season == season)
+                & (Game.is_processed == True)
+                & (Game.excluded_from_rankings == False)
+            )
+            .all()
+        )
 
         if not games:
             return 0.0
@@ -552,10 +584,11 @@ class RankingService:
         current_week = season_obj.current_week
 
         # EPIC-024: Query ranking_history instead of teams table for season-specific data
-        query = self.db.query(RankingHistory).filter(
-            RankingHistory.season == season,
-            RankingHistory.week == current_week
-        ).order_by(RankingHistory.elo_rating.desc())
+        query = (
+            self.db.query(RankingHistory)
+            .filter(RankingHistory.season == season, RankingHistory.week == current_week)
+            .order_by(RankingHistory.elo_rating.desc())
+        )
 
         if limit:
             query = query.limit(limit)
@@ -567,20 +600,22 @@ class RankingService:
             # Get team info (name, conference) from Team table
             team = record.team
 
-            rankings.append({
-                'rank': rank,
-                'team_id': record.team_id,
-                'team_name': team.name,
-                'conference': team.conference,
-                'conference_name': team.conference_name,  # EPIC-012: Add actual conference name
-                'elo_rating': round(record.elo_rating, 2),  # EPIC-024: From ranking_history
-                'wins': record.wins,  # EPIC-024: Season-specific wins from ranking_history
-                'losses': record.losses,  # EPIC-024: Season-specific losses from ranking_history
-                'sos': round(record.sos, 2),  # EPIC-024: Use saved SOS from ranking_history
-                'sos_rank': record.sos_rank,  # EPIC-024: Use saved SOS rank
-                'transfer_portal_rank': team.transfer_portal_rank,  # EPIC-026: Transfer portal rank
-                'recruiting_rank': team.recruiting_rank  # EPIC-026: Recruiting rank for comparison
-            })
+            rankings.append(
+                {
+                    "rank": rank,
+                    "team_id": record.team_id,
+                    "team_name": team.name,
+                    "conference": team.conference,
+                    "conference_name": team.conference_name,  # EPIC-012: Add actual conference name
+                    "elo_rating": round(record.elo_rating, 2),  # EPIC-024: From ranking_history
+                    "wins": record.wins,  # EPIC-024: Season-specific wins from ranking_history
+                    "losses": record.losses,  # EPIC-024: Season-specific losses from ranking_history
+                    "sos": round(record.sos, 2),  # EPIC-024: Use saved SOS from ranking_history
+                    "sos_rank": record.sos_rank,  # EPIC-024: Use saved SOS rank
+                    "transfer_portal_rank": team.transfer_portal_rank,  # EPIC-026: Transfer portal rank
+                    "recruiting_rank": team.recruiting_rank,  # EPIC-026: Recruiting rank for comparison
+                }
+            )
 
         return rankings
 
@@ -599,8 +634,7 @@ class RankingService:
         # Delete existing entries for this season/week to prevent duplicates
         # (handles case where weekly update runs multiple times)
         self.db.query(RankingHistory).filter(
-            RankingHistory.season == season,
-            RankingHistory.week == week
+            RankingHistory.season == season, RankingHistory.week == week
         ).delete()
 
         # Build rankings from current teams table state (not from ranking_history)
@@ -622,17 +656,19 @@ class RankingService:
                 wins=wins,  # Season-specific wins
                 losses=losses,  # Season-specific losses
                 sos=sos,
-                sos_rank=None  # Will be calculated after all teams are saved
+                sos_rank=None,  # Will be calculated after all teams are saved
             )
             self.db.add(history)
 
         self.db.commit()
 
         # Calculate and save SOS ranks
-        rankings = self.db.query(RankingHistory).filter(
-            RankingHistory.season == season,
-            RankingHistory.week == week
-        ).order_by(RankingHistory.sos.desc()).all()
+        rankings = (
+            self.db.query(RankingHistory)
+            .filter(RankingHistory.season == season, RankingHistory.week == week)
+            .order_by(RankingHistory.sos.desc())
+            .all()
+        )
 
         for sos_rank, ranking in enumerate(rankings, start=1):
             ranking.sos_rank = sos_rank
@@ -681,12 +717,13 @@ class RankingService:
 
 # Prediction Functions (standalone, not part of RankingService class)
 
+
 def generate_predictions(
     db: Session,
     week: Optional[int] = None,
     team_id: Optional[int] = None,
     next_week: bool = True,
-    season_year: Optional[int] = None
+    season_year: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
     """
     Generate predictions for upcoming (unprocessed) games.
@@ -706,17 +743,12 @@ def generate_predictions(
         season_year = datetime.now().year
 
     # Build query for unprocessed games
-    query = db.query(Game).filter(
-        Game.is_processed == False,
-        Game.season == season_year
-    )
+    query = db.query(Game).filter(Game.is_processed == False, Game.season == season_year)
 
     # Apply week filter
     if next_week:
         # Get current week from Season model
-        current_week = db.query(Season.current_week).filter(
-            Season.year == season_year
-        ).scalar()
+        current_week = db.query(Season.current_week).filter(Season.year == season_year).scalar()
 
         if current_week is None:
             return []  # No active season
@@ -727,12 +759,7 @@ def generate_predictions(
 
     # Apply team filter
     if team_id is not None:
-        query = query.filter(
-            or_(
-                Game.home_team_id == team_id,
-                Game.away_team_id == team_id
-            )
-        )
+        query = query.filter(or_(Game.home_team_id == team_id, Game.away_team_id == team_id))
 
     # Execute query
     games = query.all()
@@ -895,7 +922,7 @@ def _calculate_game_prediction(game: Game, home_team: Team, away_team: Team) -> 
         "away_win_probability": round(away_win_prob * 100, 1),
         "confidence": confidence,
         "home_team_rating": home_team.elo_rating,
-        "away_team_rating": away_team.elo_rating
+        "away_team_rating": away_team.elo_rating,
     }
 
 
@@ -941,13 +968,17 @@ def create_and_store_prediction(db: Session, game: Game) -> Optional[Prediction]
     # Create Prediction object
     prediction = Prediction(
         game_id=game.id,
-        predicted_winner_id=prediction_data['predicted_winner_id'],
-        predicted_home_score=prediction_data['predicted_home_score'],
-        predicted_away_score=prediction_data['predicted_away_score'],
-        win_probability=prediction_data['home_win_probability'] / 100.0 if prediction_data['predicted_winner_id'] == home_team.id else prediction_data['away_win_probability'] / 100.0,
+        predicted_winner_id=prediction_data["predicted_winner_id"],
+        predicted_home_score=prediction_data["predicted_home_score"],
+        predicted_away_score=prediction_data["predicted_away_score"],
+        win_probability=(
+            prediction_data["home_win_probability"] / 100.0
+            if prediction_data["predicted_winner_id"] == home_team.id
+            else prediction_data["away_win_probability"] / 100.0
+        ),
         home_elo_at_prediction=home_team.elo_rating,
         away_elo_at_prediction=away_team.elo_rating,
-        was_correct=None  # Will be set when game completes
+        was_correct=None,  # Will be set when game completes
     )
 
     # Store in database
@@ -995,7 +1026,7 @@ def evaluate_prediction_accuracy(db: Session, game: Game) -> Optional[Prediction
     actual_winner_id = game.winner_id
 
     # Compare predicted winner to actual winner
-    prediction.was_correct = (prediction.predicted_winner_id == actual_winner_id)
+    prediction.was_correct = prediction.predicted_winner_id == actual_winner_id
 
     # No need to commit here - will be committed by caller (process_game)
     return prediction
@@ -1037,7 +1068,9 @@ def get_overall_prediction_accuracy(db: Session, season: Optional[int] = None) -
     correct_predictions = query.filter(Prediction.was_correct == True).count()
 
     # Calculate accuracy
-    accuracy_percentage = (correct_predictions / evaluated_predictions * 100) if evaluated_predictions > 0 else 0.0
+    accuracy_percentage = (
+        (correct_predictions / evaluated_predictions * 100) if evaluated_predictions > 0 else 0.0
+    )
 
     return {
         "total_predictions": total_predictions,
@@ -1046,11 +1079,13 @@ def get_overall_prediction_accuracy(db: Session, season: Optional[int] = None) -
         "accuracy_percentage": round(accuracy_percentage, 2),
         "high_confidence_accuracy": None,  # TODO: Implement confidence-based accuracy
         "medium_confidence_accuracy": None,
-        "low_confidence_accuracy": None
+        "low_confidence_accuracy": None,
     }
 
 
-def get_team_prediction_accuracy(db: Session, team_id: int, season: Optional[int] = None) -> Dict[str, Any]:
+def get_team_prediction_accuracy(
+    db: Session, team_id: int, season: Optional[int] = None
+) -> Dict[str, Any]:
     """
     Get prediction accuracy for a specific team.
 
@@ -1081,15 +1116,14 @@ def get_team_prediction_accuracy(db: Session, team_id: int, season: Optional[int
             "correct_predictions": 0,
             "accuracy_percentage": 0.0,
             "as_favorite_accuracy": None,
-            "as_underdog_accuracy": None
+            "as_underdog_accuracy": None,
         }
 
     # Build query for predictions involving this team
-    query = db.query(Prediction).join(Game).filter(
-        or_(
-            Game.home_team_id == team_id,
-            Game.away_team_id == team_id
-        )
+    query = (
+        db.query(Prediction)
+        .join(Game)
+        .filter(or_(Game.home_team_id == team_id, Game.away_team_id == team_id))
     )
 
     # Filter by season if provided
@@ -1104,11 +1138,17 @@ def get_team_prediction_accuracy(db: Session, team_id: int, season: Optional[int
     correct_predictions = sum(1 for p in predictions if p.was_correct is True)
 
     # Calculate accuracy
-    accuracy_percentage = (correct_predictions / evaluated_predictions * 100) if evaluated_predictions > 0 else 0.0
+    accuracy_percentage = (
+        (correct_predictions / evaluated_predictions * 100) if evaluated_predictions > 0 else 0.0
+    )
 
     # Calculate as favorite/underdog accuracy
-    as_favorite = [p for p in predictions if p.predicted_winner_id == team_id and p.was_correct is not None]
-    as_underdog = [p for p in predictions if p.predicted_winner_id != team_id and p.was_correct is not None]
+    as_favorite = [
+        p for p in predictions if p.predicted_winner_id == team_id and p.was_correct is not None
+    ]
+    as_underdog = [
+        p for p in predictions if p.predicted_winner_id != team_id and p.was_correct is not None
+    ]
 
     as_favorite_correct = sum(1 for p in as_favorite if p.was_correct is True)
     # For underdogs: was_correct = True means prediction was correct (team lost as predicted)
@@ -1124,6 +1164,10 @@ def get_team_prediction_accuracy(db: Session, team_id: int, season: Optional[int
         "evaluated_predictions": evaluated_predictions,
         "correct_predictions": correct_predictions,
         "accuracy_percentage": round(accuracy_percentage, 2),
-        "as_favorite_accuracy": round(as_favorite_accuracy, 2) if as_favorite_accuracy is not None else None,
-        "as_underdog_accuracy": round(as_underdog_accuracy, 2) if as_underdog_accuracy is not None else None
+        "as_favorite_accuracy": (
+            round(as_favorite_accuracy, 2) if as_favorite_accuracy is not None else None
+        ),
+        "as_underdog_accuracy": (
+            round(as_underdog_accuracy, 2) if as_underdog_accuracy is not None else None
+        ),
     }

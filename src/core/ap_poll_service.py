@@ -29,11 +29,15 @@ def get_team_ap_rank(db: Session, team_id: int, season: int, week: int) -> Optio
         >>> rank = get_team_ap_rank(db, 82, 2024, 5)
         >>> print(rank)  # 1 (if Ohio State is ranked #1 in week 5)
     """
-    ranking = db.query(APPollRanking).filter(
-        APPollRanking.team_id == team_id,
-        APPollRanking.season == season,
-        APPollRanking.week == week
-    ).first()
+    ranking = (
+        db.query(APPollRanking)
+        .filter(
+            APPollRanking.team_id == team_id,
+            APPollRanking.season == season,
+            APPollRanking.week == week,
+        )
+        .first()
+    )
 
     return ranking.rank if ranking else None
 
@@ -120,11 +124,15 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
         }
     """
     # Get all completed games with ELO predictions for this season
-    games = db.query(Game).filter(
-        Game.season == season,
-        Game.is_processed == True,
-        Game.excluded_from_rankings == False  # Only FBS vs FBS games
-    ).all()
+    games = (
+        db.query(Game)
+        .filter(
+            Game.season == season,
+            Game.is_processed == True,
+            Game.excluded_from_rankings == False,  # Only FBS vs FBS games
+        )
+        .all()
+    )
 
     if not games:
         return {
@@ -140,7 +148,7 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
             "ap_only_correct": 0,
             "both_wrong": 0,
             "by_week": [],
-            "disagreements": []
+            "disagreements": [],
         }
 
     # Track statistics
@@ -157,9 +165,7 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
 
     for game in games:
         # Get ELO prediction
-        elo_prediction = db.query(Prediction).filter(
-            Prediction.game_id == game.id
-        ).first()
+        elo_prediction = db.query(Prediction).filter(Prediction.game_id == game.id).first()
 
         # Skip if no ELO prediction
         if not elo_prediction:
@@ -176,11 +182,13 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
         total_games_compared += 1
 
         # Determine actual winner
-        actual_winner_id = game.home_team_id if game.home_score > game.away_score else game.away_team_id
+        actual_winner_id = (
+            game.home_team_id if game.home_score > game.away_score else game.away_team_id
+        )
 
         # Check if each system was correct
-        elo_correct = (elo_prediction.predicted_winner_id == actual_winner_id)
-        ap_correct = (ap_predicted_winner_id == actual_winner_id)
+        elo_correct = elo_prediction.predicted_winner_id == actual_winner_id
+        ap_correct = ap_predicted_winner_id == actual_winner_id
 
         # Update counts
         if elo_correct:
@@ -200,12 +208,7 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
         # Track by week
         week = game.week
         if week not in by_week_stats:
-            by_week_stats[week] = {
-                "week": week,
-                "games": 0,
-                "elo_correct": 0,
-                "ap_correct": 0
-            }
+            by_week_stats[week] = {"week": week, "games": 0, "elo_correct": 0, "ap_correct": 0}
         by_week_stats[week]["games"] += 1
         if elo_correct:
             by_week_stats[week]["elo_correct"] += 1
@@ -216,19 +219,25 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
         if elo_prediction.predicted_winner_id != ap_predicted_winner_id:
             home_team = db.query(Team).filter(Team.id == game.home_team_id).first()
             away_team = db.query(Team).filter(Team.id == game.away_team_id).first()
-            elo_predicted_team = db.query(Team).filter(Team.id == elo_prediction.predicted_winner_id).first()
+            elo_predicted_team = (
+                db.query(Team).filter(Team.id == elo_prediction.predicted_winner_id).first()
+            )
             ap_predicted_team = db.query(Team).filter(Team.id == ap_predicted_winner_id).first()
 
-            disagreements.append({
-                "game_id": game.id,
-                "week": week,
-                "matchup": f"{away_team.name} @ {home_team.name}",
-                "elo_predicted": elo_predicted_team.name if elo_predicted_team else "Unknown",
-                "ap_predicted": ap_predicted_team.name if ap_predicted_team else "Unknown",
-                "actual_winner": home_team.name if actual_winner_id == game.home_team_id else away_team.name,
-                "elo_correct": elo_correct,
-                "ap_correct": ap_correct
-            })
+            disagreements.append(
+                {
+                    "game_id": game.id,
+                    "week": week,
+                    "matchup": f"{away_team.name} @ {home_team.name}",
+                    "elo_predicted": elo_predicted_team.name if elo_predicted_team else "Unknown",
+                    "ap_predicted": ap_predicted_team.name if ap_predicted_team else "Unknown",
+                    "actual_winner": (
+                        home_team.name if actual_winner_id == game.home_team_id else away_team.name
+                    ),
+                    "elo_correct": elo_correct,
+                    "ap_correct": ap_correct,
+                }
+            )
 
     # Calculate accuracies
     elo_accuracy = elo_correct_count / total_games_compared if total_games_compared > 0 else 0.0
@@ -240,18 +249,22 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
     for week_num in sorted(by_week_stats.keys()):
         stats = by_week_stats[week_num]
         games_count = stats["games"]
-        by_week.append({
-            "week": week_num,
-            "elo_accuracy": stats["elo_correct"] / games_count if games_count > 0 else 0.0,
-            "ap_accuracy": stats["ap_correct"] / games_count if games_count > 0 else 0.0,
-            "games": games_count
-        })
+        by_week.append(
+            {
+                "week": week_num,
+                "elo_accuracy": stats["elo_correct"] / games_count if games_count > 0 else 0.0,
+                "ap_accuracy": stats["ap_correct"] / games_count if games_count > 0 else 0.0,
+                "games": games_count,
+            }
+        )
 
     # Calculate OVERALL ELO accuracy (all predictions, not just compared ones)
-    all_predictions = db.query(Prediction).join(Game).filter(
-        Game.season == season,
-        Prediction.was_correct.isnot(None)
-    ).all()
+    all_predictions = (
+        db.query(Prediction)
+        .join(Game)
+        .filter(Game.season == season, Prediction.was_correct.isnot(None))
+        .all()
+    )
 
     overall_elo_total = len(all_predictions)
     overall_elo_correct = sum(1 for p in all_predictions if p.was_correct)
@@ -274,5 +287,5 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
         # New fields for overall ELO accuracy
         "overall_elo_accuracy": round(overall_elo_accuracy, 4),
         "overall_elo_total": overall_elo_total,
-        "overall_elo_correct": overall_elo_correct
+        "overall_elo_correct": overall_elo_correct,
     }

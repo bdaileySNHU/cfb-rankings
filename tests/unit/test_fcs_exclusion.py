@@ -36,7 +36,7 @@ class TestExcludedGameRankingProtection:
             home_score=70,
             away_score=0,
             excluded_from_rankings=True,
-            is_processed=False
+            is_processed=False,
         )
 
         ranking_service = RankingService(test_db)
@@ -63,7 +63,7 @@ class TestExcludedGameRankingProtection:
             home_score=70,
             away_score=0,
             excluded_from_rankings=True,
-            is_processed=False
+            is_processed=False,
         )
 
         # Attempt to process (should raise error)
@@ -95,7 +95,7 @@ class TestExcludedGameRankingProtection:
             home_score=70,
             away_score=0,
             excluded_from_rankings=True,
-            is_processed=False
+            is_processed=False,
         )
 
         # Attempt to process
@@ -137,7 +137,7 @@ class TestSOSCalculationWithExcludedGames:
             away_score=27,
             excluded_from_rankings=False,
             is_processed=True,
-            season=2025
+            season=2025,
         )
         game2 = GameFactory(
             home_team=team_a,
@@ -146,7 +146,7 @@ class TestSOSCalculationWithExcludedGames:
             away_score=28,
             excluded_from_rankings=False,
             is_processed=True,
-            season=2025
+            season=2025,
         )
 
         # FCS game (excluded from rankings)
@@ -157,7 +157,7 @@ class TestSOSCalculationWithExcludedGames:
             away_score=0,
             excluded_from_rankings=True,
             is_processed=False,  # Not processed
-            season=2025
+            season=2025,
         )
 
         # Act
@@ -184,14 +184,14 @@ class TestSOSCalculationWithExcludedGames:
             away_team=fcs_opp_1,
             excluded_from_rankings=True,
             is_processed=False,
-            season=2025
+            season=2025,
         )
         GameFactory(
             home_team=team,
             away_team=fcs_opp_2,
             excluded_from_rankings=True,
             is_processed=False,
-            season=2025
+            season=2025,
         )
 
         # Act
@@ -223,7 +223,7 @@ class TestSOSCalculationWithExcludedGames:
                 away_team=opp,
                 excluded_from_rankings=False,
                 is_processed=True,
-                season=2025
+                season=2025,
             )
 
         for opp in [fcs_1, fcs_2]:
@@ -232,7 +232,7 @@ class TestSOSCalculationWithExcludedGames:
                 away_team=opp,
                 excluded_from_rankings=True,
                 is_processed=False,
-                season=2025
+                season=2025,
             )
 
         # Act
@@ -261,7 +261,7 @@ class TestRegressionExistingGames:
             home_score=28,
             away_score=24,
             excluded_from_rankings=False,
-            is_processed=False
+            is_processed=False,
         )
 
         ranking_service = RankingService(test_db)
@@ -271,7 +271,7 @@ class TestRegressionExistingGames:
 
         # Assert
         assert result is not None
-        assert 'game_id' in result
+        assert "game_id" in result
         assert game.is_processed is True
 
         # Ratings should have changed
@@ -302,7 +302,7 @@ class TestRegressionExistingGames:
                 away_team=opp,
                 excluded_from_rankings=False,
                 is_processed=True,
-                season=2025
+                season=2025,
             )
 
         # Act

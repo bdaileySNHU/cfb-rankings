@@ -20,26 +20,24 @@ def check_column():
 
     db = SessionLocal()
 
-    print("="*80)
+    print("=" * 80)
     print("CHECK POSTSEASON_NAME COLUMN")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Get table info
     result = db.execute(text("PRAGMA table_info(games)"))
     columns = {row[1]: row[2] for row in result.fetchall()}  # name: type
 
-    if 'postseason_name' in columns:
+    if "postseason_name" in columns:
         print(f"✓ postseason_name column exists")
         print(f"  Type: {columns['postseason_name']}")
         print()
 
         # Check if any games have postseason names
-        result = db.execute(text(
-            "SELECT COUNT(*) as total, "
-            "COUNT(postseason_name) as with_names "
-            "FROM games"
-        ))
+        result = db.execute(
+            text("SELECT COUNT(*) as total, " "COUNT(postseason_name) as with_names " "FROM games")
+        )
         row = result.fetchone()
 
         print(f"Games in database:")

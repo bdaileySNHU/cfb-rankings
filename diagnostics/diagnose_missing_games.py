@@ -1,6 +1,7 @@
 """
 Diagnose missing games for specific teams
 """
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,7 +13,7 @@ from src.integrations.cfbd_client import CFBDClient
 
 def check_team_games(team_name: str, year: int = 2025, max_week: int = 6):
     """Check what games are available for a specific team"""
-    api_key = os.getenv('CFBD_API_KEY')
+    api_key = os.getenv("CFBD_API_KEY")
     if not api_key:
         print("ERROR: No CFBD_API_KEY found in environment")
         return
@@ -32,15 +33,14 @@ def check_team_games(team_name: str, year: int = 2025, max_week: int = 6):
 
         # Find games involving this team
         team_games = [
-            g for g in games
-            if g.get('homeTeam') == team_name or g.get('awayTeam') == team_name
+            g for g in games if g.get("homeTeam") == team_name or g.get("awayTeam") == team_name
         ]
 
         for game in team_games:
-            home = game.get('homeTeam')
-            away = game.get('awayTeam')
-            home_score = game.get('homePoints')
-            away_score = game.get('awayPoints')
+            home = game.get("homeTeam")
+            away = game.get("awayTeam")
+            home_score = game.get("homePoints")
+            away_score = game.get("awayPoints")
 
             opponent = away if home == team_name else home
             location = "vs" if home == team_name else "@"
@@ -50,13 +50,15 @@ def check_team_games(team_name: str, year: int = 2025, max_week: int = 6):
             else:
                 status = f"FINAL: {home} {home_score}, {away} {away_score}"
 
-            all_team_games.append({
-                'week': week,
-                'opponent': opponent,
-                'location': location,
-                'status': status,
-                'completed': home_score is not None and away_score is not None
-            })
+            all_team_games.append(
+                {
+                    "week": week,
+                    "opponent": opponent,
+                    "location": location,
+                    "status": status,
+                    "completed": home_score is not None and away_score is not None,
+                }
+            )
 
             print(f"Week {week}: {location} {opponent}")
             print(f"  Status: {status}")
@@ -77,13 +79,7 @@ def check_team_games(team_name: str, year: int = 2025, max_week: int = 6):
 
 if __name__ == "__main__":
     # Check teams that are missing games
-    teams_to_check = [
-        'Ohio State',
-        'Georgia',
-        'Alabama',
-        'Oregon',
-        'Texas'
-    ]
+    teams_to_check = ["Ohio State", "Georgia", "Alabama", "Oregon", "Texas"]
 
     for team in teams_to_check:
         check_team_games(team, year=2025, max_week=6)

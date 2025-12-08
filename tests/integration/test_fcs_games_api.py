@@ -28,16 +28,8 @@ class TestFCSGameImport:
         """Test that FCS games are created with excluded_from_rankings=True"""
         configure_factories(test_db)
 
-        fbs_team = TeamFactory(
-            name="Alabama",
-            conference=ConferenceType.POWER_5,
-            is_fcs=False
-        )
-        fcs_team = TeamFactory(
-            name="UT Martin",
-            conference=ConferenceType.FCS,
-            is_fcs=True
-        )
+        fbs_team = TeamFactory(name="Alabama", conference=ConferenceType.POWER_5, is_fcs=False)
+        fcs_team = TeamFactory(name="UT Martin", conference=ConferenceType.FCS, is_fcs=True)
 
         # Create FCS game
         game = GameFactory(
@@ -48,7 +40,7 @@ class TestFCSGameImport:
             week=2,
             season=2025,
             excluded_from_rankings=True,
-            is_processed=False
+            is_processed=False,
         )
 
         # Verify game was created correctly
@@ -69,7 +61,7 @@ class TestFCSGameImport:
             home_score=70,
             away_score=7,
             excluded_from_rankings=True,
-            is_processed=False
+            is_processed=False,
         )
 
         # Attempt to process
@@ -105,7 +97,7 @@ class TestTeamScheduleAPIWithFCS:
             transfer_rank=10,
             returning_production=0.75,
             wins=0,
-            losses=0
+            losses=0,
         )
         test_db.add(fbs_team)
 
@@ -119,7 +111,7 @@ class TestTeamScheduleAPIWithFCS:
             transfer_rank=999,
             returning_production=0.5,
             wins=0,
-            losses=0
+            losses=0,
         )
         test_db.add(fcs_opponent)
 
@@ -133,7 +125,7 @@ class TestTeamScheduleAPIWithFCS:
             transfer_rank=15,
             returning_production=0.65,
             wins=0,
-            losses=0
+            losses=0,
         )
         test_db.add(fbs_opponent)
         test_db.commit()
@@ -151,7 +143,7 @@ class TestTeamScheduleAPIWithFCS:
             season=2025,
             is_neutral_site=False,
             excluded_from_rankings=True,
-            is_processed=False
+            is_processed=False,
         )
         test_db.add(fcs_game)
 
@@ -165,7 +157,7 @@ class TestTeamScheduleAPIWithFCS:
             season=2025,
             is_neutral_site=False,
             excluded_from_rankings=False,
-            is_processed=True
+            is_processed=True,
         )
         test_db.add(fbs_game)
         test_db.commit()
@@ -211,7 +203,7 @@ class TestTeamScheduleAPIWithFCS:
             transfer_rank=20,
             returning_production=0.7,
             wins=0,
-            losses=0
+            losses=0,
         )
         test_db.add(team)
         test_db.commit()
@@ -229,7 +221,7 @@ class TestTeamScheduleAPIWithFCS:
                 transfer_rank=50,
                 returning_production=0.5,
                 wins=0,
-                losses=0
+                losses=0,
             )
             test_db.add(opponent)
             test_db.commit()
@@ -244,7 +236,7 @@ class TestTeamScheduleAPIWithFCS:
                 season=2025,
                 is_neutral_site=False,
                 excluded_from_rankings=(week == 2),
-                is_processed=False
+                is_processed=False,
             )
             test_db.add(game)
         test_db.commit()
@@ -259,7 +251,9 @@ class TestTeamScheduleAPIWithFCS:
         weeks = [game["week"] for game in data["games"]]
         assert weeks == [1, 2, 3, 4, 5], "Games should be ordered by week"
 
-    def test_schedule_distinguishes_fbs_and_fcs_opponents(self, test_client: TestClient, test_db: Session):
+    def test_schedule_distinguishes_fbs_and_fcs_opponents(
+        self, test_client: TestClient, test_db: Session
+    ):
         """Test that schedule clearly distinguishes FBS and FCS opponents"""
         # Create main team
         team = Team(
@@ -272,7 +266,7 @@ class TestTeamScheduleAPIWithFCS:
             transfer_rank=12,
             returning_production=0.72,
             wins=0,
-            losses=0
+            losses=0,
         )
         test_db.add(team)
         test_db.commit()
@@ -290,7 +284,7 @@ class TestTeamScheduleAPIWithFCS:
                 transfer_rank=999,
                 returning_production=0.5,
                 wins=0,
-                losses=0
+                losses=0,
             )
             test_db.add(fcs_opp)
             test_db.commit()
@@ -301,11 +295,11 @@ class TestTeamScheduleAPIWithFCS:
                 away_team_id=fcs_opp.id,
                 home_score=52,
                 away_score=10,
-                week=i+1,
+                week=i + 1,
                 season=2025,
                 is_neutral_site=False,
                 excluded_from_rankings=True,
-                is_processed=False
+                is_processed=False,
             )
             test_db.add(game)
 
@@ -321,7 +315,7 @@ class TestTeamScheduleAPIWithFCS:
                 transfer_rank=25,
                 returning_production=0.6,
                 wins=0,
-                losses=0
+                losses=0,
             )
             test_db.add(fbs_opp)
             test_db.commit()
@@ -332,11 +326,11 @@ class TestTeamScheduleAPIWithFCS:
                 away_team_id=fbs_opp.id,
                 home_score=31,
                 away_score=24,
-                week=i+3,
+                week=i + 3,
                 season=2025,
                 is_neutral_site=False,
                 excluded_from_rankings=False,
-                is_processed=False
+                is_processed=False,
             )
             test_db.add(game)
 
@@ -379,7 +373,7 @@ class TestFCSGameRecordExclusion:
             conference=ConferenceType.POWER_5,
             elo_rating=1700.0,
             wins=0,
-            losses=0
+            losses=0,
         )
 
         # FCS opponent (game excluded)
@@ -389,7 +383,7 @@ class TestFCSGameRecordExclusion:
             is_fcs=True,
             elo_rating=1200.0,
             wins=0,
-            losses=0
+            losses=0,
         )
 
         # FBS opponent (game included)
@@ -399,7 +393,7 @@ class TestFCSGameRecordExclusion:
             is_fcs=False,
             elo_rating=1650.0,
             wins=0,
-            losses=0
+            losses=0,
         )
 
         # Create FCS game (should NOT be processed)
@@ -411,7 +405,7 @@ class TestFCSGameRecordExclusion:
             week=1,
             season=2025,
             excluded_from_rankings=True,
-            is_processed=False
+            is_processed=False,
         )
 
         # Create FBS game (should be processed)
@@ -423,7 +417,7 @@ class TestFCSGameRecordExclusion:
             week=2,
             season=2025,
             excluded_from_rankings=False,
-            is_processed=False
+            is_processed=False,
         )
 
         # Process only the FBS game
@@ -448,30 +442,23 @@ class TestFCSGameRecordExclusion:
 
         # Team with mixed schedule
         team = TeamFactory(
-            name="Alabama",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1750.0,
-            wins=0,
-            losses=0
+            name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1750.0, wins=0, losses=0
         )
 
         # Create 2 FCS games
         for i in range(2):
             fcs_opp = TeamFactory(
-                name=f"FCS {i+1}",
-                conference=ConferenceType.FCS,
-                is_fcs=True,
-                elo_rating=1200.0
+                name=f"FCS {i+1}", conference=ConferenceType.FCS, is_fcs=True, elo_rating=1200.0
             )
             GameFactory(
                 home_team=team,
                 away_team=fcs_opp,
                 home_score=50,
                 away_score=7,
-                week=i+1,
+                week=i + 1,
                 season=2025,
                 excluded_from_rankings=True,
-                is_processed=False
+                is_processed=False,
             )
 
         # Create 3 FBS games and process them
@@ -484,7 +471,7 @@ class TestFCSGameRecordExclusion:
                 conference=ConferenceType.POWER_5,
                 elo_rating=initial_rating,
                 wins=0,
-                losses=0
+                losses=0,
             )
             fbs_opponents.append(fbs_opp)
             fbs_initial_ratings.append(initial_rating)
@@ -494,10 +481,10 @@ class TestFCSGameRecordExclusion:
                 away_team=fbs_opp,
                 home_score=35,
                 away_score=21,
-                week=i+3,
+                week=i + 3,
                 season=2025,
                 excluded_from_rankings=False,
-                is_processed=False
+                is_processed=False,
             )
 
             # Process FBS game

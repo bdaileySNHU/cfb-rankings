@@ -19,16 +19,18 @@ def check_playoff_games(season=2024):
 
     db = SessionLocal()
 
-    print("="*80)
+    print("=" * 80)
     print(f"CFP PLAYOFF GAMES - {season}")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Get all playoff games
-    playoff_games = db.query(Game).filter(
-        Game.season == season,
-        Game.game_type == 'playoff'
-    ).order_by(Game.week, Game.postseason_name).all()
+    playoff_games = (
+        db.query(Game)
+        .filter(Game.season == season, Game.game_type == "playoff")
+        .order_by(Game.week, Game.postseason_name)
+        .all()
+    )
 
     print(f"Total playoff games: {len(playoff_games)}")
     print()
@@ -40,7 +42,7 @@ def check_playoff_games(season=2024):
 
     # Display each playoff game
     print(f"{'Week':<6} {'Round':<45} {'Matchup':<50} {'Score':<12} {'Processed':<10}")
-    print("-"*125)
+    print("-" * 125)
 
     for game in playoff_games:
         matchup = f"{game.away_team.name} vs {game.home_team.name}"
@@ -84,7 +86,9 @@ def check_playoff_games(season=2024):
     playoff_rounds = {}
     for g in playoff_games:
         if g.postseason_name:
-            round_type = g.postseason_name.split(' - ')[0]  # e.g., "CFP Semifinal" from "CFP Semifinal - Orange Bowl"
+            round_type = g.postseason_name.split(" - ")[
+                0
+            ]  # e.g., "CFP Semifinal" from "CFP Semifinal - Orange Bowl"
             playoff_rounds[round_type] = playoff_rounds.get(round_type, 0) + 1
 
     print(f"Games by Round:")
@@ -99,6 +103,7 @@ def check_playoff_games(season=2024):
 
 if __name__ == "__main__":
     import sys
+
     season = 2024
     if len(sys.argv) > 1:
         season = int(sys.argv[1])

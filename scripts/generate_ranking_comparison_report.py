@@ -40,7 +40,7 @@ class RankingComparisonReport:
     def capture_current_rankings(self, season: int) -> List[Tuple[int, str, float]]:
         """Capture current rankings for a season"""
         teams = self.db.query(Team).order_by(Team.elo_rating.desc()).all()
-        return [(i+1, team.name, team.elo_rating) for i, team in enumerate(teams)]
+        return [(i + 1, team.name, team.elo_rating) for i, team in enumerate(teams)]
 
     def recalculate_rankings_from_scratch(self, season: int):
         """Recalculate all rankings for a season"""
@@ -52,10 +52,12 @@ class RankingComparisonReport:
             self.ranking_service.initialize_team_rating(team)
 
         # Process all games in order
-        games = (self.db.query(Game)
-                 .filter(Game.season == season)
-                 .order_by(Game.week, Game.game_date)
-                 .all())
+        games = (
+            self.db.query(Game)
+            .filter(Game.season == season)
+            .order_by(Game.week, Game.game_date)
+            .all()
+        )
 
         for game in games:
             if not game.excluded_from_rankings:
@@ -65,21 +67,25 @@ class RankingComparisonReport:
         self.db.commit()
         logger.info(f"Recalculation complete: {len(games)} games processed")
 
-    def generate_comparison_report(self,
-                                   before: List[Tuple[int, str, float]],
-                                   after: List[Tuple[int, str, float]],
-                                   output_file: str):
+    def generate_comparison_report(
+        self,
+        before: List[Tuple[int, str, float]],
+        after: List[Tuple[int, str, float]],
+        output_file: str,
+    ):
         """Generate markdown comparison report"""
         # Create rank change dict
         before_ranks = {name: rank for rank, name, _ in before}
         after_ranks = {name: rank for rank, name, _ in after}
 
         # Generate report
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             f.write(f"# Quarter-Weighted ELO Ranking Comparison Report\n\n")
             f.write(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
             f.write(f"## Summary\n\n")
-            f.write(f"This report compares rankings before and after implementing quarter-weighted ELO with garbage time adjustment.\n\n")
+            f.write(
+                f"This report compares rankings before and after implementing quarter-weighted ELO with garbage time adjustment.\n\n"
+            )
 
             # Top 25 comparison
             f.write(f"## Top 25 Ranking Changes\n\n")
@@ -87,8 +93,8 @@ class RankingComparisonReport:
             f.write("|--------------|------|---------------|--------|----------------|\n")
 
             for rank, team, rating in after[:25]:
-                before_rank = before_ranks.get(team, 'NR')
-                if before_rank != 'NR':
+                before_rank = before_ranks.get(team, "NR")
+                if before_rank != "NR":
                     change = before_rank - rank
                     change_str = f"+{change}" if change > 0 else str(change)
                 else:
@@ -120,8 +126,12 @@ class RankingComparisonReport:
             # Analysis section
             f.write(f"\n## Analysis\n\n")
             f.write("### Algorithm Impact\n\n")
-            f.write(f"- Teams that benefited most (moved up): Likely teams with competitive games\n")
-            f.write(f"- Teams that dropped (moved down): Likely teams with garbage time inflation\n")
+            f.write(
+                f"- Teams that benefited most (moved up): Likely teams with competitive games\n"
+            )
+            f.write(
+                f"- Teams that dropped (moved down): Likely teams with garbage time inflation\n"
+            )
             f.write(f"- Minimal movement: Teams with close games throughout\n\n")
 
             # Garbage time examples
@@ -129,11 +139,7 @@ class RankingComparisonReport:
             f.write("Games where 4th quarter received reduced weight:\n\n")
 
             # Query games with large Q3 differential
-            games_with_garbage_time = (
-                self.db.query(Game)
-                .filter(Game.q1_home.isnot(None))
-                .all()
-            )
+            games_with_garbage_time = self.db.query(Game).filter(Game.q1_home.isnot(None)).all()
 
             garbage_time_games = []
             for game in games_with_garbage_time:
@@ -142,12 +148,14 @@ class RankingComparisonReport:
                 diff = abs(q3_home - q3_away)
 
                 if diff > 21:  # Garbage time threshold
-                    garbage_time_games.append((
-                        game.home_team.name,
-                        game.away_team.name,
-                        f"{game.home_score}-{game.away_score}",
-                        diff
-                    ))
+                    garbage_time_games.append(
+                        (
+                            game.home_team.name,
+                            game.away_team.name,
+                            f"{game.home_score}-{game.away_score}",
+                            diff,
+                        )
+                    )
 
             if garbage_time_games:
                 f.write("| Home Team | Away Team | Final Score | Diff after Q3 |\n")
@@ -163,9 +171,9 @@ class RankingComparisonReport:
 
 def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(description='Generate ranking comparison report')
-    parser.add_argument('--season', type=int, required=True, help='Season year')
-    parser.add_argument('--output', type=str, default='ranking_comparison.md', help='Output file')
+    parser = argparse.ArgumentParser(description="Generate ranking comparison report")
+    parser.add_argument("--season", type=int, required=True, help="Season year")
+    parser.add_argument("--output", type=str, default="ranking_comparison.md", help="Output file")
 
     args = parser.parse_args()
 
@@ -196,5 +204,5 @@ def main():
         db.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

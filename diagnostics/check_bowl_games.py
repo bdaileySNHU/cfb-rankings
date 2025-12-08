@@ -19,16 +19,18 @@ def check_bowl_games(season=2024):
 
     db = SessionLocal()
 
-    print("="*80)
+    print("=" * 80)
     print(f"BOWL GAMES - {season}")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Get all bowl games
-    bowl_games = db.query(Game).filter(
-        Game.season == season,
-        Game.game_type == 'bowl'
-    ).order_by(Game.week, Game.postseason_name).all()
+    bowl_games = (
+        db.query(Game)
+        .filter(Game.season == season, Game.game_type == "bowl")
+        .order_by(Game.week, Game.postseason_name)
+        .all()
+    )
 
     print(f"Total bowl games: {len(bowl_games)}")
     print()
@@ -40,7 +42,7 @@ def check_bowl_games(season=2024):
 
     # Display each bowl game
     print(f"{'Week':<6} {'Bowl Name':<40} {'Matchup':<50} {'Score':<12} {'Processed':<10}")
-    print("-"*120)
+    print("-" * 120)
 
     for game in bowl_games:
         matchup = f"{game.away_team.name} @ {game.home_team.name}"
@@ -87,6 +89,7 @@ def check_bowl_games(season=2024):
 
 if __name__ == "__main__":
     import sys
+
     season = 2024
     if len(sys.argv) > 1:
         season = int(sys.argv[1])

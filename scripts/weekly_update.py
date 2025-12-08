@@ -33,8 +33,8 @@ from src.integrations.cfbd_client import CFBDClient, get_monthly_usage
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format="[%(asctime)s] %(levelname)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 
@@ -82,10 +82,10 @@ def check_api_usage(db: "Session" = None) -> bool:
     """
     try:
         usage = get_monthly_usage(db=db)
-        percentage = usage['percentage_used']
-        remaining = usage['remaining_calls']
-        total = usage['total_calls']
-        limit = usage['monthly_limit']
+        percentage = usage["percentage_used"]
+        remaining = usage["remaining_calls"]
+        total = usage["total_calls"]
+        limit = usage["monthly_limit"]
 
         if percentage >= 90:
             logger.critical(
@@ -183,17 +183,11 @@ def validate_week_number(week: int, season_year: int) -> bool:
 
     # Range check
     if week < MIN_WEEK:
-        logger.error(
-            f"Week {week} is below minimum {MIN_WEEK} "
-            f"for season {season_year}"
-        )
+        logger.error(f"Week {week} is below minimum {MIN_WEEK} " f"for season {season_year}")
         return False
 
     if week > MAX_WEEK:
-        logger.error(
-            f"Week {week} exceeds maximum {MAX_WEEK} "
-            f"for season {season_year}"
-        )
+        logger.error(f"Week {week} exceeds maximum {MAX_WEEK} " f"for season {season_year}")
         return False
 
     logger.debug(f"Week {week} validated successfully for season {season_year}")
@@ -232,6 +226,7 @@ def update_current_week(season_year: int, db: "Session" = None) -> int:
         if not db_provided:
             from sqlalchemy import create_engine
             from sqlalchemy.orm import sessionmaker
+
             db_path = project_root / "cfb_rankings.db"
             engine = create_engine(f"sqlite:///{db_path}")
             SessionLocal = sessionmaker(bind=engine)
@@ -239,10 +234,11 @@ def update_current_week(season_year: int, db: "Session" = None) -> int:
 
         try:
             # Get max week from processed games this season
-            max_week = db.query(func.max(Game.week)).filter(
-                Game.season == season_year,
-                Game.is_processed == True
-            ).scalar()
+            max_week = (
+                db.query(func.max(Game.week))
+                .filter(Game.season == season_year, Game.is_processed == True)
+                .scalar()
+            )
 
             # Default to 0 if no games processed
             max_week = max_week or 0
@@ -267,8 +263,7 @@ def update_current_week(season_year: int, db: "Session" = None) -> int:
                 season.current_week = max_week
                 db.commit()
                 logger.info(
-                    f"✓ Updated current week: {old_week} → {max_week} "
-                    f"for season {season_year}"
+                    f"✓ Updated current week: {old_week} → {max_week} " f"for season {season_year}"
                 )
             else:
                 logger.debug(f"Current week already {max_week}, no update needed")
@@ -322,7 +317,7 @@ def run_import_script() -> int:
             text=True,
             capture_output=True,
             timeout=1800,  # 30 minute timeout
-            cwd=str(project_root)
+            cwd=str(project_root),
         )
 
         end_time = datetime.now()
@@ -349,8 +344,7 @@ def run_import_script() -> int:
     except Exception as e:
         duration = (datetime.now() - start_time).total_seconds()
         logger.error(
-            f"Unexpected error during data import after {duration:.1f} seconds: {e}",
-            exc_info=True
+            f"Unexpected error during data import after {duration:.1f} seconds: {e}", exc_info=True
         )
         return 1
 

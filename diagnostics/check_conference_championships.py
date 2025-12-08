@@ -21,16 +21,18 @@ def check_conference_championships(season=2025):
 
     db = SessionLocal()
 
-    print("="*80)
+    print("=" * 80)
     print(f"CONFERENCE CHAMPIONSHIP GAMES - {season}")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Get all conference championship games
-    conf_champ_games = db.query(Game).filter(
-        Game.season == season,
-        Game.game_type == 'conference_championship'
-    ).order_by(Game.week).all()
+    conf_champ_games = (
+        db.query(Game)
+        .filter(Game.season == season, Game.game_type == "conference_championship")
+        .order_by(Game.week)
+        .all()
+    )
 
     print(f"Total conference championship games: {len(conf_champ_games)}")
     print()
@@ -43,7 +45,7 @@ def check_conference_championships(season=2025):
 
     # Display each game
     print(f"{'Week':<6} {'Game ID':<8} {'Matchup':<50} {'Score':<12} {'Processed':<10}")
-    print("-"*100)
+    print("-" * 100)
 
     for game in conf_champ_games:
         matchup = f"{game.away_team.name} @ {game.home_team.name}"
@@ -76,10 +78,12 @@ def check_conference_championships(season=2025):
     teams_in_champs = set()
     for game in conf_champ_games:
         if game.is_processed:
-            teams_in_champs.add((game.home_team.name, game.home_team.id,
-                               game.home_score > game.away_score))
-            teams_in_champs.add((game.away_team.name, game.away_team.id,
-                               game.away_score > game.home_score))
+            teams_in_champs.add(
+                (game.home_team.name, game.home_team.id, game.home_score > game.away_score)
+            )
+            teams_in_champs.add(
+                (game.away_team.name, game.away_team.id, game.away_score > game.home_score)
+            )
 
     for team_name, team_id, won in sorted(teams_in_champs, key=lambda x: x[0]):
         result = "Won" if won else "Lost"

@@ -60,7 +60,7 @@ class TestGetGamesList:
         team2 = TeamFactory()
 
         for i in range(5):
-            GameFactory(home_team=team1, away_team=team2, week=i+1)
+            GameFactory(home_team=team1, away_team=team2, week=i + 1)
         test_db.commit()
 
         # Act
@@ -79,7 +79,7 @@ class TestGetGamesList:
         team2 = TeamFactory()
 
         for i in range(10):
-            GameFactory(home_team=team1, away_team=team2, week=i+1)
+            GameFactory(home_team=team1, away_team=team2, week=i + 1)
         test_db.commit()
 
         # Act
@@ -235,11 +235,7 @@ class TestGetGameDetail:
         home_team = TeamFactory(name="Alabama")
         away_team = TeamFactory(name="Georgia")
         game = GameFactory(
-            home_team=home_team,
-            away_team=away_team,
-            home_score=35,
-            away_score=28,
-            week=5
+            home_team=home_team, away_team=away_team, home_score=35, away_score=28, week=5
         )
         test_db.commit()
 
@@ -260,12 +256,7 @@ class TestGetGameDetail:
         configure_factories(test_db)
         home_team = TeamFactory(name="Alabama")
         away_team = TeamFactory(name="Georgia")
-        game = GameFactory(
-            home_team=home_team,
-            away_team=away_team,
-            home_score=35,
-            away_score=28
-        )
+        game = GameFactory(home_team=home_team, away_team=away_team, home_score=35, away_score=28)
         test_db.commit()
 
         # Act
@@ -283,12 +274,7 @@ class TestGetGameDetail:
         configure_factories(test_db)
         home_team = TeamFactory(name="Alabama")
         away_team = TeamFactory(name="Georgia")
-        game = GameFactory(
-            home_team=home_team,
-            away_team=away_team,
-            home_score=35,
-            away_score=28
-        )
+        game = GameFactory(home_team=home_team, away_team=away_team, home_score=35, away_score=28)
         test_db.commit()
 
         # Act
@@ -306,12 +292,7 @@ class TestGetGameDetail:
         configure_factories(test_db)
         home_team = TeamFactory()
         away_team = TeamFactory()
-        game = GameFactory(
-            home_team=home_team,
-            away_team=away_team,
-            home_score=42,
-            away_score=14
-        )
+        game = GameFactory(home_team=home_team, away_team=away_team, home_score=42, away_score=14)
         test_db.commit()
 
         # Act
@@ -351,7 +332,7 @@ class TestCreateGame:
             "away_score": 28,
             "week": 5,
             "season": 2024,
-            "is_neutral_site": False
+            "is_neutral_site": False,
         }
 
         # Act
@@ -391,7 +372,7 @@ class TestCreateGame:
             "away_score": 28,
             "week": 5,
             "season": 2024,
-            "is_neutral_site": False
+            "is_neutral_site": False,
         }
 
         # Act
@@ -428,7 +409,7 @@ class TestCreateGame:
             "away_score": 28,
             "week": 5,
             "season": 2024,
-            "is_neutral_site": False
+            "is_neutral_site": False,
         }
 
         # Act
@@ -452,7 +433,7 @@ class TestCreateGame:
             "away_score": 28,
             "week": 5,
             "season": 2024,
-            "is_neutral_site": False
+            "is_neutral_site": False,
         }
 
         # Act
@@ -477,7 +458,7 @@ class TestCreateGame:
             "away_score": 28,
             "week": 5,
             "season": 2024,
-            "is_neutral_site": True  # Neutral site
+            "is_neutral_site": True,  # Neutral site
         }
 
         # Act
@@ -509,7 +490,7 @@ class TestCreateGame:
             "away_score": 28,
             "week": 25,  # Invalid - should be 0-20
             "season": 2024,
-            "is_neutral_site": False
+            "is_neutral_site": False,
         }
 
         # Act
@@ -518,7 +499,9 @@ class TestCreateGame:
         # Assert
         assert response.status_code == 422  # Validation error
 
-    def test_create_game_blowout_has_mov_multiplier(self, test_client: TestClient, test_db: Session):
+    def test_create_game_blowout_has_mov_multiplier(
+        self, test_client: TestClient, test_db: Session
+    ):
         """Test that blowout games have appropriate MOV multiplier"""
         # Arrange
         configure_factories(test_db)
@@ -533,7 +516,7 @@ class TestCreateGame:
             "away_score": 14,  # 49 point blowout
             "week": 5,
             "season": 2024,
-            "is_neutral_site": False
+            "is_neutral_site": False,
         }
 
         # Act

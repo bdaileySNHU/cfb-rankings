@@ -70,14 +70,14 @@ class TestWeekDetection:
 
         # Mock the get_games method to return sample games
         mock_games = [
-            {'week': 1, 'home_points': 35, 'away_points': 28},
-            {'week': 2, 'home_points': 21, 'away_points': 24},
-            {'week': 8, 'home_points': 42, 'away_points': 17},
-            {'week': 8, 'home_points': 14, 'away_points': 31},
-            {'week': 9, 'home_points': None, 'away_points': None},  # Future game
+            {"week": 1, "home_points": 35, "away_points": 28},
+            {"week": 2, "home_points": 21, "away_points": 24},
+            {"week": 8, "home_points": 42, "away_points": 17},
+            {"week": 8, "home_points": 14, "away_points": 31},
+            {"week": 9, "home_points": None, "away_points": None},  # Future game
         ]
 
-        with patch.object(client, 'get_games', return_value=mock_games):
+        with patch.object(client, "get_games", return_value=mock_games):
             week = client.get_current_week(2025)
             assert week == 8
 
@@ -85,7 +85,7 @@ class TestWeekDetection:
         """Test week detection when no games played yet (pre-season)"""
         client = CFBDClient()
 
-        with patch.object(client, 'get_games', return_value=[]):
+        with patch.object(client, "get_games", return_value=[]):
             week = client.get_current_week(2025)
             assert week is None
 
@@ -94,12 +94,12 @@ class TestWeekDetection:
         client = CFBDClient()
 
         mock_games = [
-            {'week': 1, 'home_points': None, 'away_points': None},
-            {'week': 2, 'home_points': None, 'away_points': None},
-            {'week': 3, 'home_points': None, 'away_points': None},
+            {"week": 1, "home_points": None, "away_points": None},
+            {"week": 2, "home_points": None, "away_points": None},
+            {"week": 3, "home_points": None, "away_points": None},
         ]
 
-        with patch.object(client, 'get_games', return_value=mock_games):
+        with patch.object(client, "get_games", return_value=mock_games):
             week = client.get_current_week(2025)
             assert week is None
 
@@ -107,7 +107,7 @@ class TestWeekDetection:
         """Test week detection when API call fails"""
         client = CFBDClient()
 
-        with patch.object(client, 'get_games', return_value=None):
+        with patch.object(client, "get_games", return_value=None):
             week = client.get_current_week(2025)
             assert week is None
 
@@ -115,7 +115,7 @@ class TestWeekDetection:
         """Test week detection when API raises exception"""
         client = CFBDClient()
 
-        with patch.object(client, 'get_games', side_effect=Exception("API Error")):
+        with patch.object(client, "get_games", side_effect=Exception("API Error")):
             week = client.get_current_week(2025)
             assert week is None
 
@@ -124,11 +124,11 @@ class TestWeekDetection:
         client = CFBDClient()
 
         mock_games = [
-            {'week': 1, 'home_points': 28, 'away_points': 14},
-            {'week': 1, 'home_points': 35, 'away_points': 21},
+            {"week": 1, "home_points": 28, "away_points": 14},
+            {"week": 1, "home_points": 35, "away_points": 21},
         ]
 
-        with patch.object(client, 'get_games', return_value=mock_games):
+        with patch.object(client, "get_games", return_value=mock_games):
             week = client.get_current_week(2025)
             assert week == 1
 
@@ -137,12 +137,12 @@ class TestWeekDetection:
         client = CFBDClient()
 
         mock_games = [
-            {'week': 5, 'home_points': 28, 'away_points': 14},
-            {'home_points': 35, 'away_points': 21},  # Missing week
-            {'week': 3, 'home_points': 42, 'away_points': 7},
+            {"week": 5, "home_points": 28, "away_points": 14},
+            {"home_points": 35, "away_points": 21},  # Missing week
+            {"week": 3, "home_points": 42, "away_points": 7},
         ]
 
-        with patch.object(client, 'get_games', return_value=mock_games):
+        with patch.object(client, "get_games", return_value=mock_games):
             week = client.get_current_week(2025)
             assert week == 5
 
@@ -284,12 +284,12 @@ class TestEdgeCases:
         client = CFBDClient()
 
         mock_games = [
-            {'week': 5, 'home_points': 28, 'away_points': 14},  # Completed game
-            {'week': 6, 'home_points': 0, 'away_points': 0},     # Future game (0-0 placeholder)
-            {'week': 7, 'home_points': None, 'away_points': None},  # Future game (None)
+            {"week": 5, "home_points": 28, "away_points": 14},  # Completed game
+            {"week": 6, "home_points": 0, "away_points": 0},  # Future game (0-0 placeholder)
+            {"week": 7, "home_points": None, "away_points": None},  # Future game (None)
         ]
 
-        with patch.object(client, 'get_games', return_value=mock_games):
+        with patch.object(client, "get_games", return_value=mock_games):
             week = client.get_current_week(2025)
             # Should return week 5, not week 6 (0-0 games are future games)
             # College football games cannot end 0-0 due to overtime rules
@@ -301,22 +301,22 @@ class TestEdgeCases:
 
         mock_games = [
             # Weeks 1-9 have completed games
-            {'week': 1, 'home_points': 35, 'away_points': 28},
-            {'week': 2, 'home_points': 21, 'away_points': 14},
-            {'week': 3, 'home_points': 28, 'away_points': 24},
-            {'week': 4, 'home_points': 42, 'away_points': 17},
-            {'week': 5, 'home_points': 31, 'away_points': 28},
-            {'week': 6, 'home_points': 24, 'away_points': 21},
-            {'week': 7, 'home_points': 35, 'away_points': 14},
-            {'week': 8, 'home_points': 28, 'away_points': 27},
-            {'week': 9, 'home_points': 42, 'away_points': 38},
+            {"week": 1, "home_points": 35, "away_points": 28},
+            {"week": 2, "home_points": 21, "away_points": 14},
+            {"week": 3, "home_points": 28, "away_points": 24},
+            {"week": 4, "home_points": 42, "away_points": 17},
+            {"week": 5, "home_points": 31, "away_points": 28},
+            {"week": 6, "home_points": 24, "away_points": 21},
+            {"week": 7, "home_points": 35, "away_points": 14},
+            {"week": 8, "home_points": 28, "away_points": 27},
+            {"week": 9, "home_points": 42, "away_points": 38},
             # Week 10 has future games with 0-0 placeholder scores
-            {'week': 10, 'home_points': 0, 'away_points': 0},
-            {'week': 10, 'home_points': 0, 'away_points': 0},
-            {'week': 10, 'home_points': 0, 'away_points': 0},
+            {"week": 10, "home_points": 0, "away_points": 0},
+            {"week": 10, "home_points": 0, "away_points": 0},
+            {"week": 10, "home_points": 0, "away_points": 0},
         ]
 
-        with patch.object(client, 'get_games', return_value=mock_games):
+        with patch.object(client, "get_games", return_value=mock_games):
             week = client.get_current_week(2025)
             # Should return week 9 (last completed week), NOT week 10
             assert week == 9
@@ -326,14 +326,14 @@ class TestEdgeCases:
         client = CFBDClient()
 
         mock_games = [
-            {'week': 1, 'home_points': 35, 'away_points': 28},
-            {'week': 3, 'home_points': 21, 'away_points': 24},
-            {'week': 5, 'home_points': None, 'away_points': None},
-            {'week': 2, 'home_points': 42, 'away_points': 17},
-            {'week': 4, 'home_points': None, 'away_points': None},
+            {"week": 1, "home_points": 35, "away_points": 28},
+            {"week": 3, "home_points": 21, "away_points": 24},
+            {"week": 5, "home_points": None, "away_points": None},
+            {"week": 2, "home_points": 42, "away_points": 17},
+            {"week": 4, "home_points": None, "away_points": None},
         ]
 
-        with patch.object(client, 'get_games', return_value=mock_games):
+        with patch.object(client, "get_games", return_value=mock_games):
             week = client.get_current_week(2025)
             # Should find week 3 as the highest completed week
             assert week == 3

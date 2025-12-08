@@ -74,7 +74,7 @@ class TeamFactory(BaseFactory):
             elo_rating=1850.0,
             initial_rating=1800.0,
             wins=10,
-            losses=1
+            losses=1,
         )
 
         # Trait for struggling team
@@ -85,27 +85,19 @@ class TeamFactory(BaseFactory):
             elo_rating=1350.0,
             initial_rating=1400.0,
             wins=2,
-            losses=8
+            losses=8,
         )
 
         # Conference-specific traits
-        p5 = factory.Trait(
-            conference=ConferenceType.POWER_5,
-            recruiting_rank=35,
-            elo_rating=1550.0
-        )
+        p5 = factory.Trait(conference=ConferenceType.POWER_5, recruiting_rank=35, elo_rating=1550.0)
 
-        g5 = factory.Trait(
-            conference=ConferenceType.GROUP_5,
-            recruiting_rank=75,
-            elo_rating=1450.0
-        )
+        g5 = factory.Trait(conference=ConferenceType.GROUP_5, recruiting_rank=75, elo_rating=1450.0)
 
         fcs = factory.Trait(
             conference=ConferenceType.FCS,
             recruiting_rank=999,
             elo_rating=1300.0,
-            initial_rating=1300.0
+            initial_rating=1300.0,
         )
 
 
@@ -136,27 +128,17 @@ class GameFactory(BaseFactory):
 
     class Params:
         # Trait for home blowout
-        home_blowout = factory.Trait(
-            home_score=42,
-            away_score=14
-        )
+        home_blowout = factory.Trait(home_score=42, away_score=14)
 
         # Trait for away upset
-        away_upset = factory.Trait(
-            home_score=17,
-            away_score=24
-        )
+        away_upset = factory.Trait(home_score=17, away_score=24)
 
         # Trait for neutral site
-        neutral = factory.Trait(
-            is_neutral_site=True
-        )
+        neutral = factory.Trait(is_neutral_site=True)
 
         # Trait for processed game
         processed = factory.Trait(
-            is_processed=True,
-            home_rating_change=15.5,
-            away_rating_change=-15.5
+            is_processed=True, home_rating_change=15.5, away_rating_change=-15.5
         )
 
 
@@ -175,16 +157,10 @@ class SeasonFactory(BaseFactory):
 
     class Params:
         # Trait for active mid-season
-        mid_season = factory.Trait(
-            current_week=6,
-            is_active=True
-        )
+        mid_season = factory.Trait(current_week=6, is_active=True)
 
         # Trait for completed season
-        completed = factory.Trait(
-            current_week=15,
-            is_active=False
-        )
+        completed = factory.Trait(current_week=15, is_active=False)
 
 
 class RankingHistoryFactory(BaseFactory):
@@ -216,23 +192,19 @@ class RankingHistoryFactory(BaseFactory):
             wins=10,
             losses=0,
             sos=1750.0,
-            sos_rank=5
+            sos_rank=5,
         )
 
         # Trait for unranked team
         unranked = factory.Trait(
-            rank=75,
-            elo_rating=1400.0,
-            wins=3,
-            losses=7,
-            sos=1500.0,
-            sos_rank=50
+            rank=75, elo_rating=1400.0, wins=3, losses=7, sos=1500.0, sos_rank=50
         )
 
 
 # Convenience factory combinations
 class EliteTeamFactory(TeamFactory):
     """Factory for elite Power 5 team"""
+
     conference = ConferenceType.POWER_5
     recruiting_rank = 5
     transfer_rank = 8
@@ -245,6 +217,7 @@ class EliteTeamFactory(TeamFactory):
 
 class G5ChampionFactory(TeamFactory):
     """Factory for strong Group of 5 team"""
+
     conference = ConferenceType.GROUP_5
     recruiting_rank = 60
     transfer_rank = 40
@@ -257,6 +230,7 @@ class G5ChampionFactory(TeamFactory):
 
 class FCSTeamFactory(TeamFactory):
     """Factory for FCS team"""
+
     conference = ConferenceType.FCS
     recruiting_rank = 999
     transfer_rank = 999
@@ -269,6 +243,7 @@ class FCSTeamFactory(TeamFactory):
 
 class ProcessedGameFactory(GameFactory):
     """Factory for a processed game with rating changes"""
+
     is_processed = True
     home_rating_change = 15.5
     away_rating_change = -15.5
@@ -276,6 +251,7 @@ class ProcessedGameFactory(GameFactory):
 
 class NeutralSiteGameFactory(GameFactory):
     """Factory for neutral site game"""
+
     is_neutral_site = True
 
 
@@ -303,8 +279,15 @@ def configure_factories(db_session):
     BaseFactory._meta.sqlalchemy_session = db_session
 
     # Set session for all factory classes
-    for factory_class in [TeamFactory, GameFactory, SeasonFactory,
-                          RankingHistoryFactory, EliteTeamFactory,
-                          G5ChampionFactory, FCSTeamFactory,
-                          ProcessedGameFactory, NeutralSiteGameFactory]:
+    for factory_class in [
+        TeamFactory,
+        GameFactory,
+        SeasonFactory,
+        RankingHistoryFactory,
+        EliteTeamFactory,
+        G5ChampionFactory,
+        FCSTeamFactory,
+        ProcessedGameFactory,
+        NeutralSiteGameFactory,
+    ]:
         factory_class._meta.sqlalchemy_session = db_session

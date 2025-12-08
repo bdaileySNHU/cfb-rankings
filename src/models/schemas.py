@@ -52,26 +52,39 @@ class TeamBase(BaseModel):
     All fields have validation constraints and descriptions that appear in
     the auto-generated API documentation at /docs.
     """
+
     name: str = Field(..., description="Team name", max_length=100)
     conference: ConferenceType = Field(..., description="Conference type (P5, G5, FCS)")
-    conference_name: Optional[str] = Field(None, description="Actual conference name (Big Ten, SEC, etc.)", max_length=50)
+    conference_name: Optional[str] = Field(
+        None, description="Actual conference name (Big Ten, SEC, etc.)", max_length=50
+    )
     recruiting_rank: Optional[int] = Field(999, description="247Sports recruiting rank", ge=1)
-    transfer_rank: Optional[int] = Field(999, description="DEPRECATED: Use transfer_portal_rank instead", ge=1)
-    returning_production: Optional[float] = Field(0.5, description="Returning production percentage", ge=0.0, le=1.0)
+    transfer_rank: Optional[int] = Field(
+        999, description="DEPRECATED: Use transfer_portal_rank instead", ge=1
+    )
+    returning_production: Optional[float] = Field(
+        0.5, description="Returning production percentage", ge=0.0, le=1.0
+    )
 
     # EPIC-026: Transfer portal metrics (calculated from player transfers)
-    transfer_portal_points: Optional[int] = Field(0, description="Total star points from incoming transfers", ge=0)
-    transfer_portal_rank: Optional[int] = Field(999, description="Transfer portal national rank (1=best, 999=N/A)", ge=1)
+    transfer_portal_points: Optional[int] = Field(
+        0, description="Total star points from incoming transfers", ge=0
+    )
+    transfer_portal_rank: Optional[int] = Field(
+        999, description="Transfer portal national rank (1=best, 999=N/A)", ge=1
+    )
     transfer_count: Optional[int] = Field(0, description="Number of incoming transfers", ge=0)
 
 
 class TeamCreate(TeamBase):
     """Schema for creating a new team"""
+
     pass
 
 
 class TeamUpdate(BaseModel):
     """Schema for updating team information"""
+
     name: Optional[str] = Field(None, max_length=100)
     conference: Optional[ConferenceType] = None
     conference_name: Optional[str] = Field(None, max_length=50)
@@ -87,6 +100,7 @@ class TeamUpdate(BaseModel):
 
 class Team(TeamBase):
     """Schema for team response"""
+
     id: int
     elo_rating: float
     initial_rating: float
@@ -101,6 +115,7 @@ class Team(TeamBase):
 
 class TeamDetail(Team):
     """Detailed team response with additional stats"""
+
     sos: Optional[float] = Field(None, description="Strength of schedule")
     rank: Optional[int] = Field(None, description="Current ranking")
 
@@ -108,6 +123,7 @@ class TeamDetail(Team):
 # Game Schemas
 class GameBase(BaseModel):
     """Base game schema"""
+
     home_team_id: int = Field(..., description="Home team ID")
     away_team_id: int = Field(..., description="Away team ID")
     home_score: int = Field(..., description="Home team score", ge=0)
@@ -120,11 +136,13 @@ class GameBase(BaseModel):
 
 class GameCreate(GameBase):
     """Schema for creating a new game"""
+
     pass
 
 
 class Game(GameBase):
     """Schema for game response"""
+
     id: int
     is_processed: bool
     home_rating_change: float
@@ -137,6 +155,7 @@ class Game(GameBase):
 
 class GameDetail(Game):
     """Detailed game response with team names"""
+
     home_team_name: str
     away_team_name: str
     winner_name: str
@@ -147,6 +166,7 @@ class GameDetail(Game):
 # Ranking Schemas
 class RankingEntry(BaseModel):
     """Single ranking entry"""
+
     rank: int
     team_id: int
     team_name: str
@@ -159,12 +179,15 @@ class RankingEntry(BaseModel):
     sos_rank: Optional[int] = None
 
     # EPIC-026: Transfer portal metrics
-    transfer_portal_rank: Optional[int] = Field(None, description="Transfer portal national rank (1=best, 999=N/A)")
+    transfer_portal_rank: Optional[int] = Field(
+        None, description="Transfer portal national rank (1=best, 999=N/A)"
+    )
     recruiting_rank: Optional[int] = Field(None, description="247Sports recruiting rank")
 
 
 class RankingsResponse(BaseModel):
     """Response for rankings endpoint"""
+
     week: int
     season: int
     rankings: List[RankingEntry]
@@ -173,6 +196,7 @@ class RankingsResponse(BaseModel):
 
 class RankingHistory(BaseModel):
     """Historical ranking for a team"""
+
     week: int
     season: int
     rank: int
@@ -196,6 +220,7 @@ class GameResult(BaseModel):
     Used by POST /api/games to show the immediate impact of processing
     a game through the Modified ELO algorithm.
     """
+
     game_id: int
     winner_name: str
     loser_name: str
@@ -211,6 +236,7 @@ class GameResult(BaseModel):
 # Stats Schemas
 class SystemStats(BaseModel):
     """Overall system statistics"""
+
     total_teams: int
     total_games: int
     total_games_processed: int
@@ -222,6 +248,7 @@ class SystemStats(BaseModel):
 # Schedule Schemas
 class ScheduleGame(BaseModel):
     """Game in a team's schedule"""
+
     game_id: int
     week: int
     opponent_id: int
@@ -231,18 +258,25 @@ class ScheduleGame(BaseModel):
     is_neutral_site: bool = Field(False, description="Is this a neutral site game?")
     score: Optional[str] = None  # "W 35-14" or "L 21-28" or None if not played
     is_played: bool
-    excluded_from_rankings: bool = Field(False, description="Is this game excluded from rankings (e.g., FCS game)?")
+    excluded_from_rankings: bool = Field(
+        False, description="Is this game excluded from rankings (e.g., FCS game)?"
+    )
     is_fcs: bool = Field(False, description="Is the opponent an FCS team?")
 
     # EPIC-022: Game type classification
-    game_type: Optional[str] = Field(None, description="Game type: NULL (regular), 'conference_championship', 'bowl', 'playoff'")
+    game_type: Optional[str] = Field(
+        None, description="Game type: NULL (regular), 'conference_championship', 'bowl', 'playoff'"
+    )
 
     # EPIC-023: Postseason game name
-    postseason_name: Optional[str] = Field(None, description="Bowl name or playoff round (e.g., 'Rose Bowl Game', 'CFP Semifinal')")
+    postseason_name: Optional[str] = Field(
+        None, description="Bowl name or playoff round (e.g., 'Rose Bowl Game', 'CFP Semifinal')"
+    )
 
 
 class TeamSchedule(BaseModel):
     """Team's full schedule"""
+
     team_id: int
     team_name: str
     season: int
@@ -252,6 +286,7 @@ class TeamSchedule(BaseModel):
 # Error Schemas
 class ErrorResponse(BaseModel):
     """Error response schema"""
+
     error: str
     detail: Optional[str] = None
 
@@ -259,6 +294,7 @@ class ErrorResponse(BaseModel):
 # Success Response
 class SuccessResponse(BaseModel):
     """Generic success response"""
+
     message: str
     data: Optional[dict] = None
 
@@ -266,6 +302,7 @@ class SuccessResponse(BaseModel):
 # Season Schemas
 class SeasonResponse(BaseModel):
     """Season response schema"""
+
     id: int
     year: int
     current_week: int
@@ -280,6 +317,7 @@ class SeasonResponse(BaseModel):
 # API Usage Schemas
 class EndpointUsage(BaseModel):
     """Usage stats for a specific endpoint"""
+
     endpoint: str
     count: int
     percentage: Optional[float] = None
@@ -287,6 +325,7 @@ class EndpointUsage(BaseModel):
 
 class APIUsageResponse(BaseModel):
     """Response for API usage endpoint"""
+
     month: str
     total_calls: int
     monthly_limit: int
@@ -302,8 +341,10 @@ class APIUsageResponse(BaseModel):
 # Admin - Manual Update Trigger Schemas
 # ============================================================================
 
+
 class UpdateTriggerResponse(BaseModel):
     """Response from triggering a manual update"""
+
     status: str  # "started", "failed"
     message: str
     task_id: Optional[str] = None
@@ -313,6 +354,7 @@ class UpdateTriggerResponse(BaseModel):
 
 class UpdateTaskResult(BaseModel):
     """Result details from an update task"""
+
     success: bool
     games_imported: Optional[int] = None
     teams_updated: Optional[int] = None
@@ -323,6 +365,7 @@ class UpdateTaskResult(BaseModel):
 
 class UpdateTaskStatus(BaseModel):
     """Status of an update task"""
+
     task_id: str
     status: str  # "started", "running", "completed", "failed"
     trigger_type: str  # "manual", "automated"
@@ -336,14 +379,17 @@ class UpdateTaskStatus(BaseModel):
 # Admin - Usage Dashboard Schemas
 # ============================================================================
 
+
 class DailyUsage(BaseModel):
     """Daily API usage stats"""
+
     date: str
     calls: int
 
 
 class CurrentMonthStats(BaseModel):
     """Extended monthly stats for dashboard"""
+
     month: str
     total_calls: int
     monthly_limit: int
@@ -357,6 +403,7 @@ class CurrentMonthStats(BaseModel):
 
 class UsageDashboardResponse(BaseModel):
     """Comprehensive usage dashboard data"""
+
     current_month: CurrentMonthStats
     top_endpoints: List[EndpointUsage]
     daily_usage: List[DailyUsage]
@@ -367,8 +414,10 @@ class UsageDashboardResponse(BaseModel):
 # Admin - Configuration Schemas
 # ============================================================================
 
+
 class SystemConfig(BaseModel):
     """System configuration values"""
+
     cfbd_monthly_limit: int
     update_schedule: str
     api_usage_warning_thresholds: List[int]
@@ -378,6 +427,7 @@ class SystemConfig(BaseModel):
 
 class ConfigUpdate(BaseModel):
     """Configuration update request"""
+
     cfbd_monthly_limit: Optional[int] = None
 
 
@@ -385,8 +435,10 @@ class ConfigUpdate(BaseModel):
 # Prediction Schemas
 # ============================================================================
 
+
 class GamePrediction(BaseModel):
     """Schema for game prediction response"""
+
     game_id: int
     home_team_id: int
     home_team: str
@@ -414,33 +466,49 @@ class GamePrediction(BaseModel):
 # Prediction Accuracy Schemas (EPIC-009)
 # ============================================================================
 
+
 class PredictionAccuracyStats(BaseModel):
     """Overall prediction accuracy statistics"""
+
     total_predictions: int = Field(..., description="Total predictions made")
-    evaluated_predictions: int = Field(..., description="Predictions that have been evaluated (games completed)")
+    evaluated_predictions: int = Field(
+        ..., description="Predictions that have been evaluated (games completed)"
+    )
     correct_predictions: int = Field(..., description="Number of correct predictions")
     accuracy_percentage: float = Field(..., description="Accuracy percentage (0-100)", ge=0, le=100)
 
     # Breakdown by confidence level
-    high_confidence_accuracy: Optional[float] = Field(None, description="Accuracy for high confidence predictions")
-    medium_confidence_accuracy: Optional[float] = Field(None, description="Accuracy for medium confidence predictions")
-    low_confidence_accuracy: Optional[float] = Field(None, description="Accuracy for low confidence predictions")
+    high_confidence_accuracy: Optional[float] = Field(
+        None, description="Accuracy for high confidence predictions"
+    )
+    medium_confidence_accuracy: Optional[float] = Field(
+        None, description="Accuracy for medium confidence predictions"
+    )
+    low_confidence_accuracy: Optional[float] = Field(
+        None, description="Accuracy for low confidence predictions"
+    )
 
 
 class TeamPredictionAccuracy(BaseModel):
     """Prediction accuracy for a specific team"""
+
     team_id: int
     team_name: str
     total_predictions: int = Field(..., description="Total predictions involving this team")
     evaluated_predictions: int = Field(..., description="Evaluated predictions for this team")
     correct_predictions: int = Field(..., description="Correct predictions for this team")
     accuracy_percentage: float = Field(..., description="Accuracy percentage", ge=0, le=100)
-    as_favorite_accuracy: Optional[float] = Field(None, description="Accuracy when predicted to win")
-    as_underdog_accuracy: Optional[float] = Field(None, description="Accuracy when predicted to lose")
+    as_favorite_accuracy: Optional[float] = Field(
+        None, description="Accuracy when predicted to win"
+    )
+    as_underdog_accuracy: Optional[float] = Field(
+        None, description="Accuracy when predicted to lose"
+    )
 
 
 class StoredPrediction(BaseModel):
     """Schema for a stored prediction with evaluation status"""
+
     id: int
     game_id: int
     predicted_winner_id: int
@@ -467,8 +535,10 @@ class StoredPrediction(BaseModel):
 
 # EPIC-010: AP Poll Comparison Schemas
 
+
 class DisagreementDetail(BaseModel):
     """Schema for games where ELO and AP Poll disagreed"""
+
     game_id: int
     week: int
     matchup: str = Field(..., description="Game matchup (Away @ Home)")
@@ -481,6 +551,7 @@ class DisagreementDetail(BaseModel):
 
 class WeeklyComparisonStats(BaseModel):
     """Schema for weekly comparison statistics"""
+
     week: int
     elo_accuracy: float = Field(..., ge=0, le=1.0)
     ap_accuracy: float = Field(..., ge=0, le=1.0)
@@ -493,20 +564,33 @@ class ComparisonStats(BaseModel):
 
     Part of EPIC-010: AP Poll Prediction Comparison
     """
+
     season: int
-    elo_accuracy: float = Field(..., description="ELO prediction accuracy vs AP Poll (0-1)", ge=0, le=1.0)
+    elo_accuracy: float = Field(
+        ..., description="ELO prediction accuracy vs AP Poll (0-1)", ge=0, le=1.0
+    )
     ap_accuracy: float = Field(..., description="AP Poll prediction accuracy (0-1)", ge=0, le=1.0)
     elo_advantage: float = Field(..., description="ELO advantage over AP (can be negative)")
-    total_games_compared: int = Field(..., description="Total games with both ELO and AP predictions", ge=0)
-    elo_correct: int = Field(..., description="Games ELO predicted correctly (compared subset)", ge=0)
+    total_games_compared: int = Field(
+        ..., description="Total games with both ELO and AP predictions", ge=0
+    )
+    elo_correct: int = Field(
+        ..., description="Games ELO predicted correctly (compared subset)", ge=0
+    )
     ap_correct: int = Field(..., description="Games AP predicted correctly", ge=0)
     both_correct: int = Field(..., description="Games both systems predicted correctly", ge=0)
     elo_only_correct: int = Field(..., description="Games only ELO predicted correctly", ge=0)
     ap_only_correct: int = Field(..., description="Games only AP predicted correctly", ge=0)
     both_wrong: int = Field(..., description="Games both systems predicted incorrectly", ge=0)
-    by_week: List[WeeklyComparisonStats] = Field(default_factory=list, description="Weekly breakdown")
-    disagreements: List[DisagreementDetail] = Field(default_factory=list, description="Games where systems disagreed")
+    by_week: List[WeeklyComparisonStats] = Field(
+        default_factory=list, description="Weekly breakdown"
+    )
+    disagreements: List[DisagreementDetail] = Field(
+        default_factory=list, description="Games where systems disagreed"
+    )
     # Overall ELO accuracy (all predictions, not just compared)
-    overall_elo_accuracy: float = Field(..., description="Overall ELO prediction accuracy across ALL games (0-1)", ge=0, le=1.0)
+    overall_elo_accuracy: float = Field(
+        ..., description="Overall ELO prediction accuracy across ALL games (0-1)", ge=0, le=1.0
+    )
     overall_elo_total: int = Field(..., description="Total ELO predictions evaluated", ge=0)
     overall_elo_correct: int = Field(..., description="Total ELO predictions correct", ge=0)

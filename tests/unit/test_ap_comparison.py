@@ -12,7 +12,11 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from src.core.ap_poll_service import calculate_comparison_stats, get_ap_prediction_for_game, get_team_ap_rank
+from src.core.ap_poll_service import (
+    calculate_comparison_stats,
+    get_ap_prediction_for_game,
+    get_team_ap_rank,
+)
 from src.models.models import APPollRanking, ConferenceType, Game, Prediction, Season, Team
 
 
@@ -68,6 +72,7 @@ class TestAPPredictionLogic:
 
     def test_both_ranked_higher_rank_home_wins(self, mock_db, sample_game):
         """Test AP prediction when both teams ranked, home team ranked higher"""
+
         def mock_ap_rank(db, team_id, season, week):
             if team_id == 10:  # Home team
                 return 5
@@ -75,13 +80,14 @@ class TestAPPredictionLogic:
                 return 12
             return None
 
-        with patch('src.core.ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
+        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank):
             predicted_winner_id = get_ap_prediction_for_game(mock_db, sample_game)
             # Home team is #5, away team is #12, so AP predicts home team wins
             assert predicted_winner_id == 10
 
     def test_both_ranked_higher_rank_away_wins(self, mock_db, sample_game):
         """Test AP prediction when both teams ranked, away team ranked higher"""
+
         def mock_ap_rank(db, team_id, season, week):
             if team_id == 10:  # Home team
                 return 15
@@ -89,51 +95,55 @@ class TestAPPredictionLogic:
                 return 3
             return None
 
-        with patch('src.core.ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
+        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank):
             predicted_winner_id = get_ap_prediction_for_game(mock_db, sample_game)
             # Away team is #3, home team is #15, so AP predicts away team wins
             assert predicted_winner_id == 20
 
     def test_only_home_ranked(self, mock_db, sample_game):
         """Test AP prediction when only home team is ranked"""
+
         def mock_ap_rank(db, team_id, season, week):
             if team_id == 10:  # Home team
                 return 8
             return None  # Away team unranked
 
-        with patch('src.core.ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
+        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank):
             predicted_winner_id = get_ap_prediction_for_game(mock_db, sample_game)
             # Only home team ranked, so AP predicts home team wins
             assert predicted_winner_id == 10
 
     def test_only_away_ranked(self, mock_db, sample_game):
         """Test AP prediction when only away team is ranked"""
+
         def mock_ap_rank(db, team_id, season, week):
             if team_id == 20:  # Away team
                 return 10
             return None  # Home team unranked
 
-        with patch('src.core.ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
+        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank):
             predicted_winner_id = get_ap_prediction_for_game(mock_db, sample_game)
             # Only away team ranked, so AP predicts away team wins
             assert predicted_winner_id == 20
 
     def test_both_unranked(self, mock_db, sample_game):
         """Test AP prediction when neither team is ranked"""
+
         def mock_ap_rank(db, team_id, season, week):
             return None  # Both unranked
 
-        with patch('src.core.ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
+        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank):
             predicted_winner_id = get_ap_prediction_for_game(mock_db, sample_game)
             # Both unranked, no AP prediction possible
             assert predicted_winner_id is None
 
     def test_equal_ranks(self, mock_db, sample_game):
         """Test AP prediction when teams have equal ranks (edge case)"""
+
         def mock_ap_rank(db, team_id, season, week):
             return 10  # Both ranked #10 (very rare)
 
-        with patch('src.core.ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
+        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank):
             predicted_winner_id = get_ap_prediction_for_game(mock_db, sample_game)
             # Equal ranks, no clear prediction
             assert predicted_winner_id is None
@@ -194,7 +204,7 @@ class TestComparisonStatistics:
 
                 def filter_pred(game_id_filter):
                     # Return appropriate prediction based on game_id
-                    if hasattr(game_id_filter, 'right') and hasattr(game_id_filter.right, 'value'):
+                    if hasattr(game_id_filter, "right") and hasattr(game_id_filter.right, "value"):
                         game_id = game_id_filter.right.value
                     else:
                         return mock_pred_query
@@ -236,12 +246,12 @@ class TestComparisonStatistics:
 
         stats = calculate_comparison_stats(db, 2024)
 
-        assert stats['season'] == 2024
-        assert stats['total_games_compared'] == 0
-        assert stats['elo_accuracy'] == 0.0
-        assert stats['ap_accuracy'] == 0.0
-        assert len(stats['by_week']) == 0
-        assert len(stats['disagreements']) == 0
+        assert stats["season"] == 2024
+        assert stats["total_games_compared"] == 0
+        assert stats["elo_accuracy"] == 0.0
+        assert stats["ap_accuracy"] == 0.0
+        assert len(stats["by_week"]) == 0
+        assert len(stats["disagreements"]) == 0
 
     def test_calculate_comparison_stats_structure(self):
         """Test that comparison stats returns correct structure"""
@@ -251,19 +261,19 @@ class TestComparisonStatistics:
         stats = calculate_comparison_stats(db, 2024)
 
         # Verify all required fields present
-        assert 'season' in stats
-        assert 'elo_accuracy' in stats
-        assert 'ap_accuracy' in stats
-        assert 'elo_advantage' in stats
-        assert 'total_games_compared' in stats
-        assert 'elo_correct' in stats
-        assert 'ap_correct' in stats
-        assert 'both_correct' in stats
-        assert 'elo_only_correct' in stats
-        assert 'ap_only_correct' in stats
-        assert 'both_wrong' in stats
-        assert 'by_week' in stats
-        assert 'disagreements' in stats
+        assert "season" in stats
+        assert "elo_accuracy" in stats
+        assert "ap_accuracy" in stats
+        assert "elo_advantage" in stats
+        assert "total_games_compared" in stats
+        assert "elo_correct" in stats
+        assert "ap_correct" in stats
+        assert "both_correct" in stats
+        assert "elo_only_correct" in stats
+        assert "ap_only_correct" in stats
+        assert "both_wrong" in stats
+        assert "by_week" in stats
+        assert "disagreements" in stats
 
     def test_elo_advantage_calculation(self):
         """Test ELO advantage calculation"""
@@ -273,4 +283,4 @@ class TestComparisonStatistics:
         stats = calculate_comparison_stats(db, 2024)
 
         # With no data, advantage should be 0
-        assert stats['elo_advantage'] == stats['elo_accuracy'] - stats['ap_accuracy']
+        assert stats["elo_advantage"] == stats["elo_accuracy"] - stats["ap_accuracy"]

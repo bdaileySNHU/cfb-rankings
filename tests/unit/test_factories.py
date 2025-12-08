@@ -69,12 +69,7 @@ class TestTeamFactory:
         configure_factories(test_db)
 
         # Act
-        team = TeamFactory(
-            name="Alabama",
-            elo_rating=1850.0,
-            wins=10,
-            losses=2
-        )
+        team = TeamFactory(name="Alabama", elo_rating=1850.0, wins=10, losses=2)
 
         # Assert
         assert team.name == "Alabama"
@@ -436,17 +431,8 @@ class TestFactoryIntegration:
         season = SeasonFactory(year=2024)
         team1 = EliteTeamFactory(name="Alabama")
         team2 = EliteTeamFactory(name="Georgia")
-        game = GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=season.year,
-            week=5
-        )
-        history = RankingHistoryFactory(
-            team=team1,
-            season=season.year,
-            week=5
-        )
+        game = GameFactory(home_team=team1, away_team=team2, season=season.year, week=5)
+        history = RankingHistoryFactory(team=team1, season=season.year, week=5)
 
         # Assert
         assert game.season == season.year

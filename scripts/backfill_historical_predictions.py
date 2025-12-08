@@ -32,8 +32,8 @@ from src.models.models import Game, Prediction, RankingHistory, Team
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format="[%(asctime)s] %(levelname)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 
@@ -62,11 +62,15 @@ def get_historical_rating(db, team_id: int, season: int, week: int) -> float:
     # For week 1, use week 0 (preseason)
     lookup_week = max(0, week - 1)
 
-    rating = db.query(RankingHistory.elo_rating).filter(
-        RankingHistory.team_id == team_id,
-        RankingHistory.season == season,
-        RankingHistory.week == lookup_week
-    ).scalar()
+    rating = (
+        db.query(RankingHistory.elo_rating)
+        .filter(
+            RankingHistory.team_id == team_id,
+            RankingHistory.season == season,
+            RankingHistory.week == lookup_week,
+        )
+        .scalar()
+    )
 
     if rating is None:
         # Get team name for better logging
@@ -121,8 +125,9 @@ def prediction_exists(db, game_id: int) -> bool:
     return count > 0
 
 
-def detect_anomalies(home_team: str, away_team: str, home_rating: float,
-                     away_rating: float, home_win_prob: float) -> list:
+def detect_anomalies(
+    home_team: str, away_team: str, home_rating: float, away_rating: float, home_win_prob: float
+) -> list:
     """
     Detect unusual predictions or ratings.
 
@@ -188,10 +193,11 @@ def rollback_predictions(db, start_time: str, end_time: str, dry_run: bool = Fal
         return 0
 
     # Query predictions in range
-    predictions = db.query(Prediction).filter(
-        Prediction.created_at >= start_dt,
-        Prediction.created_at <= end_dt
-    ).all()
+    predictions = (
+        db.query(Prediction)
+        .filter(Prediction.created_at >= start_dt, Prediction.created_at <= end_dt)
+        .all()
+    )
 
     count = len(predictions)
 
@@ -208,7 +214,7 @@ def rollback_predictions(db, start_time: str, end_time: str, dry_run: bool = Fal
 
     # Confirm deletion
     confirmation = input(f"Delete {count} predictions? (yes/no): ")
-    if confirmation.lower() != 'yes':
+    if confirmation.lower() != "yes":
         logger.info("Deletion cancelled")
         return 0
 
@@ -225,7 +231,7 @@ def rollback_predictions(db, start_time: str, end_time: str, dry_run: bool = Fal
 def parse_arguments():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description='Backfill historical predictions using historical ELO ratings',
+        description="Backfill historical predictions using historical ELO ratings",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -241,26 +247,31 @@ Examples:
   # Rollback predictions created between specific times
   python3 scripts/backfill_historical_predictions.py --delete-backfilled \\
     --start-time "2025-10-27 10:00:00" --end-time "2025-10-27 10:05:00"
-        """
+        """,
     )
 
-    parser.add_argument('--dry-run', action='store_true',
-                        help='Preview changes without writing to database')
-    parser.add_argument('--delete-backfilled', action='store_true',
-                        help='Delete predictions from previous backfill run')
-    parser.add_argument('--start-time', type=str,
-                        help='Start time for rollback (format: "YYYY-MM-DD HH:MM:SS")')
-    parser.add_argument('--end-time', type=str,
-                        help='End time for rollback (format: "YYYY-MM-DD HH:MM:SS")')
-    parser.add_argument('--season', type=int,
-                        help='Process only specific season')
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Preview changes without writing to database"
+    )
+    parser.add_argument(
+        "--delete-backfilled",
+        action="store_true",
+        help="Delete predictions from previous backfill run",
+    )
+    parser.add_argument(
+        "--start-time", type=str, help='Start time for rollback (format: "YYYY-MM-DD HH:MM:SS")'
+    )
+    parser.add_argument(
+        "--end-time", type=str, help='End time for rollback (format: "YYYY-MM-DD HH:MM:SS")'
+    )
+    parser.add_argument("--season", type=int, help="Process only specific season")
 
     args = parser.parse_args()
 
     # Validate rollback arguments
     if args.delete_backfilled:
         if not args.start_time or not args.end_time:
-            parser.error('--delete-backfilled requires both --start-time and --end-time')
+            parser.error("--delete-backfilled requires both --start-time and --end-time")
 
     return args
 
@@ -278,25 +289,29 @@ def backfill_predictions_for_season(db, season_year: int, dry_run: bool = False)
         dict: Statistics about the backfill operation
     """
     stats = {
-        'total_games': 0,
-        'predictions_created': 0,
-        'predictions_skipped': 0,
-        'warnings': 0,
-        'errors': 0
+        "total_games": 0,
+        "predictions_created": 0,
+        "predictions_skipped": 0,
+        "warnings": 0,
+        "errors": 0,
     }
 
     # Query all processed games without predictions (using outerjoin)
-    games = db.query(Game).outerjoin(
-        Prediction, Game.id == Prediction.game_id
-    ).filter(
-        Game.season == season_year,
-        Game.is_processed == True,
-        Prediction.id == None  # No prediction exists
-    ).order_by(Game.week, Game.id).all()
+    games = (
+        db.query(Game)
+        .outerjoin(Prediction, Game.id == Prediction.game_id)
+        .filter(
+            Game.season == season_year,
+            Game.is_processed == True,
+            Prediction.id == None,  # No prediction exists
+        )
+        .order_by(Game.week, Game.id)
+        .all()
+    )
 
-    stats['total_games'] = len(games)
+    stats["total_games"] = len(games)
 
-    if stats['total_games'] == 0:
+    if stats["total_games"] == 0:
         logger.info(f"No games found without predictions for season {season_year}")
         return stats
 
@@ -325,7 +340,7 @@ def backfill_predictions_for_season(db, season_year: int, dry_run: bool = False)
 
                 if not home_team or not away_team:
                     logger.error(f"Game {game.id}: Missing team data")
-                    stats['errors'] += 1
+                    stats["errors"] += 1
                     continue
 
                 # Get historical ratings (from week before game)
@@ -334,7 +349,7 @@ def backfill_predictions_for_season(db, season_year: int, dry_run: bool = False)
 
                 # Track if we used default ratings
                 if home_rating == 1500.0 or away_rating == 1500.0:
-                    stats['warnings'] += 1
+                    stats["warnings"] += 1
                     week_warnings += 1
 
                 # Apply home field advantage (unless neutral site)
@@ -342,7 +357,9 @@ def backfill_predictions_for_season(db, season_year: int, dry_run: bool = False)
                 away_rating_adjusted = away_rating
 
                 # Calculate win probability
-                home_win_prob = 1 / (1 + 10 ** ((away_rating_adjusted - home_rating_adjusted) / 400))
+                home_win_prob = 1 / (
+                    1 + 10 ** ((away_rating_adjusted - home_rating_adjusted) / 400)
+                )
                 away_win_prob = 1 - home_win_prob
 
                 # Estimate scores
@@ -374,7 +391,7 @@ def backfill_predictions_for_season(db, season_year: int, dry_run: bool = False)
                     home_elo_at_prediction=home_rating,
                     away_elo_at_prediction=away_rating,
                     was_correct=None,  # Will be calculated later
-                    created_at=prediction_timestamp
+                    created_at=prediction_timestamp,
                 )
 
                 db.add(prediction)
@@ -382,14 +399,14 @@ def backfill_predictions_for_season(db, season_year: int, dry_run: bool = False)
 
             except Exception as e:
                 logger.error(f"Game {game.id}: Error creating prediction - {e}")
-                stats['errors'] += 1
+                stats["errors"] += 1
                 continue
 
         # Commit all predictions for this week (or skip in dry-run mode)
         if dry_run:
             # In dry-run mode, rollback instead of commit
             db.rollback()
-            stats['predictions_created'] += week_created
+            stats["predictions_created"] += week_created
 
             # Log week summary
             if week_warnings > 0:
@@ -402,7 +419,7 @@ def backfill_predictions_for_season(db, season_year: int, dry_run: bool = False)
         else:
             try:
                 db.commit()
-                stats['predictions_created'] += week_created
+                stats["predictions_created"] += week_created
 
                 # Log week summary
                 if week_warnings > 0:
@@ -416,7 +433,7 @@ def backfill_predictions_for_season(db, season_year: int, dry_run: bool = False)
             except Exception as e:
                 logger.error(f"Week {week}: Failed to commit predictions - {e}")
                 db.rollback()
-                stats['errors'] += len(week_games)
+                stats["errors"] += len(week_games)
 
     return stats
 
@@ -468,9 +485,13 @@ def main():
             seasons = [(args.season,)]
             logger.info(f"Processing only season: {args.season}")
         else:
-            seasons = db.query(Game.season).filter(
-                Game.is_processed == True
-            ).distinct().order_by(Game.season).all()
+            seasons = (
+                db.query(Game.season)
+                .filter(Game.is_processed == True)
+                .distinct()
+                .order_by(Game.season)
+                .all()
+            )
 
         if not seasons:
             logger.info("No processed games found in database")
@@ -478,11 +499,11 @@ def main():
             return
 
         all_stats = {
-            'total_games': 0,
-            'predictions_created': 0,
-            'predictions_skipped': 0,
-            'warnings': 0,
-            'errors': 0
+            "total_games": 0,
+            "predictions_created": 0,
+            "predictions_skipped": 0,
+            "warnings": 0,
+            "errors": 0,
         }
 
         # Process each season
@@ -491,11 +512,11 @@ def main():
             season_stats = backfill_predictions_for_season(db, season_year, args.dry_run)
 
             # Aggregate stats
-            all_stats['total_games'] += season_stats['total_games']
-            all_stats['predictions_created'] += season_stats['predictions_created']
-            all_stats['predictions_skipped'] += season_stats['predictions_skipped']
-            all_stats['warnings'] += season_stats['warnings']
-            all_stats['errors'] += season_stats['errors']
+            all_stats["total_games"] += season_stats["total_games"]
+            all_stats["predictions_created"] += season_stats["predictions_created"]
+            all_stats["predictions_skipped"] += season_stats["predictions_skipped"]
+            all_stats["warnings"] += season_stats["warnings"]
+            all_stats["errors"] += season_stats["errors"]
 
         # Calculate duration
         end_time = datetime.now()
@@ -516,14 +537,14 @@ def main():
         logger.info(f"  Errors: {all_stats['errors']}")
         logger.info(f"  Duration: {duration:.1f} seconds")
 
-        if all_stats['predictions_created'] > 0 and not args.dry_run:
-            avg_time = duration / all_stats['predictions_created']
+        if all_stats["predictions_created"] > 0 and not args.dry_run:
+            avg_time = duration / all_stats["predictions_created"]
             logger.info(f"  Average time per prediction: {avg_time:.3f} seconds")
 
         if args.dry_run:
             logger.info("\nDRY RUN - No changes written to database")
             logger.info("Run without --dry-run to commit changes")
-        elif all_stats['errors'] == 0:
+        elif all_stats["errors"] == 0:
             logger.info("\n✅ Backfill completed successfully")
         else:
             logger.warning(f"\n⚠️  Backfill completed with {all_stats['errors']} errors")

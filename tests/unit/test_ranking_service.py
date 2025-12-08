@@ -32,7 +32,7 @@ class TestPreseasonRating:
             conference=ConferenceType.POWER_5,
             recruiting_rank=999,  # Unranked (no bonuses)
             transfer_rank=999,
-            returning_production=0.0
+            returning_production=0.0,
         )
 
         # Act
@@ -50,7 +50,7 @@ class TestPreseasonRating:
             conference=ConferenceType.FCS,
             recruiting_rank=999,
             transfer_rank=999,
-            returning_production=0.0
+            returning_production=0.0,
         )
 
         # Act
@@ -59,11 +59,14 @@ class TestPreseasonRating:
         # Assert
         assert rating == 1300.0, "FCS base rating should be 1300"
 
-    @pytest.mark.parametrize("conference_type,expected_base", [
-        (ConferenceType.POWER_5, 1500.0),
-        (ConferenceType.GROUP_5, 1500.0),
-        (ConferenceType.FCS, 1300.0),
-    ])
+    @pytest.mark.parametrize(
+        "conference_type,expected_base",
+        [
+            (ConferenceType.POWER_5, 1500.0),
+            (ConferenceType.GROUP_5, 1500.0),
+            (ConferenceType.FCS, 1300.0),
+        ],
+    )
     def test_base_rating_by_conference(self, test_db: Session, conference_type, expected_base):
         """Test base ratings for all conference types"""
         # Arrange
@@ -73,7 +76,7 @@ class TestPreseasonRating:
             conference=conference_type,
             recruiting_rank=999,
             transfer_rank=999,
-            returning_production=0.0
+            returning_production=0.0,
         )
 
         # Act
@@ -82,21 +85,24 @@ class TestPreseasonRating:
         # Assert
         assert rating == expected_base
 
-    @pytest.mark.parametrize("recruiting_rank,expected_bonus", [
-        (1, 200.0),    # Top 5
-        (5, 200.0),    # Top 5 boundary
-        (6, 150.0),    # Top 10
-        (10, 150.0),   # Top 10 boundary
-        (11, 100.0),   # Top 25
-        (25, 100.0),   # Top 25 boundary
-        (26, 50.0),    # Top 50
-        (50, 50.0),    # Top 50 boundary
-        (51, 25.0),    # Top 75
-        (75, 25.0),    # Top 75 boundary
-        (76, 0.0),     # Outside top 75
-        (100, 0.0),    # Unranked
-        (999, 0.0),    # Default unranked value
-    ])
+    @pytest.mark.parametrize(
+        "recruiting_rank,expected_bonus",
+        [
+            (1, 200.0),  # Top 5
+            (5, 200.0),  # Top 5 boundary
+            (6, 150.0),  # Top 10
+            (10, 150.0),  # Top 10 boundary
+            (11, 100.0),  # Top 25
+            (25, 100.0),  # Top 25 boundary
+            (26, 50.0),  # Top 50
+            (50, 50.0),  # Top 50 boundary
+            (51, 25.0),  # Top 75
+            (75, 25.0),  # Top 75 boundary
+            (76, 0.0),  # Outside top 75
+            (100, 0.0),  # Unranked
+            (999, 0.0),  # Default unranked value
+        ],
+    )
     def test_recruiting_bonus_tiers(self, test_db: Session, recruiting_rank, expected_bonus):
         """Test recruiting bonus calculation for all tiers"""
         # Arrange
@@ -106,7 +112,7 @@ class TestPreseasonRating:
             conference=ConferenceType.POWER_5,
             recruiting_rank=recruiting_rank,
             transfer_rank=999,
-            returning_production=0.0
+            returning_production=0.0,
         )
 
         # Act
@@ -114,21 +120,26 @@ class TestPreseasonRating:
 
         # Assert
         expected_rating = 1500.0 + expected_bonus
-        assert rating == expected_rating, f"Recruiting rank {recruiting_rank} should give +{expected_bonus} bonus"
+        assert (
+            rating == expected_rating
+        ), f"Recruiting rank {recruiting_rank} should give +{expected_bonus} bonus"
 
-    @pytest.mark.parametrize("transfer_rank,expected_bonus", [
-        (1, 100.0),    # Top 5
-        (5, 100.0),    # Top 5 boundary
-        (6, 75.0),     # Top 10
-        (10, 75.0),    # Top 10 boundary
-        (11, 50.0),    # Top 25
-        (25, 50.0),    # Top 25 boundary
-        (26, 25.0),    # Top 50
-        (50, 25.0),    # Top 50 boundary
-        (51, 0.0),     # Outside top 50
-        (100, 0.0),    # Unranked
-        (999, 0.0),    # Default unranked value
-    ])
+    @pytest.mark.parametrize(
+        "transfer_rank,expected_bonus",
+        [
+            (1, 100.0),  # Top 5
+            (5, 100.0),  # Top 5 boundary
+            (6, 75.0),  # Top 10
+            (10, 75.0),  # Top 10 boundary
+            (11, 50.0),  # Top 25
+            (25, 50.0),  # Top 25 boundary
+            (26, 25.0),  # Top 50
+            (50, 25.0),  # Top 50 boundary
+            (51, 0.0),  # Outside top 50
+            (100, 0.0),  # Unranked
+            (999, 0.0),  # Default unranked value
+        ],
+    )
     def test_transfer_portal_bonus_tiers(self, test_db: Session, transfer_rank, expected_bonus):
         """Test transfer portal bonus calculation for all tiers"""
         # Arrange
@@ -138,7 +149,7 @@ class TestPreseasonRating:
             conference=ConferenceType.POWER_5,
             recruiting_rank=999,
             transfer_rank=transfer_rank,
-            returning_production=0.0
+            returning_production=0.0,
         )
 
         # Act
@@ -146,23 +157,30 @@ class TestPreseasonRating:
 
         # Assert
         expected_rating = 1500.0 + expected_bonus
-        assert rating == expected_rating, f"Transfer rank {transfer_rank} should give +{expected_bonus} bonus"
+        assert (
+            rating == expected_rating
+        ), f"Transfer rank {transfer_rank} should give +{expected_bonus} bonus"
 
-    @pytest.mark.parametrize("returning_production,expected_bonus", [
-        (1.0, 40.0),    # 100% returning (max)
-        (0.90, 40.0),   # 90% returning
-        (0.80, 40.0),   # 80% returning (boundary)
-        (0.79, 25.0),   # 79% returning
-        (0.70, 25.0),   # 70% returning
-        (0.60, 25.0),   # 60% returning (boundary)
-        (0.59, 10.0),   # 59% returning
-        (0.50, 10.0),   # 50% returning
-        (0.40, 10.0),   # 40% returning (boundary)
-        (0.39, 0.0),    # 39% returning
-        (0.20, 0.0),    # 20% returning
-        (0.0, 0.0),     # 0% returning (min)
-    ])
-    def test_returning_production_bonus_tiers(self, test_db: Session, returning_production, expected_bonus):
+    @pytest.mark.parametrize(
+        "returning_production,expected_bonus",
+        [
+            (1.0, 40.0),  # 100% returning (max)
+            (0.90, 40.0),  # 90% returning
+            (0.80, 40.0),  # 80% returning (boundary)
+            (0.79, 25.0),  # 79% returning
+            (0.70, 25.0),  # 70% returning
+            (0.60, 25.0),  # 60% returning (boundary)
+            (0.59, 10.0),  # 59% returning
+            (0.50, 10.0),  # 50% returning
+            (0.40, 10.0),  # 40% returning (boundary)
+            (0.39, 0.0),  # 39% returning
+            (0.20, 0.0),  # 20% returning
+            (0.0, 0.0),  # 0% returning (min)
+        ],
+    )
+    def test_returning_production_bonus_tiers(
+        self, test_db: Session, returning_production, expected_bonus
+    ):
         """Test returning production bonus calculation for all tiers"""
         # Arrange
         service = RankingService(test_db)
@@ -171,7 +189,7 @@ class TestPreseasonRating:
             conference=ConferenceType.POWER_5,
             recruiting_rank=999,
             transfer_rank=999,
-            returning_production=returning_production
+            returning_production=returning_production,
         )
 
         # Act
@@ -179,7 +197,9 @@ class TestPreseasonRating:
 
         # Assert
         expected_rating = 1500.0 + expected_bonus
-        assert rating == expected_rating, f"Returning production {returning_production} should give +{expected_bonus} bonus"
+        assert (
+            rating == expected_rating
+        ), f"Returning production {returning_production} should give +{expected_bonus} bonus"
 
     def test_combined_preseason_rating_elite_team(self, test_db: Session):
         """Test combined rating for elite team (top recruiting, transfers, high returning production)"""
@@ -188,9 +208,9 @@ class TestPreseasonRating:
         team = Team(
             name="Alabama",  # Elite program example
             conference=ConferenceType.POWER_5,
-            recruiting_rank=1,    # Top 5: +200
-            transfer_rank=3,      # Top 5: +100
-            returning_production=0.85  # 80%+: +40
+            recruiting_rank=1,  # Top 5: +200
+            transfer_rank=3,  # Top 5: +100
+            returning_production=0.85,  # 80%+: +40
         )
 
         # Act
@@ -207,9 +227,9 @@ class TestPreseasonRating:
         team = Team(
             name="Typical P5 Team",
             conference=ConferenceType.POWER_5,
-            recruiting_rank=35,   # Top 50: +50
-            transfer_rank=20,     # Top 25: +50
-            returning_production=0.65  # 60-79%: +25
+            recruiting_rank=35,  # Top 50: +50
+            transfer_rank=20,  # Top 25: +50
+            returning_production=0.65,  # 60-79%: +25
         )
 
         # Act
@@ -226,9 +246,9 @@ class TestPreseasonRating:
         team = Team(
             name="G5 Team",
             conference=ConferenceType.GROUP_5,
-            recruiting_rank=80,   # Unranked: +0
-            transfer_rank=60,     # Unranked: +0
-            returning_production=0.55  # 40-59%: +10
+            recruiting_rank=80,  # Unranked: +0
+            transfer_rank=60,  # Unranked: +0
+            returning_production=0.55,  # 40-59%: +10
         )
 
         # Act
@@ -245,9 +265,9 @@ class TestPreseasonRating:
         team = Team(
             name="Top FCS Team",
             conference=ConferenceType.FCS,
-            recruiting_rank=30,   # Top 50: +50
-            transfer_rank=15,     # Top 25: +50
-            returning_production=0.75  # 60-79%: +25
+            recruiting_rank=30,  # Top 50: +50
+            transfer_rank=15,  # Top 25: +50
+            returning_production=0.75,  # 60-79%: +25
         )
 
         # Act
@@ -255,7 +275,9 @@ class TestPreseasonRating:
 
         # Assert
         # Base (1300) + Recruiting (50) + Transfer (50) + Returning (25) = 1425
-        assert rating == 1425.0, "FCS team with good factors should have lower base but can gain bonuses"
+        assert (
+            rating == 1425.0
+        ), "FCS team with good factors should have lower base but can gain bonuses"
 
     def test_edge_case_unranked_team_all_defaults(self, test_db: Session):
         """Test edge case: completely unranked team with default values"""
@@ -265,8 +287,8 @@ class TestPreseasonRating:
             name="Unranked Team",
             conference=ConferenceType.GROUP_5,
             recruiting_rank=999,  # Default unranked
-            transfer_rank=999,    # Default unranked
-            returning_production=0.5  # Default (39-59%: +10 originally, but 50% is boundary case)
+            transfer_rank=999,  # Default unranked
+            returning_production=0.5,  # Default (39-59%: +10 originally, but 50% is boundary case)
         )
 
         # Act
@@ -283,9 +305,9 @@ class TestPreseasonRating:
         team = Team(
             name="Test Team",
             conference=ConferenceType.POWER_5,
-            recruiting_rank=10,   # Top 10: +150
+            recruiting_rank=10,  # Top 10: +150
             transfer_rank=999,
-            returning_production=0.0
+            returning_production=0.0,
         )
         test_db.add(team)
         test_db.commit()
@@ -297,7 +319,9 @@ class TestPreseasonRating:
         # Assert
         expected_rating = 1650.0  # 1500 + 150
         assert team.elo_rating == expected_rating, "elo_rating should be set to preseason rating"
-        assert team.initial_rating == expected_rating, "initial_rating should store preseason rating"
+        assert (
+            team.initial_rating == expected_rating
+        ), "initial_rating should store preseason rating"
         assert team.elo_rating == team.initial_rating, "Both ratings should match initially"
 
     def test_initialize_team_rating_persists_to_database(self, test_db: Session):
@@ -309,7 +333,7 @@ class TestPreseasonRating:
             conference=ConferenceType.POWER_5,
             recruiting_rank=25,
             transfer_rank=999,
-            returning_production=0.0
+            returning_production=0.0,
         )
         test_db.add(team)
         test_db.commit()
@@ -324,7 +348,9 @@ class TestPreseasonRating:
         # Assert
         expected_rating = 1600.0  # 1500 + 100
         assert fresh_team.elo_rating == expected_rating, "Rating should persist in database"
-        assert fresh_team.initial_rating == expected_rating, "Initial rating should persist in database"
+        assert (
+            fresh_team.initial_rating == expected_rating
+        ), "Initial rating should persist in database"
 
 
 @pytest.mark.unit
@@ -335,57 +361,66 @@ class TestExpectedScore:
         """Teams with equal ratings should have 50% win probability"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act
         expected = service.calculate_expected_score(1500.0, 1500.0)
-        
+
         # Assert
-        assert expected == pytest.approx(0.5, abs=0.001), "Equal ratings should give 50% probability"
+        assert expected == pytest.approx(
+            0.5, abs=0.001
+        ), "Equal ratings should give 50% probability"
 
     def test_higher_rated_team_favored(self, test_db: Session):
         """Higher rated team should have >50% win probability"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act
         expected = service.calculate_expected_score(1600.0, 1500.0)
-        
+
         # Assert
         assert expected > 0.5, "Higher rated team should be favored"
-        assert expected == pytest.approx(0.640, abs=0.001), "100 point advantage should give ~64% probability"
+        assert expected == pytest.approx(
+            0.640, abs=0.001
+        ), "100 point advantage should give ~64% probability"
 
     def test_lower_rated_team_underdog(self, test_db: Session):
         """Lower rated team should have <50% win probability"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act
         expected = service.calculate_expected_score(1500.0, 1600.0)
-        
+
         # Assert
         assert expected < 0.5, "Lower rated team should be underdog"
-        assert expected == pytest.approx(0.360, abs=0.001), "100 point disadvantage should give ~36% probability"
+        assert expected == pytest.approx(
+            0.360, abs=0.001
+        ), "100 point disadvantage should give ~36% probability"
 
-    @pytest.mark.parametrize("rating_diff,expected_prob", [
-        (0, 0.500),      # Equal ratings
-        (100, 0.640),    # Small advantage
-        (200, 0.760),    # Medium advantage
-        (300, 0.849),    # Large advantage
-        (400, 0.909),    # Very large advantage (10:1 odds)
-        (-100, 0.360),   # Small disadvantage
-        (-200, 0.240),   # Medium disadvantage
-        (-400, 0.091),   # Very large disadvantage
-    ])
+    @pytest.mark.parametrize(
+        "rating_diff,expected_prob",
+        [
+            (0, 0.500),  # Equal ratings
+            (100, 0.640),  # Small advantage
+            (200, 0.760),  # Medium advantage
+            (300, 0.849),  # Large advantage
+            (400, 0.909),  # Very large advantage (10:1 odds)
+            (-100, 0.360),  # Small disadvantage
+            (-200, 0.240),  # Medium disadvantage
+            (-400, 0.091),  # Very large disadvantage
+        ],
+    )
     def test_expected_score_formula(self, test_db: Session, rating_diff, expected_prob):
         """Test expected score formula across various rating differences"""
         # Arrange
         service = RankingService(test_db)
         team_a_rating = 1500.0
         team_b_rating = 1500.0 - rating_diff
-        
+
         # Act
         result = service.calculate_expected_score(team_a_rating, team_b_rating)
-        
+
         # Assert
         assert result == pytest.approx(expected_prob, abs=0.001)
 
@@ -395,13 +430,15 @@ class TestExpectedScore:
         service = RankingService(test_db)
         rating_a = 1650.0
         rating_b = 1450.0
-        
+
         # Act
         expected_a = service.calculate_expected_score(rating_a, rating_b)
         expected_b = service.calculate_expected_score(rating_b, rating_a)
-        
+
         # Assert
-        assert expected_a + expected_b == pytest.approx(1.0, abs=0.001), "Probabilities should sum to 1.0"
+        assert expected_a + expected_b == pytest.approx(
+            1.0, abs=0.001
+        ), "Probabilities should sum to 1.0"
 
 
 @pytest.mark.unit
@@ -412,10 +449,10 @@ class TestMovMultiplier:
         """Zero point differential should return multiplier of 1.0"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act
         multiplier = service.calculate_mov_multiplier(0)
-        
+
         # Assert
         assert multiplier == 1.0
 
@@ -423,31 +460,34 @@ class TestMovMultiplier:
         """Negative point differential should return multiplier of 1.0"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act
         multiplier = service.calculate_mov_multiplier(-10)
-        
+
         # Assert
         assert multiplier == 1.0
 
-    @pytest.mark.parametrize("point_diff,expected_multiplier", [
-        (1, 0.693),      # ln(2)
-        (3, 1.386),      # ln(4)
-        (7, 2.079),      # ln(8)
-        (10, 2.398),     # ln(11)
-        (14, 2.500),     # ln(15) = 2.708, capped at 2.5
-        (20, 2.500),     # ln(21) = 3.045, capped at 2.5
-        (50, 2.500),     # ln(51) = 3.932, capped at 2.5
-        (100, 2.500),    # Blowout, capped at 2.5
-    ])
+    @pytest.mark.parametrize(
+        "point_diff,expected_multiplier",
+        [
+            (1, 0.693),  # ln(2)
+            (3, 1.386),  # ln(4)
+            (7, 2.079),  # ln(8)
+            (10, 2.398),  # ln(11)
+            (14, 2.500),  # ln(15) = 2.708, capped at 2.5
+            (20, 2.500),  # ln(21) = 3.045, capped at 2.5
+            (50, 2.500),  # ln(51) = 3.932, capped at 2.5
+            (100, 2.500),  # Blowout, capped at 2.5
+        ],
+    )
     def test_mov_multiplier_values(self, test_db: Session, point_diff, expected_multiplier):
         """Test MOV multiplier calculation for various point differentials"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act
         multiplier = service.calculate_mov_multiplier(point_diff)
-        
+
         # Assert
         assert multiplier == pytest.approx(expected_multiplier, abs=0.001)
 
@@ -455,12 +495,12 @@ class TestMovMultiplier:
         """MOV multiplier should be capped at MAX_MOV_MULTIPLIER"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act
         multiplier_20 = service.calculate_mov_multiplier(20)
         multiplier_50 = service.calculate_mov_multiplier(50)
         multiplier_100 = service.calculate_mov_multiplier(100)
-        
+
         # Assert
         assert multiplier_20 == 2.5, "20+ point win should be capped"
         assert multiplier_50 == 2.5, "50 point blowout should be capped"
@@ -471,12 +511,12 @@ class TestMovMultiplier:
         """MOV multiplier should grow logarithmically (diminishing returns)"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act
         mov_1 = service.calculate_mov_multiplier(1)
         mov_3 = service.calculate_mov_multiplier(3)
         mov_7 = service.calculate_mov_multiplier(7)
-        
+
         # Assert - difference between 1 and 3 should be greater than difference between 3 and 7
         diff_1_to_3 = mov_3 - mov_1
         diff_3_to_7 = mov_7 - mov_3
@@ -491,21 +531,21 @@ class TestConferenceMultiplier:
         """Same tier matchups should have no multiplier adjustment"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act & Assert - P5 vs P5
         winner_mult, loser_mult = service.get_conference_multiplier(
             ConferenceType.POWER_5, ConferenceType.POWER_5
         )
         assert winner_mult == 1.0
         assert loser_mult == 1.0
-        
+
         # G5 vs G5
         winner_mult, loser_mult = service.get_conference_multiplier(
             ConferenceType.GROUP_5, ConferenceType.GROUP_5
         )
         assert winner_mult == 1.0
         assert loser_mult == 1.0
-        
+
         # FCS vs FCS
         winner_mult, loser_mult = service.get_conference_multiplier(
             ConferenceType.FCS, ConferenceType.FCS
@@ -517,12 +557,12 @@ class TestConferenceMultiplier:
         """P5 beating G5 should have reduced multiplier (expected outcome)"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act
         winner_mult, loser_mult = service.get_conference_multiplier(
             ConferenceType.POWER_5, ConferenceType.GROUP_5
         )
-        
+
         # Assert
         assert winner_mult == 0.9, "P5 should gain less for beating G5"
         assert loser_mult == 1.1, "G5 should lose more for losing to P5"
@@ -531,12 +571,12 @@ class TestConferenceMultiplier:
         """G5 beating P5 should have increased multiplier (upset bonus)"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act
         winner_mult, loser_mult = service.get_conference_multiplier(
             ConferenceType.GROUP_5, ConferenceType.POWER_5
         )
-        
+
         # Assert
         assert winner_mult == 1.1, "G5 should gain more for upset over P5"
         assert loser_mult == 0.9, "P5 should lose less for losing to G5"
@@ -545,17 +585,17 @@ class TestConferenceMultiplier:
         """FBS beating FCS should have minimal gain"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act - P5 beats FCS
         winner_mult_p5, loser_mult = service.get_conference_multiplier(
             ConferenceType.POWER_5, ConferenceType.FCS
         )
-        
+
         # Act - G5 beats FCS
         winner_mult_g5, loser_mult_g5 = service.get_conference_multiplier(
             ConferenceType.GROUP_5, ConferenceType.FCS
         )
-        
+
         # Assert
         assert winner_mult_p5 == 0.5, "P5 should gain half for beating FCS"
         assert winner_mult_g5 == 0.5, "G5 should gain half for beating FCS"
@@ -566,43 +606,47 @@ class TestConferenceMultiplier:
         """FCS beating FBS should have major upset bonus"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act - FCS beats P5
         winner_mult, loser_mult_p5 = service.get_conference_multiplier(
             ConferenceType.FCS, ConferenceType.POWER_5
         )
-        
+
         # Act - FCS beats G5
         winner_mult_g5, loser_mult_g5 = service.get_conference_multiplier(
             ConferenceType.FCS, ConferenceType.GROUP_5
         )
-        
+
         # Assert
         assert winner_mult == 2.0, "FCS should gain double for beating P5"
         assert winner_mult_g5 == 2.0, "FCS should gain double for beating G5"
         assert loser_mult_p5 == 0.5, "P5 should lose half for losing to FCS"
         assert loser_mult_g5 == 0.5, "G5 should lose half for losing to FCS"
 
-    @pytest.mark.parametrize("winner_conf,loser_conf,expected_winner,expected_loser", [
-        (ConferenceType.POWER_5, ConferenceType.POWER_5, 1.0, 1.0),    # P5 vs P5
-        (ConferenceType.POWER_5, ConferenceType.GROUP_5, 0.9, 1.1),    # P5 beats G5
-        (ConferenceType.GROUP_5, ConferenceType.POWER_5, 1.1, 0.9),    # G5 upsets P5
-        (ConferenceType.POWER_5, ConferenceType.FCS, 0.5, 2.0),        # P5 beats FCS
-        (ConferenceType.FCS, ConferenceType.POWER_5, 2.0, 0.5),        # FCS upsets P5
-        (ConferenceType.GROUP_5, ConferenceType.GROUP_5, 1.0, 1.0),    # G5 vs G5
-        (ConferenceType.GROUP_5, ConferenceType.FCS, 0.5, 2.0),        # G5 beats FCS
-        (ConferenceType.FCS, ConferenceType.GROUP_5, 2.0, 0.5),        # FCS upsets G5
-        (ConferenceType.FCS, ConferenceType.FCS, 1.0, 1.0),            # FCS vs FCS
-    ])
-    def test_all_conference_matchups(self, test_db: Session, winner_conf, loser_conf, 
-                                     expected_winner, expected_loser):
+    @pytest.mark.parametrize(
+        "winner_conf,loser_conf,expected_winner,expected_loser",
+        [
+            (ConferenceType.POWER_5, ConferenceType.POWER_5, 1.0, 1.0),  # P5 vs P5
+            (ConferenceType.POWER_5, ConferenceType.GROUP_5, 0.9, 1.1),  # P5 beats G5
+            (ConferenceType.GROUP_5, ConferenceType.POWER_5, 1.1, 0.9),  # G5 upsets P5
+            (ConferenceType.POWER_5, ConferenceType.FCS, 0.5, 2.0),  # P5 beats FCS
+            (ConferenceType.FCS, ConferenceType.POWER_5, 2.0, 0.5),  # FCS upsets P5
+            (ConferenceType.GROUP_5, ConferenceType.GROUP_5, 1.0, 1.0),  # G5 vs G5
+            (ConferenceType.GROUP_5, ConferenceType.FCS, 0.5, 2.0),  # G5 beats FCS
+            (ConferenceType.FCS, ConferenceType.GROUP_5, 2.0, 0.5),  # FCS upsets G5
+            (ConferenceType.FCS, ConferenceType.FCS, 1.0, 1.0),  # FCS vs FCS
+        ],
+    )
+    def test_all_conference_matchups(
+        self, test_db: Session, winner_conf, loser_conf, expected_winner, expected_loser
+    ):
         """Test conference multipliers for all possible matchups"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Act
         winner_mult, loser_mult = service.get_conference_multiplier(winner_conf, loser_conf)
-        
+
         # Assert
         assert winner_mult == expected_winner
         assert loser_mult == expected_loser
@@ -620,7 +664,7 @@ class TestGameProcessing:
         away_team = Team(name="Away Team", conference=ConferenceType.POWER_5, elo_rating=1500.0)
         test_db.add_all([home_team, away_team])
         test_db.commit()
-        
+
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
@@ -628,24 +672,24 @@ class TestGameProcessing:
             away_score=21,
             week=1,
             season=2024,
-            is_neutral_site=False
+            is_neutral_site=False,
         )
         test_db.add(game)
         test_db.commit()
-        
+
         # Act
         result = service.process_game(game)
         test_db.refresh(home_team)
         test_db.refresh(away_team)
-        
+
         # Assert
         assert game.is_processed is True, "Game should be marked as processed"
         assert home_team.elo_rating > 1500.0, "Home team rating should increase"
         assert away_team.elo_rating < 1500.0, "Away team rating should decrease"
         assert home_team.wins == 1, "Home team should have 1 win"
         assert away_team.losses == 1, "Away team should have 1 loss"
-        assert result['winner_name'] == "Home Team"
-        assert result['loser_name'] == "Away Team"
+        assert result["winner_name"] == "Home Team"
+        assert result["loser_name"] == "Away Team"
 
     def test_process_game_away_team_wins(self, test_db: Session):
         """Test processing game where away team wins"""
@@ -655,7 +699,7 @@ class TestGameProcessing:
         away_team = Team(name="Away Team", conference=ConferenceType.POWER_5, elo_rating=1500.0)
         test_db.add_all([home_team, away_team])
         test_db.commit()
-        
+
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
@@ -663,23 +707,23 @@ class TestGameProcessing:
             away_score=35,
             week=1,
             season=2024,
-            is_neutral_site=False
+            is_neutral_site=False,
         )
         test_db.add(game)
         test_db.commit()
-        
+
         # Act
         result = service.process_game(game)
         test_db.refresh(home_team)
         test_db.refresh(away_team)
-        
+
         # Assert
         assert game.is_processed is True
         assert away_team.elo_rating > 1500.0, "Away team rating should increase"
         assert home_team.elo_rating < 1500.0, "Home team rating should decrease"
         assert away_team.wins == 1, "Away team should have 1 win"
         assert home_team.losses == 1, "Home team should have 1 loss"
-        assert result['winner_name'] == "Away Team"
+        assert result["winner_name"] == "Away Team"
 
     def test_home_field_advantage_applied(self, test_db: Session):
         """Test that home field advantage is applied in calculations"""
@@ -690,7 +734,7 @@ class TestGameProcessing:
         away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
         test_db.add_all([home_team, away_team])
         test_db.commit()
-        
+
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
@@ -698,21 +742,23 @@ class TestGameProcessing:
             away_score=21,  # Close game
             week=1,
             season=2024,
-            is_neutral_site=False
+            is_neutral_site=False,
         )
         test_db.add(game)
         test_db.commit()
-        
+
         # Act
         result = service.process_game(game)
-        
+
         # Assert
         # Home team was expected to have better chance due to HFA
         # So winning gains less rating change than if it were neutral
-        assert result['winner_expected_probability'] > 0.5, "Home team should be favored with HFA"
+        assert result["winner_expected_probability"] > 0.5, "Home team should be favored with HFA"
         # With equal teams (1500 each) + 65 HFA, home team has rating of 1565 vs 1500
         # Expected prob = 1 / (1 + 10^((1500-1565)/400)) = 1 / (1 + 10^(-0.1625)) ≈ 0.592
-        assert result['winner_expected_probability'] == pytest.approx(0.592, abs=0.01), "65 point HFA should give ~59% chance"
+        assert result["winner_expected_probability"] == pytest.approx(
+            0.592, abs=0.01
+        ), "65 point HFA should give ~59% chance"
 
     def test_neutral_site_no_home_advantage(self, test_db: Session):
         """Test that neutral site games don't apply home field advantage"""
@@ -722,7 +768,7 @@ class TestGameProcessing:
         away_team = Team(name="Team B", conference=ConferenceType.POWER_5, elo_rating=1500.0)
         test_db.add_all([home_team, away_team])
         test_db.commit()
-        
+
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
@@ -730,29 +776,31 @@ class TestGameProcessing:
             away_score=24,
             week=1,
             season=2024,
-            is_neutral_site=True  # Neutral site
+            is_neutral_site=True,  # Neutral site
         )
         test_db.add(game)
         test_db.commit()
-        
+
         # Act
         result = service.process_game(game)
-        
+
         # Assert
         # Equal teams on neutral site should be 50-50
-        assert result['winner_expected_probability'] == pytest.approx(0.5, abs=0.001), "Neutral site should be 50-50"
+        assert result["winner_expected_probability"] == pytest.approx(
+            0.5, abs=0.001
+        ), "Neutral site should be 50-50"
 
     def test_larger_mov_increases_rating_change(self, test_db: Session):
         """Test that larger margin of victory increases rating change"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Game 1: Close win (3 points)
         team1_home = Team(name="Team 1 Home", conference=ConferenceType.POWER_5, elo_rating=1500.0)
         team1_away = Team(name="Team 1 Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
         test_db.add_all([team1_home, team1_away])
         test_db.commit()
-        
+
         game1 = Game(
             home_team_id=team1_home.id,
             away_team_id=team1_away.id,
@@ -760,17 +808,17 @@ class TestGameProcessing:
             away_score=21,
             week=1,
             season=2024,
-            is_neutral_site=True
+            is_neutral_site=True,
         )
         test_db.add(game1)
         test_db.commit()
-        
+
         # Game 2: Blowout (21 points)
         team2_home = Team(name="Team 2 Home", conference=ConferenceType.POWER_5, elo_rating=1500.0)
         team2_away = Team(name="Team 2 Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
         test_db.add_all([team2_home, team2_away])
         test_db.commit()
-        
+
         game2 = Game(
             home_team_id=team2_home.id,
             away_team_id=team2_away.id,
@@ -778,30 +826,34 @@ class TestGameProcessing:
             away_score=21,
             week=1,
             season=2024,
-            is_neutral_site=True
+            is_neutral_site=True,
         )
         test_db.add(game2)
         test_db.commit()
-        
+
         # Act
         result1 = service.process_game(game1)
         result2 = service.process_game(game2)
-        
+
         # Assert
-        assert result2['mov_multiplier'] > result1['mov_multiplier'], "Larger MOV should have larger multiplier"
-        assert abs(result2['winner_rating_change']) > abs(result1['winner_rating_change']), "Larger MOV should yield larger rating change"
+        assert (
+            result2["mov_multiplier"] > result1["mov_multiplier"]
+        ), "Larger MOV should have larger multiplier"
+        assert abs(result2["winner_rating_change"]) > abs(
+            result1["winner_rating_change"]
+        ), "Larger MOV should yield larger rating change"
 
     def test_conference_multiplier_applied_in_processing(self, test_db: Session):
         """Test that conference multipliers affect rating changes"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # P5 beats G5 (expected, reduced gain)
         p5_team = Team(name="P5 Team", conference=ConferenceType.POWER_5, elo_rating=1600.0)
         g5_team = Team(name="G5 Team", conference=ConferenceType.GROUP_5, elo_rating=1500.0)
         test_db.add_all([p5_team, g5_team])
         test_db.commit()
-        
+
         game = Game(
             home_team_id=p5_team.id,
             away_team_id=g5_team.id,
@@ -809,17 +861,17 @@ class TestGameProcessing:
             away_score=14,
             week=1,
             season=2024,
-            is_neutral_site=True
+            is_neutral_site=True,
         )
         test_db.add(game)
         test_db.commit()
-        
+
         initial_p5_rating = p5_team.elo_rating
-        
+
         # Act
         result = service.process_game(game)
         test_db.refresh(p5_team)
-        
+
         # Assert
         # P5 beating G5 should have 0.9 multiplier, so less gain
         rating_change = p5_team.elo_rating - initial_p5_rating
@@ -834,29 +886,33 @@ class TestGameProcessing:
         away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1500.0)
         test_db.add_all([home_team, away_team])
         test_db.commit()
-        
+
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
             home_score=28,
             away_score=24,
             week=1,
-            season=2024
+            season=2024,
         )
         test_db.add(game)
         test_db.commit()
-        
+
         # Act
         result1 = service.process_game(game)
         rating_after_first = home_team.elo_rating
-        
+
         # Try to process again
         result2 = service.process_game(game)
         test_db.refresh(home_team)
-        
+
         # Assert
-        assert result2 == {"error": "Game already processed"}, "Should return error for duplicate processing"
-        assert home_team.elo_rating == rating_after_first, "Rating should not change on duplicate processing"
+        assert result2 == {
+            "error": "Game already processed"
+        }, "Should return error for duplicate processing"
+        assert (
+            home_team.elo_rating == rating_after_first
+        ), "Rating should not change on duplicate processing"
 
     def test_rating_changes_stored_in_game(self, test_db: Session):
         """Test that rating changes are stored in the game record"""
@@ -866,22 +922,22 @@ class TestGameProcessing:
         away_team = Team(name="Away", conference=ConferenceType.POWER_5, elo_rating=1450.0)
         test_db.add_all([home_team, away_team])
         test_db.commit()
-        
+
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
             home_score=31,
             away_score=28,
             week=1,
-            season=2024
+            season=2024,
         )
         test_db.add(game)
         test_db.commit()
-        
+
         # Act
         service.process_game(game)
         test_db.refresh(game)
-        
+
         # Assert
         assert game.home_rating_change != 0.0, "Home team rating change should be stored"
         assert game.away_rating_change != 0.0, "Away team rating change should be stored"
@@ -892,13 +948,13 @@ class TestGameProcessing:
         """Test realistic game scenario with all factors combined"""
         # Arrange
         service = RankingService(test_db)
-        
+
         # Alabama (elite) vs Georgia (elite) - close game
         alabama = Team(name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0)
         georgia = Team(name="Georgia", conference=ConferenceType.POWER_5, elo_rating=1875.0)
         test_db.add_all([alabama, georgia])
         test_db.commit()
-        
+
         # Close game, Alabama wins at home
         game = Game(
             home_team_id=alabama.id,
@@ -907,27 +963,27 @@ class TestGameProcessing:
             away_score=24,
             week=5,
             season=2024,
-            is_neutral_site=False
+            is_neutral_site=False,
         )
         test_db.add(game)
         test_db.commit()
-        
+
         # Act
         result = service.process_game(game)
         test_db.refresh(alabama)
         test_db.refresh(georgia)
-        
+
         # Assert
         assert game.is_processed is True
         assert alabama.wins == 1
         assert georgia.losses == 1
         assert alabama.elo_rating > 1850.0, "Alabama should gain rating"
         assert georgia.elo_rating < 1875.0, "Georgia should lose rating"
-        assert result['score'] == "27-24"
-        
+        assert result["score"] == "27-24"
+
         # Alabama was slightly favored due to home field, so upset value is moderate
-        assert 'winner_expected_probability' in result
-        assert 'mov_multiplier' in result
+        assert "winner_expected_probability" in result
+        assert "mov_multiplier" in result
 
 
 @pytest.mark.unit
@@ -947,12 +1003,18 @@ class TestQuarterWeightedMOV:
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_score=42, away_score=14,
-            week=1, season=2024,
-            q1_home=14, q1_away=0,
-            q2_home=14, q2_away=0,
-            q3_home=7, q3_away=7,
-            q4_home=7, q4_away=7  # Garbage time TD by loser
+            home_score=42,
+            away_score=14,
+            week=1,
+            season=2024,
+            q1_home=14,
+            q1_away=0,
+            q2_home=14,
+            q2_away=0,
+            q3_home=7,
+            q3_away=7,
+            q4_home=7,
+            q4_away=7,  # Garbage time TD by loser
         )
 
         # Act
@@ -976,12 +1038,18 @@ class TestQuarterWeightedMOV:
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_score=21, away_score=14,
-            week=1, season=2024,
-            q1_home=7, q1_away=0,
-            q2_home=0, q2_away=7,
-            q3_home=7, q3_away=0,
-            q4_home=7, q4_away=7
+            home_score=21,
+            away_score=14,
+            week=1,
+            season=2024,
+            q1_home=7,
+            q1_away=0,
+            q2_home=0,
+            q2_away=7,
+            q3_home=7,
+            q3_away=0,
+            q4_home=7,
+            q4_away=7,
         )
 
         # Act
@@ -1004,12 +1072,18 @@ class TestQuarterWeightedMOV:
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_score=21, away_score=0,
-            week=1, season=2024,
-            q1_home=7, q1_away=0,
-            q2_home=7, q2_away=0,
-            q3_home=7, q3_away=0,
-            q4_home=0, q4_away=0
+            home_score=21,
+            away_score=0,
+            week=1,
+            season=2024,
+            q1_home=7,
+            q1_away=0,
+            q2_home=7,
+            q2_away=0,
+            q3_home=7,
+            q3_away=0,
+            q4_home=0,
+            q4_away=0,
         )
 
         # Act & Assert - Should NOT trigger garbage time (threshold is >21, not >=21)
@@ -1030,12 +1104,18 @@ class TestQuarterWeightedMOV:
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_score=28, away_score=0,
-            week=1, season=2024,
-            q1_home=7, q1_away=0,
-            q2_home=7, q2_away=0,
-            q3_home=7, q3_away=0,
-            q4_home=7, q4_away=0
+            home_score=28,
+            away_score=0,
+            week=1,
+            season=2024,
+            q1_home=7,
+            q1_away=0,
+            q2_home=7,
+            q2_away=0,
+            q3_home=7,
+            q3_away=0,
+            q4_home=7,
+            q4_away=0,
         )
 
         # Act
@@ -1058,8 +1138,10 @@ class TestQuarterWeightedMOV:
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_score=35, away_score=28,
-            week=1, season=2024
+            home_score=35,
+            away_score=28,
+            week=1,
+            season=2024,
             # No quarter scores
         )
 
@@ -1083,12 +1165,18 @@ class TestQuarterWeightedMOV:
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_score=35, away_score=28,
-            week=1, season=2024,
-            q1_home=14, q1_away=7,
-            q2_home=7, q2_away=14,
-            q3_home=None, q3_away=None,  # Missing
-            q4_home=None, q4_away=None   # Missing
+            home_score=35,
+            away_score=28,
+            week=1,
+            season=2024,
+            q1_home=14,
+            q1_away=7,
+            q2_home=7,
+            q2_away=14,
+            q3_home=None,
+            q3_away=None,  # Missing
+            q4_home=None,
+            q4_away=None,  # Missing
         )
 
         # Act
@@ -1111,12 +1199,18 @@ class TestQuarterWeightedMOV:
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_score=28, away_score=0,
-            week=1, season=2024,
-            q1_home=28, q1_away=0,
-            q2_home=0, q2_away=0,
-            q3_home=0, q3_away=0,
-            q4_home=0, q4_away=0
+            home_score=28,
+            away_score=0,
+            week=1,
+            season=2024,
+            q1_home=28,
+            q1_away=0,
+            q2_home=0,
+            q2_away=0,
+            q3_home=0,
+            q3_away=0,
+            q4_home=0,
+            q4_away=0,
         )
 
         # Act
@@ -1139,12 +1233,18 @@ class TestQuarterWeightedMOV:
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_score=28, away_score=21,
-            week=1, season=2024,
-            q1_home=0, q1_away=14,  # Away ahead
-            q2_home=0, q2_away=7,   # Away still ahead
-            q3_home=14, q3_away=0,  # Home rallies
-            q4_home=14, q4_away=0   # Home wins
+            home_score=28,
+            away_score=21,
+            week=1,
+            season=2024,
+            q1_home=0,
+            q1_away=14,  # Away ahead
+            q2_home=0,
+            q2_away=7,  # Away still ahead
+            q3_home=14,
+            q3_away=0,  # Home rallies
+            q4_home=14,
+            q4_away=0,  # Home wins
         )
 
         # Act
@@ -1168,12 +1268,18 @@ class TestQuarterWeightedMOV:
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_score=70, away_score=0,
-            week=1, season=2024,
-            q1_home=21, q1_away=0,
-            q2_home=21, q2_away=0,
-            q3_home=14, q3_away=0,
-            q4_home=14, q4_away=0
+            home_score=70,
+            away_score=0,
+            week=1,
+            season=2024,
+            q1_home=21,
+            q1_away=0,
+            q2_home=21,
+            q2_away=0,
+            q3_home=14,
+            q3_away=0,
+            q4_home=14,
+            q4_away=0,
         )
 
         # Act
@@ -1195,12 +1301,18 @@ class TestQuarterWeightedMOV:
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_score=14, away_score=35,
-            week=1, season=2024,
-            q1_home=0, q1_away=14,
-            q2_home=7, q2_away=7,
-            q3_home=7, q3_away=7,
-            q4_home=0, q4_away=7
+            home_score=14,
+            away_score=35,
+            week=1,
+            season=2024,
+            q1_home=0,
+            q1_away=14,
+            q2_home=7,
+            q2_away=7,
+            q3_home=7,
+            q3_away=7,
+            q4_home=0,
+            q4_away=7,
         )
 
         # Act - winner_is_home=False because away team won
@@ -1228,12 +1340,18 @@ class TestProcessGameWithQuarters:
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_score=35, away_score=28,
-            week=1, season=2024,
-            q1_home=7, q1_away=7,
-            q2_home=14, q2_away=7,
-            q3_home=7, q3_away=7,
-            q4_home=7, q4_away=7
+            home_score=35,
+            away_score=28,
+            week=1,
+            season=2024,
+            q1_home=7,
+            q1_away=7,
+            q2_home=14,
+            q2_away=7,
+            q3_home=7,
+            q3_away=7,
+            q4_home=7,
+            q4_away=7,
         )
         test_db.add(game)
         test_db.commit()
@@ -1243,9 +1361,9 @@ class TestProcessGameWithQuarters:
 
         # Assert - Game should be processed successfully
         assert game.is_processed is True
-        assert result['mov_multiplier'] is not None
+        assert result["mov_multiplier"] is not None
         # MOV should be from quarter-weighted calculation
-        assert result['winner_name'] == "Home"
+        assert result["winner_name"] == "Home"
 
     def test_process_game_without_quarter_data_uses_legacy(self, test_db: Session):
         """Test that games without quarter data use legacy MOV"""
@@ -1260,8 +1378,10 @@ class TestProcessGameWithQuarters:
         game = Game(
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            home_score=35, away_score=28,
-            week=1, season=2024
+            home_score=35,
+            away_score=28,
+            week=1,
+            season=2024,
             # No quarter scores
         )
         test_db.add(game)
@@ -1272,7 +1392,7 @@ class TestProcessGameWithQuarters:
 
         # Assert - Game should be processed successfully with legacy MOV
         assert game.is_processed is True
-        assert result['mov_multiplier'] is not None
+        assert result["mov_multiplier"] is not None
         # MOV should be from legacy calculation (7 point difference)
         expected_legacy_mov = math.log(7 + 1)
-        assert abs(result['mov_multiplier'] - expected_legacy_mov) < 0.01
+        assert abs(result["mov_multiplier"] - expected_legacy_mov) < 0.01

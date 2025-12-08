@@ -26,7 +26,7 @@ class TestWinProbabilityCalculation:
             elo_rating=1500,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         away_team = Team(
             id=2,
@@ -34,7 +34,7 @@ class TestWinProbabilityCalculation:
             elo_rating=1500,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         game = Game(
             id=1,
@@ -45,7 +45,7 @@ class TestWinProbabilityCalculation:
             home_score=0,
             away_score=0,
             is_neutral_site=True,
-            is_processed=False
+            is_processed=False,
         )
 
         prediction = _calculate_game_prediction(game, home_team, away_team)
@@ -61,7 +61,7 @@ class TestWinProbabilityCalculation:
             elo_rating=1500,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         away_team = Team(
             id=2,
@@ -69,7 +69,7 @@ class TestWinProbabilityCalculation:
             elo_rating=1500,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         game = Game(
             id=1,
@@ -80,7 +80,7 @@ class TestWinProbabilityCalculation:
             home_score=0,
             away_score=0,
             is_neutral_site=False,
-            is_processed=False
+            is_processed=False,
         )
 
         prediction = _calculate_game_prediction(game, home_team, away_team)
@@ -99,7 +99,7 @@ class TestWinProbabilityCalculation:
             elo_rating=1700,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         away_team = Team(
             id=2,
@@ -107,7 +107,7 @@ class TestWinProbabilityCalculation:
             elo_rating=1400,
             conference=ConferenceType.GROUP_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         game = Game(
             id=1,
@@ -118,7 +118,7 @@ class TestWinProbabilityCalculation:
             home_score=0,
             away_score=0,
             is_neutral_site=True,
-            is_processed=False
+            is_processed=False,
         )
 
         prediction = _calculate_game_prediction(game, home_team, away_team)
@@ -139,7 +139,7 @@ class TestScoreEstimation:
             elo_rating=1700,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         away_team = Team(
             id=2,
@@ -147,7 +147,7 @@ class TestScoreEstimation:
             elo_rating=1400,
             conference=ConferenceType.GROUP_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         game = Game(
             id=1,
@@ -158,7 +158,7 @@ class TestScoreEstimation:
             home_score=0,
             away_score=0,
             is_neutral_site=True,
-            is_processed=False
+            is_processed=False,
         )
 
         prediction = _calculate_game_prediction(game, home_team, away_team)
@@ -177,20 +177,10 @@ class TestScoreEstimation:
         """Test that scores are clamped within 0-150 range"""
         # Extreme case: massive rating difference
         home_team = Team(
-            id=1,
-            name="Elite",
-            elo_rating=2200,
-            conference=ConferenceType.POWER_5,
-            wins=0,
-            losses=0
+            id=1, name="Elite", elo_rating=2200, conference=ConferenceType.POWER_5, wins=0, losses=0
         )
         away_team = Team(
-            id=2,
-            name="Very Weak",
-            elo_rating=1000,
-            conference=ConferenceType.FCS,
-            wins=0,
-            losses=0
+            id=2, name="Very Weak", elo_rating=1000, conference=ConferenceType.FCS, wins=0, losses=0
         )
         game = Game(
             id=1,
@@ -201,7 +191,7 @@ class TestScoreEstimation:
             home_score=0,
             away_score=0,
             is_neutral_site=True,
-            is_processed=False
+            is_processed=False,
         )
 
         prediction = _calculate_game_prediction(game, home_team, away_team)
@@ -218,7 +208,7 @@ class TestScoreEstimation:
             elo_rating=1500,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         away_team = Team(
             id=2,
@@ -226,7 +216,7 @@ class TestScoreEstimation:
             elo_rating=1500,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         game = Game(
             id=1,
@@ -237,7 +227,7 @@ class TestScoreEstimation:
             home_score=0,
             away_score=0,
             is_neutral_site=True,
-            is_processed=False
+            is_processed=False,
         )
 
         prediction = _calculate_game_prediction(game, home_team, away_team)
@@ -253,20 +243,10 @@ class TestConfidenceLevels:
     def test_high_confidence(self):
         """Test high confidence for large rating difference"""
         home_team = Team(
-            id=1,
-            name="Elite",
-            elo_rating=1800,
-            conference=ConferenceType.POWER_5,
-            wins=0,
-            losses=0
+            id=1, name="Elite", elo_rating=1800, conference=ConferenceType.POWER_5, wins=0, losses=0
         )
         away_team = Team(
-            id=2,
-            name="Weak",
-            elo_rating=1200,
-            conference=ConferenceType.FCS,
-            wins=0,
-            losses=0
+            id=2, name="Weak", elo_rating=1200, conference=ConferenceType.FCS, wins=0, losses=0
         )
         game = Game(
             id=1,
@@ -277,7 +257,7 @@ class TestConfidenceLevels:
             home_score=0,
             away_score=0,
             is_neutral_site=True,
-            is_processed=False
+            is_processed=False,
         )
 
         prediction = _calculate_game_prediction(game, home_team, away_team)
@@ -292,7 +272,7 @@ class TestConfidenceLevels:
             elo_rating=1600,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         away_team = Team(
             id=2,
@@ -300,7 +280,7 @@ class TestConfidenceLevels:
             elo_rating=1450,
             conference=ConferenceType.GROUP_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         game = Game(
             id=1,
@@ -311,7 +291,7 @@ class TestConfidenceLevels:
             home_score=0,
             away_score=0,
             is_neutral_site=True,
-            is_processed=False
+            is_processed=False,
         )
 
         prediction = _calculate_game_prediction(game, home_team, away_team)
@@ -326,7 +306,7 @@ class TestConfidenceLevels:
             elo_rating=1500,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         away_team = Team(
             id=2,
@@ -334,7 +314,7 @@ class TestConfidenceLevels:
             elo_rating=1490,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         game = Game(
             id=1,
@@ -345,7 +325,7 @@ class TestConfidenceLevels:
             home_score=0,
             away_score=0,
             is_neutral_site=True,
-            is_processed=False
+            is_processed=False,
         )
 
         prediction = _calculate_game_prediction(game, home_team, away_team)
@@ -364,7 +344,7 @@ class TestValidation:
             elo_rating=1500,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         valid_team_2 = Team(
             id=2,
@@ -372,7 +352,7 @@ class TestValidation:
             elo_rating=1600,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
 
         assert _validate_prediction_teams(valid_team_1, valid_team_2) == True
@@ -385,15 +365,10 @@ class TestValidation:
             elo_rating=1500,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         invalid_team = Team(
-            id=2,
-            name="Team B",
-            elo_rating=0,
-            conference=ConferenceType.POWER_5,
-            wins=0,
-            losses=0
+            id=2, name="Team B", elo_rating=0, conference=ConferenceType.POWER_5, wins=0, losses=0
         )
 
         assert _validate_prediction_teams(valid_team, invalid_team) == False
@@ -407,7 +382,7 @@ class TestValidation:
             elo_rating=1500,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
 
         assert _validate_prediction_teams(None, valid_team) == False
@@ -426,7 +401,7 @@ class TestPredictionOutput:
             elo_rating=1600,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         away_team = Team(
             id=2,
@@ -434,7 +409,7 @@ class TestPredictionOutput:
             elo_rating=1500,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         game = Game(
             id=42,
@@ -445,18 +420,31 @@ class TestPredictionOutput:
             home_score=0,
             away_score=0,
             is_neutral_site=False,
-            is_processed=False
+            is_processed=False,
         )
 
         prediction = _calculate_game_prediction(game, home_team, away_team)
 
         # Check all required fields exist
         required_fields = [
-            "game_id", "home_team_id", "home_team", "away_team_id", "away_team",
-            "week", "season", "game_date", "is_neutral_site", "predicted_winner",
-            "predicted_winner_id", "predicted_home_score", "predicted_away_score",
-            "home_win_probability", "away_win_probability", "confidence",
-            "home_team_rating", "away_team_rating"
+            "game_id",
+            "home_team_id",
+            "home_team",
+            "away_team_id",
+            "away_team",
+            "week",
+            "season",
+            "game_date",
+            "is_neutral_site",
+            "predicted_winner",
+            "predicted_winner_id",
+            "predicted_home_score",
+            "predicted_away_score",
+            "home_win_probability",
+            "away_win_probability",
+            "confidence",
+            "home_team_rating",
+            "away_team_rating",
         ]
 
         for field in required_fields:
@@ -477,7 +465,7 @@ class TestPredictionOutput:
             elo_rating=1700,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         away_team = Team(
             id=2,
@@ -485,7 +473,7 @@ class TestPredictionOutput:
             elo_rating=1400,
             conference=ConferenceType.GROUP_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         game = Game(
             id=1,
@@ -496,7 +484,7 @@ class TestPredictionOutput:
             home_score=0,
             away_score=0,
             is_neutral_site=True,
-            is_processed=False
+            is_processed=False,
         )
 
         prediction = _calculate_game_prediction(game, home_team, away_team)
@@ -513,7 +501,7 @@ class TestPredictionOutput:
             elo_rating=1550,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         away_team = Team(
             id=2,
@@ -521,7 +509,7 @@ class TestPredictionOutput:
             elo_rating=1450,
             conference=ConferenceType.POWER_5,
             wins=0,
-            losses=0
+            losses=0,
         )
         game = Game(
             id=1,
@@ -532,7 +520,7 @@ class TestPredictionOutput:
             home_score=0,
             away_score=0,
             is_neutral_site=True,
-            is_processed=False
+            is_processed=False,
         )
 
         prediction = _calculate_game_prediction(game, home_team, away_team)
@@ -593,7 +581,7 @@ class TestValidationFunctions:
             away_team_id=2,
             home_score=0,
             away_score=0,
-            is_processed=False
+            is_processed=False,
         )
         assert validate_game_for_prediction(game) == True
 
@@ -607,7 +595,7 @@ class TestValidationFunctions:
             away_team_id=2,
             home_score=35,
             away_score=28,
-            is_processed=True
+            is_processed=True,
         )
         assert validate_game_for_prediction(game) == False
 
@@ -621,6 +609,6 @@ class TestValidationFunctions:
             away_team_id=2,
             home_score=0,
             away_score=0,
-            is_processed=False
+            is_processed=False,
         )
         assert validate_game_for_prediction(game) == False

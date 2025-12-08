@@ -46,7 +46,7 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
         print(f"\nWeek {week}:")
 
         # Get games from CFBD
-        games_data = cfbd.get_games(season, week=week, season_type='regular')
+        games_data = cfbd.get_games(season, week=week, season_type="regular")
 
         if not games_data:
             print(f"  No games found")
@@ -56,8 +56,8 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
         week_skipped = 0
 
         for game_data in games_data:
-            home_name = game_data.get('homeTeam')
-            away_name = game_data.get('awayTeam')
+            home_name = game_data.get("homeTeam")
+            away_name = game_data.get("awayTeam")
 
             # Skip if team names are missing
             if not home_name or not away_name:
@@ -74,10 +74,10 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
                     # Create FCS team
                     home_team = Team(
                         name=home_name,
-                        conference='FCS',
+                        conference="FCS",
                         is_fcs=True,
                         elo_rating=1500.0,
-                        initial_rating=1500.0
+                        initial_rating=1500.0,
                     )
                     db.add(home_team)
                     db.flush()
@@ -86,32 +86,36 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
                     # Create FCS team
                     away_team = Team(
                         name=away_name,
-                        conference='FCS',
+                        conference="FCS",
                         is_fcs=True,
                         elo_rating=1500.0,
-                        initial_rating=1500.0
+                        initial_rating=1500.0,
                     )
                     db.add(away_team)
                     db.flush()
 
             # Check if game already exists
-            existing = db.query(Game).filter(
-                Game.home_team_id == home_team.id,
-                Game.away_team_id == away_team.id,
-                Game.week == week,
-                Game.season == season
-            ).first()
+            existing = (
+                db.query(Game)
+                .filter(
+                    Game.home_team_id == home_team.id,
+                    Game.away_team_id == away_team.id,
+                    Game.week == week,
+                    Game.season == season,
+                )
+                .first()
+            )
 
             if existing:
                 week_skipped += 1
                 continue
 
             # Parse game date
-            game_date_str = game_data.get('startDate')
+            game_date_str = game_data.get("startDate")
             game_date = None
             if game_date_str:
                 try:
-                    game_date = datetime.fromisoformat(game_date_str.replace('Z', '+00:00'))
+                    game_date = datetime.fromisoformat(game_date_str.replace("Z", "+00:00"))
                 except:
                     pass
 
@@ -119,18 +123,18 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
             is_fcs_game = home_team.is_fcs or away_team.is_fcs
 
             # Fetch quarter scores for completed games
-            home_score = game_data.get('homePoints') or 0
-            away_score = game_data.get('awayPoints') or 0
+            home_score = game_data.get("homePoints") or 0
+            away_score = game_data.get("awayPoints") or 0
             is_completed = home_score != 0 or away_score != 0
 
             line_scores = None
             if is_completed:
                 line_scores = cfbd.get_game_line_scores(
-                    game_id=game_data.get('id', 0),
+                    game_id=game_data.get("id", 0),
                     year=season,
                     week=week,
                     home_team=home_name,
-                    away_team=away_name
+                    away_team=away_name,
                 )
 
             # Create game record
@@ -141,19 +145,19 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
                 away_score=away_score,
                 week=week,
                 season=season,
-                is_neutral_site=game_data.get('neutralSite', False),
+                is_neutral_site=game_data.get("neutralSite", False),
                 game_date=game_date,
                 is_processed=False,  # Future game, not processed yet
                 excluded_from_rankings=is_fcs_game,
                 # EPIC-021: Quarter scores (if available)
-                q1_home=line_scores['home'][0] if line_scores else None,
-                q1_away=line_scores['away'][0] if line_scores else None,
-                q2_home=line_scores['home'][1] if line_scores else None,
-                q2_away=line_scores['away'][1] if line_scores else None,
-                q3_home=line_scores['home'][2] if line_scores else None,
-                q3_away=line_scores['away'][2] if line_scores else None,
-                q4_home=line_scores['home'][3] if line_scores else None,
-                q4_away=line_scores['away'][3] if line_scores else None,
+                q1_home=line_scores["home"][0] if line_scores else None,
+                q1_away=line_scores["away"][0] if line_scores else None,
+                q2_home=line_scores["home"][1] if line_scores else None,
+                q2_away=line_scores["away"][1] if line_scores else None,
+                q3_home=line_scores["home"][2] if line_scores else None,
+                q3_away=line_scores["away"][2] if line_scores else None,
+                q4_home=line_scores["home"][3] if line_scores else None,
+                q4_away=line_scores["away"][3] if line_scores else None,
             )
 
             # Validate quarter scores if present
@@ -186,7 +190,7 @@ def main():
     print()
 
     # Get API key
-    api_key = os.getenv('CFBD_API_KEY')
+    api_key = os.getenv("CFBD_API_KEY")
     if not api_key:
         print("ERROR: No CFBD_API_KEY found in environment")
         sys.exit(1)
@@ -218,7 +222,7 @@ def main():
     print(f"Will import games for {season}, weeks {start_week}-{end_week}")
     confirm = input("Continue? (yes/no): ").strip().lower()
 
-    if confirm != 'yes':
+    if confirm != "yes":
         print("Cancelled")
         sys.exit(0)
 

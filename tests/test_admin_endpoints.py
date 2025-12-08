@@ -107,19 +107,13 @@ class TestConfigEndpoints:
 
     def test_put_config_updates_limit(self, test_client):
         """PUT config should update monthly limit"""
-        response = test_client.put(
-            "/api/admin/config",
-            json={"cfbd_monthly_limit": 2000}
-        )
+        response = test_client.put("/api/admin/config", json={"cfbd_monthly_limit": 2000})
         assert response.status_code == 200
         assert response.json()["cfbd_monthly_limit"] == 2000
 
     def test_put_config_returns_updated_config(self, test_client):
         """PUT config should return full updated config"""
-        response = test_client.put(
-            "/api/admin/config",
-            json={"cfbd_monthly_limit": 1500}
-        )
+        response = test_client.put("/api/admin/config", json={"cfbd_monthly_limit": 1500})
         data = response.json()
 
         assert data["cfbd_monthly_limit"] == 1500
@@ -130,7 +124,7 @@ class TestConfigEndpoints:
 class TestTriggerUpdateEndpoint:
     """Tests for POST /api/admin/trigger-update"""
 
-    @patch('weekly_update.is_active_season')
+    @patch("weekly_update.is_active_season")
     def test_trigger_update_fails_in_off_season(self, mock_is_active, test_client):
         """Trigger should fail with 400 if in off-season"""
         mock_is_active.return_value = False
@@ -140,8 +134,8 @@ class TestTriggerUpdateEndpoint:
         assert response.status_code == 400
         assert "off-season" in response.json()["detail"].lower()
 
-    @patch('weekly_update.is_active_season')
-    @patch('weekly_update.get_current_week_wrapper')
+    @patch("weekly_update.is_active_season")
+    @patch("weekly_update.get_current_week_wrapper")
     def test_trigger_update_fails_with_no_week(self, mock_get_week, mock_is_active, test_client):
         """Trigger should fail with 400 if no current week"""
         mock_is_active.return_value = True
@@ -152,9 +146,9 @@ class TestTriggerUpdateEndpoint:
         assert response.status_code == 400
         assert "no current week" in response.json()["detail"].lower()
 
-    @patch('weekly_update.is_active_season')
-    @patch('weekly_update.get_current_week_wrapper')
-    @patch('weekly_update.check_api_usage')
+    @patch("weekly_update.is_active_season")
+    @patch("weekly_update.get_current_week_wrapper")
+    @patch("weekly_update.check_api_usage")
     def test_trigger_update_fails_at_90_percent_usage(
         self, mock_check_usage, mock_get_week, mock_is_active, test_client
     ):
@@ -168,9 +162,9 @@ class TestTriggerUpdateEndpoint:
         assert response.status_code == 429
         assert "usage" in response.json()["detail"].lower()
 
-    @patch('weekly_update.is_active_season')
-    @patch('weekly_update.get_current_week_wrapper')
-    @patch('weekly_update.check_api_usage')
+    @patch("weekly_update.is_active_season")
+    @patch("weekly_update.get_current_week_wrapper")
+    @patch("weekly_update.check_api_usage")
     def test_trigger_update_succeeds_with_valid_conditions(
         self, mock_check_usage, mock_get_week, mock_is_active, test_client
     ):
@@ -186,9 +180,9 @@ class TestTriggerUpdateEndpoint:
         assert "task_id" in response.json()
         assert "started_at" in response.json()
 
-    @patch('weekly_update.is_active_season')
-    @patch('weekly_update.get_current_week_wrapper')
-    @patch('weekly_update.check_api_usage')
+    @patch("weekly_update.is_active_season")
+    @patch("weekly_update.get_current_week_wrapper")
+    @patch("weekly_update.check_api_usage")
     def test_trigger_update_creates_task_record(
         self, mock_check_usage, mock_get_week, mock_is_active, test_db, test_client
     ):
@@ -225,11 +219,7 @@ class TestUpdateStatusEndpoint:
             started_at=datetime.utcnow(),
             completed_at=datetime.utcnow(),
             duration_seconds=120.5,
-            result_json=json.dumps({
-                "success": True,
-                "games_imported": 45,
-                "error_message": None
-            })
+            result_json=json.dumps({"success": True, "games_imported": 45, "error_message": None}),
         )
         test_db.add(task)
         test_db.commit()
@@ -252,7 +242,7 @@ class TestUpdateStatusEndpoint:
             task_id="test-task-no-result",
             status="running",
             trigger_type="manual",
-            started_at=datetime.utcnow()
+            started_at=datetime.utcnow(),
         )
         test_db.add(task)
         test_db.commit()
@@ -274,16 +264,16 @@ class TestUpdateTaskModel:
             task_id="model-test-123",
             status="started",
             trigger_type="manual",
-            started_at=datetime.utcnow()
+            started_at=datetime.utcnow(),
         )
         test_db.add(task)
         test_db.commit()
         test_db.refresh(task)
 
         # Verify it was saved
-        saved_task = test_db.query(UpdateTask).filter(
-            UpdateTask.task_id == "model-test-123"
-        ).first()
+        saved_task = (
+            test_db.query(UpdateTask).filter(UpdateTask.task_id == "model-test-123").first()
+        )
 
         assert saved_task is not None
         assert saved_task.status == "started"
@@ -296,7 +286,7 @@ class TestUpdateTaskModel:
             task_id="update-test-456",
             status="started",
             trigger_type="manual",
-            started_at=datetime.utcnow()
+            started_at=datetime.utcnow(),
         )
         test_db.add(task)
         test_db.commit()
@@ -309,9 +299,9 @@ class TestUpdateTaskModel:
         test_db.commit()
 
         # Verify update
-        updated_task = test_db.query(UpdateTask).filter(
-            UpdateTask.task_id == "update-test-456"
-        ).first()
+        updated_task = (
+            test_db.query(UpdateTask).filter(UpdateTask.task_id == "update-test-456").first()
+        )
 
         assert updated_task.status == "completed"
         assert updated_task.completed_at is not None
@@ -336,9 +326,9 @@ class TestAPIIntegration:
         config_limit = config_response.json()["cfbd_monthly_limit"]
         assert dashboard_limit == config_limit
 
-    @patch('weekly_update.is_active_season')
-    @patch('weekly_update.get_current_week_wrapper')
-    @patch('weekly_update.check_api_usage')
+    @patch("weekly_update.is_active_season")
+    @patch("weekly_update.get_current_week_wrapper")
+    @patch("weekly_update.check_api_usage")
     def test_trigger_and_check_status_workflow(
         self, mock_check_usage, mock_get_week, mock_is_active, test_client
     ):

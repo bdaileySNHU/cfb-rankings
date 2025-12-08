@@ -10,18 +10,22 @@ import sys
 def check_schema():
     """Check which migrations have been applied"""
     try:
-        conn = sqlite3.connect('cfb_rankings.db')
+        conn = sqlite3.connect("cfb_rankings.db")
         cursor = conn.cursor()
 
         # Get all columns from games table
-        cursor.execute('PRAGMA table_info(games)')
+        cursor.execute("PRAGMA table_info(games)")
         columns = cursor.fetchall()
 
         # Check for quarter score columns (EPIC-021)
-        quarter_cols = [col for col in columns if 'q1' in col[1] or 'q2' in col[1] or 'q3' in col[1] or 'q4' in col[1]]
+        quarter_cols = [
+            col
+            for col in columns
+            if "q1" in col[1] or "q2" in col[1] or "q3" in col[1] or "q4" in col[1]
+        ]
 
         # Check for game_type column (EPIC-022)
-        game_type_col = [col for col in columns if col[1] == 'game_type']
+        game_type_col = [col for col in columns if col[1] == "game_type"]
 
         print("=" * 80)
         print("PRODUCTION DATABASE SCHEMA CHECK")

@@ -17,7 +17,7 @@ from src.integrations.cfbd_client import CFBDClient
 
 
 def main():
-    api_key = os.getenv('CFBD_API_KEY')
+    api_key = os.getenv("CFBD_API_KEY")
     if not api_key:
         print("ERROR: No CFBD_API_KEY found")
         sys.exit(1)
@@ -31,7 +31,7 @@ def main():
 
     # Get week 10 games
     print("Fetching week 10 games for 2025 season...")
-    games = cfbd.get_games(2025, week=10, season_type='regular')
+    games = cfbd.get_games(2025, week=10, season_type="regular")
 
     if not games:
         print("No games returned!")
@@ -51,6 +51,7 @@ def main():
         print()
 
     print("=" * 60)
+
 
 if __name__ == "__main__":
     main()

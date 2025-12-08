@@ -65,6 +65,7 @@ class ConferenceType(str, enum.Enum):
         Conference tier affects base ELO rating and cross-tier matchup
         multipliers. FCS teams start at 1300 ELO vs 1500 for FBS teams.
     """
+
     POWER_5 = "P5"
     GROUP_5 = "G5"
     FCS = "FCS"
@@ -109,6 +110,7 @@ class Team(Base):
         >>> db.add(team)
         >>> db.commit()
     """
+
     __tablename__ = "teams"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -195,6 +197,7 @@ class Game(Base):
         >>> db.add(game)
         >>> db.commit()
     """
+
     __tablename__ = "games"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -275,18 +278,34 @@ class Game(Base):
             ValueError: If quarter scores don't sum to final scores
         """
         # Validate home team quarters
-        if all([self.q1_home is not None, self.q2_home is not None,
-                self.q3_home is not None, self.q4_home is not None]):
+        if all(
+            [
+                self.q1_home is not None,
+                self.q2_home is not None,
+                self.q3_home is not None,
+                self.q4_home is not None,
+            ]
+        ):
             home_sum = self.q1_home + self.q2_home + self.q3_home + self.q4_home
             if home_sum != self.home_score:
-                raise ValueError(f"Home quarter scores sum to {home_sum}, expected {self.home_score}")
+                raise ValueError(
+                    f"Home quarter scores sum to {home_sum}, expected {self.home_score}"
+                )
 
         # Validate away team quarters
-        if all([self.q1_away is not None, self.q2_away is not None,
-                self.q3_away is not None, self.q4_away is not None]):
+        if all(
+            [
+                self.q1_away is not None,
+                self.q2_away is not None,
+                self.q3_away is not None,
+                self.q4_away is not None,
+            ]
+        ):
             away_sum = self.q1_away + self.q2_away + self.q3_away + self.q4_away
             if away_sum != self.away_score:
-                raise ValueError(f"Away quarter scores sum to {away_sum}, expected {self.away_score}")
+                raise ValueError(
+                    f"Away quarter scores sum to {away_sum}, expected {self.away_score}"
+                )
 
     def __repr__(self):
         return f"<Game(week={self.week}, {self.home_team.name} {self.home_score} vs {self.away_team.name} {self.away_score})>"
@@ -325,10 +344,11 @@ class RankingHistory(Base):
         >>> db.add(history)
         >>> db.commit()
     """
+
     __tablename__ = "ranking_history"
     __table_args__ = (
         # EPIC-024 FIX: Prevent duplicate entries for same team/season/week
-        Index('idx_ranking_history_unique', 'team_id', 'season', 'week', unique=True),
+        Index("idx_ranking_history_unique", "team_id", "season", "week", unique=True),
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -382,6 +402,7 @@ class Season(Base):
         >>> db.add(season)
         >>> db.commit()
     """
+
     __tablename__ = "seasons"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -422,6 +443,7 @@ class APIUsage(Base):
         >>> db.add(usage)
         >>> db.commit()
     """
+
     __tablename__ = "api_usage"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -466,6 +488,7 @@ class UpdateTask(Base):
         >>> db.add(task)
         >>> db.commit()
     """
+
     __tablename__ = "update_tasks"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -492,6 +515,7 @@ class Prediction(Base):
 
     Part of EPIC-009: Prediction Accuracy Tracking
     """
+
     __tablename__ = "predictions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -538,6 +562,7 @@ class APPollRanking(Base):
 
     Part of EPIC-010: AP Poll Prediction Comparison
     """
+
     __tablename__ = "ap_poll_rankings"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -547,7 +572,7 @@ class APPollRanking(Base):
     week = Column(Integer, nullable=False, index=True)
 
     # Poll metadata
-    poll_type = Column(String(50), default='AP Top 25', nullable=False)
+    poll_type = Column(String(50), default="AP Top 25", nullable=False)
     rank = Column(Integer, nullable=False)
 
     # Team reference
@@ -565,9 +590,9 @@ class APPollRanking(Base):
 
     # Unique constraint: one rank per team per week per season
     __table_args__ = (
-        Index('idx_ap_season_week', 'season', 'week'),
-        Index('idx_ap_team_season', 'team_id', 'season'),
-        UniqueConstraint('season', 'week', 'team_id', name='uq_ap_season_week_team'),
+        Index("idx_ap_season_week", "season", "week"),
+        Index("idx_ap_team_season", "team_id", "season"),
+        UniqueConstraint("season", "week", "team_id", name="uq_ap_season_week_team"),
     )
 
     def __repr__(self):

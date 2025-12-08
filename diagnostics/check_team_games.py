@@ -27,23 +27,29 @@ def check_team_games(team_id, season):
         print(f"Team ID {team_id} not found")
         return 1
 
-    print("="*80)
+    print("=" * 80)
     print(f"GAMES CHECK: {team.name} - {season}")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Get all games (including unprocessed)
-    games = db.query(Game).filter(
-        ((Game.home_team_id == team_id) | (Game.away_team_id == team_id)),
-        Game.season == season
-    ).order_by(Game.week).all()
+    games = (
+        db.query(Game)
+        .filter(
+            ((Game.home_team_id == team_id) | (Game.away_team_id == team_id)), Game.season == season
+        )
+        .order_by(Game.week)
+        .all()
+    )
 
     print(f"Total games: {len(games)}")
     print()
 
     # Show all games
-    print(f"{'Week':<6} {'Game ID':<8} {'Opponent':<30} {'Score':<12} {'Processed':<10} {'Result':<10}")
-    print("-"*100)
+    print(
+        f"{'Week':<6} {'Game ID':<8} {'Opponent':<30} {'Score':<12} {'Processed':<10} {'Result':<10}"
+    )
+    print("-" * 100)
 
     for game in games:
         is_home = game.home_team_id == team_id
@@ -71,7 +77,9 @@ def check_team_games(team_id, season):
 
         processed = "Yes" if game.is_processed else "No"
 
-        print(f"{game.week:<6} {game.id:<8} {opponent.name:<30} {score:<12} {processed:<10} {result:<10}")
+        print(
+            f"{game.week:<6} {game.id:<8} {opponent.name:<30} {score:<12} {processed:<10} {result:<10}"
+        )
 
     print()
 

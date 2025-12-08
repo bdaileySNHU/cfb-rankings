@@ -127,9 +127,9 @@ class TestComparisonChart:
 
         # Check for chart-related elements
         has_chart_element = (
-            "canvas" in page_content.lower() or
-            "chart" in page_content.lower() or
-            "svg" in page_content.lower()
+            "canvas" in page_content.lower()
+            or "chart" in page_content.lower()
+            or "svg" in page_content.lower()
         )
 
         # Page should have some chart visualization capability
@@ -243,11 +243,7 @@ class TestComparisonUserWorkflow:
         test_db.add(season)
 
         team = Team(
-            name="USC",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1790.0,
-            wins=7,
-            losses=2
+            name="USC", conference=ConferenceType.POWER_5, elo_rating=1790.0, wins=7, losses=2
         )
         test_db.add(team)
         test_db.commit()

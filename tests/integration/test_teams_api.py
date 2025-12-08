@@ -131,7 +131,9 @@ class TestGetTeamsList:
         assert len(data) == 2
         assert all(team["conference"] == "P5" for team in data)
 
-    def test_get_teams_filter_by_conference_group_5(self, test_client: TestClient, test_db: Session):
+    def test_get_teams_filter_by_conference_group_5(
+        self, test_client: TestClient, test_db: Session
+    ):
         """Test filtering teams by Group of 5 conference"""
         # Arrange
         configure_factories(test_db)
@@ -161,7 +163,7 @@ class TestGetTeamsList:
             returning_production=0.75,
             elo_rating=1850.0,
             wins=10,
-            losses=2
+            losses=2,
         )
         test_db.commit()
 
@@ -235,7 +237,7 @@ class TestGetTeamDetail:
             home_score=27,
             away_score=24,
             season=2024,
-            is_processed=True
+            is_processed=True,
         )
         GameFactory(
             home_team=opponent2,
@@ -243,7 +245,7 @@ class TestGetTeamDetail:
             home_score=20,
             away_score=31,
             season=2024,
-            is_processed=True
+            is_processed=True,
         )
         test_db.commit()
 
@@ -324,7 +326,7 @@ class TestCreateTeam:
             "conference": "P5",  # Use enum value
             "recruiting_rank": 5,
             "transfer_rank": 10,
-            "returning_production": 0.75
+            "returning_production": 0.75,
         }
 
         # Act
@@ -348,15 +350,17 @@ class TestCreateTeam:
         assert team is not None
         assert team.id == data["id"]
 
-    def test_create_team_calculates_preseason_rating(self, test_client: TestClient, test_db: Session):
+    def test_create_team_calculates_preseason_rating(
+        self, test_client: TestClient, test_db: Session
+    ):
         """Test that creating a team calculates preseason ELO rating"""
         # Arrange - Elite team with top recruiting
         team_data = {
             "name": "Alabama",
             "conference": "P5",  # Use enum value
             "recruiting_rank": 1,  # Top recruiting = +200
-            "transfer_rank": 1,    # Top transfer = +100
-            "returning_production": 0.85  # High returning production
+            "transfer_rank": 1,  # Top transfer = +100
+            "returning_production": 0.85,  # High returning production
         }
 
         # Act
@@ -383,7 +387,7 @@ class TestCreateTeam:
             "conference": "P5",  # Use enum value
             "recruiting_rank": 5,
             "transfer_rank": 10,
-            "returning_production": 0.75
+            "returning_production": 0.75,
         }
 
         # Act
@@ -396,10 +400,7 @@ class TestCreateTeam:
     def test_create_team_minimal_data(self, test_client: TestClient, test_db: Session):
         """Test creating team with only required fields"""
         # Arrange
-        team_data = {
-            "name": "New Team",
-            "conference": "G5"  # Use enum value
-        }
+        team_data = {"name": "New Team", "conference": "G5"}  # Use enum value
 
         # Act
         response = test_client.post("/api/teams", json=team_data)
@@ -418,11 +419,7 @@ class TestCreateTeam:
     def test_create_team_invalid_conference(self, test_client: TestClient, test_db: Session):
         """Test creating team with invalid conference fails"""
         # Arrange
-        team_data = {
-            "name": "Alabama",
-            "conference": "INVALID_CONFERENCE",
-            "recruiting_rank": 5
-        }
+        team_data = {"name": "Alabama", "conference": "INVALID_CONFERENCE", "recruiting_rank": 5}
 
         # Act
         response = test_client.post("/api/teams", json=team_data)
@@ -430,7 +427,9 @@ class TestCreateTeam:
         # Assert
         assert response.status_code == 422  # Validation error
 
-    def test_create_fcs_team_gets_correct_base_rating(self, test_client: TestClient, test_db: Session):
+    def test_create_fcs_team_gets_correct_base_rating(
+        self, test_client: TestClient, test_db: Session
+    ):
         """Test that FCS teams get FCS base rating (1300)"""
         # Arrange
         team_data = {
@@ -438,7 +437,7 @@ class TestCreateTeam:
             "conference": "FCS",
             "recruiting_rank": 999,
             "transfer_rank": 999,
-            "returning_production": 0.50
+            "returning_production": 0.50,
         }
 
         # Act
@@ -496,7 +495,9 @@ class TestUpdateTeam:
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
-    def test_update_team_preseason_factors_recalculates_rating(self, test_client: TestClient, test_db: Session):
+    def test_update_team_preseason_factors_recalculates_rating(
+        self, test_client: TestClient, test_db: Session
+    ):
         """Test that updating preseason factors recalculates ELO rating"""
         # Arrange
         configure_factories(test_db)
@@ -506,14 +507,14 @@ class TestUpdateTeam:
             transfer_rank=50,
             returning_production=0.50,
             elo_rating=1500.0,
-            initial_rating=1500.0
+            initial_rating=1500.0,
         )
         test_db.commit()
 
         update_data = {
             "recruiting_rank": 1,  # Change to top recruiting class
             "transfer_rank": 1,
-            "returning_production": 0.85
+            "returning_production": 0.85,
         }
 
         # Act
@@ -555,13 +556,7 @@ class TestUpdateTeam:
         """Test partial update (only some fields)"""
         # Arrange
         configure_factories(test_db)
-        team = TeamFactory(
-            name="Alabama",
-            recruiting_rank=10,
-            transfer_rank=20,
-            wins=5,
-            losses=2
-        )
+        team = TeamFactory(name="Alabama", recruiting_rank=10, transfer_rank=20, wins=5, losses=2)
         test_db.commit()
 
         update_data = {"recruiting_rank": 5}  # Only update recruiting rank
@@ -595,20 +590,10 @@ class TestGetTeamSchedule:
         opponent2 = TeamFactory(name="LSU")
 
         game1 = GameFactory(
-            home_team=team,
-            away_team=opponent1,
-            season=2024,
-            week=1,
-            home_score=27,
-            away_score=24
+            home_team=team, away_team=opponent1, season=2024, week=1, home_score=27, away_score=24
         )
         game2 = GameFactory(
-            home_team=opponent2,
-            away_team=team,
-            season=2024,
-            week=2,
-            home_score=20,
-            away_score=31
+            home_team=opponent2, away_team=team, season=2024, week=2, home_score=20, away_score=31
         )
         test_db.commit()
 
@@ -651,7 +636,9 @@ class TestGetTeamSchedule:
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
-    def test_get_team_schedule_includes_opponent_info(self, test_client: TestClient, test_db: Session):
+    def test_get_team_schedule_includes_opponent_info(
+        self, test_client: TestClient, test_db: Session
+    ):
         """Test that schedule includes opponent information"""
         # Arrange
         configure_factories(test_db)
@@ -660,12 +647,7 @@ class TestGetTeamSchedule:
         opponent = TeamFactory(name="Georgia", elo_rating=1840.0)
 
         game = GameFactory(
-            home_team=team,
-            away_team=opponent,
-            season=2024,
-            week=1,
-            home_score=27,
-            away_score=24
+            home_team=team, away_team=opponent, season=2024, week=1, home_score=27, away_score=24
         )
         test_db.commit()
 
@@ -680,7 +662,9 @@ class TestGetTeamSchedule:
         # Verify opponent information is included
         assert game_data["opponent_name"] == "Georgia"
 
-    def test_get_team_schedule_shows_home_and_away_games(self, test_client: TestClient, test_db: Session):
+    def test_get_team_schedule_shows_home_and_away_games(
+        self, test_client: TestClient, test_db: Session
+    ):
         """Test that schedule includes both home and away games"""
         # Arrange
         configure_factories(test_db)

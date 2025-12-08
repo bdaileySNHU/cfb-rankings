@@ -34,12 +34,12 @@ def main():
 
         # Predictions by season
         print("\n📅 Predictions by season:")
-        season_counts = db.query(
-            Game.season,
-            func.count(Prediction.id).label('count')
-        ).join(Game, Prediction.game_id == Game.id)\
-         .group_by(Game.season)\
-         .all()
+        season_counts = (
+            db.query(Game.season, func.count(Prediction.id).label("count"))
+            .join(Game, Prediction.game_id == Game.id)
+            .group_by(Game.season)
+            .all()
+        )
 
         for season, count in season_counts:
             print(f"   Season {season}: {count} predictions")
@@ -52,17 +52,23 @@ def main():
 
         # Sample predictions
         print("\n📋 Sample predictions (first 5):")
-        predictions = db.query(Prediction)\
-            .join(Game, Prediction.game_id == Game.id)\
-            .order_by(Prediction.id)\
-            .limit(5)\
+        predictions = (
+            db.query(Prediction)
+            .join(Game, Prediction.game_id == Game.id)
+            .order_by(Prediction.id)
+            .limit(5)
             .all()
+        )
 
         for pred in predictions:
-            status = "✓" if pred.was_correct == True else ("✗" if pred.was_correct == False else "⏳")
-            print(f"   {status} ID: {pred.id}, Game: {pred.game_id}, "
-                  f"Winner: {pred.predicted_winner_id}, "
-                  f"Probability: {pred.win_probability:.1%}")
+            status = (
+                "✓" if pred.was_correct == True else ("✗" if pred.was_correct == False else "⏳")
+            )
+            print(
+                f"   {status} ID: {pred.id}, Game: {pred.game_id}, "
+                f"Winner: {pred.predicted_winner_id}, "
+                f"Probability: {pred.win_probability:.1%}"
+            )
 
         print("\n" + "=" * 60)
 
@@ -71,6 +77,7 @@ def main():
         raise
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     main()

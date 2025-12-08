@@ -82,18 +82,10 @@ class TestRankingsTableDisplay:
         test_db.add(season)
 
         team1 = Team(
-            name="Alabama",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1850.0,
-            wins=5,
-            losses=0
+            name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
         )
         team2 = Team(
-            name="Georgia",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1840.0,
-            wins=4,
-            losses=1
+            name="Georgia", conference=ConferenceType.POWER_5, elo_rating=1840.0, wins=4, losses=1
         )
         test_db.add(team1)
         test_db.add(team2)
@@ -117,11 +109,7 @@ class TestRankingsTableDisplay:
         test_db.add(season)
 
         alabama = Team(
-            name="Alabama",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1850.0,
-            wins=1,
-            losses=0
+            name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=1, losses=0
         )
         test_db.add(alabama)
         test_db.commit()
@@ -146,9 +134,19 @@ class TestRankingsTableDisplay:
         test_db.add(season)
 
         # Create teams in mixed order
-        team3 = Team(name="Ohio State", conference=ConferenceType.POWER_5, elo_rating=1820.0, wins=3, losses=0)
-        team1 = Team(name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=3, losses=0)
-        team2 = Team(name="Georgia", conference=ConferenceType.POWER_5, elo_rating=1840.0, wins=3, losses=0)
+        team3 = Team(
+            name="Ohio State",
+            conference=ConferenceType.POWER_5,
+            elo_rating=1820.0,
+            wins=3,
+            losses=0,
+        )
+        team1 = Team(
+            name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=3, losses=0
+        )
+        team2 = Team(
+            name="Georgia", conference=ConferenceType.POWER_5, elo_rating=1840.0, wins=3, losses=0
+        )
 
         test_db.add_all([team3, team1, team2])
         test_db.commit()
@@ -177,7 +175,7 @@ class TestRankingsTableDisplay:
             conference=ConferenceType.GROUP_5,
             elo_rating=1600.0,
             wins=5,
-            losses=0
+            losses=0,
         )
         test_db.add(team)
         test_db.commit()
@@ -206,11 +204,7 @@ class TestRankingsPageInteractions:
         test_db.add(season)
 
         alabama = Team(
-            name="Alabama",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1850.0,
-            wins=5,
-            losses=0
+            name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
         )
         test_db.add(alabama)
         test_db.commit()

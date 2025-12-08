@@ -21,17 +21,18 @@ from src.models.models import RankingHistory
 
 def find_duplicates(db):
     """Find all duplicate team/season/week combinations"""
-    duplicates = db.query(
-        RankingHistory.team_id,
-        RankingHistory.season,
-        RankingHistory.week,
-        func.count(RankingHistory.id).label('count'),
-        func.group_concat(RankingHistory.id).label('ids')
-    ).group_by(
-        RankingHistory.team_id,
-        RankingHistory.season,
-        RankingHistory.week
-    ).having(func.count(RankingHistory.id) > 1).all()
+    duplicates = (
+        db.query(
+            RankingHistory.team_id,
+            RankingHistory.season,
+            RankingHistory.week,
+            func.count(RankingHistory.id).label("count"),
+            func.group_concat(RankingHistory.id).label("ids"),
+        )
+        .group_by(RankingHistory.team_id, RankingHistory.season, RankingHistory.week)
+        .having(func.count(RankingHistory.id) > 1)
+        .all()
+    )
 
     return duplicates
 
@@ -62,23 +63,32 @@ def cleanup_duplicates(db, dry_run=True):
         count = dup.count
 
         # Get all entries for this team/season/week
-        entries = db.query(RankingHistory).filter(
-            and_(
-                RankingHistory.team_id == team_id,
-                RankingHistory.season == season,
-                RankingHistory.week == week
+        entries = (
+            db.query(RankingHistory)
+            .filter(
+                and_(
+                    RankingHistory.team_id == team_id,
+                    RankingHistory.season == season,
+                    RankingHistory.week == week,
+                )
             )
-        ).order_by(RankingHistory.id.desc()).all()
+            .order_by(RankingHistory.id.desc())
+            .all()
+        )
 
         # Keep the first (most recent ID), delete the rest
         keep_entry = entries[0]
         delete_entries = entries[1:]
 
         print(f"Team {team_id}, Season {season}, Week {week}: {count} entries")
-        print(f"  Keeping: ID {keep_entry.id} (ELO: {keep_entry.elo_rating:.2f}, Rank: {keep_entry.rank})")
+        print(
+            f"  Keeping: ID {keep_entry.id} (ELO: {keep_entry.elo_rating:.2f}, Rank: {keep_entry.rank})"
+        )
 
         for entry in delete_entries:
-            print(f"  {'[DRY RUN] Would delete' if dry_run else 'Deleting'}: ID {entry.id} (ELO: {entry.elo_rating:.2f}, Rank: {entry.rank})")
+            print(
+                f"  {'[DRY RUN] Would delete' if dry_run else 'Deleting'}: ID {entry.id} (ELO: {entry.elo_rating:.2f}, Rank: {entry.rank})"
+            )
             if not dry_run:
                 db.delete(entry)
             total_to_delete += 1
@@ -100,16 +110,17 @@ def cleanup_duplicates(db, dry_run=True):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='Clean up duplicate ranking_history entries')
-    parser.add_argument('--execute', action='store_true',
-                       help='Actually delete duplicates (default is dry-run)')
+    parser = argparse.ArgumentParser(description="Clean up duplicate ranking_history entries")
+    parser.add_argument(
+        "--execute", action="store_true", help="Actually delete duplicates (default is dry-run)"
+    )
     args = parser.parse_args()
 
     db = SessionLocal()
 
-    print("="*80)
+    print("=" * 80)
     print("EPIC-024: Ranking History Duplicate Cleanup")
-    print("="*80)
+    print("=" * 80)
     print()
 
     if not args.execute:

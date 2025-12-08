@@ -23,7 +23,7 @@ def update_current_week(week: int, season: int = 2025):
 
     try:
         # Connect to database
-        conn = sqlite3.connect('cfb_rankings.db')
+        conn = sqlite3.connect("cfb_rankings.db")
         cursor = conn.cursor()
 
         # Check if season exists
@@ -38,10 +38,7 @@ def update_current_week(week: int, season: int = 2025):
         old_week = result[1]
 
         # Update current week
-        cursor.execute(
-            "UPDATE seasons SET current_week = ? WHERE year = ?",
-            (week, season)
-        )
+        cursor.execute("UPDATE seasons SET current_week = ? WHERE year = ?", (week, season))
         conn.commit()
 
         # Verify update

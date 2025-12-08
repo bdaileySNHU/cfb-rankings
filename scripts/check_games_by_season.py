@@ -24,10 +24,7 @@ def main():
     # Check 2024 season
     print("2024 Season:")
     for week in range(8, 16):
-        count = db.query(Game).filter(
-            Game.week == week,
-            Game.season == 2024
-        ).count()
+        count = db.query(Game).filter(Game.week == week, Game.season == 2024).count()
         if count > 0:
             print(f"  Week {week}: {count} games")
 
@@ -36,10 +33,7 @@ def main():
     # Check 2025 season
     print("2025 Season:")
     for week in range(1, 16):
-        count = db.query(Game).filter(
-            Game.week == week,
-            Game.season == 2025
-        ).count()
+        count = db.query(Game).filter(Game.week == week, Game.season == 2025).count()
         if count > 0:
             print(f"  Week {week}: {count} games")
 
@@ -56,6 +50,7 @@ def main():
     print("=" * 60)
 
     db.close()
+
 
 if __name__ == "__main__":
     main()

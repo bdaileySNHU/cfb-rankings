@@ -65,8 +65,8 @@ from src.core.ranking_service import (
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format="[%(asctime)s] %(levelname)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="College Football Ranking API",
     description="Modified ELO ranking system for college football with recruiting, transfers, and returning production",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # CORS middleware
@@ -123,23 +123,20 @@ async def root():
         >>> response.json()
         {'status': 'healthy', 'service': 'College Football Ranking API', 'version': '1.0.0'}
     """
-    return {
-        "status": "healthy",
-        "service": "College Football Ranking API",
-        "version": "1.0.0"
-    }
+    return {"status": "healthy", "service": "College Football Ranking API", "version": "1.0.0"}
 
 
 # ============================================================================
 # TEAM ENDPOINTS
 # ============================================================================
 
+
 @app.get("/api/teams", response_model=List[schemas.Team], tags=["Teams"])
 async def get_teams(
     conference: Optional[ConferenceType] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get all teams with optional filtering by conference.
 
@@ -209,7 +206,7 @@ async def get_team(team_id: int, db: Session = Depends(get_db)):
     rankings = ranking_service.get_current_rankings(season_year)
 
     # Find this team's ranking data (includes season-specific wins/losses)
-    team_ranking = next((r for r in rankings if r['team_id'] == team_id), None)
+    team_ranking = next((r for r in rankings if r["team_id"] == team_id), None)
 
     # Convert to TeamDetail schema
     team_dict = {
@@ -223,15 +220,19 @@ async def get_team(team_id: int, db: Session = Depends(get_db)):
         "transfer_portal_points": team.transfer_portal_points,  # EPIC-026: Transfer portal points
         "transfer_portal_rank": team.transfer_portal_rank,  # EPIC-026: Transfer portal rank
         "transfer_count": team.transfer_count,  # EPIC-026: Transfer count
-        "elo_rating": team_ranking['elo_rating'] if team_ranking else team.elo_rating,  # EPIC-024: Season-specific ELO
+        "elo_rating": (
+            team_ranking["elo_rating"] if team_ranking else team.elo_rating
+        ),  # EPIC-024: Season-specific ELO
         "initial_rating": team.initial_rating,
-        "wins": team_ranking['wins'] if team_ranking else 0,  # EPIC-024: Season-specific wins
-        "losses": team_ranking['losses'] if team_ranking else 0,  # EPIC-024: Season-specific losses
+        "wins": team_ranking["wins"] if team_ranking else 0,  # EPIC-024: Season-specific wins
+        "losses": team_ranking["losses"] if team_ranking else 0,  # EPIC-024: Season-specific losses
         "created_at": team.created_at,
         "updated_at": team.updated_at,
-        "sos": team_ranking['sos'] if team_ranking else None,  # EPIC-024: From ranking_history
-        "rank": team_ranking['rank'] if team_ranking else None,  # EPIC-024: From ranking_history
-        "sos_rank": team_ranking['sos_rank'] if team_ranking else None  # EPIC-024: From ranking_history
+        "sos": team_ranking["sos"] if team_ranking else None,  # EPIC-024: From ranking_history
+        "rank": team_ranking["rank"] if team_ranking else None,  # EPIC-024: From ranking_history
+        "sos_rank": (
+            team_ranking["sos_rank"] if team_ranking else None
+        ),  # EPIC-024: From ranking_history
     }
 
     return team_dict
@@ -327,8 +328,17 @@ async def update_team(team_id: int, team_update: schemas.TeamUpdate, db: Session
 
     # Recalculate rating if preseason factors changed
     # EPIC-026: Added transfer portal fields to trigger recalculation
-    if any(field in update_data for field in ['recruiting_rank', 'transfer_rank', 'returning_production',
-                                                'transfer_portal_rank', 'transfer_portal_points', 'transfer_count']):
+    if any(
+        field in update_data
+        for field in [
+            "recruiting_rank",
+            "transfer_rank",
+            "returning_production",
+            "transfer_portal_rank",
+            "transfer_portal_points",
+            "transfer_count",
+        ]
+    ):
         ranking_service = RankingService(db)
         team.elo_rating = ranking_service.calculate_preseason_rating(team)
         team.initial_rating = team.elo_rating
@@ -369,10 +379,15 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
         raise HTTPException(status_code=404, detail="Team not found")
 
     # Get all games for this team (including FCS games)
-    games = db.query(Game).filter(
-        ((Game.home_team_id == team_id) | (Game.away_team_id == team_id)) &
-        (Game.season == season)
-    ).order_by(Game.week).all()
+    games = (
+        db.query(Game)
+        .filter(
+            ((Game.home_team_id == team_id) | (Game.away_team_id == team_id))
+            & (Game.season == season)
+        )
+        .order_by(Game.week)
+        .all()
+    )
 
     schedule_games = []
     for game in games:
@@ -388,33 +403,31 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
                 result = "W" if game.away_score > game.home_score else "L"
                 score_str = f"{result} {game.away_score}-{game.home_score}"
 
-        schedule_games.append({
-            "game_id": game.id,
-            "week": game.week,
-            "opponent_id": opponent.id,
-            "opponent_name": opponent.name,
-            "opponent_conference": opponent.conference.value if opponent.conference else None,
-            "is_home": is_home,
-            "is_neutral_site": game.is_neutral_site,
-            "score": score_str,
-            "is_played": game.is_processed,
-            "excluded_from_rankings": game.excluded_from_rankings,
-            "is_fcs": opponent.is_fcs,
-            "game_type": game.game_type,  # EPIC-022: Include game type for frontend badge display
-            "postseason_name": game.postseason_name  # EPIC-023: Include bowl/playoff name
-        })
+        schedule_games.append(
+            {
+                "game_id": game.id,
+                "week": game.week,
+                "opponent_id": opponent.id,
+                "opponent_name": opponent.name,
+                "opponent_conference": opponent.conference.value if opponent.conference else None,
+                "is_home": is_home,
+                "is_neutral_site": game.is_neutral_site,
+                "score": score_str,
+                "is_played": game.is_processed,
+                "excluded_from_rankings": game.excluded_from_rankings,
+                "is_fcs": opponent.is_fcs,
+                "game_type": game.game_type,  # EPIC-022: Include game type for frontend badge display
+                "postseason_name": game.postseason_name,  # EPIC-023: Include bowl/playoff name
+            }
+        )
 
-    return {
-        "team_id": team_id,
-        "team_name": team.name,
-        "season": season,
-        "games": schedule_games
-    }
+    return {"team_id": team_id, "team_name": team.name, "season": season, "games": schedule_games}
 
 
 # ============================================================================
 # GAME ENDPOINTS
 # ============================================================================
+
 
 @app.get("/api/games", response_model=List[schemas.Game], tags=["Games"])
 async def get_games(
@@ -424,7 +437,7 @@ async def get_games(
     processed: Optional[bool] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get games with flexible filtering options.
 
@@ -503,7 +516,7 @@ async def get_game(game_id: int, db: Session = Depends(get_db)):
         "away_team_name": game.away_team.name,
         "winner_name": winner_name,
         "loser_name": loser_name,
-        "point_differential": abs(game.home_score - game.away_score)
+        "point_differential": abs(game.home_score - game.away_score),
     }
 
 
@@ -565,13 +578,14 @@ async def create_game(game: schemas.GameCreate, db: Session = Depends(get_db)):
 # PREDICTION ENDPOINTS
 # ============================================================================
 
+
 @app.get("/api/predictions", response_model=List[schemas.GamePrediction], tags=["Predictions"])
 async def get_predictions(
     week: Optional[int] = Query(None, ge=0, le=15, description="Specific week number (0-15)"),
     team_id: Optional[int] = Query(None, ge=1, description="Filter by team ID"),
     next_week: bool = Query(True, description="Only show next week's games"),
     season: Optional[int] = Query(None, ge=2020, description="Season year"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get game predictions for upcoming games.
@@ -591,11 +605,7 @@ async def get_predictions(
     """
     try:
         predictions = generate_predictions(
-            db=db,
-            week=week,
-            team_id=team_id,
-            next_week=next_week,
-            season_year=season
+            db=db, week=week, team_id=team_id, next_week=next_week, season_year=season
         )
         return predictions
     except Exception as e:
@@ -603,10 +613,14 @@ async def get_predictions(
         raise HTTPException(status_code=500, detail=f"Error generating predictions: {str(e)}")
 
 
-@app.get("/api/predictions/accuracy", response_model=schemas.PredictionAccuracyStats, tags=["Predictions"])
+@app.get(
+    "/api/predictions/accuracy",
+    response_model=schemas.PredictionAccuracyStats,
+    tags=["Predictions"],
+)
 async def get_prediction_accuracy(
     season: Optional[int] = Query(None, description="Filter by season year"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get overall prediction accuracy statistics.
@@ -626,14 +640,20 @@ async def get_prediction_accuracy(
         return stats
     except Exception as e:
         logger.error(f"Error retrieving prediction accuracy: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error retrieving prediction accuracy: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving prediction accuracy: {str(e)}"
+        )
 
 
-@app.get("/api/predictions/accuracy/team/{team_id}", response_model=schemas.TeamPredictionAccuracy, tags=["Predictions"])
+@app.get(
+    "/api/predictions/accuracy/team/{team_id}",
+    response_model=schemas.TeamPredictionAccuracy,
+    tags=["Predictions"],
+)
 async def get_team_prediction_accuracy_endpoint(
     team_id: int,
     season: Optional[int] = Query(None, description="Filter by season year"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get prediction accuracy for a specific team.
@@ -656,16 +676,20 @@ async def get_team_prediction_accuracy_endpoint(
         return stats
     except Exception as e:
         logger.error(f"Error retrieving team prediction accuracy: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error retrieving team prediction accuracy: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving team prediction accuracy: {str(e)}"
+        )
 
 
-@app.get("/api/predictions/stored", response_model=List[schemas.StoredPrediction], tags=["Predictions"])
+@app.get(
+    "/api/predictions/stored", response_model=List[schemas.StoredPrediction], tags=["Predictions"]
+)
 async def get_stored_predictions(
     season: Optional[int] = Query(None, description="Filter by season year"),
     week: Optional[int] = Query(None, ge=0, le=15, description="Filter by week"),
     team_id: Optional[int] = Query(None, description="Filter by team ID"),
     evaluated_only: bool = Query(False, description="Only return evaluated predictions"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get stored predictions with evaluation results.
@@ -694,12 +718,7 @@ async def get_stored_predictions(
         if week is not None:
             query = query.filter(Game.week == week)
         if team_id:
-            query = query.filter(
-                or_(
-                    Game.home_team_id == team_id,
-                    Game.away_team_id == team_id
-                )
-            )
+            query = query.filter(or_(Game.home_team_id == team_id, Game.away_team_id == team_id))
         if evaluated_only:
             query = query.filter(Prediction.was_correct.isnot(None))
 
@@ -710,37 +729,45 @@ async def get_stored_predictions(
         result = []
         for pred in predictions:
             game = pred.game
-            result.append({
-                "id": pred.id,
-                "game_id": pred.game_id,
-                "predicted_winner_id": pred.predicted_winner_id,
-                "predicted_winner_name": pred.predicted_winner.name if pred.predicted_winner else None,
-                "predicted_home_score": pred.predicted_home_score,
-                "predicted_away_score": pred.predicted_away_score,
-                "win_probability": pred.win_probability,
-                "home_elo_at_prediction": pred.home_elo_at_prediction,
-                "away_elo_at_prediction": pred.away_elo_at_prediction,
-                "was_correct": pred.was_correct,
-                "created_at": pred.created_at,
-                "home_team_name": game.home_team.name if game.home_team else None,
-                "away_team_name": game.away_team.name if game.away_team else None,
-                "actual_home_score": game.home_score if game.is_processed else None,
-                "actual_away_score": game.away_score if game.is_processed else None,
-                "week": game.week,
-                "season": game.season
-            })
+            result.append(
+                {
+                    "id": pred.id,
+                    "game_id": pred.game_id,
+                    "predicted_winner_id": pred.predicted_winner_id,
+                    "predicted_winner_name": (
+                        pred.predicted_winner.name if pred.predicted_winner else None
+                    ),
+                    "predicted_home_score": pred.predicted_home_score,
+                    "predicted_away_score": pred.predicted_away_score,
+                    "win_probability": pred.win_probability,
+                    "home_elo_at_prediction": pred.home_elo_at_prediction,
+                    "away_elo_at_prediction": pred.away_elo_at_prediction,
+                    "was_correct": pred.was_correct,
+                    "created_at": pred.created_at,
+                    "home_team_name": game.home_team.name if game.home_team else None,
+                    "away_team_name": game.away_team.name if game.away_team else None,
+                    "actual_home_score": game.home_score if game.is_processed else None,
+                    "actual_away_score": game.away_score if game.is_processed else None,
+                    "week": game.week,
+                    "season": game.season,
+                }
+            )
 
         return result
 
     except Exception as e:
         logger.error(f"Error retrieving stored predictions: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error retrieving stored predictions: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving stored predictions: {str(e)}"
+        )
 
 
-@app.get("/api/predictions/comparison", response_model=schemas.ComparisonStats, tags=["Predictions"])
+@app.get(
+    "/api/predictions/comparison", response_model=schemas.ComparisonStats, tags=["Predictions"]
+)
 async def get_prediction_comparison(
     season: Optional[int] = Query(None, description="Season year (defaults to active season)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Compare ELO prediction accuracy vs AP Poll prediction accuracy.
@@ -784,18 +811,21 @@ async def get_prediction_comparison(
         raise
     except Exception as e:
         logger.error(f"Error calculating prediction comparison: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error calculating prediction comparison: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error calculating prediction comparison: {str(e)}"
+        )
 
 
 # ============================================================================
 # RANKING ENDPOINTS
 # ============================================================================
 
+
 @app.get("/api/rankings", response_model=schemas.RankingsResponse, tags=["Rankings"])
 async def get_rankings(
     season: Optional[int] = None,
     limit: Optional[int] = Query(25, ge=1, le=200),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get current team rankings sorted by ELO rating.
 
@@ -836,16 +866,12 @@ async def get_rankings(
         "week": current_week,
         "season": season,
         "rankings": rankings,
-        "total_teams": len(rankings)
+        "total_teams": len(rankings),
     }
 
 
 @app.get("/api/rankings/history", response_model=List[schemas.RankingHistory], tags=["Rankings"])
-async def get_ranking_history(
-    team_id: int,
-    season: int,
-    db: Session = Depends(get_db)
-):
+async def get_ranking_history(team_id: int, season: int, db: Session = Depends(get_db)):
     """Get historical rankings for a specific team across a season.
 
     Retrieves week-by-week ranking snapshots for a team, showing how their
@@ -863,20 +889,18 @@ async def get_ranking_history(
     Example:
         GET /api/rankings/history?team_id=42&season=2024
     """
-    history = db.query(RankingHistory).filter(
-        (RankingHistory.team_id == team_id) &
-        (RankingHistory.season == season)
-    ).order_by(RankingHistory.week).all()
+    history = (
+        db.query(RankingHistory)
+        .filter((RankingHistory.team_id == team_id) & (RankingHistory.season == season))
+        .order_by(RankingHistory.week)
+        .all()
+    )
 
     return history
 
 
 @app.post("/api/rankings/save", response_model=schemas.SuccessResponse, tags=["Rankings"])
-async def save_rankings(
-    season: int,
-    week: int,
-    db: Session = Depends(get_db)
-):
+async def save_rankings(season: int, week: int, db: Session = Depends(get_db)):
     """Save current rankings to historical snapshots.
 
     Creates a snapshot of current rankings for all teams at a specific week,
@@ -899,13 +923,14 @@ async def save_rankings(
 
     return {
         "message": f"Rankings saved for Week {week}, {season}",
-        "data": {"season": season, "week": week}
+        "data": {"season": season, "week": week},
     }
 
 
 # ============================================================================
 # SEASON ENDPOINTS
 # ============================================================================
+
 
 @app.get("/api/seasons", response_model=List[schemas.SeasonResponse], tags=["Seasons"])
 async def get_seasons(db: Session = Depends(get_db)):
@@ -984,10 +1009,7 @@ async def reset_season(year: int, db: Session = Depends(get_db)):
     ranking_service = RankingService(db)
     ranking_service.reset_season(year)
 
-    return {
-        "message": f"Season {year} reset successfully",
-        "data": {"year": year}
-    }
+    return {"message": f"Season {year} reset successfully", "data": {"year": year}}
 
 
 @app.get("/api/seasons/active", tags=["Seasons"])
@@ -1006,11 +1028,7 @@ async def get_active_season(db: Session = Depends(get_db)):
     if not season:
         raise HTTPException(status_code=404, detail="No active season found")
 
-    return {
-        "year": season.year,
-        "current_week": season.current_week,
-        "is_active": season.is_active
-    }
+    return {"year": season.year, "current_week": season.current_week, "is_active": season.is_active}
 
 
 @app.get("/api/seasons/{year}", tags=["Seasons"])
@@ -1034,16 +1052,13 @@ async def get_season(year: int, db: Session = Depends(get_db)):
     if not season:
         raise HTTPException(status_code=404, detail=f"Season {year} not found")
 
-    return {
-        "year": season.year,
-        "current_week": season.current_week,
-        "is_active": season.is_active
-    }
+    return {"year": season.year, "current_week": season.current_week, "is_active": season.is_active}
 
 
 # ============================================================================
 # STATS ENDPOINTS
 # ============================================================================
+
 
 @app.get("/api/stats", response_model=schemas.SystemStats, tags=["Stats"])
 async def get_stats(db: Session = Depends(get_db)):
@@ -1080,13 +1095,14 @@ async def get_stats(db: Session = Depends(get_db)):
         "total_games_processed": total_processed,
         "current_season": active_season.year if active_season else 0,
         "current_week": active_season.current_week if active_season else 0,
-        "last_updated": datetime.utcnow()
+        "last_updated": datetime.utcnow(),
     }
 
 
 # ============================================================================
 # UTILITY ENDPOINTS
 # ============================================================================
+
 
 @app.post("/api/calculate", response_model=schemas.SuccessResponse, tags=["Utility"])
 async def recalculate_rankings(season: int, db: Session = Depends(get_db)):
@@ -1138,16 +1154,14 @@ async def recalculate_rankings(season: int, db: Session = Depends(get_db)):
 
     return {
         "message": f"Rankings recalculated for {season}",
-        "data": {
-            "season": season,
-            "games_processed": processed_count
-        }
+        "data": {"season": season, "games_processed": processed_count},
     }
 
 
 # ============================================================================
 # ADMIN ENDPOINTS - API Usage Monitoring
 # ============================================================================
+
 
 @app.get("/api/admin/api-usage", response_model=schemas.APIUsageResponse, tags=["Admin"])
 async def get_api_usage(month: Optional[str] = None):
@@ -1177,15 +1191,9 @@ async def get_api_usage(month: Optional[str] = None):
     try:
         usage_stats = get_monthly_usage(month)
 
-        return {
-            **usage_stats,
-            "last_updated": datetime.utcnow()
-        }
+        return {**usage_stats, "last_updated": datetime.utcnow()}
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve API usage stats: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve API usage stats: {str(e)}")
 
 
 # ============================================================================
@@ -1220,6 +1228,7 @@ def run_weekly_update_task(task_id: str, db_session):
         Task status is updated to "running", "completed", or "failed".
     """
     import logging
+
     logger = logging.getLogger(__name__)
 
     project_root = Path(__file__).parent
@@ -1228,6 +1237,7 @@ def run_weekly_update_task(task_id: str, db_session):
     try:
         # Update status to running
         from models import UpdateTask
+
         task = db_session.query(UpdateTask).filter(UpdateTask.task_id == task_id).first()
         if task:
             task.status = "running"
@@ -1239,7 +1249,7 @@ def run_weekly_update_task(task_id: str, db_session):
             capture_output=True,
             text=True,
             timeout=1800,  # 30 minute timeout
-            cwd=str(project_root)
+            cwd=str(project_root),
         )
 
         # Parse result
@@ -1248,7 +1258,7 @@ def run_weekly_update_task(task_id: str, db_session):
             "success": success,
             "stdout": result.stdout[-1000:] if result.stdout else "",  # Last 1000 chars
             "stderr": result.stderr[-1000:] if result.stderr else "",
-            "error_message": None if success else "Update script failed"
+            "error_message": None if success else "Update script failed",
         }
 
         # Update task record
@@ -1273,10 +1283,9 @@ def run_weekly_update_task(task_id: str, db_session):
             task.status = "failed"
             task.completed_at = datetime.utcnow()
             task.duration_seconds = (task.completed_at - task.started_at).total_seconds()
-            task.result_json = json.dumps({
-                "success": False,
-                "error_message": "Update timed out after 30 minutes"
-            })
+            task.result_json = json.dumps(
+                {"success": False, "error_message": "Update timed out after 30 minutes"}
+            )
             db_session.commit()
         if task_id in _running_updates:
             del _running_updates[task_id]
@@ -1288,10 +1297,7 @@ def run_weekly_update_task(task_id: str, db_session):
             task.status = "failed"
             task.completed_at = datetime.utcnow()
             task.duration_seconds = (task.completed_at - task.started_at).total_seconds()
-            task.result_json = json.dumps({
-                "success": False,
-                "error_message": str(e)
-            })
+            task.result_json = json.dumps({"success": False, "error_message": str(e)})
             db_session.commit()
         if task_id in _running_updates:
             del _running_updates[task_id]
@@ -1333,7 +1339,7 @@ async def trigger_manual_update(background_tasks: BackgroundTasks, db: Session =
     if not is_active_season():
         raise HTTPException(
             status_code=400,
-            detail="Off-season (February-July) - updates not allowed during off-season"
+            detail="Off-season (February-July) - updates not allowed during off-season",
         )
 
     # Pre-flight check 2: Current week detection
@@ -1341,29 +1347,22 @@ async def trigger_manual_update(background_tasks: BackgroundTasks, db: Session =
         current_week = get_current_week_wrapper()
         if not current_week:
             raise HTTPException(
-                status_code=400,
-                detail="No current week detected - season may not have started yet"
+                status_code=400, detail="No current week detected - season may not have started yet"
             )
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to detect current week: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to detect current week: {str(e)}")
 
     # Pre-flight check 3: API usage
     if not check_api_usage(db=db):
         usage = get_monthly_usage(db=db)
         raise HTTPException(
             status_code=429,
-            detail=f"API usage at {usage['percentage_used']}% - update aborted to prevent quota exhaustion"
+            detail=f"API usage at {usage['percentage_used']}% - update aborted to prevent quota exhaustion",
         )
 
     # Create task record
     task = UpdateTask(
-        task_id=task_id,
-        status="started",
-        trigger_type="manual",
-        started_at=datetime.utcnow()
+        task_id=task_id, status="started", trigger_type="manual", started_at=datetime.utcnow()
     )
     db.add(task)
     db.commit()
@@ -1379,11 +1378,13 @@ async def trigger_manual_update(background_tasks: BackgroundTasks, db: Session =
         "status": "started",
         "message": f"Weekly update triggered manually for week {current_week}",
         "task_id": task_id,
-        "started_at": task.started_at
+        "started_at": task.started_at,
     }
 
 
-@app.get("/api/admin/update-status/{task_id}", response_model=schemas.UpdateTaskStatus, tags=["Admin"])
+@app.get(
+    "/api/admin/update-status/{task_id}", response_model=schemas.UpdateTaskStatus, tags=["Admin"]
+)
 async def get_update_status(task_id: str, db: Session = Depends(get_db)):
     """
     Get the status of a manual update task.
@@ -1418,16 +1419,12 @@ async def get_update_status(task_id: str, db: Session = Depends(get_db)):
         started_at=task.started_at,
         completed_at=task.completed_at,
         duration_seconds=task.duration_seconds,
-        result=result
+        result=result,
     )
 
 
 @app.post("/api/admin/update-current-week", tags=["Admin"])
-async def update_current_week_manual(
-    year: int,
-    week: int,
-    db: Session = Depends(get_db)
-):
+async def update_current_week_manual(year: int, week: int, db: Session = Depends(get_db)):
     """
     Manually update the current week for a season.
 
@@ -1450,18 +1447,12 @@ async def update_current_week_manual(
     """
     # Validate week
     if not (0 <= week <= 15):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Week must be between 0 and 15, got {week}"
-        )
+        raise HTTPException(status_code=400, detail=f"Week must be between 0 and 15, got {week}")
 
     # Get season
     season = db.query(Season).filter(Season.year == year).first()
     if not season:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Season {year} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Season {year} not found")
 
     # Update
     old_week = season.current_week
@@ -1475,11 +1466,13 @@ async def update_current_week_manual(
         "season": year,
         "old_week": old_week,
         "new_week": week,
-        "message": f"Current week updated from {old_week} to {week}"
+        "message": f"Current week updated from {old_week} to {week}",
     }
 
 
-@app.get("/api/admin/usage-dashboard", response_model=schemas.UsageDashboardResponse, tags=["Admin"])
+@app.get(
+    "/api/admin/usage-dashboard", response_model=schemas.UsageDashboardResponse, tags=["Admin"]
+)
 async def get_usage_dashboard(month: Optional[str] = None, db: Session = Depends(get_db)):
     """
     Get comprehensive API usage dashboard data.
@@ -1512,8 +1505,7 @@ async def get_usage_dashboard(month: Optional[str] = None, db: Session = Depends
     # Calculate daily usage (last 7 days)
     daily_usage_data = (
         db.query(
-            func.date(APIUsage.timestamp).label('date'),
-            func.count(APIUsage.id).label('calls')
+            func.date(APIUsage.timestamp).label("date"), func.count(APIUsage.id).label("calls")
         )
         .filter(APIUsage.month == month)
         .group_by(func.date(APIUsage.timestamp))
@@ -1529,7 +1521,7 @@ async def get_usage_dashboard(month: Optional[str] = None, db: Session = Depends
     ]
 
     # Calculate days until reset
-    year, month_num = map(int, month.split('-'))
+    year, month_num = map(int, month.split("-"))
     current_date = datetime.now()
 
     if year == current_date.year and month_num == current_date.month:
@@ -1542,27 +1534,27 @@ async def get_usage_dashboard(month: Optional[str] = None, db: Session = Depends
         days_elapsed = days_in_month
 
     # Project end-of-month usage
-    avg_per_day = monthly_stats['total_calls'] / days_elapsed if days_elapsed > 0 else 0
+    avg_per_day = monthly_stats["total_calls"] / days_elapsed if days_elapsed > 0 else 0
     projected_eom = int(avg_per_day * days_in_month)
 
     # Build current month stats with extended fields
     current_month_stats = schemas.CurrentMonthStats(
-        month=monthly_stats['month'],
-        total_calls=monthly_stats['total_calls'],
-        monthly_limit=monthly_stats['monthly_limit'],
-        percentage_used=monthly_stats['percentage_used'],
-        remaining_calls=monthly_stats['remaining_calls'],
-        average_calls_per_day=monthly_stats['average_calls_per_day'],
-        warning_level=monthly_stats['warning_level'],
+        month=monthly_stats["month"],
+        total_calls=monthly_stats["total_calls"],
+        monthly_limit=monthly_stats["monthly_limit"],
+        percentage_used=monthly_stats["percentage_used"],
+        remaining_calls=monthly_stats["remaining_calls"],
+        average_calls_per_day=monthly_stats["average_calls_per_day"],
+        warning_level=monthly_stats["warning_level"],
         days_until_reset=days_until_reset,
-        projected_end_of_month=projected_eom
+        projected_end_of_month=projected_eom,
     )
 
     return schemas.UsageDashboardResponse(
         current_month=current_month_stats,
-        top_endpoints=[schemas.EndpointUsage(**ep) for ep in monthly_stats['top_endpoints']],
+        top_endpoints=[schemas.EndpointUsage(**ep) for ep in monthly_stats["top_endpoints"]],
         daily_usage=daily_usage,
-        last_update=datetime.utcnow()
+        last_update=datetime.utcnow(),
     )
 
 
@@ -1587,7 +1579,7 @@ async def get_system_config():
         update_schedule="Sun 20:00 ET",
         api_usage_warning_thresholds=[80, 90, 95],
         active_season_start="08-01",
-        active_season_end="01-31"
+        active_season_end="01-31",
     )
 
 
@@ -1623,4 +1615,5 @@ async def update_system_config(config_update: schemas.ConfigUpdate):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

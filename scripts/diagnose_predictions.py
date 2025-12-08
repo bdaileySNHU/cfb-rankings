@@ -33,40 +33,36 @@ def main():
     print()
 
     # Check for week 10 games
-    week_10_total = db.query(Game).filter(
-        Game.week == 10,
-        Game.season == 2025
-    ).count()
+    week_10_total = db.query(Game).filter(Game.week == 10, Game.season == 2025).count()
     print(f"Total week 10 games in DB: {week_10_total}")
 
     # Check for unprocessed week 10 games
-    week_10_unprocessed = db.query(Game).filter(
-        Game.week == 10,
-        Game.season == 2025,
-        Game.is_processed == False
-    ).count()
+    week_10_unprocessed = (
+        db.query(Game)
+        .filter(Game.week == 10, Game.season == 2025, Game.is_processed == False)
+        .count()
+    )
     print(f"Unprocessed week 10 games: {week_10_unprocessed}")
 
     # Check processed status
-    week_10_processed = db.query(Game).filter(
-        Game.week == 10,
-        Game.season == 2025,
-        Game.is_processed == True
-    ).count()
+    week_10_processed = (
+        db.query(Game)
+        .filter(Game.week == 10, Game.season == 2025, Game.is_processed == True)
+        .count()
+    )
     print(f"Processed week 10 games: {week_10_processed}")
 
     print()
 
     # Sample a few week 10 games
     print("Sample week 10 games:")
-    sample_games = db.query(Game).filter(
-        Game.week == 10,
-        Game.season == 2025
-    ).limit(5).all()
+    sample_games = db.query(Game).filter(Game.week == 10, Game.season == 2025).limit(5).all()
 
     if sample_games:
         for g in sample_games:
-            print(f"  Game {g.id}: Week {g.week}, Season {g.season}, Processed: {g.is_processed}, Home Score: {g.home_score}, Away Score: {g.away_score}")
+            print(
+                f"  Game {g.id}: Week {g.week}, Season {g.season}, Processed: {g.is_processed}, Home Score: {g.home_score}, Away Score: {g.away_score}"
+            )
     else:
         print("  No week 10 games found!")
 
@@ -75,21 +71,19 @@ def main():
     # Check weeks 8-15
     print("Games by week (8-15):")
     for week in range(8, 16):
-        total = db.query(Game).filter(
-            Game.week == week,
-            Game.season == 2025
-        ).count()
-        unprocessed = db.query(Game).filter(
-            Game.week == week,
-            Game.season == 2025,
-            Game.is_processed == False
-        ).count()
+        total = db.query(Game).filter(Game.week == week, Game.season == 2025).count()
+        unprocessed = (
+            db.query(Game)
+            .filter(Game.week == week, Game.season == 2025, Game.is_processed == False)
+            .count()
+        )
         print(f"  Week {week}: {total} total, {unprocessed} unprocessed")
 
     print()
     print("=" * 60)
 
     db.close()
+
 
 if __name__ == "__main__":
     main()

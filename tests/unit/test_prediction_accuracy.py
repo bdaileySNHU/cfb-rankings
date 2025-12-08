@@ -20,6 +20,7 @@ from src.core.ranking_service import (
 def test_game_with_prediction(test_db):
     """Create a test game with a prediction"""
     import random
+
     unique_id = random.randint(10000, 99999)
 
     # Create teams
@@ -27,13 +28,13 @@ def test_game_with_prediction(test_db):
         name=f"Test Home Team {unique_id}",
         conference=ConferenceType.POWER_5,
         is_fcs=False,
-        elo_rating=1650.0
+        elo_rating=1650.0,
     )
     away_team = Team(
         name=f"Test Away Team {unique_id}",
         conference=ConferenceType.POWER_5,
         is_fcs=False,
-        elo_rating=1550.0
+        elo_rating=1550.0,
     )
 
     test_db.add(home_team)
@@ -51,7 +52,7 @@ def test_game_with_prediction(test_db):
         week=10,
         season=2024,
         is_processed=True,
-        excluded_from_rankings=False
+        excluded_from_rankings=False,
     )
     test_db.add(game)
     test_db.commit()
@@ -66,7 +67,7 @@ def test_game_with_prediction(test_db):
         win_probability=0.65,
         home_elo_at_prediction=1650.0,
         away_elo_at_prediction=1550.0,
-        was_correct=None  # Not yet evaluated
+        was_correct=None,  # Not yet evaluated
     )
     test_db.add(prediction)
     test_db.commit()
@@ -97,6 +98,7 @@ class TestPredictionAccuracyEvaluation:
     def test_evaluate_incorrect_prediction(self, test_db):
         """Test evaluating an incorrect prediction"""
         import random
+
         unique_id = random.randint(10000, 99999)
 
         # Create teams
@@ -104,13 +106,13 @@ class TestPredictionAccuracyEvaluation:
             name=f"Test Home Team {unique_id}",
             conference=ConferenceType.POWER_5,
             is_fcs=False,
-            elo_rating=1550.0
+            elo_rating=1550.0,
         )
         away_team = Team(
             name=f"Test Away Team {unique_id}",
             conference=ConferenceType.POWER_5,
             is_fcs=False,
-            elo_rating=1650.0
+            elo_rating=1650.0,
         )
         test_db.add_all([home_team, away_team])
         test_db.commit()
@@ -125,7 +127,7 @@ class TestPredictionAccuracyEvaluation:
             away_score=35,
             week=11,
             season=2024,
-            is_processed=True
+            is_processed=True,
         )
         test_db.add(game)
         test_db.commit()
@@ -140,7 +142,7 @@ class TestPredictionAccuracyEvaluation:
             win_probability=0.55,
             home_elo_at_prediction=1550.0,
             away_elo_at_prediction=1650.0,
-            was_correct=None
+            was_correct=None,
         )
         test_db.add(prediction)
         test_db.commit()
@@ -155,6 +157,7 @@ class TestPredictionAccuracyEvaluation:
     def test_evaluate_no_prediction(self, test_db):
         """Test evaluating a game with no prediction"""
         import random
+
         unique_id = random.randint(10000, 99999)
 
         # Create teams
@@ -162,13 +165,13 @@ class TestPredictionAccuracyEvaluation:
             name=f"Test Home Team {unique_id}",
             conference=ConferenceType.POWER_5,
             is_fcs=False,
-            elo_rating=1600.0
+            elo_rating=1600.0,
         )
         away_team = Team(
             name=f"Test Away Team {unique_id}",
             conference=ConferenceType.POWER_5,
             is_fcs=False,
-            elo_rating=1600.0
+            elo_rating=1600.0,
         )
         test_db.add_all([home_team, away_team])
         test_db.commit()
@@ -183,7 +186,7 @@ class TestPredictionAccuracyEvaluation:
             away_score=21,
             week=12,
             season=2024,
-            is_processed=True
+            is_processed=True,
         )
         test_db.add(game)
         test_db.commit()
@@ -196,6 +199,7 @@ class TestPredictionAccuracyEvaluation:
     def test_evaluate_unprocessed_game(self, test_db):
         """Test evaluating an unprocessed game"""
         import random
+
         unique_id = random.randint(10000, 99999)
 
         # Create teams
@@ -203,13 +207,13 @@ class TestPredictionAccuracyEvaluation:
             name=f"Test Home Team {unique_id}",
             conference=ConferenceType.POWER_5,
             is_fcs=False,
-            elo_rating=1600.0
+            elo_rating=1600.0,
         )
         away_team = Team(
             name=f"Test Away Team {unique_id}",
             conference=ConferenceType.POWER_5,
             is_fcs=False,
-            elo_rating=1600.0
+            elo_rating=1600.0,
         )
         test_db.add_all([home_team, away_team])
         test_db.commit()
@@ -224,7 +228,7 @@ class TestPredictionAccuracyEvaluation:
             away_score=0,
             week=13,
             season=2024,
-            is_processed=False  # Not yet played
+            is_processed=False,  # Not yet played
         )
         test_db.add(game)
         test_db.commit()
@@ -239,7 +243,7 @@ class TestPredictionAccuracyEvaluation:
             win_probability=0.60,
             home_elo_at_prediction=1600.0,
             away_elo_at_prediction=1600.0,
-            was_correct=None
+            was_correct=None,
         )
         test_db.add(prediction)
         test_db.commit()
@@ -269,7 +273,7 @@ class TestPredictionAccuracyStats:
                 name=f"Test Team {unique_id}-{i}",
                 conference=ConferenceType.POWER_5,
                 is_fcs=False,
-                elo_rating=1600.0
+                elo_rating=1600.0,
             )
             teams.append(team)
             test_db.add(team)
@@ -281,18 +285,44 @@ class TestPredictionAccuracyStats:
         # Create games with predictions (2 correct, 1 incorrect, 1 not evaluated)
         predictions_data = [
             # Correct predictions
-            {"home_id": teams[0].id, "away_id": teams[1].id, "home_score": 35, "away_score": 28,
-             "predicted_winner": teams[0].id, "processed": True, "week": 1},
-            {"home_id": teams[2].id, "away_id": teams[3].id, "home_score": 21, "away_score": 28,
-             "predicted_winner": teams[3].id, "processed": True, "week": 2},
-
+            {
+                "home_id": teams[0].id,
+                "away_id": teams[1].id,
+                "home_score": 35,
+                "away_score": 28,
+                "predicted_winner": teams[0].id,
+                "processed": True,
+                "week": 1,
+            },
+            {
+                "home_id": teams[2].id,
+                "away_id": teams[3].id,
+                "home_score": 21,
+                "away_score": 28,
+                "predicted_winner": teams[3].id,
+                "processed": True,
+                "week": 2,
+            },
             # Incorrect prediction
-            {"home_id": teams[0].id, "away_id": teams[2].id, "home_score": 14, "away_score": 24,
-             "predicted_winner": teams[0].id, "processed": True, "week": 3},
-
+            {
+                "home_id": teams[0].id,
+                "away_id": teams[2].id,
+                "home_score": 14,
+                "away_score": 24,
+                "predicted_winner": teams[0].id,
+                "processed": True,
+                "week": 3,
+            },
             # Not yet evaluated
-            {"home_id": teams[1].id, "away_id": teams[3].id, "home_score": 0, "away_score": 0,
-             "predicted_winner": teams[1].id, "processed": False, "week": 4},
+            {
+                "home_id": teams[1].id,
+                "away_id": teams[3].id,
+                "home_score": 0,
+                "away_score": 0,
+                "predicted_winner": teams[1].id,
+                "processed": False,
+                "week": 4,
+            },
         ]
 
         for pred_data in predictions_data:
@@ -303,7 +333,7 @@ class TestPredictionAccuracyStats:
                 away_score=pred_data["away_score"],
                 week=pred_data["week"],
                 season=test_season,  # Use unique test season
-                is_processed=pred_data["processed"]
+                is_processed=pred_data["processed"],
             )
             test_db.add(game)
             test_db.commit()
@@ -316,7 +346,7 @@ class TestPredictionAccuracyStats:
                 predicted_away_score=24,
                 win_probability=0.60,
                 home_elo_at_prediction=1600.0,
-                away_elo_at_prediction=1600.0
+                away_elo_at_prediction=1600.0,
             )
             test_db.add(prediction)
             test_db.commit()  # Commit prediction
@@ -347,19 +377,19 @@ class TestPredictionAccuracyStats:
             name=f"Target Team {unique_id}",
             conference=ConferenceType.POWER_5,
             is_fcs=False,
-            elo_rating=1650.0
+            elo_rating=1650.0,
         )
         opponent1 = Team(
             name=f"Opponent 1 {unique_id}",
             conference=ConferenceType.POWER_5,
             is_fcs=False,
-            elo_rating=1550.0
+            elo_rating=1550.0,
         )
         opponent2 = Team(
             name=f"Opponent 2 {unique_id}",
             conference=ConferenceType.POWER_5,
             is_fcs=False,
-            elo_rating=1700.0
+            elo_rating=1700.0,
         )
         test_db.add_all([target_team, opponent1, opponent2])
         test_db.commit()
@@ -375,7 +405,7 @@ class TestPredictionAccuracyStats:
             away_score=28,
             week=1,
             season=test_season,  # Use unique test season
-            is_processed=True
+            is_processed=True,
         )
         test_db.add(game1)
         test_db.commit()
@@ -388,7 +418,7 @@ class TestPredictionAccuracyStats:
             predicted_away_score=24,
             win_probability=0.70,
             home_elo_at_prediction=1650.0,
-            away_elo_at_prediction=1550.0
+            away_elo_at_prediction=1550.0,
         )
         test_db.add(pred1)
         test_db.commit()  # Commit prediction
@@ -403,7 +433,7 @@ class TestPredictionAccuracyStats:
             away_score=24,
             week=2,
             season=test_season,  # Use unique test season
-            is_processed=True
+            is_processed=True,
         )
         test_db.add(game2)
         test_db.commit()
@@ -416,7 +446,7 @@ class TestPredictionAccuracyStats:
             predicted_away_score=21,
             win_probability=0.60,
             home_elo_at_prediction=1700.0,
-            away_elo_at_prediction=1650.0
+            away_elo_at_prediction=1650.0,
         )
         test_db.add(pred2)
         test_db.commit()  # Commit prediction

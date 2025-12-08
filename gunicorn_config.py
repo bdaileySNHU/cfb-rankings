@@ -13,7 +13,7 @@ keepalive = 5
 
 # Logging
 accesslog = "-"  # Log to stdout (systemd will capture it)
-errorlog = "-"   # Log to stderr (systemd will capture it)
+errorlog = "-"  # Log to stderr (systemd will capture it)
 loglevel = "info"
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
 

@@ -36,25 +36,25 @@ try:
     print()
 
     # Get predictions by season
-    predictions_with_games = db.query(Prediction).join(Game).filter(
-        Prediction.was_correct.isnot(None)
-    ).all()
+    predictions_with_games = (
+        db.query(Prediction).join(Game).filter(Prediction.was_correct.isnot(None)).all()
+    )
 
     if predictions_with_games:
         seasons = {}
         for pred in predictions_with_games:
             season = pred.game.season
             if season not in seasons:
-                seasons[season] = {'total': 0, 'correct': 0}
-            seasons[season]['total'] += 1
+                seasons[season] = {"total": 0, "correct": 0}
+            seasons[season]["total"] += 1
             if pred.was_correct:
-                seasons[season]['correct'] += 1
+                seasons[season]["correct"] += 1
 
         print("Breakdown by season:")
         print("-" * 60)
         for season in sorted(seasons.keys()):
-            total_season = seasons[season]['total']
-            correct_season = seasons[season]['correct']
+            total_season = seasons[season]["total"]
+            correct_season = seasons[season]["correct"]
             accuracy_season = 100.0 * correct_season / total_season
             print(f"  {season}: {correct_season}/{total_season} = {accuracy_season:.1f}%")
 

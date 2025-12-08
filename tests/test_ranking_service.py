@@ -81,14 +81,14 @@ class TestGeneratePredictions:
         """
         # Document expected behavior
         expected_behavior = {
-            'queries_season_table': True,
-            'filters_by_week': 'current_week + 1',
-            'filters_by_processed': False,
-            'filters_by_season_year': True,
+            "queries_season_table": True,
+            "filters_by_week": "current_week + 1",
+            "filters_by_processed": False,
+            "filters_by_season_year": True,
         }
 
-        assert expected_behavior['queries_season_table'] == True
-        assert expected_behavior['filters_by_week'] == 'current_week + 1'
+        assert expected_behavior["queries_season_table"] == True
+        assert expected_behavior["filters_by_week"] == "current_week + 1"
 
     def test_generate_predictions_with_specific_week(self, mock_db, sample_game, sample_teams):
         """Test filtering by specific week number"""
@@ -112,9 +112,14 @@ class TestGeneratePredictions:
         mock_db.query.side_effect = query_side_effect
 
         # Call with specific week
-        with patch('src.core.ranking_service._validate_prediction_teams', return_value=True):
-            with patch('src.core.ranking_service._calculate_game_prediction', return_value={'game_id': 1, 'week': 5}):
-                predictions = generate_predictions(mock_db, week=5, next_week=False, season_year=2025)
+        with patch("src.core.ranking_service._validate_prediction_teams", return_value=True):
+            with patch(
+                "src.core.ranking_service._calculate_game_prediction",
+                return_value={"game_id": 1, "week": 5},
+            ):
+                predictions = generate_predictions(
+                    mock_db, week=5, next_week=False, season_year=2025
+                )
 
         # Should return predictions
         assert isinstance(predictions, list)
@@ -153,21 +158,19 @@ class TestGeneratePredictions:
         mock_db.query.side_effect = query_side_effect
 
         # Call with team_id filter
-        with patch('src.core.ranking_service._validate_prediction_teams', return_value=True):
-            with patch('src.core.ranking_service._calculate_game_prediction', return_value={'game_id': 1}):
+        with patch("src.core.ranking_service._validate_prediction_teams", return_value=True):
+            with patch(
+                "src.core.ranking_service._calculate_game_prediction", return_value={"game_id": 1}
+            ):
                 predictions = generate_predictions(
-                    mock_db,
-                    team_id=1,
-                    next_week=False,
-                    week=10,
-                    season_year=2025
+                    mock_db, team_id=1, next_week=False, week=10, season_year=2025
                 )
 
         assert isinstance(predictions, list)
 
     def test_generate_predictions_uses_current_year_by_default(self, mock_db):
         """Test that season_year defaults to current year"""
-        with patch('src.core.ranking_service.datetime') as mock_datetime:
+        with patch("src.core.ranking_service.datetime") as mock_datetime:
             mock_datetime.now.return_value.year = 2025
 
             # Mock empty query results
@@ -294,7 +297,7 @@ class TestPredictionEdgeCases:
 
         mock_db.query.side_effect = query_side_effect
 
-        with patch('src.core.ranking_service._validate_prediction_teams', return_value=False):
+        with patch("src.core.ranking_service._validate_prediction_teams", return_value=False):
             predictions = generate_predictions(mock_db, next_week=False, week=10, season_year=2025)
 
         # Should skip invalid games
@@ -336,15 +339,15 @@ class TestPredictionDataStructure:
         # Actual structure is validated in integration tests
 
         expected_fields = [
-            'game_id',
-            'predicted_winner_id',
-            'predicted_home_score',
-            'predicted_away_score',
-            'home_win_probability',
-            'away_win_probability',
-            'confidence',
-            'home_team_rating',
-            'away_team_rating',
+            "game_id",
+            "predicted_winner_id",
+            "predicted_home_score",
+            "predicted_away_score",
+            "home_win_probability",
+            "away_win_probability",
+            "confidence",
+            "home_team_rating",
+            "away_team_rating",
         ]
 
         assert len(expected_fields) == 9

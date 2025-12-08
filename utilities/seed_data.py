@@ -37,7 +37,6 @@ def seed_database():
         ("Florida State", ConferenceType.POWER_5, 10, 15, 0.55),
         ("Notre Dame", ConferenceType.POWER_5, 7, 18, 0.62),
         ("USC", ConferenceType.POWER_5, 6, 6, 0.58),
-
         # Mid-tier P5
         ("Wisconsin", ConferenceType.POWER_5, 35, 40, 0.72),
         ("Iowa", ConferenceType.POWER_5, 45, 55, 0.80),
@@ -49,21 +48,18 @@ def seed_database():
         ("Clemson", ConferenceType.POWER_5, 11, 16, 0.65),
         ("Miami", ConferenceType.POWER_5, 14, 11, 0.60),
         ("Florida", ConferenceType.POWER_5, 16, 22, 0.52),
-
         # Strong G5
         ("Boise State", ConferenceType.GROUP_5, 85, 65, 0.82),
         ("Memphis", ConferenceType.GROUP_5, 90, 75, 0.68),
         ("UCF", ConferenceType.GROUP_5, 70, 60, 0.70),
         ("Cincinnati", ConferenceType.GROUP_5, 75, 70, 0.75),
         ("Houston", ConferenceType.GROUP_5, 65, 55, 0.65),
-
         # Average G5
         ("Toledo", ConferenceType.GROUP_5, 110, 95, 0.70),
         ("UTSA", ConferenceType.GROUP_5, 105, 88, 0.65),
         ("App State", ConferenceType.GROUP_5, 95, 85, 0.72),
         ("Louisiana", ConferenceType.GROUP_5, 100, 92, 0.68),
         ("Tulane", ConferenceType.GROUP_5, 88, 78, 0.73),
-
         # FCS
         ("North Dakota State", ConferenceType.FCS, 999, 999, 0.85),
         ("Montana", ConferenceType.FCS, 999, 999, 0.78),
@@ -77,7 +73,7 @@ def seed_database():
             conference=conf,
             recruiting_rank=recruiting,
             transfer_rank=transfer,
-            returning_production=returning
+            returning_production=returning,
         )
         ranking_service.initialize_team_rating(team)
         db.add(team)
@@ -120,7 +116,7 @@ def seed_database():
             week=1,
             season=2024,
             is_neutral_site=is_neutral,
-            game_date=datetime(2024, 9, 1)
+            game_date=datetime(2024, 9, 1),
         )
         db.add(game)
         db.commit()
@@ -137,13 +133,11 @@ def seed_database():
         ("Ohio State", "Texas", 31, 28, False),
         ("Oregon", "Michigan", 38, 17, False),
         ("Notre Dame", "USC", 24, 20, False),
-
         # Mid-tier games
         ("Penn State", "Iowa", 31, 0, False),
         ("Wisconsin", "Michigan State", 24, 21, False),
         ("Miami", "Florida State", 36, 14, False),
         ("LSU", "Nebraska", 41, 14, False),
-
         # G5 action
         ("Memphis", "Louisiana", 35, 21, False),
         ("Boise State", "Tulane", 37, 34, False),
@@ -163,7 +157,7 @@ def seed_database():
             week=2,
             season=2024,
             is_neutral_site=is_neutral,
-            game_date=datetime(2024, 9, 8)
+            game_date=datetime(2024, 9, 8),
         )
         db.add(game)
         db.commit()
@@ -179,17 +173,19 @@ def seed_database():
     ranking_service.save_weekly_rankings(2024, 2)
 
     # Print final rankings
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("FINAL RANKINGS AFTER WEEK 2")
-    print("="*80)
+    print("=" * 80)
     rankings = ranking_service.get_current_rankings(2024, limit=25)
 
     print(f"{'RANK':<6} {'TEAM':<25} {'RATING':<10} {'RECORD':<10} {'CONF':<6} {'SOS':<10}")
-    print("-"*80)
+    print("-" * 80)
     for r in rankings:
         record = f"{r['wins']}-{r['losses']}"
-        print(f"{r['rank']:<6} {r['team_name']:<25} {r['elo_rating']:<10.2f} {record:<10} "
-              f"{r['conference'].value:<6} {r['sos']:<10.2f}")
+        print(
+            f"{r['rank']:<6} {r['team_name']:<25} {r['elo_rating']:<10.2f} {record:<10} "
+            f"{r['conference'].value:<6} {r['sos']:<10.2f}"
+        )
 
     print("\nDatabase seeded successfully!")
     db.close()

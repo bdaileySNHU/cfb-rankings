@@ -67,7 +67,7 @@ class TestUpdateGamesScript:
                 "awayClassification": "fbs",
                 "awayConference": "Conference USA",
                 "awayPoints": None,
-            }
+            },
         ]
         return client
 
@@ -92,17 +92,17 @@ class TestUpdateGamesScript:
 
         # First game
         game1 = games[0]
-        assert game1['homeTeam'] == 'Texas State'  # camelCase!
-        assert game1['awayTeam'] == 'James Madison'  # camelCase!
-        assert game1['startDate'] == '2025-10-29T00:00:00.000Z'  # camelCase!
-        assert game1['neutralSite'] == False  # camelCase!
-        assert game1['homePoints'] is None  # camelCase!
-        assert game1['awayPoints'] is None  # camelCase!
+        assert game1["homeTeam"] == "Texas State"  # camelCase!
+        assert game1["awayTeam"] == "James Madison"  # camelCase!
+        assert game1["startDate"] == "2025-10-29T00:00:00.000Z"  # camelCase!
+        assert game1["neutralSite"] == False  # camelCase!
+        assert game1["homePoints"] is None  # camelCase!
+        assert game1["awayPoints"] is None  # camelCase!
 
         # Second game
         game2 = games[1]
-        assert game2['homeTeam'] == 'Kennesaw State'
-        assert game2['awayTeam'] == 'UTEP'
+        assert game2["homeTeam"] == "Kennesaw State"
+        assert game2["awayTeam"] == "UTEP"
 
     def test_null_team_name_handling(self, mock_cfbd_client):
         """
@@ -111,14 +111,16 @@ class TestUpdateGamesScript:
         This prevents the "NOT NULL constraint failed: teams.name" error
         """
         # Add a game with null team names
-        mock_cfbd_client.get_games.return_value.append({
-            "id": 999999,
-            "season": 2025,
-            "week": 10,
-            "homeTeam": None,  # NULL!
-            "awayTeam": "Some Team",
-            "startDate": "2025-10-29T00:00:00.000Z",
-        })
+        mock_cfbd_client.get_games.return_value.append(
+            {
+                "id": 999999,
+                "season": 2025,
+                "week": 10,
+                "homeTeam": None,  # NULL!
+                "awayTeam": "Some Team",
+                "startDate": "2025-10-29T00:00:00.000Z",
+            }
+        )
 
         games = mock_cfbd_client.get_games(2025, week=10)
 
@@ -127,8 +129,8 @@ class TestUpdateGamesScript:
         skipped_count = 0
 
         for game_data in games:
-            home_name = game_data.get('homeTeam')
-            away_name = game_data.get('awayTeam')
+            home_name = game_data.get("homeTeam")
+            away_name = game_data.get("awayTeam")
 
             if not home_name or not away_name:
                 skipped_count += 1
@@ -168,17 +170,13 @@ class TestUpdateGamesScript:
 
         # Create FCS team
         fcs_team = Team(
-            name="Montana",
-            conference='FCS',
-            is_fcs=True,
-            elo_rating=1500.0,
-            initial_rating=1500.0
+            name="Montana", conference="FCS", is_fcs=True, elo_rating=1500.0, initial_rating=1500.0
         )
 
         assert fcs_team.name == "Montana"
         assert fcs_team.is_fcs == True
         assert fcs_team.elo_rating == 1500.0
-        assert fcs_team.conference == 'FCS'
+        assert fcs_team.conference == "FCS"
 
     def test_game_date_parsing(self):
         """
@@ -190,7 +188,7 @@ class TestUpdateGamesScript:
         date_str = "2025-10-29T00:00:00.000Z"
 
         # Parse ISO format
-        game_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        game_date = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
 
         assert game_date.year == 2025
         assert game_date.month == 10
@@ -201,7 +199,7 @@ class TestUpdateGamesScript:
         games = mock_cfbd_client.get_games(2025, week=10)
 
         game1 = games[0]
-        assert game1['neutralSite'] == False
+        assert game1["neutralSite"] == False
 
         # Test with a neutral site game
         neutral_game = {
@@ -211,7 +209,7 @@ class TestUpdateGamesScript:
             "startDate": "2025-10-29T00:00:00.000Z",
         }
 
-        assert neutral_game['neutralSite'] == True
+        assert neutral_game["neutralSite"] == True
 
     def test_future_game_not_processed(self):
         """
@@ -232,7 +230,7 @@ class TestUpdateGamesScript:
             week=10,
             season=2025,
             is_processed=False,
-            excluded_from_rankings=False
+            excluded_from_rankings=False,
         )
 
         assert future_game.is_processed == False
@@ -257,11 +255,7 @@ class TestUpdateGamesScript:
         is_fcs_game = fbs_team.is_fcs or fcs_team.is_fcs
 
         game = Game(
-            home_team_id=1,
-            away_team_id=2,
-            week=10,
-            season=2025,
-            excluded_from_rankings=is_fcs_game
+            home_team_id=1, away_team_id=2, week=10, season=2025, excluded_from_rankings=is_fcs_game
         )
 
         assert is_fcs_game == True
@@ -282,20 +276,20 @@ class TestCFBDAPIFieldMapping:
         CFBD API uses camelCase, NOT snake_case!
         """
         expected_fields = {
-            'homeTeam': 'home_team',      # CFBD -> Our code
-            'awayTeam': 'away_team',
-            'startDate': 'start_date',
-            'neutralSite': 'neutral_site',
-            'homePoints': 'home_points',
-            'awayPoints': 'away_points',
-            'homeId': 'home_id',
-            'awayId': 'away_id',
-            'seasonType': 'season_type',
+            "homeTeam": "home_team",  # CFBD -> Our code
+            "awayTeam": "away_team",
+            "startDate": "start_date",
+            "neutralSite": "neutral_site",
+            "homePoints": "home_points",
+            "awayPoints": "away_points",
+            "homeId": "home_id",
+            "awayId": "away_id",
+            "seasonType": "season_type",
         }
 
         # Verify we're using the correct CFBD field names
-        assert 'homeTeam' in expected_fields
-        assert 'home_team' not in expected_fields  # Don't use snake_case for CFBD!
+        assert "homeTeam" in expected_fields
+        assert "home_team" not in expected_fields  # Don't use snake_case for CFBD!
 
     def test_cfbd_response_schema(self):
         """
@@ -326,13 +320,13 @@ class TestCFBDAPIFieldMapping:
         }
 
         # Verify all critical fields are camelCase
-        assert 'homeTeam' in cfbd_game_response
-        assert 'awayTeam' in cfbd_game_response
-        assert 'startDate' in cfbd_game_response
-        assert 'neutralSite' in cfbd_game_response
-        assert 'homePoints' in cfbd_game_response
-        assert 'awayPoints' in cfbd_game_response
+        assert "homeTeam" in cfbd_game_response
+        assert "awayTeam" in cfbd_game_response
+        assert "startDate" in cfbd_game_response
+        assert "neutralSite" in cfbd_game_response
+        assert "homePoints" in cfbd_game_response
+        assert "awayPoints" in cfbd_game_response
 
         # These should NOT exist (snake_case)
-        assert 'home_team' not in cfbd_game_response
-        assert 'away_team' not in cfbd_game_response
+        assert "home_team" not in cfbd_game_response
+        assert "away_team" not in cfbd_game_response

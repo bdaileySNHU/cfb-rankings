@@ -55,7 +55,7 @@ def update_current_week(year: int, week: int) -> bool:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Update the current_week for a season',
+        description="Update the current_week for a season",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -64,13 +64,11 @@ Examples:
 
   # Update 2025 season to week 8
   python3 scripts/fix_current_week.py --year 2025 --week 8
-        """
+        """,
     )
 
-    parser.add_argument('--year', type=int, required=True,
-                        help='Season year to update')
-    parser.add_argument('--week', type=int, required=True,
-                        help='Week number to set (0-15)')
+    parser.add_argument("--year", type=int, required=True, help="Season year to update")
+    parser.add_argument("--week", type=int, required=True, help="Week number to set (0-15)")
 
     args = parser.parse_args()
 
@@ -78,5 +76,5 @@ Examples:
     sys.exit(0 if success else 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

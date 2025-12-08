@@ -109,12 +109,7 @@ class TestGetRankings:
         team2 = TeamFactory(name="Georgia", elo_rating=1750.0)
 
         # Create a game so team1 has SOS
-        GameFactory(
-            home_team=team1,
-            away_team=team2,
-            season=2024,
-            is_processed=True
-        )
+        GameFactory(home_team=team1, away_team=team2, season=2024, is_processed=True)
         test_db.commit()
 
         # Act
@@ -178,11 +173,7 @@ class TestGetRankingHistory:
         # Create history for multiple weeks
         for week in range(1, 6):
             RankingHistoryFactory(
-                team=team,
-                season=2024,
-                week=week,
-                rank=week,
-                elo_rating=1800.0 + week * 10
+                team=team, season=2024, week=week, rank=week, elo_rating=1800.0 + week * 10
             )
         test_db.commit()
 
@@ -259,10 +250,11 @@ class TestSaveRankings:
         assert data["data"]["week"] == 5
 
         # Verify history was created
-        history = test_db.query(RankingHistory).filter(
-            RankingHistory.season == 2024,
-            RankingHistory.week == 5
-        ).all()
+        history = (
+            test_db.query(RankingHistory)
+            .filter(RankingHistory.season == 2024, RankingHistory.week == 5)
+            .all()
+        )
         assert len(history) == 2
 
     def test_save_rankings_creates_history_records(self, test_client: TestClient, test_db: Session):
@@ -279,11 +271,15 @@ class TestSaveRankings:
         assert response.status_code == 200
 
         # Verify history record
-        history = test_db.query(RankingHistory).filter(
-            RankingHistory.team_id == team.id,
-            RankingHistory.season == 2024,
-            RankingHistory.week == 5
-        ).first()
+        history = (
+            test_db.query(RankingHistory)
+            .filter(
+                RankingHistory.team_id == team.id,
+                RankingHistory.season == 2024,
+                RankingHistory.week == 5,
+            )
+            .first()
+        )
 
         assert history is not None
         assert history.elo_rating == 1850.0
@@ -422,7 +418,7 @@ class TestResetSeason:
             transfer_rank=10,
             returning_production=0.75,
             elo_rating=1600.0,  # Some rating from previous season
-            initial_rating=1600.0
+            initial_rating=1600.0,
         )
         test_db.commit()
 
@@ -449,11 +445,7 @@ class TestResetSeason:
         season = SeasonFactory(year=2024)
 
         team = TeamFactory(
-            wins=5,
-            losses=2,
-            recruiting_rank=50,
-            transfer_rank=50,
-            returning_production=0.5
+            wins=5, losses=2, recruiting_rank=50, transfer_rank=50, returning_production=0.5
         )
         test_db.commit()
 
@@ -546,7 +538,9 @@ class TestGetActiveSeason:
         assert data["year"] == 2025  # Returns most recent
         assert data["current_week"] == 8
 
-    def test_get_active_season_inactive_season_ignored(self, test_client: TestClient, test_db: Session):
+    def test_get_active_season_inactive_season_ignored(
+        self, test_client: TestClient, test_db: Session
+    ):
         """Test inactive seasons are ignored"""
         # Arrange
         configure_factories(test_db)

@@ -43,8 +43,8 @@ def import_ap_poll_for_week(cfbd: CFBDClient, db, year: int, week: int) -> int:
     rankings_imported = 0
 
     for ranking in ap_poll_data:
-        school_name = ranking.get('school')
-        rank = ranking.get('rank')
+        school_name = ranking.get("school")
+        rank = ranking.get("rank")
 
         # Find team in our database
         team = db.query(Team).filter(Team.name == school_name).first()
@@ -53,29 +53,33 @@ def import_ap_poll_for_week(cfbd: CFBDClient, db, year: int, week: int) -> int:
             continue
 
         # Check if ranking already exists (prevent duplicates)
-        existing = db.query(APPollRanking).filter(
-            APPollRanking.season == year,
-            APPollRanking.week == week,
-            APPollRanking.team_id == team.id
-        ).first()
+        existing = (
+            db.query(APPollRanking)
+            .filter(
+                APPollRanking.season == year,
+                APPollRanking.week == week,
+                APPollRanking.team_id == team.id,
+            )
+            .first()
+        )
 
         if existing:
             # Update existing ranking
             existing.rank = rank
-            existing.first_place_votes = ranking.get('firstPlaceVotes', 0)
-            existing.points = ranking.get('points', 0)
-            existing.poll_type = ranking.get('poll', 'AP Top 25')
+            existing.first_place_votes = ranking.get("firstPlaceVotes", 0)
+            existing.points = ranking.get("points", 0)
+            existing.poll_type = ranking.get("poll", "AP Top 25")
             print(f"      Updated: #{rank} {school_name}")
         else:
             # Create new ranking
             ap_ranking = APPollRanking(
                 season=year,
                 week=week,
-                poll_type=ranking.get('poll', 'AP Top 25'),
+                poll_type=ranking.get("poll", "AP Top 25"),
                 rank=rank,
                 team_id=team.id,
-                first_place_votes=ranking.get('firstPlaceVotes', 0),
-                points=ranking.get('points', 0)
+                first_place_votes=ranking.get("firstPlaceVotes", 0),
+                points=ranking.get("points", 0),
             )
             db.add(ap_ranking)
             rankings_imported += 1
@@ -87,14 +91,14 @@ def import_ap_poll_for_week(cfbd: CFBDClient, db, year: int, week: int) -> int:
 
 def main():
     """Main import function"""
-    print("="*80)
+    print("=" * 80)
     print("AP POLL RANKINGS IMPORT")
     print("EPIC-010: AP Poll Prediction Comparison")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Get API key
-    api_key = os.getenv('CFBD_API_KEY')
+    api_key = os.getenv("CFBD_API_KEY")
     if not api_key:
         print("ERROR: No API key found!")
         print()
@@ -122,16 +126,18 @@ def main():
     season_input = input(f"Enter season year (default: {current_season}): ").strip()
     season = int(season_input) if season_input else current_season
 
-    weeks_input = input(f"Enter weeks to import (e.g., '1-{max_week_available}' or '1,3,5'): ").strip()
+    weeks_input = input(
+        f"Enter weeks to import (e.g., '1-{max_week_available}' or '1,3,5'): "
+    ).strip()
 
     # Parse weeks
     if not weeks_input:
         weeks = range(1, max_week_available + 1)
-    elif '-' in weeks_input:
-        start, end = weeks_input.split('-')
+    elif "-" in weeks_input:
+        start, end = weeks_input.split("-")
         weeks = range(int(start), int(end) + 1)
     else:
-        weeks = [int(w.strip()) for w in weeks_input.split(',')]
+        weeks = [int(w.strip()) for w in weeks_input.split(",")]
 
     print()
     print(f"Importing AP Poll rankings for {season}, weeks: {list(weeks)}")
@@ -157,12 +163,12 @@ def main():
 
     # Print summary
     print()
-    print("="*80)
+    print("=" * 80)
     print("IMPORT SUMMARY")
-    print("="*80)
+    print("=" * 80)
     print(f"Total rankings imported: {total_imported}")
     print(f"Weeks with AP Poll data: {weeks_with_data}")
-    print("="*80)
+    print("=" * 80)
     print()
     print("✓ Import complete!")
     print()

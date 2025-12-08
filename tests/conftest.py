@@ -48,8 +48,7 @@ def test_db():
     # Create in-memory SQLite engine with shared cache
     # Using file::memory:?cache=shared ensures all connections share the same in-memory database
     engine = create_engine(
-        "sqlite:///file::memory:?cache=shared&uri=true",
-        connect_args={"check_same_thread": False}
+        "sqlite:///file::memory:?cache=shared&uri=true", connect_args={"check_same_thread": False}
     )
 
     # Create session factory
@@ -90,6 +89,7 @@ def test_client(test_db: Session):
     Yields:
         TestClient: FastAPI test client for making API requests
     """
+
     def override_get_db():
         """Override database dependency to use test database"""
         yield test_db
@@ -159,13 +159,13 @@ def factories(test_db: Session):
     configure_factories(test_db)
 
     yield {
-        'team': TeamFactory,
-        'game': GameFactory,
-        'season': SeasonFactory,
-        'history': RankingHistoryFactory,
-        'elite_team': EliteTeamFactory,
-        'g5_champion': G5ChampionFactory,
-        'fcs_team': FCSTeamFactory
+        "team": TeamFactory,
+        "game": GameFactory,
+        "season": SeasonFactory,
+        "history": RankingHistoryFactory,
+        "elite_team": EliteTeamFactory,
+        "g5_champion": G5ChampionFactory,
+        "fcs_team": FCSTeamFactory,
     }
 
 
@@ -189,95 +189,75 @@ def mock_cfbd_client(monkeypatch):
 
     # Mock get_teams() - Returns realistic FBS team data
     mock_client.get_teams.return_value = [
-        {
-            'school': 'Alabama',
-            'conference': 'SEC',
-            'abbreviation': 'ALA'
-        },
-        {
-            'school': 'Georgia',
-            'conference': 'SEC',
-            'abbreviation': 'UGA'
-        },
-        {
-            'school': 'Ohio State',
-            'conference': 'Big Ten',
-            'abbreviation': 'OSU'
-        },
-        {
-            'school': 'Michigan',
-            'conference': 'Big Ten',
-            'abbreviation': 'MICH'
-        },
-        {
-            'school': 'Boise State',
-            'conference': 'Mountain West',
-            'abbreviation': 'BSU'
-        }
+        {"school": "Alabama", "conference": "SEC", "abbreviation": "ALA"},
+        {"school": "Georgia", "conference": "SEC", "abbreviation": "UGA"},
+        {"school": "Ohio State", "conference": "Big Ten", "abbreviation": "OSU"},
+        {"school": "Michigan", "conference": "Big Ten", "abbreviation": "MICH"},
+        {"school": "Boise State", "conference": "Mountain West", "abbreviation": "BSU"},
     ]
 
     # Mock get_games() - Returns completed game data
     mock_client.get_games.return_value = [
         {
-            'homeTeam': 'Alabama',
-            'awayTeam': 'Georgia',
-            'homePoints': 27,
-            'awayPoints': 24,
-            'week': 1,
-            'neutralSite': False
+            "homeTeam": "Alabama",
+            "awayTeam": "Georgia",
+            "homePoints": 27,
+            "awayPoints": 24,
+            "week": 1,
+            "neutralSite": False,
         },
         {
-            'homeTeam': 'Ohio State',
-            'awayTeam': 'Michigan',
-            'homePoints': 30,
-            'awayPoints': 24,
-            'week': 1,
-            'neutralSite': False
-        }
+            "homeTeam": "Ohio State",
+            "awayTeam": "Michigan",
+            "homePoints": 30,
+            "awayPoints": 24,
+            "week": 1,
+            "neutralSite": False,
+        },
     ]
 
     # Mock get_recruiting_rankings() - Returns recruiting class rankings
     mock_client.get_recruiting_rankings.return_value = [
-        {'team': 'Alabama', 'rank': 1},
-        {'team': 'Georgia', 'rank': 2},
-        {'team': 'Ohio State', 'rank': 3},
-        {'team': 'Michigan', 'rank': 5},
-        {'team': 'Boise State', 'rank': 60}
+        {"team": "Alabama", "rank": 1},
+        {"team": "Georgia", "rank": 2},
+        {"team": "Ohio State", "rank": 3},
+        {"team": "Michigan", "rank": 5},
+        {"team": "Boise State", "rank": 60},
     ]
 
     # Mock get_team_talent() - Returns talent composite scores
     mock_client.get_team_talent.return_value = [
-        {'school': 'Alabama', 'talent': 95.5},
-        {'school': 'Georgia', 'talent': 94.8},
-        {'school': 'Ohio State', 'talent': 93.2},
-        {'school': 'Michigan', 'talent': 91.5},
-        {'school': 'Boise State', 'talent': 75.0}
+        {"school": "Alabama", "talent": 95.5},
+        {"school": "Georgia", "talent": 94.8},
+        {"school": "Ohio State", "talent": 93.2},
+        {"school": "Michigan", "talent": 91.5},
+        {"school": "Boise State", "talent": 75.0},
     ]
 
     # Mock get_returning_production() - Returns returning production percentages
     mock_client.get_returning_production.return_value = [
-        {'team': 'Alabama', 'returningProduction': 75.5},
-        {'team': 'Georgia', 'returningProduction': 68.2},
-        {'team': 'Ohio State', 'returningProduction': 82.0},
-        {'team': 'Michigan', 'returningProduction': 55.5},
-        {'team': 'Boise State', 'returningProduction': 70.0}
+        {"team": "Alabama", "returningProduction": 75.5},
+        {"team": "Georgia", "returningProduction": 68.2},
+        {"team": "Ohio State", "returningProduction": 82.0},
+        {"team": "Michigan", "returningProduction": 55.5},
+        {"team": "Boise State", "returningProduction": 70.0},
     ]
 
     # Mock get_transfer_portal() - Returns transfer portal rankings
     mock_client.get_transfer_portal.return_value = [
-        {'team': 'Alabama', 'rank': 2},
-        {'team': 'Georgia', 'rank': 1},
-        {'team': 'Ohio State', 'rank': 4},
-        {'team': 'Michigan', 'rank': 8},
-        {'team': 'Boise State', 'rank': 25}
+        {"team": "Alabama", "rank": 2},
+        {"team": "Georgia", "rank": 1},
+        {"team": "Ohio State", "rank": 4},
+        {"team": "Michigan", "rank": 8},
+        {"team": "Boise State", "rank": 25},
     ]
 
     # Mock get_ap_poll() - Returns AP Poll rankings
     mock_client.get_ap_poll.return_value = [
-        {'school': 'Alabama', 'rank': 1, 'firstPlaceVotes': 45, 'points': 1500},
-        {'school': 'Georgia', 'rank': 2, 'firstPlaceVotes': 10, 'points': 1450},
-        {'school': 'Ohio State', 'rank': 3, 'firstPlaceVotes': 7, 'points': 1400},
-        {'school': 'Michigan', 'rank': 5, 'firstPlaceVotes': 0, 'points': 1300}
+        {"school": "Alabama", "rank": 1, "firstPlaceVotes": 45, "points": 1500},
+        {"school": "Georgia", "rank": 2, "firstPlaceVotes": 10, "points": 1450},
+        {"school": "Ohio State", "rank": 3, "firstPlaceVotes": 7, "points": 1400},
+        {"school": "Michigan", "rank": 5, "firstPlaceVotes": 0, "points": 1300},
     ]
 
     return mock_client
@@ -344,10 +324,7 @@ def browser_page(live_server):
         browser = p.chromium.launch(headless=True)
 
         # Create new context for test isolation
-        context = browser.new_context(
-            viewport={"width": 1280, "height": 720},
-            locale="en-US"
-        )
+        context = browser.new_context(viewport={"width": 1280, "height": 720}, locale="en-US")
 
         # Create new page
         page = context.new_page()

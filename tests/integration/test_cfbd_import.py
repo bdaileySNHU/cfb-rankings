@@ -36,28 +36,28 @@ class TestCFBDClientMocking:
         # Assert - Verify mock returns expected data structures
         assert isinstance(teams, list)
         assert len(teams) == 5
-        assert teams[0]['school'] == 'Alabama'
-        assert teams[0]['conference'] == 'SEC'
+        assert teams[0]["school"] == "Alabama"
+        assert teams[0]["conference"] == "SEC"
 
         assert isinstance(games, list)
         assert len(games) == 2
-        assert 'homeTeam' in games[0]
-        assert 'awayTeam' in games[0]
-        assert 'homePoints' in games[0]
+        assert "homeTeam" in games[0]
+        assert "awayTeam" in games[0]
+        assert "homePoints" in games[0]
 
         assert isinstance(recruiting, list)
-        assert recruiting[0]['team'] == 'Alabama'
-        assert recruiting[0]['rank'] == 1
+        assert recruiting[0]["team"] == "Alabama"
+        assert recruiting[0]["rank"] == 1
 
         assert isinstance(talent, list)
-        assert talent[0]['school'] == 'Alabama'
-        assert talent[0]['talent'] == 95.5
+        assert talent[0]["school"] == "Alabama"
+        assert talent[0]["talent"] == 95.5
 
         assert isinstance(returning, list)
-        assert returning[0]['team'] == 'Alabama'
+        assert returning[0]["team"] == "Alabama"
 
         assert isinstance(transfers, list)
-        assert transfers[0]['team'] == 'Alabama'
+        assert transfers[0]["team"] == "Alabama"
 
     def test_mock_client_is_deterministic(self, mock_cfbd_client):
         """Test that mock client returns same data on repeated calls"""
@@ -85,17 +85,17 @@ class TestTeamImportWithMock:
 
         # Assert - Verify teams were created
         assert len(team_objects) == 5
-        assert 'Alabama' in team_objects
-        assert 'Georgia' in team_objects
-        assert 'Ohio State' in team_objects
+        assert "Alabama" in team_objects
+        assert "Georgia" in team_objects
+        assert "Ohio State" in team_objects
 
         # Verify teams in database
         teams_in_db = test_db.query(Team).all()
         assert len(teams_in_db) == 5
 
         # Verify Alabama has correct data
-        alabama = team_objects['Alabama']
-        assert alabama.name == 'Alabama'
+        alabama = team_objects["Alabama"]
+        assert alabama.name == "Alabama"
         assert alabama.conference == ConferenceType.POWER_5
         assert alabama.recruiting_rank == 1  # From mock recruiting data
         assert alabama.returning_production > 0  # From mock returning production
@@ -109,8 +109,8 @@ class TestTeamImportWithMock:
         team_objects = import_teams(mock_cfbd_client, test_db, year=2025)
 
         # Assert - Verify conference types
-        alabama = team_objects['Alabama']
-        boise = team_objects['Boise State']
+        alabama = team_objects["Alabama"]
+        boise = team_objects["Boise State"]
 
         assert alabama.conference == ConferenceType.POWER_5  # SEC -> P5
         assert boise.conference == ConferenceType.GROUP_5  # Mountain West -> G5
@@ -124,13 +124,15 @@ class TestTeamImportWithMock:
         team_objects = import_teams(mock_cfbd_client, test_db, year=2025)
 
         # Assert - Teams should have initial ELO ratings calculated
-        alabama = team_objects['Alabama']
-        georgia = team_objects['Georgia']
+        alabama = team_objects["Alabama"]
+        georgia = team_objects["Georgia"]
 
         # Alabama has better recruiting (#1 vs #2), so should have higher initial rating
         assert alabama.elo_rating > 1500  # Base FBS rating
-        assert alabama.elo_rating > georgia.elo_rating or \
-               abs(alabama.elo_rating - georgia.elo_rating) < 50  # Close due to similar recruiting
+        assert (
+            alabama.elo_rating > georgia.elo_rating
+            or abs(alabama.elo_rating - georgia.elo_rating) < 50
+        )  # Close due to similar recruiting
 
         # Verify initial_rating is set
         assert alabama.initial_rating == alabama.elo_rating
@@ -152,7 +154,7 @@ class TestGameImportWithMock:
         import_stats = import_games(mock_cfbd_client, test_db, team_objects, year=2025, max_week=1)
 
         # Assert - Verify games were created and processed
-        assert import_stats['imported'] == 2  # Mock data has 2 games
+        assert import_stats["imported"] == 2  # Mock data has 2 games
 
         games_in_db = test_db.query(Game).all()
         assert len(games_in_db) == 2
@@ -173,8 +175,8 @@ class TestGameImportWithMock:
         import_games(mock_cfbd_client, test_db, team_objects, year=2025, max_week=1)
 
         # Assert - Teams should have updated records
-        alabama = test_db.query(Team).filter(Team.name == 'Alabama').first()
-        georgia = test_db.query(Team).filter(Team.name == 'Georgia').first()
+        alabama = test_db.query(Team).filter(Team.name == "Alabama").first()
+        georgia = test_db.query(Team).filter(Team.name == "Georgia").first()
 
         # Alabama beat Georgia 27-24 in mock data
         assert alabama.wins == 1
@@ -190,12 +192,12 @@ class TestGameImportWithMock:
         # Modify mock to include incomplete game
         mock_cfbd_client.get_games.return_value = [
             {
-                'homeTeam': 'Alabama',
-                'awayTeam': 'Georgia',
-                'homePoints': None,  # Future/incomplete game
-                'awayPoints': None,
-                'week': 1,
-                'neutralSite': False
+                "homeTeam": "Alabama",
+                "awayTeam": "Georgia",
+                "homePoints": None,  # Future/incomplete game
+                "awayPoints": None,
+                "week": 1,
+                "neutralSite": False,
             }
         ]
 
@@ -205,8 +207,8 @@ class TestGameImportWithMock:
         import_stats = import_games(mock_cfbd_client, test_db, team_objects, year=2025, max_week=1)
 
         # Assert - Games without scores are treated as future games
-        assert import_stats['imported'] == 0
-        assert import_stats['future_imported'] == 1
+        assert import_stats["imported"] == 0
+        assert import_stats["future_imported"] == 1
 
     def test_import_games_skips_fcs_opponents(self, test_db: Session, mock_cfbd_client):
         """Test that import creates FCS games with excluded_from_rankings flag"""
@@ -217,12 +219,12 @@ class TestGameImportWithMock:
         # Modify mock to include FCS opponent
         mock_cfbd_client.get_games.return_value = [
             {
-                'homeTeam': 'Alabama',
-                'awayTeam': 'Some FCS Team',  # Not in our team list
-                'homePoints': 56,
-                'awayPoints': 7,
-                'week': 1,
-                'neutralSite': False
+                "homeTeam": "Alabama",
+                "awayTeam": "Some FCS Team",  # Not in our team list
+                "homePoints": 56,
+                "awayPoints": 7,
+                "week": 1,
+                "neutralSite": False,
             }
         ]
 
@@ -232,8 +234,8 @@ class TestGameImportWithMock:
         import_stats = import_games(mock_cfbd_client, test_db, team_objects, year=2025, max_week=1)
 
         # Assert - FCS game should be imported but not processed for rankings
-        assert import_stats['imported'] == 0, "No FBS games should be imported"
-        assert import_stats['fcs_imported'] == 1, "One FCS game should be imported"
+        assert import_stats["imported"] == 0, "No FBS games should be imported"
+        assert import_stats["fcs_imported"] == 1, "One FCS game should be imported"
 
         # Verify the game was created with excluded_from_rankings=True
         fcs_game = test_db.query(Game).first()
@@ -249,12 +251,12 @@ class TestGameImportWithMock:
         # Modify mock to include neutral site game
         mock_cfbd_client.get_games.return_value = [
             {
-                'homeTeam': 'Alabama',
-                'awayTeam': 'Georgia',
-                'homePoints': 27,
-                'awayPoints': 24,
-                'week': 1,
-                'neutralSite': True  # Neutral site game
+                "homeTeam": "Alabama",
+                "awayTeam": "Georgia",
+                "homePoints": 27,
+                "awayPoints": 24,
+                "week": 1,
+                "neutralSite": True,  # Neutral site game
             }
         ]
 
@@ -296,9 +298,7 @@ class TestMockClientErrorHandling:
         from import_real_data import import_teams
 
         mock_client = Mock()
-        mock_client.get_teams.return_value = [
-            {'school': 'Alabama', 'conference': 'SEC'}
-        ]
+        mock_client.get_teams.return_value = [{"school": "Alabama", "conference": "SEC"}]
         # Missing recruiting, talent, returning production data
         mock_client.get_recruiting_rankings.return_value = []
         mock_client.get_team_talent.return_value = []
@@ -309,6 +309,6 @@ class TestMockClientErrorHandling:
 
         # Assert - Should still create team with defaults
         assert len(team_objects) == 1
-        alabama = team_objects['Alabama']
+        alabama = team_objects["Alabama"]
         assert alabama.recruiting_rank == 999  # Default for unranked
         assert alabama.returning_production == 0.5  # Default

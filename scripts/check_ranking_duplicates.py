@@ -28,16 +28,17 @@ def check_duplicates(db, verbose=False):
     Returns:
         Number of duplicate groups found
     """
-    duplicates = db.query(
-        RankingHistory.team_id,
-        RankingHistory.season,
-        RankingHistory.week,
-        func.count(RankingHistory.id).label('count')
-    ).group_by(
-        RankingHistory.team_id,
-        RankingHistory.season,
-        RankingHistory.week
-    ).having(func.count(RankingHistory.id) > 1).all()
+    duplicates = (
+        db.query(
+            RankingHistory.team_id,
+            RankingHistory.season,
+            RankingHistory.week,
+            func.count(RankingHistory.id).label("count"),
+        )
+        .group_by(RankingHistory.team_id, RankingHistory.season, RankingHistory.week)
+        .having(func.count(RankingHistory.id) > 1)
+        .all()
+    )
 
     if not duplicates:
         print("✅ No duplicates found!")
@@ -58,18 +59,25 @@ def check_duplicates(db, verbose=False):
 
         if verbose:
             # Get all entries for this team/season/week
-            entries = db.query(RankingHistory).filter(
-                and_(
-                    RankingHistory.team_id == team_id,
-                    RankingHistory.season == season,
-                    RankingHistory.week == week
+            entries = (
+                db.query(RankingHistory)
+                .filter(
+                    and_(
+                        RankingHistory.team_id == team_id,
+                        RankingHistory.season == season,
+                        RankingHistory.week == week,
+                    )
                 )
-            ).order_by(RankingHistory.id.desc()).all()
+                .order_by(RankingHistory.id.desc())
+                .all()
+            )
 
             print(f"Team {team_id}, Season {season}, Week {week}: {count} entries")
             for entry in entries:
                 team_name = entry.team.name if entry.team else "Unknown"
-                print(f"  - ID {entry.id}: {team_name} (ELO: {entry.elo_rating:.2f}, Rank: {entry.rank}, W-L: {entry.wins}-{entry.losses})")
+                print(
+                    f"  - ID {entry.id}: {team_name} (ELO: {entry.elo_rating:.2f}, Rank: {entry.rank}, W-L: {entry.wins}-{entry.losses})"
+                )
             print()
         else:
             print(f"Team {team_id}, Season {season}, Week {week}: {count} entries")
@@ -89,16 +97,20 @@ def check_duplicates(db, verbose=False):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='Check for duplicate ranking_history entries')
-    parser.add_argument('--verbose', '-v', action='store_true',
-                       help='Show detailed information about each duplicate')
+    parser = argparse.ArgumentParser(description="Check for duplicate ranking_history entries")
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Show detailed information about each duplicate",
+    )
     args = parser.parse_args()
 
     db = SessionLocal()
 
-    print("="*80)
+    print("=" * 80)
     print("EPIC-024: Ranking History Duplicate Check")
-    print("="*80)
+    print("=" * 80)
     print()
 
     try:

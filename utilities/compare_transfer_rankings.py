@@ -32,7 +32,7 @@ SPORTS_247_RANKINGS = {
     "UCF": 22,
     "Wisconsin": 23,
     "Syracuse": 24,
-    "TCU": 25
+    "TCU": 25,
 }
 
 
@@ -41,21 +41,19 @@ def get_our_rankings(db_path: str = "cfb_rankings.db") -> Dict[str, int]:
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT name, transfer_portal_rank, transfer_portal_points, transfer_count
         FROM teams
         WHERE transfer_portal_rank IS NOT NULL
         ORDER BY transfer_portal_rank
-    """)
+    """
+    )
 
     rankings = {}
     for row in cursor.fetchall():
         name, rank, points, count = row
-        rankings[name] = {
-            'rank': rank,
-            'points': points,
-            'count': count
-        }
+        rankings[name] = {"rank": rank, "points": points, "count": count}
 
     conn.close()
     return rankings
@@ -77,7 +75,9 @@ def normalize_team_name(name: str) -> str:
     return normalizations.get(name, name)
 
 
-def find_overlaps(sports247: Dict[str, int], ours: Dict[str, dict]) -> Tuple[List[str], List[str], List[str]]:
+def find_overlaps(
+    sports247: Dict[str, int], ours: Dict[str, dict]
+) -> Tuple[List[str], List[str], List[str]]:
     """Find teams in both rankings, and unique to each"""
     sports247_names = set(normalize_team_name(name) for name in sports247.keys())
     our_names = set(normalize_team_name(name) for name in ours.keys())
@@ -104,7 +104,7 @@ def calculate_correlation(sports247: Dict[str, int], ours: Dict[str, dict]) -> f
             if normalize_team_name(team_ours) == team_norm:
                 common_teams.append(team_norm)
                 sports247_ranks.append(rank_247)
-                our_ranks.append(data['rank'])
+                our_ranks.append(data["rank"])
                 break
 
     if len(common_teams) < 2:
@@ -138,7 +138,9 @@ def main():
 
     print(f"✓ Teams in both top 25: {len(in_both)}")
     print(f"  Only in 247Sports: {len(only_247)}")
-    print(f"  Only in our top 25: {len([t for t in ours.keys() if ours[t]['rank'] <= 25]) - len(in_both)}")
+    print(
+        f"  Only in our top 25: {len([t for t in ours.keys() if ours[t]['rank'] <= 25]) - len(in_both)}"
+    )
     print()
 
     # Calculate correlation
@@ -172,16 +174,18 @@ def main():
         our_count = None
         for team_ours, data in ours.items():
             if normalize_team_name(team_ours) == team_norm:
-                our_rank = data['rank']
-                our_points = data['points']
-                our_count = data['count']
+                our_rank = data["rank"]
+                our_points = data["points"]
+                our_count = data["count"]
                 break
 
         if our_rank:
             diff = our_rank - rank_247
             pts_per_transfer = our_points / our_count if our_count > 0 else 0
             diff_str = f"+{diff}" if diff > 0 else str(diff)
-            print(f"{team_247:<25} {rank_247:<12} {our_rank:<12} {diff_str:<10} {pts_per_transfer:.1f}")
+            print(
+                f"{team_247:<25} {rank_247:<12} {our_rank:<12} {diff_str:<10} {pts_per_transfer:.1f}"
+            )
             comparisons.append((team_247, rank_247, our_rank, diff, pts_per_transfer))
         else:
             print(f"{team_247:<25} {rank_247:<12} {'N/A':<12} {'N/A':<10} -")
@@ -206,10 +210,14 @@ def main():
     sorted_by_diff = sorted(comparisons, key=lambda x: abs(x[3]), reverse=True)[:5]
     for team, rank_247, our_rank, diff, pts_per in sorted_by_diff:
         if diff > 0:
-            print(f"  • {team}: 247Sports #{rank_247}, Ours #{our_rank} ({pts_per:.1f} pts/transfer)")
+            print(
+                f"  • {team}: 247Sports #{rank_247}, Ours #{our_rank} ({pts_per:.1f} pts/transfer)"
+            )
             print(f"    → We rank them {diff} spots LOWER (quantity-focused)")
         else:
-            print(f"  • {team}: 247Sports #{rank_247}, Ours #{our_rank} ({pts_per:.1f} pts/transfer)")
+            print(
+                f"  • {team}: 247Sports #{rank_247}, Ours #{our_rank} ({pts_per:.1f} pts/transfer)"
+            )
             print(f"    → We rank them {abs(diff)} spots HIGHER (quantity-focused)")
 
     print()

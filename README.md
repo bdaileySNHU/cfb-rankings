@@ -353,13 +353,6 @@ All endpoints are documented in the interactive API docs at `http://localhost:80
 │   │   └── database.py   # Database configuration
 │   └── integrations/     # External services
 │       └── cfbd_client.py  # CollegeFootballData.com API client
-├── import_real_data.py   # Import real teams & games
-├── seed_data.py          # Sample data population script
-├── demo.py               # Standalone demo of ranking algorithm
-├── requirements.txt      # Python dependencies
-├── requirements-dev.txt  # Development & testing dependencies
-├── Makefile              # Convenient test commands
-├── cfb_rankings.db       # SQLite database (created on first run)
 ├── migrations/           # Database schema migration scripts
 │   ├── README.md         # Migration documentation and history
 │   ├── migrate_add_*.py  # Python migration scripts
@@ -369,15 +362,46 @@ All endpoints are documented in the interactive API docs at `http://localhost:80
 │   ├── check_*.py        # Data verification scripts
 │   ├── debug_*.py        # Interactive debugging tools
 │   └── diagnose_*.py     # Problem identification scripts
-├── scripts/              # Operational and maintenance scripts
+├── scripts/              # Production operational scripts
 │   ├── weekly_update.py  # Automated weekly data import
 │   ├── generate_predictions.py  # Generate predictions for upcoming games
 │   ├── backfill_*.py     # Historical data backfill scripts
 │   └── check_*.py        # Operational checks and reports
-└── tests/                # Comprehensive test suite
-    ├── unit/             # Unit tests
-    ├── integration/      # Integration tests
-    └── e2e/              # End-to-end tests
+├── utilities/            # Reusable development tools
+│   ├── README.md         # Utility documentation
+│   ├── seed_data.py      # Sample data population
+│   ├── demo.py           # Standalone ELO demo
+│   ├── compare_rankings.py  # ELO vs AP Poll comparison
+│   ├── compare_transfer_rankings.py  # Transfer portal analysis
+│   └── evaluate_rating_systems.py  # Rating system evaluation
+├── archive/              # Historical one-off scripts (do not run)
+│   ├── README.md         # Archive documentation and warnings
+│   ├── fix_*.py          # One-time data fixes
+│   ├── recalculate_*.py  # Historical recalculations
+│   └── optimize_*.py     # Parameter optimization experiments
+├── tests/                # Comprehensive test suite
+│   ├── unit/             # Unit tests
+│   ├── integration/      # Integration tests
+│   └── e2e/              # End-to-end tests
+├── docs/                 # Project documentation
+│   ├── architecture.md   # System architecture
+│   ├── CODING-STANDARDS.md  # Coding standards and style guide
+│   ├── stories/          # Epic stories and specifications
+│   └── archive/          # Historical documentation
+├── frontend/             # Frontend application files
+├── deploy/               # Deployment configuration
+│
+├── import_real_data.py   # Main data import script
+├── gunicorn_config.py    # Production server configuration
+├── requirements.txt      # Python dependencies
+├── requirements-dev.txt  # Development dependencies
+├── requirements-prod.txt # Production dependencies
+├── pyproject.toml        # Black, isort configuration
+├── pytest.ini            # Pytest configuration
+├── .flake8               # Flake8 linting configuration
+├── README.md             # This file
+├── CONTRIBUTING.md       # Contribution guidelines
+└── DEVELOPMENT.md        # Development setup and workflows
 ```
 
 ## Installation

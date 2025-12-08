@@ -41,31 +41,31 @@ class TestAPPollFetching:
                                 "school": "Georgia",
                                 "conference": "SEC",
                                 "firstPlaceVotes": 62,
-                                "points": 1550
+                                "points": 1550,
                             },
                             {
                                 "rank": 2,
                                 "school": "Alabama",
                                 "conference": "SEC",
                                 "firstPlaceVotes": 0,
-                                "points": 1488
-                            }
-                        ]
+                                "points": 1488,
+                            },
+                        ],
                     }
-                ]
+                ],
             }
         ]
 
-        with patch.object(client, '_get', return_value=mock_response):
+        with patch.object(client, "_get", return_value=mock_response):
             rankings = client.get_ap_poll(2024, 5)
 
             assert len(rankings) == 2
-            assert rankings[0]['rank'] == 1
-            assert rankings[0]['school'] == 'Georgia'
-            assert rankings[0]['week'] == 5
-            assert rankings[0]['season'] == 2024
-            assert rankings[1]['rank'] == 2
-            assert rankings[1]['school'] == 'Alabama'
+            assert rankings[0]["rank"] == 1
+            assert rankings[0]["school"] == "Georgia"
+            assert rankings[0]["week"] == 5
+            assert rankings[0]["season"] == 2024
+            assert rankings[1]["rank"] == 2
+            assert rankings[1]["school"] == "Alabama"
 
     def test_get_ap_poll_filters_coaches_poll(self):
         """Test that get_ap_poll filters out non-AP polls"""
@@ -80,33 +80,29 @@ class TestAPPollFetching:
                 "polls": [
                     {
                         "poll": "AP Top 25",
-                        "ranks": [
-                            {"rank": 1, "school": "Georgia", "conference": "SEC"}
-                        ]
+                        "ranks": [{"rank": 1, "school": "Georgia", "conference": "SEC"}],
                     },
                     {
                         "poll": "Coaches Poll",
-                        "ranks": [
-                            {"rank": 1, "school": "Alabama", "conference": "SEC"}
-                        ]
-                    }
-                ]
+                        "ranks": [{"rank": 1, "school": "Alabama", "conference": "SEC"}],
+                    },
+                ],
             }
         ]
 
-        with patch.object(client, '_get', return_value=mock_response):
+        with patch.object(client, "_get", return_value=mock_response):
             rankings = client.get_ap_poll(2024, 5)
 
             # Should only include AP Poll, not Coaches Poll
             assert len(rankings) == 1
-            assert rankings[0]['school'] == 'Georgia'
-            assert rankings[0]['poll'] == 'AP Top 25'
+            assert rankings[0]["school"] == "Georgia"
+            assert rankings[0]["poll"] == "AP Top 25"
 
     def test_get_ap_poll_no_data(self):
         """Test AP Poll fetch when no poll data available"""
         client = CFBDClient()
 
-        with patch.object(client, '_get', return_value=None):
+        with patch.object(client, "_get", return_value=None):
             rankings = client.get_ap_poll(2024, 1)
             assert rankings == []
 
@@ -114,7 +110,7 @@ class TestAPPollFetching:
         """Test AP Poll fetch with empty response"""
         client = CFBDClient()
 
-        with patch.object(client, '_get', return_value=[]):
+        with patch.object(client, "_get", return_value=[]):
             rankings = client.get_ap_poll(2024, 5)
             assert rankings == []
 
@@ -126,26 +122,22 @@ class TestAPPollFetching:
             {
                 "season": 2024,
                 "week": 1,
-                "polls": [
-                    {"poll": "AP Top 25", "ranks": [{"rank": 1, "school": "Georgia"}]}
-                ]
+                "polls": [{"poll": "AP Top 25", "ranks": [{"rank": 1, "school": "Georgia"}]}],
             },
             {
                 "season": 2024,
                 "week": 2,
-                "polls": [
-                    {"poll": "AP Top 25", "ranks": [{"rank": 1, "school": "Alabama"}]}
-                ]
-            }
+                "polls": [{"poll": "AP Top 25", "ranks": [{"rank": 1, "school": "Alabama"}]}],
+            },
         ]
 
-        with patch.object(client, '_get', return_value=mock_response):
+        with patch.object(client, "_get", return_value=mock_response):
             rankings = client.get_ap_poll(2024)  # No week specified
 
             # Should include both weeks
             assert len(rankings) == 2
-            assert rankings[0]['week'] == 1
-            assert rankings[1]['week'] == 2
+            assert rankings[0]["week"] == 1
+            assert rankings[1]["week"] == 2
 
 
 @pytest.mark.unit
@@ -164,17 +156,11 @@ class TestAPPollImport:
         """Create sample team objects"""
         return {
             "Georgia": Team(
-                id=1,
-                name="Georgia",
-                conference=ConferenceType.POWER_5,
-                elo_rating=1500
+                id=1, name="Georgia", conference=ConferenceType.POWER_5, elo_rating=1500
             ),
             "Alabama": Team(
-                id=2,
-                name="Alabama",
-                conference=ConferenceType.POWER_5,
-                elo_rating=1495
-            )
+                id=2, name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1495
+            ),
         }
 
     def test_import_ap_poll_success(self, mock_db, sample_teams):
@@ -184,28 +170,28 @@ class TestAPPollImport:
         # Mock AP Poll data
         mock_poll_data = [
             {
-                'season': 2024,
-                'week': 5,
-                'poll': 'AP Top 25',
-                'rank': 1,
-                'school': 'Georgia',
-                'conference': 'SEC',
-                'firstPlaceVotes': 62,
-                'points': 1550
+                "season": 2024,
+                "week": 5,
+                "poll": "AP Top 25",
+                "rank": 1,
+                "school": "Georgia",
+                "conference": "SEC",
+                "firstPlaceVotes": 62,
+                "points": 1550,
             },
             {
-                'season': 2024,
-                'week': 5,
-                'poll': 'AP Top 25',
-                'rank': 2,
-                'school': 'Alabama',
-                'conference': 'SEC',
-                'firstPlaceVotes': 0,
-                'points': 1488
-            }
+                "season": 2024,
+                "week": 5,
+                "poll": "AP Top 25",
+                "rank": 2,
+                "school": "Alabama",
+                "conference": "SEC",
+                "firstPlaceVotes": 0,
+                "points": 1488,
+            },
         ]
 
-        with patch.object(client, 'get_ap_poll', return_value=mock_poll_data):
+        with patch.object(client, "get_ap_poll", return_value=mock_poll_data):
             count = import_ap_poll_rankings(client, mock_db, sample_teams, 2024, 5)
 
             assert count == 2
@@ -216,7 +202,7 @@ class TestAPPollImport:
         """Test AP Poll import when no poll data available"""
         client = CFBDClient()
 
-        with patch.object(client, 'get_ap_poll', return_value=[]):
+        with patch.object(client, "get_ap_poll", return_value=[]):
             count = import_ap_poll_rankings(client, mock_db, sample_teams, 2024, 1)
 
             assert count == 0
@@ -229,18 +215,18 @@ class TestAPPollImport:
 
         mock_poll_data = [
             {
-                'season': 2024,
-                'week': 5,
-                'poll': 'AP Top 25',
-                'rank': 1,
-                'school': 'Unknown Team',  # Not in sample_teams
-                'conference': 'SEC',
-                'firstPlaceVotes': 62,
-                'points': 1550
+                "season": 2024,
+                "week": 5,
+                "poll": "AP Top 25",
+                "rank": 1,
+                "school": "Unknown Team",  # Not in sample_teams
+                "conference": "SEC",
+                "firstPlaceVotes": 62,
+                "points": 1550,
             }
         ]
 
-        with patch.object(client, 'get_ap_poll', return_value=mock_poll_data):
+        with patch.object(client, "get_ap_poll", return_value=mock_poll_data):
             count = import_ap_poll_rankings(client, mock_db, sample_teams, 2024, 5)
 
             # Should skip unknown team
@@ -256,24 +242,24 @@ class TestAPPollImport:
         existing_ranking.rank = 3  # Old rank
         existing_ranking.first_place_votes = 0
         existing_ranking.points = 1200
-        existing_ranking.poll_type = 'AP Top 25'
+        existing_ranking.poll_type = "AP Top 25"
 
         mock_db.query.return_value.filter.return_value.first.return_value = existing_ranking
 
         mock_poll_data = [
             {
-                'season': 2024,
-                'week': 5,
-                'poll': 'AP Top 25',
-                'rank': 1,  # Updated rank
-                'school': 'Georgia',
-                'conference': 'SEC',
-                'firstPlaceVotes': 62,
-                'points': 1550
+                "season": 2024,
+                "week": 5,
+                "poll": "AP Top 25",
+                "rank": 1,  # Updated rank
+                "school": "Georgia",
+                "conference": "SEC",
+                "firstPlaceVotes": 62,
+                "points": 1550,
             }
         ]
 
-        with patch.object(client, 'get_ap_poll', return_value=mock_poll_data):
+        with patch.object(client, "get_ap_poll", return_value=mock_poll_data):
             count = import_ap_poll_rankings(client, mock_db, sample_teams, 2024, 5)
 
             # Should update existing, not create new
@@ -293,11 +279,11 @@ class TestAPPollModel:
         ranking = APPollRanking(
             season=2024,
             week=5,
-            poll_type='AP Top 25',
+            poll_type="AP Top 25",
             rank=1,
             team_id=1,
             first_place_votes=62,
-            points=1550
+            points=1550,
         )
 
         assert ranking.season == 2024

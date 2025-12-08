@@ -24,17 +24,17 @@ from src.core.ranking_service import RankingService, create_and_store_prediction
 
 # Conference mapping from CFBD to our system
 CONFERENCE_MAP = {
-    'SEC': ConferenceType.POWER_5,
-    'Big Ten': ConferenceType.POWER_5,
-    'ACC': ConferenceType.POWER_5,
-    'Big 12': ConferenceType.POWER_5,
-    'Pac-12': ConferenceType.POWER_5,
-    'American Athletic': ConferenceType.GROUP_5,
-    'Mountain West': ConferenceType.GROUP_5,
-    'Conference USA': ConferenceType.GROUP_5,
-    'Mid-American': ConferenceType.GROUP_5,
-    'Sun Belt': ConferenceType.GROUP_5,
-    'FBS Independents': ConferenceType.GROUP_5,
+    "SEC": ConferenceType.POWER_5,
+    "Big Ten": ConferenceType.POWER_5,
+    "ACC": ConferenceType.POWER_5,
+    "Big 12": ConferenceType.POWER_5,
+    "Pac-12": ConferenceType.POWER_5,
+    "American Athletic": ConferenceType.GROUP_5,
+    "Mountain West": ConferenceType.GROUP_5,
+    "Conference USA": ConferenceType.GROUP_5,
+    "Mid-American": ConferenceType.GROUP_5,
+    "Sun Belt": ConferenceType.GROUP_5,
+    "FBS Independents": ConferenceType.GROUP_5,
 }
 
 
@@ -56,11 +56,11 @@ def parse_game_date(game_data: dict) -> datetime:
         This prevents showing incorrect import timestamps as game dates.
         Frontend will display "TBD" for games without scheduled dates.
     """
-    date_str = game_data.get('start_date')
+    date_str = game_data.get("start_date")
     if date_str:
         try:
             # CFBD uses ISO 8601 format with Z suffix (UTC)
-            return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
         except (ValueError, AttributeError):
             pass
     # Return None for unscheduled games instead of showing wrong date
@@ -108,14 +108,12 @@ def get_week_statistics(cfbd: CFBDClient, year: int, week: int) -> dict:
     if not games:
         return {"total": 0, "completed": 0, "scheduled": 0}
 
-    completed = sum(1 for g in games if g.get('homePoints') is not None and g.get('awayPoints') is not None)
+    completed = sum(
+        1 for g in games if g.get("homePoints") is not None and g.get("awayPoints") is not None
+    )
     total = len(games)
 
-    return {
-        "total": total,
-        "completed": completed,
-        "scheduled": total - completed
-    }
+    return {"total": total, "completed": completed, "scheduled": total - completed}
 
 
 def import_teams(cfbd: CFBDClient, db, year: int):
@@ -131,12 +129,12 @@ def import_teams(cfbd: CFBDClient, db, year: int):
     # Fetch recruiting data
     print("Fetching recruiting rankings...")
     recruiting_data = cfbd.get_recruiting_rankings(year) or []
-    recruiting_map = {r['team']: r['rank'] for r in recruiting_data if 'team' in r and 'rank' in r}
+    recruiting_map = {r["team"]: r["rank"] for r in recruiting_data if "team" in r and "rank" in r}
 
     # Fetch talent ratings
     print("Fetching talent composite...")
     talent_data = cfbd.get_team_talent(year) or []
-    talent_map = {t['school']: t['talent'] for t in talent_data if 'school' in t and 'talent' in t}
+    talent_map = {t["school"]: t["talent"] for t in talent_data if "school" in t and "talent" in t}
 
     # Fetch returning production (EPIC-025)
     # API returns percentPPA (decimal 0.0-1.0) for overall returning production
@@ -144,9 +142,9 @@ def import_teams(cfbd: CFBDClient, db, year: int):
     returning_data = cfbd.get_returning_production(year) or []
     returning_map = {}
     for r in returning_data:
-        if 'team' in r and 'percentPPA' in r:
-            team = r['team']
-            prod = r['percentPPA']
+        if "team" in r and "percentPPA" in r:
+            team = r["team"]
+            prod = r["percentPPA"]
             # Validate and store (API returns decimal, no conversion needed)
             if isinstance(prod, (int, float)) and 0.0 <= prod <= 1.0:
                 returning_map[team] = prod
@@ -162,6 +160,7 @@ def import_teams(cfbd: CFBDClient, db, year: int):
 
     print("Calculating transfer portal rankings...")
     from transfer_portal_service import TransferPortalService
+
     tp_service = TransferPortalService()
     team_scores, team_ranks = tp_service.get_team_stats(transfer_data)
     print(f"  Calculated rankings for {len(team_ranks)} teams")
@@ -172,8 +171,8 @@ def import_teams(cfbd: CFBDClient, db, year: int):
     teams_reused = 0
 
     for team_data in teams_data:
-        team_name = team_data['school']
-        conference_name = team_data.get('conference', 'FBS Independents')
+        team_name = team_data["school"]
+        conference_name = team_data.get("conference", "FBS Independents")
 
         # Check if team already exists (incremental mode)
         existing_team = db.query(Team).filter(Team.name == team_name).first()
@@ -185,8 +184,8 @@ def import_teams(cfbd: CFBDClient, db, year: int):
 
             # EPIC-026: Get transfer portal data
             transfer_portal_rank = team_ranks.get(team_name, 999)
-            transfer_portal_points = team_scores.get(team_name, {}).get('points', 0)
-            transfer_portal_count = team_scores.get(team_name, {}).get('count', 0)
+            transfer_portal_points = team_scores.get(team_name, {}).get("points", 0)
+            transfer_portal_count = team_scores.get(team_name, {}).get("count", 0)
 
             # Update preseason factors
             existing_team.recruiting_rank = recruiting_rank
@@ -203,7 +202,7 @@ def import_teams(cfbd: CFBDClient, db, year: int):
             conference_tier = CONFERENCE_MAP.get(conference_name, ConferenceType.GROUP_5)
 
             # Special case: Notre Dame is P5 Independent
-            if team_name == 'Notre Dame':
+            if team_name == "Notre Dame":
                 conference_tier = ConferenceType.POWER_5
 
             # Get preseason data
@@ -213,20 +212,20 @@ def import_teams(cfbd: CFBDClient, db, year: int):
 
             # EPIC-026: Get transfer portal data
             transfer_portal_rank = team_ranks.get(team_name, 999)
-            transfer_portal_points = team_scores.get(team_name, {}).get('points', 0)
-            transfer_portal_count = team_scores.get(team_name, {}).get('count', 0)
+            transfer_portal_points = team_scores.get(team_name, {}).get("points", 0)
+            transfer_portal_count = team_scores.get(team_name, {}).get("count", 0)
 
             # EPIC-012: Create team with BOTH conference tier and name
             team = Team(
                 name=team_name,
-                conference=conference_tier,           # P5/G5/FCS (for logic)
-                conference_name=conference_name,      # "Big Ten", "SEC", etc. (for display)
+                conference=conference_tier,  # P5/G5/FCS (for logic)
+                conference_name=conference_name,  # "Big Ten", "SEC", etc. (for display)
                 recruiting_rank=recruiting_rank,
                 transfer_rank=transfer_rank,
                 returning_production=returning_prod,
                 transfer_portal_rank=transfer_portal_rank,
                 transfer_portal_points=transfer_portal_points,
-                transfer_count=transfer_portal_count
+                transfer_count=transfer_portal_count,
             )
 
             ranking_service.initialize_team_rating(team)
@@ -234,7 +233,9 @@ def import_teams(cfbd: CFBDClient, db, year: int):
             team_objects[team_name] = team
             teams_created += 1
 
-            print(f"  Added: {team_name} - {conference_name} ({conference_tier.value}) - Recruiting: #{recruiting_rank}, Returning: {returning_prod*100:.0f}%, Portal: #{transfer_portal_rank}")
+            print(
+                f"  Added: {team_name} - {conference_name} ({conference_tier.value}) - Recruiting: #{recruiting_rank}, Returning: {returning_prod*100:.0f}%, Portal: #{transfer_portal_rank}"
+            )
 
     db.commit()
 
@@ -275,7 +276,7 @@ def get_or_create_fcs_team(db, team_name: str, team_objects: dict) -> Team:
             initial_rating=0,
             recruiting_rank=999,
             transfer_rank=999,
-            returning_production=0.5
+            returning_production=0.5,
         )
         db.add(team)
         db.commit()
@@ -287,6 +288,7 @@ def get_or_create_fcs_team(db, team_name: str, team_objects: dict) -> Team:
 
 
 # EPIC-008 Story 003: Validation and duplicate detection functions
+
 
 def check_for_duplicates(db) -> list:
     """
@@ -307,18 +309,18 @@ def check_for_duplicates(db) -> list:
     from sqlalchemy import func
 
     # Query for duplicate games
-    duplicates = db.query(
-        Game.home_team_id,
-        Game.away_team_id,
-        Game.week,
-        Game.season,
-        func.count(Game.id).label('count')
-    ).group_by(
-        Game.home_team_id,
-        Game.away_team_id,
-        Game.week,
-        Game.season
-    ).having(func.count(Game.id) > 1).all()
+    duplicates = (
+        db.query(
+            Game.home_team_id,
+            Game.away_team_id,
+            Game.week,
+            Game.season,
+            func.count(Game.id).label("count"),
+        )
+        .group_by(Game.home_team_id, Game.away_team_id, Game.week, Game.season)
+        .having(func.count(Game.id) > 1)
+        .all()
+    )
 
     if not duplicates:
         return []
@@ -326,25 +328,31 @@ def check_for_duplicates(db) -> list:
     # Get details for each duplicate group
     duplicate_details = []
     for dup in duplicates:
-        games = db.query(Game).filter(
-            Game.home_team_id == dup.home_team_id,
-            Game.away_team_id == dup.away_team_id,
-            Game.week == dup.week,
-            Game.season == dup.season
-        ).all()
+        games = (
+            db.query(Game)
+            .filter(
+                Game.home_team_id == dup.home_team_id,
+                Game.away_team_id == dup.away_team_id,
+                Game.week == dup.week,
+                Game.season == dup.season,
+            )
+            .all()
+        )
 
         home_team = db.query(Team).filter(Team.id == dup.home_team_id).first()
         away_team = db.query(Team).filter(Team.id == dup.away_team_id).first()
 
-        duplicate_details.append({
-            'home_team': home_team.name if home_team else 'Unknown',
-            'away_team': away_team.name if away_team else 'Unknown',
-            'week': dup.week,
-            'season': dup.season,
-            'count': dup.count,
-            'game_ids': [g.id for g in games],
-            'scores': [(g.home_score, g.away_score) for g in games]
-        })
+        duplicate_details.append(
+            {
+                "home_team": home_team.name if home_team else "Unknown",
+                "away_team": away_team.name if away_team else "Unknown",
+                "week": dup.week,
+                "season": dup.season,
+                "count": dup.count,
+                "game_ids": [g.id for g in games],
+                "scores": [(g.home_score, g.away_score) for g in games],
+            }
+        )
 
     return duplicate_details
 
@@ -355,20 +363,20 @@ def print_duplicate_report(duplicates: list):
         print("✓ No duplicate games found")
         return
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("⚠ WARNING: DUPLICATE GAMES DETECTED")
-    print("="*80)
+    print("=" * 80)
 
     for dup in duplicates:
         print(f"\n{dup['away_team']} @ {dup['home_team']} (Week {dup['week']}, {dup['season']})")
         print(f"  Found {dup['count']} duplicate records:")
-        for game_id, scores in zip(dup['game_ids'], dup['scores']):
+        for game_id, scores in zip(dup["game_ids"], dup["scores"]):
             print(f"    - Game ID {game_id}: {scores[1]}-{scores[0]}")
 
     print("\nTo fix duplicates manually:")
     print("  sqlite3 cfb_rankings.db")
     print("  DELETE FROM games WHERE id IN (...);")
-    print("="*80)
+    print("=" * 80)
 
 
 def validate_import_results(db, import_stats: dict, year: int):
@@ -380,9 +388,9 @@ def validate_import_results(db, import_stats: dict, year: int):
         import_stats: Dictionary with import counts
         year: Season year
     """
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("IMPORT VALIDATION")
-    print("="*80)
+    print("=" * 80)
 
     # Check for duplicates
     duplicates = check_for_duplicates(db)
@@ -390,11 +398,11 @@ def validate_import_results(db, import_stats: dict, year: int):
 
     # Verify game counts
     total_games = db.query(Game).filter(Game.season == year).count()
-    future_games = db.query(Game).filter(
-        Game.season == year,
-        Game.home_score == 0,
-        Game.away_score == 0
-    ).count()
+    future_games = (
+        db.query(Game)
+        .filter(Game.season == year, Game.home_score == 0, Game.away_score == 0)
+        .count()
+    )
     completed_games = total_games - future_games
 
     print(f"\nDatabase Game Counts (Season {year}):")
@@ -420,7 +428,7 @@ def validate_import_results(db, import_stats: dict, year: int):
     if future_games > 300:
         print(f"\n⚠ WARNING: Unusually high future game count ({future_games})")
 
-    print("="*80)
+    print("=" * 80)
 
 
 def import_ap_poll_rankings(cfbd: CFBDClient, db, team_objects: dict, year: int, week: int) -> int:
@@ -449,8 +457,8 @@ def import_ap_poll_rankings(cfbd: CFBDClient, db, team_objects: dict, year: int,
     rankings_imported = 0
 
     for ranking in ap_poll_data:
-        school_name = ranking.get('school')
-        rank = ranking.get('rank')
+        school_name = ranking.get("school")
+        rank = ranking.get("rank")
 
         # Find team in our database
         team = team_objects.get(school_name)
@@ -460,28 +468,32 @@ def import_ap_poll_rankings(cfbd: CFBDClient, db, team_objects: dict, year: int,
             continue
 
         # Check if ranking already exists (prevent duplicates)
-        existing = db.query(APPollRanking).filter(
-            APPollRanking.season == year,
-            APPollRanking.week == week,
-            APPollRanking.team_id == team.id
-        ).first()
+        existing = (
+            db.query(APPollRanking)
+            .filter(
+                APPollRanking.season == year,
+                APPollRanking.week == week,
+                APPollRanking.team_id == team.id,
+            )
+            .first()
+        )
 
         if existing:
             # Update existing ranking
             existing.rank = rank
-            existing.first_place_votes = ranking.get('firstPlaceVotes', 0)
-            existing.points = ranking.get('points', 0)
-            existing.poll_type = ranking.get('poll', 'AP Top 25')
+            existing.first_place_votes = ranking.get("firstPlaceVotes", 0)
+            existing.points = ranking.get("points", 0)
+            existing.poll_type = ranking.get("poll", "AP Top 25")
         else:
             # Create new ranking
             ap_ranking = APPollRanking(
                 season=year,
                 week=week,
-                poll_type=ranking.get('poll', 'AP Top 25'),
+                poll_type=ranking.get("poll", "AP Top 25"),
                 rank=rank,
                 team_id=team.id,
-                first_place_votes=ranking.get('firstPlaceVotes', 0),
-                points=ranking.get('points', 0)
+                first_place_votes=ranking.get("firstPlaceVotes", 0),
+                points=ranking.get("points", 0),
             )
             db.add(ap_ranking)
             rankings_imported += 1
@@ -490,7 +502,9 @@ def import_ap_poll_rankings(cfbd: CFBDClient, db, team_objects: dict, year: int,
     return rankings_imported
 
 
-def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, year: int, ranking_service):
+def import_conference_championships(
+    cfbd: CFBDClient, db, team_objects: dict, year: int, ranking_service
+):
     """
     Import conference championship games from CFBD API.
 
@@ -509,7 +523,7 @@ def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, ye
         int: Number of conference championship games imported
     """
     print(f"\nImporting conference championship games for {year}...")
-    print("="*80)
+    print("=" * 80)
 
     # Fetch regular season weeks 14-15 (championship weeks)
     # Conference championships are part of regular season, not postseason
@@ -517,19 +531,19 @@ def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, ye
     conf_championships = []
 
     for week in [14, 15]:
-        week_games = cfbd.get_games(year, week=week, season_type='regular', classification='fbs')
+        week_games = cfbd.get_games(year, week=week, season_type="regular", classification="fbs")
 
         if not week_games:
             continue
 
         # Filter for conference championships in this week
         for game in week_games:
-            notes = game.get('notes', '') or ''  # Handle None
+            notes = game.get("notes", "") or ""  # Handle None
 
             # Conference championships have "Championship" in notes
             # Exclude: CFP (College Football Playoff) games
-            is_championship = 'Championship' in notes or 'championship' in notes
-            is_cfp = 'playoff' in notes.lower() or 'semifinal' in notes.lower()
+            is_championship = "Championship" in notes or "championship" in notes
+            is_cfp = "playoff" in notes.lower() or "semifinal" in notes.lower()
 
             # Accept conference championships, exclude CFP
             if is_championship and not is_cfp:
@@ -551,10 +565,10 @@ def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, ye
     processed = 0
 
     for game_data in conf_championships:
-        home_team_name = game_data.get('homeTeam')
-        away_team_name = game_data.get('awayTeam')
-        week = game_data.get('week', 14)
-        notes = game_data.get('notes', '')
+        home_team_name = game_data.get("homeTeam")
+        away_team_name = game_data.get("awayTeam")
+        week = game_data.get("week", 14)
+        notes = game_data.get("notes", "")
 
         # Skip if teams not found
         if home_team_name not in team_objects or away_team_name not in team_objects:
@@ -566,12 +580,16 @@ def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, ye
         away_team = team_objects[away_team_name]
 
         # Check for duplicate (prevent importing same game twice)
-        existing_game = db.query(Game).filter(
-            Game.home_team_id == home_team.id,
-            Game.away_team_id == away_team.id,
-            Game.season == year,
-            Game.week == week
-        ).first()
+        existing_game = (
+            db.query(Game)
+            .filter(
+                Game.home_team_id == home_team.id,
+                Game.away_team_id == away_team.id,
+                Game.season == year,
+                Game.week == week,
+            )
+            .first()
+        )
 
         if existing_game:
             print(f"  ⚠️  {notes}: Already exists (Week {week})")
@@ -579,21 +597,21 @@ def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, ye
             continue
 
         # Get scores
-        home_score = game_data.get('homePoints', 0) or 0
-        away_score = game_data.get('awayPoints', 0) or 0
+        home_score = game_data.get("homePoints", 0) or 0
+        away_score = game_data.get("awayPoints", 0) or 0
 
         # Check if game is completed (has actual scores)
-        is_future_game = (home_score == 0 and away_score == 0)
+        is_future_game = home_score == 0 and away_score == 0
 
         # EPIC-021: Fetch quarter scores if game is completed
         line_scores = None
         if not is_future_game:
             line_scores = cfbd.get_game_line_scores(
-                game_id=game_data.get('id', 0),
+                game_id=game_data.get("id", 0),
                 year=year,
                 week=week,
                 home_team=home_team_name,
-                away_team=away_team_name
+                away_team=away_team_name,
             )
 
         # Create game with game_type='conference_championship'
@@ -604,18 +622,20 @@ def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, ye
             away_score=away_score,
             week=week,
             season=year,
-            is_neutral_site=game_data.get('neutralSite', True),  # Championships usually at neutral site
-            game_type='conference_championship',  # EPIC-022: Mark as conference championship
+            is_neutral_site=game_data.get(
+                "neutralSite", True
+            ),  # Championships usually at neutral site
+            game_type="conference_championship",  # EPIC-022: Mark as conference championship
             game_date=parse_game_date(game_data),
             # EPIC-021: Quarter scores (if available)
-            q1_home=line_scores['home'][0] if line_scores else None,
-            q1_away=line_scores['away'][0] if line_scores else None,
-            q2_home=line_scores['home'][1] if line_scores else None,
-            q2_away=line_scores['away'][1] if line_scores else None,
-            q3_home=line_scores['home'][2] if line_scores else None,
-            q3_away=line_scores['away'][2] if line_scores else None,
-            q4_home=line_scores['home'][3] if line_scores else None,
-            q4_away=line_scores['away'][3] if line_scores else None,
+            q1_home=line_scores["home"][0] if line_scores else None,
+            q1_away=line_scores["away"][0] if line_scores else None,
+            q2_home=line_scores["home"][1] if line_scores else None,
+            q2_away=line_scores["away"][1] if line_scores else None,
+            q3_home=line_scores["home"][2] if line_scores else None,
+            q3_away=line_scores["away"][2] if line_scores else None,
+            q4_home=line_scores["home"][3] if line_scores else None,
+            q4_away=line_scores["away"][3] if line_scores else None,
         )
 
         # EPIC-021: Validate quarter scores if present
@@ -635,9 +655,9 @@ def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, ye
         # Process game for rankings if completed
         if not is_future_game:
             result = ranking_service.process_game(game)
-            winner = result['winner_name']
-            loser = result['loser_name']
-            score = result['score']
+            winner = result["winner_name"]
+            loser = result["loser_name"]
+            score = result["score"]
             print(f"  ✓ {notes}: {winner} defeats {loser} {score}")
             processed += 1
         else:
@@ -645,21 +665,22 @@ def import_conference_championships(cfbd: CFBDClient, db, team_objects: dict, ye
 
             # EPIC-009: Store prediction for future championship game
             from ranking_service import create_and_store_prediction
+
             prediction = create_and_store_prediction(db, game)
             if prediction:
                 print(f"      → Prediction stored ({prediction.predicted_winner.name} favored)")
 
     # Summary
     print()
-    print("="*80)
+    print("=" * 80)
     print("CONFERENCE CHAMPIONSHIP IMPORT SUMMARY")
-    print("="*80)
+    print("=" * 80)
     print(f"Total Identified: {len(conf_championships)}")
     print(f"Imported: {imported}")
     print(f"Processed for Rankings: {processed}")
     if skipped > 0:
         print(f"Skipped: {skipped}")
-    print("="*80)
+    print("=" * 80)
     print()
 
     return imported
@@ -683,10 +704,10 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
         int: Number of bowl games imported
     """
     print(f"\nImporting bowl games for {year}...")
-    print("="*80)
+    print("=" * 80)
 
     # Fetch postseason games from CFBD API
-    postseason_games = cfbd.get_games(year, season_type='postseason', classification='fbs')
+    postseason_games = cfbd.get_games(year, season_type="postseason", classification="fbs")
 
     if not postseason_games:
         print("No postseason games found")
@@ -696,22 +717,34 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
     bowl_games = []
 
     for game in postseason_games:
-        notes = game.get('notes', '') or ''
+        notes = game.get("notes", "") or ""
 
         # Skip conference championships (already imported in EPIC-022)
-        if 'Championship' in notes or 'championship' in notes:
+        if "Championship" in notes or "championship" in notes:
             # Check if it's a CONFERENCE championship (not bowl championship)
             # Conference championships have "ACC Championship", "Big Ten Championship", etc.
-            conference_keywords = ['ACC', 'Big Ten', 'Big 12', 'SEC', 'Pac-12',
-                                   'American', 'Conference USA', 'MAC', 'Mountain West', 'Sun Belt']
+            conference_keywords = [
+                "ACC",
+                "Big Ten",
+                "Big 12",
+                "SEC",
+                "Pac-12",
+                "American",
+                "Conference USA",
+                "MAC",
+                "Mountain West",
+                "Sun Belt",
+            ]
             is_conf_champ = any(conf in notes for conf in conference_keywords)
 
             if is_conf_champ:
                 continue  # Skip conference championships
 
         # Skip playoff games (will be handled in Story 23.2)
-        is_playoff = any(keyword in notes.lower() for keyword in
-                        ['playoff', 'semifinal', 'national championship'])
+        is_playoff = any(
+            keyword in notes.lower()
+            for keyword in ["playoff", "semifinal", "national championship"]
+        )
 
         if is_playoff:
             continue  # Skip playoff games for now
@@ -731,17 +764,19 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
     processed = 0
 
     for game_data in bowl_games:
-        home_team_name = game_data.get('homeTeam')
-        away_team_name = game_data.get('awayTeam')
-        week = game_data.get('week', 16)  # Bowl games typically week 16+
-        notes = game_data.get('notes', '') or 'Bowl Game'
+        home_team_name = game_data.get("homeTeam")
+        away_team_name = game_data.get("awayTeam")
+        week = game_data.get("week", 16)  # Bowl games typically week 16+
+        notes = game_data.get("notes", "") or "Bowl Game"
 
         # Extract bowl name from notes (e.g., "Rose Bowl Game", "Sugar Bowl")
-        bowl_name = notes if notes else 'Bowl Game'
+        bowl_name = notes if notes else "Bowl Game"
 
         # Skip if teams not found
         if home_team_name not in team_objects or away_team_name not in team_objects:
-            print(f"  ⚠️  Skipping {bowl_name}: Teams not found ({home_team_name} vs {away_team_name})")
+            print(
+                f"  ⚠️  Skipping {bowl_name}: Teams not found ({home_team_name} vs {away_team_name})"
+            )
             skipped += 1
             continue
 
@@ -749,17 +784,21 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
         away_team = team_objects[away_team_name]
 
         # Check for duplicate
-        existing_game = db.query(Game).filter(
-            Game.home_team_id == home_team.id,
-            Game.away_team_id == away_team.id,
-            Game.season == year,
-            Game.week == week
-        ).first()
+        existing_game = (
+            db.query(Game)
+            .filter(
+                Game.home_team_id == home_team.id,
+                Game.away_team_id == away_team.id,
+                Game.season == year,
+                Game.week == week,
+            )
+            .first()
+        )
 
         if existing_game:
             # Update game_type and postseason_name if not set
             if not existing_game.game_type or not existing_game.postseason_name:
-                existing_game.game_type = 'bowl'
+                existing_game.game_type = "bowl"
                 existing_game.postseason_name = bowl_name
                 db.commit()
                 print(f"  ✓ Updated: {bowl_name} (Week {week})")
@@ -770,21 +809,21 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
             continue
 
         # Get scores
-        home_score = game_data.get('homePoints', 0) or 0
-        away_score = game_data.get('awayPoints', 0) or 0
+        home_score = game_data.get("homePoints", 0) or 0
+        away_score = game_data.get("awayPoints", 0) or 0
 
         # Check if game is completed
-        is_future_game = (home_score == 0 and away_score == 0)
+        is_future_game = home_score == 0 and away_score == 0
 
         # EPIC-021: Fetch quarter scores if game is completed
         line_scores = None
         if not is_future_game:
             line_scores = cfbd.get_game_line_scores(
-                game_id=game_data.get('id', 0),
+                game_id=game_data.get("id", 0),
                 year=year,
                 week=week,
                 home_team=home_team_name,
-                away_team=away_team_name
+                away_team=away_team_name,
             )
 
         # Create game with game_type='bowl' and postseason_name
@@ -795,19 +834,19 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
             away_score=away_score,
             week=week,
             season=year,
-            is_neutral_site=game_data.get('neutralSite', True),  # Bowl games usually neutral
-            game_type='bowl',  # EPIC-023: Mark as bowl game
+            is_neutral_site=game_data.get("neutralSite", True),  # Bowl games usually neutral
+            game_type="bowl",  # EPIC-023: Mark as bowl game
             postseason_name=bowl_name,  # EPIC-023: Store bowl name
             game_date=parse_game_date(game_data),
             # EPIC-021: Quarter scores (if available)
-            q1_home=line_scores['home'][0] if line_scores else None,
-            q1_away=line_scores['away'][0] if line_scores else None,
-            q2_home=line_scores['home'][1] if line_scores else None,
-            q2_away=line_scores['away'][1] if line_scores else None,
-            q3_home=line_scores['home'][2] if line_scores else None,
-            q3_away=line_scores['away'][2] if line_scores else None,
-            q4_home=line_scores['home'][3] if line_scores else None,
-            q4_away=line_scores['away'][3] if line_scores else None,
+            q1_home=line_scores["home"][0] if line_scores else None,
+            q1_away=line_scores["away"][0] if line_scores else None,
+            q2_home=line_scores["home"][1] if line_scores else None,
+            q2_away=line_scores["away"][1] if line_scores else None,
+            q3_home=line_scores["home"][2] if line_scores else None,
+            q3_away=line_scores["away"][2] if line_scores else None,
+            q4_home=line_scores["home"][3] if line_scores else None,
+            q4_away=line_scores["away"][3] if line_scores else None,
         )
         db.add(game)
         db.commit()
@@ -817,7 +856,9 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
             try:
                 ranking_service.process_game(game)
                 processed += 1
-                print(f"  ✓ Imported & processed: {bowl_name} - {away_team_name} vs {home_team_name} ({away_score}-{home_score})")
+                print(
+                    f"  ✓ Imported & processed: {bowl_name} - {away_team_name} vs {home_team_name} ({away_score}-{home_score})"
+                )
             except Exception as e:
                 print(f"  ⚠️  Imported but not processed: {bowl_name} - {str(e)}")
         else:
@@ -830,7 +871,7 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
     print(f"Processed: {processed}")
     if skipped > 0:
         print(f"Skipped: {skipped}")
-    print("="*80)
+    print("=" * 80)
     print()
 
     return imported
@@ -854,10 +895,10 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
         int: Number of playoff games imported
     """
     print(f"\nImporting CFP playoff games for {year}...")
-    print("="*80)
+    print("=" * 80)
 
     # Fetch postseason games from CFBD API
-    postseason_games = cfbd.get_games(year, season_type='postseason', classification='fbs')
+    postseason_games = cfbd.get_games(year, season_type="postseason", classification="fbs")
 
     if not postseason_games:
         print("No postseason games found")
@@ -867,16 +908,22 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
     playoff_games = []
 
     for game in postseason_games:
-        notes = game.get('notes', '') or ''
+        notes = game.get("notes", "") or ""
 
         # Identify playoff games by keywords
-        playoff_keywords = ['playoff', 'semifinal', 'quarterfinal', 'national championship',
-                           'first round', 'cfp']
+        playoff_keywords = [
+            "playoff",
+            "semifinal",
+            "quarterfinal",
+            "national championship",
+            "first round",
+            "cfp",
+        ]
 
         is_playoff = any(keyword in notes.lower() for keyword in playoff_keywords)
 
         # Also check if it's explicitly marked as championship but is CFP
-        if 'championship' in notes.lower() and 'cfp' in notes.lower():
+        if "championship" in notes.lower() and "cfp" in notes.lower():
             is_playoff = True
 
         if is_playoff:
@@ -894,51 +941,53 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
     processed = 0
 
     for game_data in playoff_games:
-        home_team_name = game_data.get('homeTeam')
-        away_team_name = game_data.get('awayTeam')
-        notes = game_data.get('notes', '') or 'CFP Game'
+        home_team_name = game_data.get("homeTeam")
+        away_team_name = game_data.get("awayTeam")
+        notes = game_data.get("notes", "") or "CFP Game"
 
         # Determine playoff round from notes
-        playoff_round = 'CFP Game'  # Default
+        playoff_round = "CFP Game"  # Default
         notes_lower = notes.lower()
 
         # Assign week numbers based on playoff round
         # 12-team format (2024+): First Round (16), Quarterfinals (17), Semifinals (18), Championship (19)
         # 4-team format (2014-2023): Semifinals (17), Championship (18)
-        if 'national championship' in notes_lower:
-            playoff_round = 'CFP National Championship'
+        if "national championship" in notes_lower:
+            playoff_round = "CFP National Championship"
             week = 19 if year >= 2024 else 18
-        elif 'semifinal' in notes_lower:
+        elif "semifinal" in notes_lower:
             # Extract bowl name if present (e.g., "CFP Semifinal - Rose Bowl")
-            playoff_round = 'CFP Semifinal'
+            playoff_round = "CFP Semifinal"
             week = 18 if year >= 2024 else 17
-            if 'rose' in notes_lower:
-                playoff_round = 'CFP Semifinal - Rose Bowl'
-            elif 'sugar' in notes_lower:
-                playoff_round = 'CFP Semifinal - Sugar Bowl'
-            elif 'orange' in notes_lower:
-                playoff_round = 'CFP Semifinal - Orange Bowl'
-            elif 'cotton' in notes_lower:
-                playoff_round = 'CFP Semifinal - Cotton Bowl'
-            elif 'peach' in notes_lower:
-                playoff_round = 'CFP Semifinal - Peach Bowl'
-            elif 'fiesta' in notes_lower:
-                playoff_round = 'CFP Semifinal - Fiesta Bowl'
-        elif 'quarterfinal' in notes_lower:
+            if "rose" in notes_lower:
+                playoff_round = "CFP Semifinal - Rose Bowl"
+            elif "sugar" in notes_lower:
+                playoff_round = "CFP Semifinal - Sugar Bowl"
+            elif "orange" in notes_lower:
+                playoff_round = "CFP Semifinal - Orange Bowl"
+            elif "cotton" in notes_lower:
+                playoff_round = "CFP Semifinal - Cotton Bowl"
+            elif "peach" in notes_lower:
+                playoff_round = "CFP Semifinal - Peach Bowl"
+            elif "fiesta" in notes_lower:
+                playoff_round = "CFP Semifinal - Fiesta Bowl"
+        elif "quarterfinal" in notes_lower:
             # 12-team format has quarterfinals
-            playoff_round = 'CFP Quarterfinal'
+            playoff_round = "CFP Quarterfinal"
             week = 17
-        elif 'first round' in notes_lower:
+        elif "first round" in notes_lower:
             # 12-team format has first round
-            playoff_round = 'CFP First Round'
+            playoff_round = "CFP First Round"
             week = 16
         else:
             # Fallback - use API week or default
-            week = game_data.get('week', 17)
+            week = game_data.get("week", 17)
 
         # Skip if teams not found
         if home_team_name not in team_objects or away_team_name not in team_objects:
-            print(f"  ⚠️  Skipping {playoff_round}: Teams not found ({home_team_name} vs {away_team_name})")
+            print(
+                f"  ⚠️  Skipping {playoff_round}: Teams not found ({home_team_name} vs {away_team_name})"
+            )
             skipped += 1
             continue
 
@@ -946,17 +995,21 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
         away_team = team_objects[away_team_name]
 
         # Check for duplicate
-        existing_game = db.query(Game).filter(
-            Game.home_team_id == home_team.id,
-            Game.away_team_id == away_team.id,
-            Game.season == year,
-            Game.week == week
-        ).first()
+        existing_game = (
+            db.query(Game)
+            .filter(
+                Game.home_team_id == home_team.id,
+                Game.away_team_id == away_team.id,
+                Game.season == year,
+                Game.week == week,
+            )
+            .first()
+        )
 
         if existing_game:
             # Update game_type and postseason_name if not set
-            if not existing_game.game_type or existing_game.game_type != 'playoff':
-                existing_game.game_type = 'playoff'
+            if not existing_game.game_type or existing_game.game_type != "playoff":
+                existing_game.game_type = "playoff"
                 existing_game.postseason_name = playoff_round
                 db.commit()
                 print(f"  ✓ Updated: {playoff_round} (Week {week})")
@@ -967,21 +1020,21 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
             continue
 
         # Get scores
-        home_score = game_data.get('homePoints', 0) or 0
-        away_score = game_data.get('awayPoints', 0) or 0
+        home_score = game_data.get("homePoints", 0) or 0
+        away_score = game_data.get("awayPoints", 0) or 0
 
         # Check if game is completed
-        is_future_game = (home_score == 0 and away_score == 0)
+        is_future_game = home_score == 0 and away_score == 0
 
         # EPIC-021: Fetch quarter scores if game is completed
         line_scores = None
         if not is_future_game:
             line_scores = cfbd.get_game_line_scores(
-                game_id=game_data.get('id', 0),
+                game_id=game_data.get("id", 0),
                 year=year,
                 week=week,
                 home_team=home_team_name,
-                away_team=away_team_name
+                away_team=away_team_name,
             )
 
         # Create game with game_type='playoff' and postseason_name
@@ -992,19 +1045,19 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
             away_score=away_score,
             week=week,
             season=year,
-            is_neutral_site=game_data.get('neutralSite', True),  # Playoff games usually neutral
-            game_type='playoff',  # EPIC-023: Mark as playoff game
+            is_neutral_site=game_data.get("neutralSite", True),  # Playoff games usually neutral
+            game_type="playoff",  # EPIC-023: Mark as playoff game
             postseason_name=playoff_round,  # EPIC-023: Store playoff round
             game_date=parse_game_date(game_data),
             # EPIC-021: Quarter scores (if available)
-            q1_home=line_scores['home'][0] if line_scores else None,
-            q1_away=line_scores['away'][0] if line_scores else None,
-            q2_home=line_scores['home'][1] if line_scores else None,
-            q2_away=line_scores['away'][1] if line_scores else None,
-            q3_home=line_scores['home'][2] if line_scores else None,
-            q3_away=line_scores['away'][2] if line_scores else None,
-            q4_home=line_scores['home'][3] if line_scores else None,
-            q4_away=line_scores['away'][3] if line_scores else None,
+            q1_home=line_scores["home"][0] if line_scores else None,
+            q1_away=line_scores["away"][0] if line_scores else None,
+            q2_home=line_scores["home"][1] if line_scores else None,
+            q2_away=line_scores["away"][1] if line_scores else None,
+            q3_home=line_scores["home"][2] if line_scores else None,
+            q3_away=line_scores["away"][2] if line_scores else None,
+            q4_home=line_scores["home"][3] if line_scores else None,
+            q4_away=line_scores["away"][3] if line_scores else None,
         )
         db.add(game)
         db.commit()
@@ -1014,11 +1067,15 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
             try:
                 ranking_service.process_game(game)
                 processed += 1
-                print(f"  ✓ Imported & processed: {playoff_round} - {away_team_name} vs {home_team_name} ({away_score}-{home_score})")
+                print(
+                    f"  ✓ Imported & processed: {playoff_round} - {away_team_name} vs {home_team_name} ({away_score}-{home_score})"
+                )
             except Exception as e:
                 print(f"  ⚠️  Imported but not processed: {playoff_round} - {str(e)}")
         else:
-            print(f"  ✓ Imported (scheduled): {playoff_round} - {away_team_name} @ {home_team_name}")
+            print(
+                f"  ✓ Imported (scheduled): {playoff_round} - {away_team_name} @ {home_team_name}"
+            )
 
         imported += 1
 
@@ -1027,13 +1084,21 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
     print(f"Processed: {processed}")
     if skipped > 0:
         print(f"Skipped: {skipped}")
-    print("="*80)
+    print("=" * 80)
     print()
 
     return imported
 
 
-def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: int = None, validate_only: bool = False, strict: bool = False):
+def import_games(
+    cfbd: CFBDClient,
+    db,
+    team_objects: dict,
+    year: int,
+    max_week: int = None,
+    validate_only: bool = False,
+    strict: bool = False,
+):
     """
     Import games for the season with validation and completeness reporting.
 
@@ -1087,10 +1152,10 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
 
         for game_data in games_data:
             # API uses camelCase
-            home_team_name = game_data.get('homeTeam')
-            away_team_name = game_data.get('awayTeam')
-            home_score = game_data.get('homePoints')
-            away_score = game_data.get('awayPoints')
+            home_team_name = game_data.get("homeTeam")
+            away_team_name = game_data.get("awayTeam")
+            home_score = game_data.get("homePoints")
+            away_score = game_data.get("awayPoints")
 
             game_desc = f"{away_team_name} @ {home_team_name}"
 
@@ -1135,12 +1200,16 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                 away_team = get_or_create_fcs_team(db, away_team_name, team_objects)
 
             # EPIC-008 Story 002: Check if game already exists (upsert logic)
-            existing_game = db.query(Game).filter(
-                Game.home_team_id == home_team.id,
-                Game.away_team_id == away_team.id,
-                Game.week == week,
-                Game.season == year
-            ).first()
+            existing_game = (
+                db.query(Game)
+                .filter(
+                    Game.home_team_id == home_team.id,
+                    Game.away_team_id == away_team.id,
+                    Game.week == week,
+                    Game.season == year,
+                )
+                .first()
+            )
 
             if existing_game:
                 # Game exists - decide whether to update, skip, or process
@@ -1156,27 +1225,29 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
 
                     existing_game.home_score = home_score
                     existing_game.away_score = away_score
-                    existing_game.is_neutral_site = game_data.get('neutralSite', False)
-                    existing_game.excluded_from_rankings = is_fcs_game  # Update based on actual FCS status
+                    existing_game.is_neutral_site = game_data.get("neutralSite", False)
+                    existing_game.excluded_from_rankings = (
+                        is_fcs_game  # Update based on actual FCS status
+                    )
                     existing_game.game_date = parse_game_date(game_data)
 
                     # EPIC-021: Fetch and update quarter scores
                     line_scores = cfbd.get_game_line_scores(
-                        game_id=game_data.get('id', 0),
+                        game_id=game_data.get("id", 0),
                         year=year,
                         week=week,
                         home_team=home_team_name,
-                        away_team=away_team_name
+                        away_team=away_team_name,
                     )
                     if line_scores:
-                        existing_game.q1_home = line_scores['home'][0]
-                        existing_game.q1_away = line_scores['away'][0]
-                        existing_game.q2_home = line_scores['home'][1]
-                        existing_game.q2_away = line_scores['away'][1]
-                        existing_game.q3_home = line_scores['home'][2]
-                        existing_game.q3_away = line_scores['away'][2]
-                        existing_game.q4_home = line_scores['home'][3]
-                        existing_game.q4_away = line_scores['away'][3]
+                        existing_game.q1_home = line_scores["home"][0]
+                        existing_game.q1_away = line_scores["away"][0]
+                        existing_game.q2_home = line_scores["home"][1]
+                        existing_game.q2_away = line_scores["away"][1]
+                        existing_game.q3_home = line_scores["home"][2]
+                        existing_game.q3_away = line_scores["away"][2]
+                        existing_game.q4_home = line_scores["home"][3]
+                        existing_game.q4_away = line_scores["away"][3]
 
                         # Validate quarter scores
                         try:
@@ -1197,9 +1268,9 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                     # Now process the game for ELO ratings (if FBS vs FBS)
                     if not is_fcs_game:
                         result = ranking_service.process_game(existing_game)
-                        winner = result['winner_name']
-                        loser = result['loser_name']
-                        score = result['score']
+                        winner = result["winner_name"]
+                        loser = result["loser_name"]
+                        score = result["score"]
                         print(f"      Processed: {winner} defeats {loser} {score}")
                         week_imported += 1
                         total_imported += 1
@@ -1235,7 +1306,7 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                 continue
 
             # Create game
-            is_neutral = game_data.get('neutralSite', False)
+            is_neutral = game_data.get("neutralSite", False)
 
             # EPIC-008: Future games are excluded from rankings for safety
             excluded_from_rankings = is_fcs_game or is_future_game
@@ -1244,11 +1315,11 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
             line_scores = None
             if not is_future_game:
                 line_scores = cfbd.get_game_line_scores(
-                    game_id=game_data.get('id', 0),
+                    game_id=game_data.get("id", 0),
                     year=year,
                     week=week,
                     home_team=home_team_name,
-                    away_team=away_team_name
+                    away_team=away_team_name,
                 )
 
             game = Game(
@@ -1262,14 +1333,14 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                 excluded_from_rankings=excluded_from_rankings,
                 game_date=parse_game_date(game_data),  # EPIC-008: Parse actual date from CFBD
                 # EPIC-021: Quarter scores (if available)
-                q1_home=line_scores['home'][0] if line_scores else None,
-                q1_away=line_scores['away'][0] if line_scores else None,
-                q2_home=line_scores['home'][1] if line_scores else None,
-                q2_away=line_scores['away'][1] if line_scores else None,
-                q3_home=line_scores['home'][2] if line_scores else None,
-                q3_away=line_scores['away'][2] if line_scores else None,
-                q4_home=line_scores['home'][3] if line_scores else None,
-                q4_away=line_scores['away'][3] if line_scores else None,
+                q1_home=line_scores["home"][0] if line_scores else None,
+                q1_away=line_scores["away"][0] if line_scores else None,
+                q2_home=line_scores["home"][1] if line_scores else None,
+                q2_away=line_scores["away"][1] if line_scores else None,
+                q3_home=line_scores["home"][2] if line_scores else None,
+                q3_away=line_scores["away"][2] if line_scores else None,
+                q4_home=line_scores["home"][3] if line_scores else None,
+                q4_away=line_scores["away"][3] if line_scores else None,
             )
 
             # EPIC-021: Validate quarter scores if present
@@ -1301,9 +1372,9 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                 # Completed FBS vs FBS game - process for rankings
                 result = ranking_service.process_game(game)
 
-                winner = result['winner_name']
-                loser = result['loser_name']
-                score = result['score']
+                winner = result["winner_name"]
+                loser = result["loser_name"]
+                score = result["score"]
 
                 print(f"    {winner} defeats {loser} {score}")
                 week_imported += 1
@@ -1316,7 +1387,7 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                 fcs_games_imported += 1
 
         # Print week summary
-        total_week_games = week_stats['completed']
+        total_week_games = week_stats["completed"]
         if total_week_games > 0:
             completion_rate = (week_imported / total_week_games) * 100
             status = "✓" if completion_rate >= 95 else "⚠"
@@ -1336,9 +1407,9 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
                 ap_poll_rankings_imported += ap_rankings_count
 
     # Print final import summary
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("IMPORT SUMMARY")
-    print("="*80)
+    print("=" * 80)
     print(f"Total FBS Games Imported: {total_imported}")
     print(f"Total FCS Games Imported: {fcs_games_imported}")
     print(f"Total Future Games Imported: {future_games_imported}")  # EPIC-008
@@ -1364,7 +1435,7 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
         print("\n✗ STRICT MODE: Import failed due to skipped games")
         sys.exit(1)
 
-    print("="*80)
+    print("=" * 80)
 
     return {
         "imported": total_imported,
@@ -1376,22 +1447,23 @@ def import_games(cfbd: CFBDClient, db, team_objects: dict, year: int, max_week: 
         "skipped": total_skipped,
         "skipped_fcs": skipped_fcs,
         "skipped_not_found": skipped_not_found,
-        "skipped_incomplete": skipped_incomplete
+        "skipped_incomplete": skipped_incomplete,
     }
 
 
 def main():
     """Main import function"""
-    print("="*80)
+    print("=" * 80)
     print("COLLEGE FOOTBALL DATA IMPORT")
-    print("="*80)
+    print("=" * 80)
     print()
     print("This script imports real college football data from CollegeFootballData.com")
     print()
 
     # Parse command-line arguments
     import os
-    api_key = os.getenv('CFBD_API_KEY')
+
+    api_key = os.getenv("CFBD_API_KEY")
 
     # Initialize CFBD client first (needed for auto-detection)
     if not api_key:
@@ -1420,7 +1492,7 @@ def main():
 
     # Set up argument parser
     parser = argparse.ArgumentParser(
-        description='Import college football data from CFBD API',
+        description="Import college football data from CFBD API",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
 Examples:
@@ -1438,32 +1510,30 @@ Examples:
 
   # Specify both season and week
   python3 import_real_data.py --season 2024 --max-week 12
-        """
+        """,
     )
     parser.add_argument(
-        '--reset',
-        action='store_true',
-        help='Reset database before import (WARNING: destroys all existing data)'
+        "--reset",
+        action="store_true",
+        help="Reset database before import (WARNING: destroys all existing data)",
     )
     parser.add_argument(
-        '--season',
+        "--season", type=int, help=f"Season year (default: auto-detect, currently {current_season})"
+    )
+    parser.add_argument(
+        "--max-week",
         type=int,
-        help=f'Season year (default: auto-detect, currently {current_season})'
+        help=f"Maximum week to import (default: all available, currently {max_week_available})",
     )
     parser.add_argument(
-        '--max-week',
-        type=int,
-        help=f'Maximum week to import (default: all available, currently {max_week_available})'
+        "--validate-only",
+        action="store_true",
+        help="Validate import without making changes (dry-run mode)",
     )
     parser.add_argument(
-        '--validate-only',
-        action='store_true',
-        help='Validate import without making changes (dry-run mode)'
-    )
-    parser.add_argument(
-        '--strict',
-        action='store_true',
-        help='Fail on validation warnings (exit with error if games skipped)'
+        "--strict",
+        action="store_true",
+        help="Fail on validation warnings (exit with error if games skipped)",
     )
 
     args = parser.parse_args()
@@ -1502,7 +1572,7 @@ Examples:
         print("WARNING: This will reset your database and replace all data!")
         response = input("Continue? (yes/no): ")
 
-        if response.lower() != 'yes':
+        if response.lower() != "yes":
             print("Cancelled.")
             return
 
@@ -1537,11 +1607,13 @@ Examples:
     # Import games (using detected/overridden max_week)
     print(f"\nImporting games through Week {max_week}...")
     import_stats = import_games(
-        cfbd, db, team_objects,
+        cfbd,
+        db,
+        team_objects,
         year=season,
         max_week=max_week,
         validate_only=args.validate_only,
-        strict=args.strict
+        strict=args.strict,
     )
 
     # EPIC-022: Import conference championship games
@@ -1553,19 +1625,15 @@ Examples:
         conf_champ_count = import_conference_championships(
             cfbd, db, team_objects, season, ranking_service
         )
-        import_stats['conf_championships_imported'] = conf_champ_count
+        import_stats["conf_championships_imported"] = conf_champ_count
 
         # Import bowl games
-        bowl_count = import_bowl_games(
-            cfbd, db, team_objects, season, ranking_service
-        )
-        import_stats['bowl_games_imported'] = bowl_count
+        bowl_count = import_bowl_games(cfbd, db, team_objects, season, ranking_service)
+        import_stats["bowl_games_imported"] = bowl_count
 
         # Import playoff games
-        playoff_count = import_playoff_games(
-            cfbd, db, team_objects, season, ranking_service
-        )
-        import_stats['playoff_games_imported'] = playoff_count
+        playoff_count = import_playoff_games(cfbd, db, team_objects, season, ranking_service)
+        import_stats["playoff_games_imported"] = playoff_count
 
     # Skip remaining steps if validate-only mode
     if args.validate_only:
@@ -1578,10 +1646,12 @@ Examples:
 
     # EPIC-022: Determine actual max week including championship games
     # Conference championships may be in Week 15, even if max_week was 14
-    actual_max_week = db.query(Game).filter(
-        Game.season == season,
-        Game.is_processed == True
-    ).order_by(Game.week.desc()).first()
+    actual_max_week = (
+        db.query(Game)
+        .filter(Game.season == season, Game.is_processed == True)
+        .order_by(Game.week.desc())
+        .first()
+    )
 
     if actual_max_week:
         final_week = actual_max_week.week
@@ -1599,35 +1669,39 @@ Examples:
         ranking_service.save_weekly_rankings(season, week)
 
     # Show final rankings
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("FINAL RANKINGS")
-    print("="*80)
+    print("=" * 80)
 
     rankings = ranking_service.get_current_rankings(season, limit=25)
     print(f"\n{'RANK':<6} {'TEAM':<30} {'RATING':<10} {'RECORD':<10} {'SOS':<10}")
-    print("-"*80)
+    print("-" * 80)
 
     for r in rankings:
         record = f"{r['wins']}-{r['losses']}"
-        print(f"{r['rank']:<6} {r['team_name']:<30} {r['elo_rating']:<10.2f} {record:<10} {r['sos']:<10.2f}")
+        print(
+            f"{r['rank']:<6} {r['team_name']:<30} {r['elo_rating']:<10.2f} {record:<10} {r['sos']:<10.2f}"
+        )
 
     print()
-    print("="*80)
+    print("=" * 80)
     print(f"✓ Import Complete!")
     print(f"  - {len(team_objects)} teams imported")
     print(f"  - {import_stats['imported']} FBS games imported")
-    if import_stats.get('fcs_imported', 0) > 0:
+    if import_stats.get("fcs_imported", 0) > 0:
         print(f"  - {import_stats['fcs_imported']} FCS games imported (not ranked)")
-    if import_stats.get('conf_championships_imported', 0) > 0:
-        print(f"  - {import_stats['conf_championships_imported']} conference championships imported")
-    if import_stats.get('bowl_games_imported', 0) > 0:
+    if import_stats.get("conf_championships_imported", 0) > 0:
+        print(
+            f"  - {import_stats['conf_championships_imported']} conference championships imported"
+        )
+    if import_stats.get("bowl_games_imported", 0) > 0:
         print(f"  - {import_stats['bowl_games_imported']} bowl games imported")
-    if import_stats.get('playoff_games_imported', 0) > 0:
+    if import_stats.get("playoff_games_imported", 0) > 0:
         print(f"  - {import_stats['playoff_games_imported']} playoff games imported")
-    if import_stats['skipped'] > 0:
+    if import_stats["skipped"] > 0:
         print(f"  - {import_stats['skipped']} games skipped")
     print(f"  - Rankings calculated through Week {final_week}")
-    print("="*80)
+    print("=" * 80)
 
     db.close()
 

@@ -11,6 +11,7 @@ from typing import Dict, List, Tuple
 
 class Conference(Enum):
     """Conference classifications for multiplier calculations"""
+
     POWER_5 = "P5"
     GROUP_5 = "G5"
     FCS = "FCS"
@@ -19,10 +20,11 @@ class Conference(Enum):
 @dataclass
 class Team:
     """Represents a college football team"""
+
     name: str
     conference: Conference
     recruiting_rank: int = 999  # 247Sports composite rank
-    transfer_rank: int = 999    # 247Sports transfer portal rank
+    transfer_rank: int = 999  # 247Sports transfer portal rank
     returning_production: float = 0.5  # Percentage (0.0 to 1.0)
     elo_rating: float = 1500.0
     wins: int = 0
@@ -129,7 +131,9 @@ class ELORankingSystem:
         multiplier = math.log(abs(point_differential) + 1)
         return min(multiplier, self.MAX_MOV_MULTIPLIER)
 
-    def get_conference_multiplier(self, winner_conf: Conference, loser_conf: Conference) -> Tuple[float, float]:
+    def get_conference_multiplier(
+        self, winner_conf: Conference, loser_conf: Conference
+    ) -> Tuple[float, float]:
         """
         Get rating change multipliers based on conference matchup
 
@@ -155,13 +159,15 @@ class ELORankingSystem:
         # Same tier matchups
         return (1.0, 1.0)
 
-    def process_game(self,
-                     winner_name: str,
-                     loser_name: str,
-                     winner_score: int,
-                     loser_score: int,
-                     is_home_game_for_winner: bool = False,
-                     is_neutral_site: bool = False) -> Dict[str, float]:
+    def process_game(
+        self,
+        winner_name: str,
+        loser_name: str,
+        winner_score: int,
+        loser_score: int,
+        is_home_game_for_winner: bool = False,
+        is_neutral_site: bool = False,
+    ) -> Dict[str, float]:
         """
         Process a game result and update ELO ratings
 
@@ -219,15 +225,15 @@ class ELORankingSystem:
         loser.games_played.append(winner_name)
 
         return {
-            'winner': winner_name,
-            'loser': loser_name,
-            'score': f"{winner_score}-{loser_score}",
-            'winner_rating_change': round(winner_change, 2),
-            'loser_rating_change': round(loser_change, 2),
-            'winner_new_rating': round(winner.elo_rating, 2),
-            'loser_new_rating': round(loser.elo_rating, 2),
-            'winner_expected': round(winner_expected, 3),
-            'mov_multiplier': round(mov_multiplier, 2)
+            "winner": winner_name,
+            "loser": loser_name,
+            "score": f"{winner_score}-{loser_score}",
+            "winner_rating_change": round(winner_change, 2),
+            "loser_rating_change": round(loser_change, 2),
+            "winner_new_rating": round(winner.elo_rating, 2),
+            "loser_new_rating": round(loser.elo_rating, 2),
+            "winner_expected": round(winner_expected, 3),
+            "mov_multiplier": round(mov_multiplier, 2),
         }
 
     def calculate_sos(self, team_name: str) -> float:
@@ -255,11 +261,7 @@ class ELORankingSystem:
         Returns:
             List of tuples (rank, Team, SOS)
         """
-        sorted_teams = sorted(
-            self.teams.values(),
-            key=lambda t: t.elo_rating,
-            reverse=True
-        )
+        sorted_teams = sorted(self.teams.values(), key=lambda t: t.elo_rating, reverse=True)
 
         rankings = []
         for rank, team in enumerate(sorted_teams, start=1):
@@ -272,12 +274,14 @@ class ELORankingSystem:
         """Print top N rankings in formatted table"""
         rankings = self.get_rankings()
 
-        print("\n" + "="*100)
+        print("\n" + "=" * 100)
         print(f"{'RANK':<6} {'TEAM':<25} {'RATING':<10} {'RECORD':<10} {'CONF':<6} {'SOS':<10}")
-        print("="*100)
+        print("=" * 100)
 
         for rank, team, sos in rankings[:top_n]:
-            print(f"{rank:<6} {team.name:<25} {team.elo_rating:<10.2f} {team.get_record():<10} "
-                  f"{team.conference.value:<6} {sos:<10.2f}")
+            print(
+                f"{rank:<6} {team.name:<25} {team.elo_rating:<10.2f} {team.get_record():<10} "
+                f"{team.conference.value:<6} {sos:<10.2f}"
+            )
 
-        print("="*100 + "\n")
+        print("=" * 100 + "\n")

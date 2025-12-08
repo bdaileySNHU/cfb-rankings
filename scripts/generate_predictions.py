@@ -39,22 +39,22 @@ def main():
             # Determine win probability for the predicted winner
             # The dict has home_win_probability and away_win_probability as percentages
             # We need to store as decimal (0-1) for the winner
-            if pred_dict['predicted_winner_id'] == pred_dict['home_team_id']:
-                win_prob = pred_dict['home_win_probability'] / 100.0
+            if pred_dict["predicted_winner_id"] == pred_dict["home_team_id"]:
+                win_prob = pred_dict["home_win_probability"] / 100.0
             else:
-                win_prob = pred_dict['away_win_probability'] / 100.0
+                win_prob = pred_dict["away_win_probability"] / 100.0
 
             # Create Prediction model instance
             prediction = Prediction(
-                game_id=pred_dict['game_id'],
-                predicted_winner_id=pred_dict['predicted_winner_id'],
-                predicted_home_score=pred_dict['predicted_home_score'],
-                predicted_away_score=pred_dict['predicted_away_score'],
+                game_id=pred_dict["game_id"],
+                predicted_winner_id=pred_dict["predicted_winner_id"],
+                predicted_home_score=pred_dict["predicted_home_score"],
+                predicted_away_score=pred_dict["predicted_away_score"],
                 win_probability=win_prob,
-                home_elo_at_prediction=pred_dict['home_team_rating'],
-                away_elo_at_prediction=pred_dict['away_team_rating'],
+                home_elo_at_prediction=pred_dict["home_team_rating"],
+                away_elo_at_prediction=pred_dict["away_team_rating"],
                 was_correct=None,  # Will be evaluated after game is played
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
             db.add(prediction)
             saved_count += 1
@@ -66,14 +66,21 @@ def main():
         # Show sample of saved predictions
         print("\nSample predictions:")
         for pred_dict in prediction_dicts[:5]:
-            win_prob_display = pred_dict['home_win_probability'] if pred_dict['predicted_winner_id'] == pred_dict['home_team_id'] else pred_dict['away_win_probability']
-            print(f"  - Game {pred_dict['game_id']}: {pred_dict['predicted_winner']} (confidence: {win_prob_display}%)")
+            win_prob_display = (
+                pred_dict["home_win_probability"]
+                if pred_dict["predicted_winner_id"] == pred_dict["home_team_id"]
+                else pred_dict["away_win_probability"]
+            )
+            print(
+                f"  - Game {pred_dict['game_id']}: {pred_dict['predicted_winner']} (confidence: {win_prob_display}%)"
+            )
 
     except Exception as e:
         print(f"\n❌ Error generating predictions: {e}")
         raise
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     main()

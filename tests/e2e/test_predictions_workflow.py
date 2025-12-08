@@ -80,14 +80,10 @@ class TestPredictionsDisplay:
             conference=ConferenceType.POWER_5,
             elo_rating=1850.0,
             wins=7,
-            losses=1
+            losses=1,
         )
         michigan = Team(
-            name="Michigan",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1820.0,
-            wins=7,
-            losses=1
+            name="Michigan", conference=ConferenceType.POWER_5, elo_rating=1820.0, wins=7, losses=1
         )
         test_db.add_all([ohio_state, michigan])
         test_db.commit()
@@ -102,7 +98,7 @@ class TestPredictionsDisplay:
             season=2025,
             game_date=datetime.now() + timedelta(days=7),
             is_processed=False,
-            is_neutral_site=False
+            is_neutral_site=False,
         )
         test_db.add(future_game)
         test_db.commit()
@@ -127,18 +123,10 @@ class TestPredictionsDisplay:
 
         # Create teams
         alabama = Team(
-            name="Alabama",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1850.0,
-            wins=8,
-            losses=0
+            name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=8, losses=0
         )
         georgia = Team(
-            name="Georgia",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1840.0,
-            wins=7,
-            losses=1
+            name="Georgia", conference=ConferenceType.POWER_5, elo_rating=1840.0, wins=7, losses=1
         )
         test_db.add_all([alabama, georgia])
         test_db.commit()
@@ -152,7 +140,7 @@ class TestPredictionsDisplay:
             week=9,
             season=2025,
             is_processed=True,
-            is_neutral_site=False
+            is_neutral_site=False,
         )
         test_db.add(completed_game)
         test_db.commit()
@@ -190,7 +178,7 @@ class TestPredictionsDisplay:
             away_score=0,
             week=9,
             season=2025,
-            is_processed=False
+            is_processed=False,
         )
         game_week_11 = Game(
             home_team_id=team1.id,
@@ -199,7 +187,7 @@ class TestPredictionsDisplay:
             away_score=0,
             week=11,
             season=2025,
-            is_processed=False
+            is_processed=False,
         )
         test_db.add_all([game_week_9, game_week_11])
         test_db.commit()
@@ -233,14 +221,10 @@ class TestPredictionCards:
             conference=ConferenceType.POWER_5,
             elo_rating=1820.0,
             wins=7,
-            losses=1
+            losses=1,
         )
         wisconsin = Team(
-            name="Wisconsin",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1750.0,
-            wins=5,
-            losses=3
+            name="Wisconsin", conference=ConferenceType.POWER_5, elo_rating=1750.0, wins=5, losses=3
         )
         test_db.add_all([penn_state, wisconsin])
         test_db.commit()
@@ -254,7 +238,7 @@ class TestPredictionCards:
             season=2025,
             game_date=datetime.now() + timedelta(days=7),
             is_processed=False,
-            is_neutral_site=False
+            is_neutral_site=False,
         )
         test_db.add(game)
         test_db.commit()
@@ -380,7 +364,7 @@ class TestPredictionsUserWorkflow:
             conference=ConferenceType.POWER_5,
             elo_rating=1800.0,
             wins=8,
-            losses=1
+            losses=1,
         )
         test_db.add(team)
         test_db.commit()

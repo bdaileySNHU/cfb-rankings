@@ -24,11 +24,7 @@ class TestTeamDetailPageLoad:
         from src.models.models import ConferenceType, Team
 
         team = Team(
-            name="Alabama",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1850.0,
-            wins=5,
-            losses=0
+            name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
         )
         test_db.add(team)
         test_db.commit()
@@ -47,11 +43,7 @@ class TestTeamDetailPageLoad:
         from src.models.models import ConferenceType, Team
 
         team = Team(
-            name="Georgia",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1840.0,
-            wins=4,
-            losses=1
+            name="Georgia", conference=ConferenceType.POWER_5, elo_rating=1840.0, wins=4, losses=1
         )
         test_db.add(team)
         test_db.commit()
@@ -83,7 +75,7 @@ class TestTeamDetailData:
             wins=7,
             losses=2,
             recruiting_rank=3,
-            returning_production=0.75
+            returning_production=0.75,
         )
         test_db.add(team)
         test_db.commit()
@@ -109,7 +101,7 @@ class TestTeamDetailData:
             conference=ConferenceType.GROUP_5,
             elo_rating=1600.0,
             wins=8,
-            losses=1
+            losses=1,
         )
         test_db.add(team)
         test_db.commit()
@@ -136,18 +128,10 @@ class TestTeamSchedule:
         from src.models.models import ConferenceType, Game, Team
 
         home_team = Team(
-            name="Alabama",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1850.0,
-            wins=1,
-            losses=0
+            name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=1, losses=0
         )
         away_team = Team(
-            name="Georgia",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1840.0,
-            wins=0,
-            losses=1
+            name="Georgia", conference=ConferenceType.POWER_5, elo_rating=1840.0, wins=0, losses=1
         )
         test_db.add_all([home_team, away_team])
         test_db.commit()
@@ -160,7 +144,7 @@ class TestTeamSchedule:
             away_score=24,
             week=1,
             season=2024,
-            is_processed=True
+            is_processed=True,
         )
         test_db.add(game)
         test_db.commit()
@@ -172,7 +156,11 @@ class TestTeamSchedule:
         # Assert - Schedule section exists
         page_content = page.content()
         # Check for schedule-related content
-        assert "schedule" in page_content.lower() or "game" in page_content.lower() or "Georgia" in page_content
+        assert (
+            "schedule" in page_content.lower()
+            or "game" in page_content.lower()
+            or "Georgia" in page_content
+        )
 
     def test_schedule_shows_opponent(self, browser_page, test_db):
         """Test that schedule shows opponent name"""
@@ -183,18 +171,14 @@ class TestTeamSchedule:
         from src.models.models import ConferenceType, Game, Team
 
         home_team = Team(
-            name="Michigan",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1820.0,
-            wins=1,
-            losses=0
+            name="Michigan", conference=ConferenceType.POWER_5, elo_rating=1820.0, wins=1, losses=0
         )
         away_team = Team(
             name="Ohio State",
             conference=ConferenceType.POWER_5,
             elo_rating=1830.0,
             wins=0,
-            losses=1
+            losses=1,
         )
         test_db.add_all([home_team, away_team])
         test_db.commit()
@@ -207,7 +191,7 @@ class TestTeamSchedule:
             week=12,
             season=2024,
             game_date=datetime.now(),
-            is_processed=True
+            is_processed=True,
         )
         test_db.add(game)
         test_db.commit()
@@ -235,11 +219,7 @@ class TestTeamDetailNavigation:
         from src.models.models import ConferenceType, Team
 
         team = Team(
-            name="Alabama",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1850.0,
-            wins=5,
-            losses=0
+            name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
         )
         test_db.add(team)
         test_db.commit()
@@ -281,11 +261,7 @@ class TestTeamDetailAPIIntegration:
         from src.models.models import ConferenceType, Team
 
         team = Team(
-            name="Alabama",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1850.0,
-            wins=5,
-            losses=0
+            name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
         )
         test_db.add(team)
         test_db.commit()
@@ -318,11 +294,7 @@ class TestTeamDetailAPIIntegration:
         test_db.add(season)
 
         alabama = Team(
-            name="Alabama",
-            conference=ConferenceType.POWER_5,
-            elo_rating=1850.0,
-            wins=5,
-            losses=0
+            name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
         )
         test_db.add(alabama)
         test_db.commit()

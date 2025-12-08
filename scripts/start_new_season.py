@@ -94,11 +94,7 @@ def create_new_season(db, season_year: int, dry_run: bool = True):
     print(f"  - Active: True")
 
     if not dry_run:
-        new_season = Season(
-            year=season_year,
-            current_week=1,
-            is_active=True
-        )
+        new_season = Season(year=season_year, current_week=1, is_active=True)
         db.add(new_season)
         db.commit()
         print(f"  ✅ Created season {season_year}")
@@ -166,7 +162,7 @@ def save_preseason_rankings(db, season_year: int, dry_run: bool = True):
             wins=0,
             losses=0,
             sos=0.0,
-            sos_rank=None
+            sos_rank=None,
         )
         db.add(history)
 
@@ -199,10 +195,11 @@ def validate_season_data(db, season_year: int):
         issues.append(f"Warning: {game_count} games already exist for {season_year}")
 
     # Check preseason rankings saved
-    preseason_rankings = db.query(RankingHistory).filter(
-        RankingHistory.season == season_year,
-        RankingHistory.week == 0
-    ).count()
+    preseason_rankings = (
+        db.query(RankingHistory)
+        .filter(RankingHistory.season == season_year, RankingHistory.week == 0)
+        .count()
+    )
 
     if preseason_rankings == 0:
         issues.append(f"No preseason rankings found for {season_year}")
@@ -213,18 +210,20 @@ def validate_season_data(db, season_year: int):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='Initialize a new season')
-    parser.add_argument('--season', type=int, required=True,
-                       help='Year of new season to start (e.g., 2025)')
-    parser.add_argument('--dry-run', action='store_true',
-                       help='Show what would be done without making changes')
+    parser = argparse.ArgumentParser(description="Initialize a new season")
+    parser.add_argument(
+        "--season", type=int, required=True, help="Year of new season to start (e.g., 2025)"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would be done without making changes"
+    )
     args = parser.parse_args()
 
     db = SessionLocal()
 
-    print("="*80)
+    print("=" * 80)
     print(f"EPIC-024: Season Initialization - {args.season}")
-    print("="*80)
+    print("=" * 80)
     print()
 
     if args.dry_run:
@@ -278,7 +277,7 @@ def main():
                 print("  ✅ All checks passed")
 
         print()
-        print("="*80)
+        print("=" * 80)
         if args.dry_run:
             print(f"[DRY RUN] To actually initialize {args.season}, run:")
             print(f"  python scripts/start_new_season.py --season {args.season}")
@@ -289,7 +288,7 @@ def main():
             print(f"  1. Import games for {args.season}")
             print(f"  2. Process weekly results")
             print(f"  3. Run weekly updates")
-        print("="*80)
+        print("=" * 80)
 
     except Exception as e:
         print(f"\n❌ Error: {e}")

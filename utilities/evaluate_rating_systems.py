@@ -73,7 +73,9 @@ class RatingSystem:
 
         return home_win_prob, home_won
 
-    def process_game(self, game: Game, week: int, home_conf: ConferenceType, away_conf: ConferenceType):
+    def process_game(
+        self, game: Game, week: int, home_conf: ConferenceType, away_conf: ConferenceType
+    ):
         """Process game and update ratings"""
         home_rating = self.get_rating(game.home_team_id, week)
         away_rating = self.get_rating(game.away_team_id, week)
@@ -110,8 +112,9 @@ class RatingSystem:
         self.teams[game.home_team_id] += home_change
         self.teams[game.away_team_id] += away_change
 
-    def get_conference_multipliers(self, home_conf: ConferenceType, away_conf: ConferenceType,
-                                   home_won: bool) -> Tuple[float, float]:
+    def get_conference_multipliers(
+        self, home_conf: ConferenceType, away_conf: ConferenceType, home_won: bool
+    ) -> Tuple[float, float]:
         """Get conference multipliers"""
         home_p5 = home_conf == ConferenceType.POWER_5
         away_p5 = away_conf == ConferenceType.POWER_5
@@ -158,11 +161,11 @@ class RatingSystem:
             conf_sum += abs(pred_prob - 0.5)
 
         return {
-            'accuracy': correct / n,
-            'brier_score': brier_sum / n,
-            'log_loss': log_loss_sum / n,
-            'mean_confidence': conf_sum / n,
-            'n_games': n
+            "accuracy": correct / n,
+            "brier_score": brier_sum / n,
+            "log_loss": log_loss_sum / n,
+            "mean_confidence": conf_sum / n,
+            "n_games": n,
         }
 
 
@@ -214,7 +217,9 @@ class PreseasonDecaySystem(RatingSystem):
 
         return effective_rating
 
-    def process_game(self, game: Game, week: int, home_conf: ConferenceType, away_conf: ConferenceType):
+    def process_game(
+        self, game: Game, week: int, home_conf: ConferenceType, away_conf: ConferenceType
+    ):
         """Process game and track rating changes separately"""
         # Get ratings before change
         home_rating_before = self.get_rating(game.home_team_id, week)
@@ -266,10 +271,12 @@ def evaluate_systems(season_year: int = 2025):
         print(f"Loaded {len(teams)} teams")
 
         # Get all processed games in chronological order
-        games = db.query(Game).filter(
-            Game.season == season_year,
-            Game.is_processed == True
-        ).order_by(Game.week, Game.id).all()
+        games = (
+            db.query(Game)
+            .filter(Game.season == season_year, Game.is_processed == True)
+            .order_by(Game.week, Game.id)
+            .all()
+        )
         print(f"Loaded {len(games)} processed games")
         print()
 
@@ -277,11 +284,7 @@ def evaluate_systems(season_year: int = 2025):
         team_lookup = {t.id: t for t in teams}
 
         # Initialize all systems
-        systems = [
-            CurrentSystem(),
-            ProgressiveKSystem(),
-            PreseasonDecaySystem()
-        ]
+        systems = [CurrentSystem(), ProgressiveKSystem(), PreseasonDecaySystem()]
 
         for system in systems:
             system.initialize_teams(teams)
@@ -334,9 +337,9 @@ def evaluate_systems(season_year: int = 2025):
         print("=" * 80)
         print()
 
-        best_accuracy = max(results, key=lambda x: x[1]['accuracy'])
-        best_brier = min(results, key=lambda x: x[1]['brier_score'])
-        best_log_loss = min(results, key=lambda x: x[1]['log_loss'])
+        best_accuracy = max(results, key=lambda x: x[1]["accuracy"])
+        best_brier = min(results, key=lambda x: x[1]["brier_score"])
+        best_log_loss = min(results, key=lambda x: x[1]["log_loss"])
 
         print(f"Best Accuracy:    {best_accuracy[0]} ({best_accuracy[1]['accuracy']:.2%})")
         print(f"Best Brier Score: {best_brier[0]} ({best_brier[1]['brier_score']:.4f})")
@@ -349,14 +352,14 @@ def evaluate_systems(season_year: int = 2025):
             # Simple scoring: 3 points for best in category, 2 for second, 1 for third
             scores[name] = 0
 
-        for metric in ['accuracy', 'brier_score', 'log_loss']:
-            if metric == 'accuracy':
+        for metric in ["accuracy", "brier_score", "log_loss"]:
+            if metric == "accuracy":
                 sorted_systems = sorted(results, key=lambda x: x[1][metric], reverse=True)
             else:
                 sorted_systems = sorted(results, key=lambda x: x[1][metric])
 
             for i, (name, _) in enumerate(sorted_systems):
-                scores[name] += (3 - i)
+                scores[name] += 3 - i
 
         best_overall = max(scores.items(), key=lambda x: x[1])
         print(f"Overall Best System: {best_overall[0]} ({best_overall[1]} points)")
