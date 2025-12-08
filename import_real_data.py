@@ -17,10 +17,10 @@ import argparse
 import sys
 from datetime import datetime
 
-from cfbd_client import CFBDClient
-from database import SessionLocal, reset_db
-from models import APPollRanking, ConferenceType, Game, Season, Team
-from ranking_service import RankingService, create_and_store_prediction
+from src.integrations.cfbd_client import CFBDClient
+from src.models.database import SessionLocal, reset_db
+from src.models.models import APPollRanking, ConferenceType, Game, Season, Team
+from src.core.ranking_service import RankingService, create_and_store_prediction
 
 # Conference mapping from CFBD to our system
 CONFERENCE_MAP = {

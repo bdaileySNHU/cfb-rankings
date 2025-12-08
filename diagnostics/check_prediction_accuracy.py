@@ -9,8 +9,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-from database import SessionLocal
-from models import Game, Prediction
+from src.models.database import SessionLocal
+from src.models.models import Game, Prediction
 
 db = SessionLocal()
 

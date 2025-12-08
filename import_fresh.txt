@@ -1,0 +1,23 @@
+WARNING:cfbd_client:Failed to track API usage: (sqlite3.OperationalError) no such table: api_usage
+[SQL: INSERT INTO api_usage (endpoint, timestamp, status_code, response_time_ms, month, created_at) VALUES (?, ?, ?, ?, ?, ?)]
+[parameters: ('/games', '2025-12-01 07:40:08.416172', 200, 3079.24, '2025-12', '2025-12-01 12:40:11.509590')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+WARNING:cfbd_client:Failed to track API usage: (sqlite3.OperationalError) no such table: api_usage
+[SQL: INSERT INTO api_usage (endpoint, timestamp, status_code, response_time_ms, month, created_at) VALUES (?, ?, ?, ?, ?, ?)]
+[parameters: ('/teams/fbs', '2025-12-01 07:40:11.511828', 200, 165.9, '2025-12', '2025-12-01 12:40:11.678227')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+================================================================================
+COLLEGE FOOTBALL DATA IMPORT
+================================================================================
+
+This script imports real college football data from CollegeFootballData.com
+
+Validating CFBD API connection...
+✓ API Connection OK (134 teams found)
+✓ Detected current season: 2025
+✓ Latest completed week: 14
+  → Using season override: 2024
+  → RESET MODE: Database will be wiped and rebuilt
+
+WARNING: This will reset your database and replace all data!
+Continue? (yes/no): Cancelled.

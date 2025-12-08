@@ -18,8 +18,8 @@ import sys
 from copy import deepcopy
 from typing import Dict, List, Tuple
 
-from database import SessionLocal
-from models import ConferenceType, Game, Season, Team
+from src.models.database import SessionLocal
+from src.models.models import ConferenceType, Game, Season, Team
 
 
 class RatingSystem:

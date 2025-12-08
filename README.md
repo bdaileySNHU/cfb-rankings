@@ -339,13 +339,20 @@ All endpoints are documented in the interactive API docs at `http://localhost:80
 
 ```
 .
-├── main.py               # FastAPI application with all endpoints
-├── models.py             # SQLAlchemy database models
-├── schemas.py            # Pydantic schemas for API validation
-├── database.py           # Database configuration
-├── ranking_service.py    # Service layer integrating ELO with database
-├── cfbd_client.py        # CollegeFootballData API client
-├── cfb_elo_ranking.py    # Core ELO ranking algorithm (standalone)
+├── src/                  # Core application code
+│   ├── api/              # FastAPI application layer
+│   │   └── main.py       # API endpoints and routing
+│   ├── core/             # Business logic
+│   │   ├── ranking_service.py      # Modified ELO ranking service
+│   │   ├── ap_poll_service.py      # AP Poll comparison logic
+│   │   ├── transfer_portal_service.py  # Transfer rankings
+│   │   └── cfb_elo_ranking.py      # Standalone ELO algorithm
+│   ├── models/           # Data layer
+│   │   ├── models.py     # SQLAlchemy database models
+│   │   ├── schemas.py    # Pydantic API validation schemas
+│   │   └── database.py   # Database configuration
+│   └── integrations/     # External services
+│       └── cfbd_client.py  # CollegeFootballData.com API client
 ├── import_real_data.py   # Import real teams & games
 ├── seed_data.py          # Sample data population script
 ├── demo.py               # Standalone demo of ranking algorithm
@@ -367,7 +374,7 @@ All endpoints are documented in the interactive API docs at `http://localhost:80
 │   ├── generate_predictions.py  # Generate predictions for upcoming games
 │   ├── backfill_*.py     # Historical data backfill scripts
 │   └── check_*.py        # Operational checks and reports
-└── tests/                # Comprehensive test suite (124 tests)
+└── tests/                # Comprehensive test suite
     ├── unit/             # Unit tests
     ├── integration/      # Integration tests
     └── e2e/              # End-to-end tests
@@ -406,7 +413,14 @@ This creates 33 teams and 25 games from 2 weeks of a sample season.
 ### Start the API Server
 
 ```bash
-python3 main.py
+# Development mode with auto-reload
+uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+
+# Or using Python module syntax
+python3 -m uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+
+# Production mode with Gunicorn
+gunicorn -c gunicorn_config.py src.api.main:app
 ```
 
 The server will start at `http://localhost:8000`

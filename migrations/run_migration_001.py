@@ -4,7 +4,7 @@ Run migration 001: Add postseason_name field
 EPIC-023 Story 23.1
 """
 
-from database import SessionLocal, engine
+from src.models.database import SessionLocal, engine
 from sqlalchemy import text
 import sys
 

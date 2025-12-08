@@ -5,9 +5,9 @@ Used when fundamental changes affect game calculations (like conference reclassi
 
 import sys
 
-from database import SessionLocal
-from models import Game, RankingHistory, Season, Team
-from ranking_service import RankingService
+from src.models.database import SessionLocal
+from src.models.models import Game, RankingHistory, Season, Team
+from src.core.ranking_service import RankingService
 
 
 def recalculate_season(season_year: int, dry_run: bool = False):

@@ -27,9 +27,9 @@ import logging
 
 from sqlalchemy.orm import Session
 
-from cfbd_client import CFBDClient
-from database import SessionLocal
-from models import Game
+from src.integrations.cfbd_client import CFBDClient
+from src.models.database import SessionLocal
+from src.models.models import Game
 
 # Configure logging
 logging.basicConfig(

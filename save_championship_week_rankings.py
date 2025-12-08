@@ -9,9 +9,9 @@ but didn't save the ranking history.
 
 import sys
 
-from database import SessionLocal
-from models import Game
-from ranking_service import RankingService
+from src.models.database import SessionLocal
+from src.models.models import Game
+from src.core.ranking_service import RankingService
 
 
 def save_championship_week_rankings(season=2024):

@@ -6,8 +6,8 @@ Updates existing playoff games in database to use correct week numbers
 based on their playoff round.
 """
 
-from database import SessionLocal
-from models import Game
+from src.models.database import SessionLocal
+from src.models.models import Game
 
 
 def fix_playoff_weeks(season=2024):

@@ -10,8 +10,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-from database import SessionLocal
-from models import Game
+from src.models.database import SessionLocal
+from src.models.models import Game
 
 
 def check_playoff_games(season=2024):

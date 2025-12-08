@@ -9,9 +9,9 @@ os.environ['CFBD_MONTHLY_LIMIT'] = '100'  # Set low limit for easy testing
 
 from datetime import datetime
 
-from cfbd_client import check_usage_warnings, get_monthly_usage
-from database import SessionLocal
-from models import APIUsage
+from src.integrations.cfbd_client import check_usage_warnings, get_monthly_usage
+from src.models.database import SessionLocal
+from src.models.models import APIUsage
 
 
 def create_fake_usage_records(count: int, month: str = None):

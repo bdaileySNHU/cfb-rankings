@@ -16,7 +16,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from freezegun import freeze_time
 
-from cfbd_client import CFBDClient
+from src.integrations.cfbd_client import CFBDClient
 
 
 @pytest.mark.unit

@@ -161,7 +161,7 @@ class TestUpdateGamesScript:
         When a team is not in the database, it should be created with
         is_fcs=True and default ELO rating of 1500.
         """
-        from models import Team
+        from src.models.models import Team
 
         # Mock team not found
         mock_db_session.query.return_value.filter.return_value.first.return_value = None
@@ -222,7 +222,7 @@ class TestUpdateGamesScript:
         - home_score = 0 or None
         - away_score = 0 or None
         """
-        from models import Game
+        from src.models.models import Game
 
         future_game = Game(
             home_team_id=1,
@@ -245,7 +245,7 @@ class TestUpdateGamesScript:
 
         When a game involves an FCS team, excluded_from_rankings should be True
         """
-        from models import Game, Team
+        from src.models.models import Game, Team
 
         # FBS team
         fbs_team = Team(name="Ohio State", is_fcs=False, elo_rating=1800.0)

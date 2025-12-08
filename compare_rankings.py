@@ -5,9 +5,9 @@ Shows how our model compares to AP Poll, Coaches Poll, and CFP Rankings
 
 import os
 
-from cfbd_client import CFBDClient
-from database import SessionLocal
-from ranking_service import RankingService
+from src.integrations.cfbd_client import CFBDClient
+from src.models.database import SessionLocal
+from src.core.ranking_service import RankingService
 
 # AP Poll Rankings (Week 5, 2024 - as reference)
 AP_POLL_WEEK_5 = {

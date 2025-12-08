@@ -16,7 +16,7 @@ from factories import configure_factories
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from models import ConferenceType, Game, Season, Team
+from src.models.models import ConferenceType, Game, Season, Team
 
 
 @pytest.mark.integration
@@ -212,7 +212,7 @@ class TestGameImportWithMock:
         """Test that import creates FCS games with excluded_from_rankings flag"""
         # Arrange
         from import_real_data import import_games, import_teams
-        from models import Game
+        from src.models.models import Game
 
         # Modify mock to include FCS opponent
         mock_cfbd_client.get_games.return_value = [

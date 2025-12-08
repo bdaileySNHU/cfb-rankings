@@ -12,8 +12,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import sys
 
-from database import SessionLocal
-from models import Game, Team
+from src.models.database import SessionLocal
+from src.models.models import Game, Team
 
 
 def check_game_details(game_id):

@@ -1,0 +1,670 @@
+WARNING:cfbd_client:Failed to track API usage: (sqlite3.OperationalError) attempt to write a readonly database
+[SQL: INSERT INTO api_usage (endpoint, timestamp, status_code, response_time_ms, month, created_at) VALUES (?, ?, ?, ?, ?, ?)]
+[parameters: ('/games/teams', '2025-12-01 07:38:21.901210', 200, 152.18699999999998, '2025-12', '2025-12-01 12:38:22.053664')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+================================================================================
+COLLEGE FOOTBALL DATA IMPORT
+================================================================================
+
+This script imports real college football data from CollegeFootballData.com
+
+Validating CFBD API connection...
+✓ API Connection OK (134 teams found)
+✓ Detected current season: 2025
+✓ Latest completed week: 14
+  → Using season override: 2024
+  → INCREMENTAL MODE: New data will be added to existing database
+
+Incremental mode: Getting or creating 2024 season...
+  Found existing season 2024 (current week: 0)
+
+Importing FBS teams for 2024...
+Fetching recruiting rankings...
+Fetching talent composite...
+Fetching returning production...
+
+✓ Reused 134 existing teams, created 0 new teams
+
+Importing games through Week 14...
+
+Importing games for 2024...
+
+Week 1...
+    Georgia Tech defeats Florida State 24-21
+    New Mexico vs Montana State (FCS - not ranked)
+    SMU defeats Nevada 29-24
+    Hawai'i vs Delaware State (FCS - not ranked)
+    Rutgers vs Howard (FCS - not ranked)
+    Bowling Green vs Fordham (FCS - not ranked)
+    UCF vs New Hampshire (FCS - not ranked)
+    UL Monroe vs Jackson State (FCS - not ranked)
+    Central Michigan vs Central Connecticut (FCS - not ranked)
+    Buffalo vs Lafayette (FCS - not ranked)
+    Wake Forest vs North Carolina A&T (FCS - not ranked)
+    NC State vs Western Carolina (FCS - not ranked)
+    Arkansas vs Arkansas-Pine Bluff (FCS - not ranked)
+    Toledo vs Duquesne (FCS - not ranked)
+    Colorado vs North Dakota State (FCS - not ranked)
+    Missouri vs Murray State (FCS - not ranked)
+    Kansas vs Lindenwood (FCS - not ranked)
+    North Carolina defeats Minnesota 19-17
+    Tulsa vs Northwestern State (FCS - not ranked)
+    Tulane vs SE Louisiana (FCS - not ranked)
+    Coastal Carolina defeats Jacksonville State 55-27
+    UAB vs Alcorn State (FCS - not ranked)
+    Illinois vs Eastern Illinois (FCS - not ranked)
+    Utah vs Southern Utah (FCS - not ranked)
+    San José State vs Sacramento State (FCS - not ranked)
+    Army vs Lehigh (FCS - not ranked)
+    Oklahoma defeats Temple 51-3
+    Michigan State defeats Florida Atlantic 16-10
+    Duke vs Elon (FCS - not ranked)
+    Wisconsin defeats Western Michigan 28-14
+    TCU defeats Stanford 34-27
+    Utah State vs Robert Morris (FCS - not ranked)
+    Maryland defeats UConn 50-7
+    Penn State defeats West Virginia 34-12
+    Navy vs Bucknell (FCS - not ranked)
+    Louisville vs Austin Peay (FCS - not ranked)
+    Pittsburgh defeats Kent State 55-24
+    Iowa vs Illinois State (FCS - not ranked)
+    Purdue vs Indiana State (FCS - not ranked)
+    Georgia defeats Clemson 34-3
+    Vanderbilt defeats Virginia Tech 34-27
+    Tennessee vs Chattanooga (FCS - not ranked)
+    Oklahoma State vs South Dakota State (FCS - not ranked)
+    Cincinnati vs Towson (FCS - not ranked)
+    Washington State vs Portland State (FCS - not ranked)
+    Nebraska defeats UTEP 40-7
+    Indiana defeats Florida International 31-7
+    Northwestern defeats Miami (OH) 13-6
+    Ohio State defeats Akron 52-6
+    Texas defeats Colorado State 52-0
+    UTSA defeats Kennesaw State 28-16
+    Miami defeats Florida 41-17
+    App State vs East Tennessee State (FCS - not ranked)
+    Eastern Michigan defeats Massachusetts 28-14
+    Air Force vs Merrimack (FCS - not ranked)
+    Syracuse defeats Ohio 38-22
+    Iowa State vs North Dakota (FCS - not ranked)
+    Northern Illinois vs Western Illinois (FCS - not ranked)
+    Boise State defeats Georgia Southern 56-45
+    South Carolina defeats Old Dominion 23-19
+    Marshall vs Stony Brook (FCS - not ranked)
+    North Texas defeats South Alabama 52-38
+    California vs UC Davis (FCS - not ranked)
+    Liberty vs Campbell (FCS - not ranked)
+    Virginia vs Richmond (FCS - not ranked)
+    Mississippi State vs Eastern Kentucky (FCS - not ranked)
+    East Carolina vs Norfolk State (FCS - not ranked)
+    Oregon State vs Idaho State (FCS - not ranked)
+    Alabama defeats Western Kentucky 63-0
+    Sam Houston defeats Rice 34-14
+    Nevada defeats Troy 28-26
+    Arkansas State vs Central Arkansas (FCS - not ranked)
+    Middle Tennessee vs Tennessee Tech (FCS - not ranked)
+    Memphis vs North Alabama (FCS - not ranked)
+    South Florida vs Bethune-Cookman (FCS - not ranked)
+    Baylor vs Tarleton State (FCS - not ranked)
+    Kansas State vs UT Martin (FCS - not ranked)
+    Ole Miss vs Furman (FCS - not ranked)
+    UNLV defeats Houston 27-7
+    Auburn vs Alabama A&M (FCS - not ranked)
+    Texas Tech vs Abilene Christian (FCS - not ranked)
+    Michigan defeats Fresno State 30-10
+    Oregon vs Idaho (FCS - not ranked)
+    UCLA defeats Hawai'i 16-13
+    Notre Dame defeats Texas A&M 23-13
+    Kentucky defeats Southern Miss 31-0
+    BYU vs Southern Illinois (FCS - not ranked)
+    SMU vs Houston Christian (FCS - not ranked)
+    Georgia Tech defeats Georgia State 35-12
+    Louisiana vs Grambling (FCS - not ranked)
+    Texas State vs Lamar (FCS - not ranked)
+    Louisiana Tech vs Nicholls (FCS - not ranked)
+    San Diego State vs East Texas A&M (FCS - not ranked)
+    James Madison defeats Charlotte 30-7
+    New Mexico State vs Southeast Missouri State (FCS - not ranked)
+    Arizona defeats New Mexico 61-39
+    Arizona State defeats Wyoming 48-7
+    Washington vs Weber State (FCS - not ranked)
+    USC defeats LSU 27-20
+    Boston College defeats Florida State 28-13
+
+  ⚠ Week 1 Summary:
+    Expected: 177 games
+    Imported: 39 games (22%)
+    Skipped: 77 games
+    AP Poll: 25 rankings imported
+
+Week 2...
+    BYU defeats SMU 18-15
+    Indiana vs Western Illinois (FCS - not ranked)
+    Duke defeats Northwestern 26-20
+    Pittsburgh defeats Cincinnati 28-27
+    Syracuse defeats Georgia Tech 31-28
+    Rutgers defeats Akron 49-17
+    Army defeats Florida Atlantic 24-7
+    Oklahoma State defeats Arkansas 39-31
+    Texas defeats Michigan 31-12
+    Minnesota vs Rhode Island (FCS - not ranked)
+    UConn vs Merrimack (FCS - not ranked)
+    Kansas State defeats Tulane 34-27
+    Penn State defeats Bowling Green 34-27
+    Memphis defeats Troy 38-17
+    Texas A&M vs McNeese (FCS - not ranked)
+    Georgia vs Tennessee Tech (FCS - not ranked)
+    Ball State vs Missouri State (FCS - not ranked)
+    Kent State vs St. Francis (PA) (FCS - not ranked)
+    UNLV vs Utah Tech (FCS - not ranked)
+    North Carolina defeats Charlotte 38-20
+    Toledo defeats Massachusetts 38-23
+    Navy defeats Temple 38-11
+    Louisville defeats Jacksonville State 49-14
+    Wyoming vs Idaho (FCS - not ranked)
+    Iowa State defeats Iowa 20-19
+    Wisconsin vs South Dakota (FCS - not ranked)
+    Boston College vs Duquesne (FCS - not ranked)
+    Utah defeats Baylor 23-12
+    Northern Illinois defeats Notre Dame 16-14
+    South Carolina defeats Kentucky 31-6
+    California defeats Auburn 21-14
+    Washington defeats Eastern Michigan 30-9
+    Michigan State defeats Maryland 27-24
+    Texas State defeats UTSA 49-10
+    Ole Miss defeats Middle Tennessee 52-3
+    Virginia Tech defeats Marshall 31-14
+    East Carolina defeats Old Dominion 20-14
+    Miami vs Florida A&M (FCS - not ranked)
+    West Virginia vs UAlbany (FCS - not ranked)
+    Florida International defeats Central Michigan 52-16
+    James Madison vs Gardner-Webb (FCS - not ranked)
+    Ohio defeats South Alabama 27-20
+    UCF defeats Sam Houston 45-14
+    San José State defeats Air Force 17-7
+    UL Monroe defeats UAB 32-6
+    Florida vs Samford (FCS - not ranked)
+    Southern Miss vs SE Louisiana (FCS - not ranked)
+    Georgia State vs Chattanooga (FCS - not ranked)
+    Rice vs Texas Southern (FCS - not ranked)
+    Louisiana defeats Kennesaw State 34-10
+    Georgia Southern defeats Nevada 20-17
+    Arkansas State defeats Tulsa 28-24
+    Alabama defeats South Florida 42-16
+    Western Kentucky vs Eastern Kentucky (FCS - not ranked)
+    Illinois defeats Kansas 23-17
+    Virginia defeats Wake Forest 31-30
+    Coastal Carolina vs William & Mary (FCS - not ranked)
+    Missouri defeats Buffalo 38-0
+    Stanford vs Cal Poly (FCS - not ranked)
+    Colorado State vs Northern Colorado (FCS - not ranked)
+    LSU vs Nicholls (FCS - not ranked)
+    Ohio State defeats Western Michigan 56-0
+    Nebraska defeats Colorado 28-10
+    North Texas vs Stephen F. Austin (FCS - not ranked)
+    Tennessee defeats NC State 51-10
+    Vanderbilt vs Alcorn State (FCS - not ranked)
+    Oklahoma defeats Houston 16-12
+    TCU vs Long Island University (FCS - not ranked)
+    Clemson defeats App State 66-20
+    UTEP vs Southern Utah (FCS - not ranked)
+    Fresno State vs Sacramento State (FCS - not ranked)
+    Arizona vs Northern Arizona (FCS - not ranked)
+    Oregon defeats Boise State 37-34
+    Washington State defeats Texas Tech 37-16
+    Liberty defeats New Mexico State 30-24
+    Oregon State defeats San Diego State 21-0
+    Arizona State defeats Mississippi State 30-23
+    USC defeats Utah State 48-0
+
+  ⚠ Week 2 Summary:
+    Expected: 314 games
+    Imported: 49 games (16%)
+    Skipped: 236 games
+    AP Poll: 25 rankings imported
+
+Week 3...
+    South Alabama vs Northwestern State (FCS - not ranked)
+    Arizona State defeats Texas State 31-28
+    UNLV defeats Kansas 23-20
+    Kansas State defeats Arizona 31-7
+    Oklahoma State defeats Tulsa 45-10
+    LSU defeats South Carolina 36-33
+    Michigan defeats Arkansas State 28-18
+    Alabama defeats Wisconsin 42-10
+    Memphis defeats Florida State 20-12
+    NC State defeats Louisiana Tech 30-20
+    Texas Tech defeats North Texas 66-21
+    Cincinnati defeats Miami (OH) 27-16
+    Illinois defeats Central Michigan 30-9
+    Missouri defeats Boston College 27-21
+    Buffalo defeats Massachusetts 34-3
+    Coastal Carolina defeats Temple 28-20
+    Oregon defeats Oregon State 49-14
+    Pittsburgh defeats West Virginia 38-34
+    Washington State defeats Washington 24-19
+    Minnesota defeats Nevada 27-0
+    Texas A&M defeats Florida 33-20
+    Notre Dame defeats Purdue 66-7
+    Georgia Tech vs VMI (FCS - not ranked)
+    Ohio vs Morgan State (FCS - not ranked)
+    Michigan State vs Prairie View A&M (FCS - not ranked)
+    Oklahoma defeats Tulane 34-19
+    Miami defeats Ball State 62-0
+    Iowa defeats Troy 38-21
+    App State defeats East Carolina 21-19
+    Arkansas defeats UAB 37-27
+    Utah defeats Utah State 38-21
+    Charlotte vs Gardner-Webb (FCS - not ranked)
+    Florida Atlantic defeats Florida International 38-20
+    Liberty defeats UTEP 28-10
+    Virginia Tech defeats Old Dominion 37-17
+    Duke defeats UConn 26-21
+    North Carolina vs North Carolina Central (FCS - not ranked)
+    Georgia Southern vs South Carolina State (FCS - not ranked)
+    Akron vs Colgate (FCS - not ranked)
+    Western Michigan vs Bethune-Cookman (FCS - not ranked)
+    Ole Miss defeats Wake Forest 40-6
+    South Florida defeats Southern Miss 49-24
+    Western Kentucky defeats Middle Tennessee 49-21
+    San José State defeats Kennesaw State 31-10
+    Eastern Michigan defeats Jacksonville State 37-34
+    Georgia State defeats Vanderbilt 36-32
+    Texas defeats UTSA 56-7
+    Missouri State vs Lindenwood (FCS - not ranked)
+    Sam Houston defeats Hawai'i 31-13
+    Colorado defeats Colorado State 28-9
+    Georgia defeats Kentucky 13-12
+    Nebraska vs Northern Iowa (FCS - not ranked)
+    Indiana defeats UCLA 42-13
+    Baylor defeats Air Force 31-3
+    Northwestern vs Eastern Illinois (FCS - not ranked)
+    Toledo defeats Mississippi State 41-17
+    Auburn defeats New Mexico 45-19
+    UCF defeats TCU 35-34
+    Tennessee defeats Kent State 71-0
+    Houston defeats Rice 33-7
+    Maryland defeats Virginia 27-13
+    BYU defeats Wyoming 34-14
+    California defeats San Diego State 31-10
+    Fresno State defeats New Mexico State 48-0
+
+  ⚠ Week 3 Summary:
+    Expected: 299 games
+    Imported: 52 games (17%)
+    Skipped: 235 games
+    AP Poll: 25 rankings imported
+
+Week 4...
+    South Alabama defeats App State 48-14
+    Stanford defeats Syracuse 26-24
+    Illinois defeats Nebraska 31-24
+    Washington State defeats San José State 54-52
+    Clemson defeats NC State 59-35
+    Florida defeats Mississippi State 45-28
+    Indiana defeats Charlotte 52-14
+    James Madison defeats North Carolina 70-50
+    Cincinnati defeats Houston 34-0
+    West Virginia defeats Kansas 32-28
+    Tulane defeats Louisiana 41-33
+    Army defeats Rice 37-14
+    Maryland vs Villanova (FCS - not ranked)
+    Ohio State defeats Marshall 49-14
+    Kentucky defeats Ohio 41-6
+    Central Michigan defeats Ball State 37-34
+    Virginia defeats Coastal Carolina 43-24
+    Eastern Michigan vs St. Francis (PA) (FCS - not ranked)
+    Iowa State defeats Arkansas State 52-7
+    Temple defeats Utah State 45-29
+    Nevada vs Eastern Washington (FCS - not ranked)
+    Jacksonville State defeats Southern Miss 44-7
+    Massachusetts vs Central Connecticut (FCS - not ranked)
+    Rutgers defeats Virginia Tech 26-23
+    Notre Dame defeats Miami (OH) 28-3
+    Pittsburgh vs Youngstown State (FCS - not ranked)
+    UTSA vs Houston Christian (FCS - not ranked)
+    Arkansas defeats Auburn 24-14
+    LSU defeats UCLA 34-17
+    Buffalo defeats Northern Illinois 23-20
+    Louisville defeats Georgia Tech 31-19
+    Michigan defeats USC 27-24
+    Penn State defeats Kent State 56-0
+    Texas Tech defeats Arizona State 30-22
+    Navy defeats Memphis 56-44
+    Duke defeats Middle Tennessee 45-17
+    Utah defeats Oklahoma State 22-19
+    Missouri defeats Vanderbilt 30-27
+    Colorado State defeats UTEP 27-17
+    SMU defeats TCU 66-42
+    Liberty defeats East Carolina 35-24
+    Florida International vs Monmouth (FCS - not ranked)
+    Sam Houston defeats New Mexico State 31-11
+    Missouri State vs UT Martin (FCS - not ranked)
+    Troy vs Florida A&M (FCS - not ranked)
+    North Texas defeats Wyoming 44-17
+    Western Kentucky defeats Toledo 26-21
+    Tulsa defeats Louisiana Tech 23-20
+    Florida State defeats California 14-9
+    UConn defeats Florida Atlantic 48-14
+    Washington defeats Northwestern 24-5
+    Miami defeats South Florida 50-15
+    Tennessee defeats Oklahoma 25-15
+    Iowa defeats Minnesota 31-14
+    Texas A&M defeats Bowling Green 26-20
+    South Carolina defeats Akron 50-7
+    Ole Miss defeats Georgia Southern 52-13
+    Boston College defeats Michigan State 23-19
+    Colorado defeats Baylor 38-31
+    Texas defeats UL Monroe 51-3
+    Oregon State defeats Purdue 38-21
+    Fresno State defeats New Mexico 38-21
+    Boise State vs Portland State (FCS - not ranked)
+    BYU defeats Kansas State 38-9
+    Hawai'i vs Northern Iowa (FCS - not ranked)
+
+  ⚠ Week 4 Summary:
+    Expected: 311 games
+    Imported: 54 games (17%)
+    Skipped: 246 games
+    AP Poll: 25 rankings imported
+
+Week 5...
+    Army defeats Temple 42-14
+    Miami defeats Virginia Tech 38-34
+    Rutgers defeats Washington 21-18
+    Michigan defeats Minnesota 27-24
+    BYU defeats Baylor 34-28
+    Indiana defeats Maryland 42-28
+    Nebraska defeats Purdue 28-10
+    UConn defeats Buffalo 47-3
+    Boston College defeats Western Kentucky 21-20
+    NC State defeats Northern Illinois 24-17
+    Navy defeats UAB 41-18
+    Tulane defeats South Florida 45-10
+    Kentucky defeats Ole Miss 20-17
+    Kansas State defeats Oklahoma State 42-20
+    Syracuse vs Holy Cross (FCS - not ranked)
+    James Madison defeats Ball State 63-7
+    Sam Houston defeats Texas State 40-39
+    Missouri State vs Youngstown State (FCS - not ranked)
+    Ohio defeats Akron 30-10
+    Colorado defeats UCF 48-21
+    Eastern Michigan defeats Kent State 52-33
+    Marshall defeats Western Michigan 27-20
+    Georgia Southern defeats Georgia State 38-21
+    Central Michigan defeats San Diego State 22-21
+    UNLV defeats Fresno State 59-14
+    TCU defeats Kansas 38-27
+    Louisiana defeats Wake Forest 41-38
+    Miami (OH) defeats Massachusetts 23-20
+    Texas A&M defeats Arkansas 21-17
+    Oklahoma defeats Auburn 27-21
+    Notre Dame defeats Louisville 31-24
+    USC defeats Wisconsin 38-21
+    Found future game: Liberty @ App State
+    Liberty @ App State (scheduled - not ranked)
+    Duke defeats North Carolina 21-20
+    East Carolina defeats UTSA 30-20
+    Texas defeats Mississippi State 35-13
+    Old Dominion defeats Bowling Green 30-27
+    Florida Atlantic vs Wagner (FCS - not ranked)
+    Florida International defeats Louisiana Tech 17-10
+    Kennesaw State vs UT Martin (FCS - not ranked)
+    North Texas defeats Tulsa 52-20
+    Charlotte defeats Rice 21-20
+    UL Monroe defeats Troy 13-9
+    Iowa State defeats Houston 20-0
+    Clemson defeats Stanford 40-14
+    Penn State defeats Illinois 21-7
+    Memphis defeats Middle Tennessee 24-7
+    Alabama defeats Georgia 41-34
+    Ohio State defeats Michigan State 38-7
+    LSU defeats South Alabama 42-10
+    New Mexico defeats New Mexico State 50-40
+    Texas Tech defeats Cincinnati 44-41
+    SMU defeats Florida State 42-16
+    Wyoming defeats Air Force 31-19
+    Boise State defeats Washington State 45-24
+    Arizona defeats Utah 23-10
+    Oregon defeats UCLA 34-13
+
+  ⚠ Week 5 Summary:
+    Expected: 269 games
+    Imported: 53 games (20%)
+    Skipped: 213 games
+    AP Poll: 25 rankings imported
+
+Week 6...
+    Texas State defeats Troy 38-17
+    Sam Houston defeats UTEP 41-21
+    Jacksonville State defeats Kennesaw State 63-24
+    Houston defeats TCU 30-19
+    Oregon defeats Michigan State 31-10
+    Syracuse defeats UNLV 44-41
+    SMU defeats Louisville 34-27
+    Wisconsin defeats Purdue 52-6
+    Northern Illinois defeats Massachusetts 34-20
+    Virginia defeats Boston College 24-14
+    Pittsburgh defeats North Carolina 34-24
+    Wake Forest defeats NC State 34-30
+    Navy defeats Air Force 34-7
+    Army defeats Tulsa 49-7
+    Penn State defeats UCLA 27-11
+    Texas A&M defeats Missouri 41-10
+    Tulane defeats UAB 71-20
+    Western Michigan defeats Ball State 45-42
+    Indiana defeats Northwestern 41-24
+    UConn defeats Temple 29-20
+    Virginia Tech defeats Stanford 31-7
+    Marshall defeats App State 52-37
+    Toledo defeats Miami (OH) 30-20
+    Bowling Green defeats Akron 27-20
+    Charlotte defeats East Carolina 55-24
+    Georgia defeats Auburn 31-13
+    Ohio State defeats Iowa 35-7
+    Ole Miss defeats South Carolina 27-3
+    West Virginia defeats Oklahoma State 38-14
+    Nebraska defeats Rutgers 14-7
+    Vanderbilt defeats Alabama 40-35
+    Oregon State defeats Colorado State 39-31
+    Louisiana defeats Southern Miss 23-13
+    UL Monroe defeats James Madison 21-19
+    Arkansas State defeats South Alabama 18-16
+    Coastal Carolina defeats Old Dominion 45-37
+    Boise State defeats Utah State 62-30
+    Clemson defeats Florida State 29-13
+    Arkansas defeats Tennessee 19-14
+    Iowa State defeats Baylor 43-21
+    Minnesota defeats USC 24-17
+    Washington defeats Michigan 27-17
+    San José State defeats Nevada 35-31
+    Florida defeats UCF 24-13
+    Georgia Tech defeats Duke 24-14
+    Arizona State defeats Kansas 35-31
+    San Diego State defeats Hawai'i 27-24
+    Miami defeats California 39-38
+    Texas Tech defeats Arizona 28-22
+
+  ⚠ Week 6 Summary:
+    Expected: 292 games
+    Imported: 49 games (17%)
+    Skipped: 243 games
+    AP Poll: 26 rankings imported
+
+Week 7...
+    Liberty defeats Florida International 31-24
+    Jacksonville State defeats New Mexico State 54-13
+    James Madison defeats Coastal Carolina 39-7
+    Louisiana Tech defeats Middle Tennessee 48-21
+    Western Kentucky defeats UTEP 44-17
+    Northwestern defeats Maryland 37-10
+    UNLV defeats Utah State 50-34
+    Arizona State defeats Utah 27-19
+    Clemson defeats Wake Forest 49-14
+    Missouri defeats Massachusetts 45-3
+    Iowa defeats Washington 40-16
+    Wisconsin defeats Rutgers 42-7
+    Georgia Tech defeats North Carolina 41-34
+    Ball State defeats Kent State 37-35
+    Buffalo defeats Toledo 30-15
+    Army defeats UAB 44-10
+    Alabama defeats South Carolina 27-25
+    Missouri State vs Illinois State (FCS - not ranked)
+    Miami (OH) defeats Eastern Michigan 38-14
+    Western Michigan defeats Akron 34-24
+    Old Dominion defeats Georgia State 21-14
+    San Diego State defeats Wyoming 27-24
+    Colorado State defeats San José State 31-24
+    Cincinnati defeats UCF 19-13
+    Louisville defeats Virginia 24-20
+    Illinois defeats Purdue 50-49
+    Pittsburgh defeats California 17-15
+    Memphis defeats South Florida 21-3
+    Notre Dame defeats Stanford 49-7
+    Northern Illinois defeats Bowling Green 17-7
+    Penn State defeats USC 33-30
+    Texas defeats Oklahoma 34-3
+    Ohio defeats Central Michigan 27-25
+    BYU defeats Arizona 41-19
+    Georgia defeats Mississippi State 41-31
+    UL Monroe defeats Southern Miss 38-21
+    Tennessee defeats Florida 23-17
+    Rice defeats UTSA 29-27
+    North Texas defeats Florida Atlantic 41-37
+    Texas State defeats Arkansas State 41-9
+    Washington State defeats Fresno State 25-17
+    New Mexico defeats Air Force 52-37
+    Nevada defeats Oregon State 42-37
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: attempt to write a readonly database
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/bryandailey/Stat-urday Synthesis/import_real_data.py", line 1596, in <module>
+    main()
+    ~~~~^^
+  File "/Users/bryandailey/Stat-urday Synthesis/import_real_data.py", line 1499, in main
+    import_stats = import_games(
+        cfbd, db, team_objects,
+    ...<3 lines>...
+        strict=args.strict
+    )
+  File "/Users/bryandailey/Stat-urday Synthesis/import_real_data.py", line 1245, in import_games
+    db.commit()
+    ~~~~~~~~~^^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2030, in commit
+    trans.commit(_to_root=True)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<string>", line 2, in commit
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 1311, in commit
+    self._prepare_impl()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "<string>", line 2, in _prepare_impl
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 1286, in _prepare_impl
+    self.session.flush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 4331, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 4466, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 4427, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/sql/elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 951, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) attempt to write a readonly database
+[SQL: INSERT INTO games (home_team_id, away_team_id, home_score, away_score, q1_home, q1_away, q2_home, q2_away, q3_home, q3_away, q4_home, q4_away, week, season, is_neutral_site, game_date, game_type, postseason_name, is_processed, excluded_from_rankings, home_rating_change, away_rating_change, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (87, 82, 32, 31, None, None, None, None, None, None, None, None, 7, 2024, 0, None, None, None, 0, 0, 0.0, 0.0, '2025-12-01 12:38:22.054432')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)

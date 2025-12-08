@@ -8,8 +8,8 @@ from datetime import datetime
 
 import pytest
 
-from models import ConferenceType, Game, Prediction, Team
-from ranking_service import create_and_store_prediction
+from src.models.models import ConferenceType, Game, Prediction, Team
+from src.core.ranking_service import create_and_store_prediction
 
 
 @pytest.fixture

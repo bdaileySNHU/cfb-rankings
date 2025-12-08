@@ -16,8 +16,8 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from sqlalchemy.orm import Session
 
-from models import Game, Season, Team
-from ranking_service import (
+from src.models.models import Game, Season, Team
+from src.core.ranking_service import (
     MAX_PREDICTED_SCORE,
     MAX_WEEK,
     MIN_PREDICTED_SCORE,
@@ -112,8 +112,8 @@ class TestGeneratePredictions:
         mock_db.query.side_effect = query_side_effect
 
         # Call with specific week
-        with patch('ranking_service._validate_prediction_teams', return_value=True):
-            with patch('ranking_service._calculate_game_prediction', return_value={'game_id': 1, 'week': 5}):
+        with patch('src.core.ranking_service._validate_prediction_teams', return_value=True):
+            with patch('src.core.ranking_service._calculate_game_prediction', return_value={'game_id': 1, 'week': 5}):
                 predictions = generate_predictions(mock_db, week=5, next_week=False, season_year=2025)
 
         # Should return predictions
@@ -153,8 +153,8 @@ class TestGeneratePredictions:
         mock_db.query.side_effect = query_side_effect
 
         # Call with team_id filter
-        with patch('ranking_service._validate_prediction_teams', return_value=True):
-            with patch('ranking_service._calculate_game_prediction', return_value={'game_id': 1}):
+        with patch('src.core.ranking_service._validate_prediction_teams', return_value=True):
+            with patch('src.core.ranking_service._calculate_game_prediction', return_value={'game_id': 1}):
                 predictions = generate_predictions(
                     mock_db,
                     team_id=1,
@@ -167,7 +167,7 @@ class TestGeneratePredictions:
 
     def test_generate_predictions_uses_current_year_by_default(self, mock_db):
         """Test that season_year defaults to current year"""
-        with patch('ranking_service.datetime') as mock_datetime:
+        with patch('src.core.ranking_service.datetime') as mock_datetime:
             mock_datetime.now.return_value.year = 2025
 
             # Mock empty query results
@@ -294,7 +294,7 @@ class TestPredictionEdgeCases:
 
         mock_db.query.side_effect = query_side_effect
 
-        with patch('ranking_service._validate_prediction_teams', return_value=False):
+        with patch('src.core.ranking_service._validate_prediction_teams', return_value=False):
             predictions = generate_predictions(mock_db, next_week=False, week=10, season_year=2025)
 
         # Should skip invalid games

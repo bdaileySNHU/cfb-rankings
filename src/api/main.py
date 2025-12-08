@@ -43,9 +43,9 @@ from sqlalchemy.orm import Session
 # Load environment variables from .env file
 load_dotenv()
 
-import schemas
-from database import get_db, init_db
-from models import (
+from src.models import schemas
+from src.models.database import get_db, init_db
+from src.models.models import (
     APIUsage,
     ConferenceType,
     Game,
@@ -55,7 +55,7 @@ from models import (
     Team,
     UpdateTask,
 )
-from ranking_service import (
+from src.core.ranking_service import (
     RankingService,
     generate_predictions,
     get_overall_prediction_accuracy,

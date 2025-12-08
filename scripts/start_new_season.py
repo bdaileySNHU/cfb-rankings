@@ -20,9 +20,9 @@ from datetime import datetime
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database import SessionLocal
-from models import Game, RankingHistory, Season, Team
-from ranking_service import RankingService
+from src.models.database import SessionLocal
+from src.models.models import Game, RankingHistory, Season, Team
+from src.core.ranking_service import RankingService
 
 
 def validate_new_season(db, season_year: int):

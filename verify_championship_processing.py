@@ -6,8 +6,8 @@ For Story 22.3 acceptance criteria verification
 
 import sys
 
-from database import SessionLocal
-from models import Game, RankingHistory, Team
+from src.models.database import SessionLocal
+from src.models.models import Game, RankingHistory, Team
 
 
 def verify_championship_processing(team_id, season=2024):

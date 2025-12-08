@@ -7,7 +7,7 @@ import os
 
 from dotenv import load_dotenv
 
-from cfbd_client import CFBDClient
+from src.integrations.cfbd_client import CFBDClient
 
 load_dotenv()
 

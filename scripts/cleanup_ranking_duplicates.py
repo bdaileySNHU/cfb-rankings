@@ -15,8 +15,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import and_, func
 
-from database import SessionLocal
-from models import RankingHistory
+from src.models.database import SessionLocal
+from src.models.models import RankingHistory
 
 
 def find_duplicates(db):

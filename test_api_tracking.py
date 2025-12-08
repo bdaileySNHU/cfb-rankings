@@ -9,9 +9,9 @@ os.environ['CFBD_MONTHLY_LIMIT'] = '1000'  # Set limit for testing
 
 from datetime import datetime
 
-from cfbd_client import CFBDClient, get_monthly_usage
-from database import SessionLocal
-from models import APIUsage
+from src.integrations.cfbd_client import CFBDClient, get_monthly_usage
+from src.models.database import SessionLocal
+from src.models.models import APIUsage
 
 
 def test_tracking():

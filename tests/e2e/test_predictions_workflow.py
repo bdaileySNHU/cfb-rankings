@@ -68,7 +68,7 @@ class TestPredictionsDisplay:
         page, base_url = browser_page
         from datetime import datetime, timedelta
 
-        from models import ConferenceType, Game, Season, Team
+        from src.models.models import ConferenceType, Game, Season, Team
 
         # Create active season
         season = Season(year=2025, current_week=9, is_active=True)
@@ -120,7 +120,7 @@ class TestPredictionsDisplay:
         """Test that completed games display actual scores"""
         # Arrange
         page, base_url = browser_page
-        from models import ConferenceType, Game, Season, Team
+        from src.models.models import ConferenceType, Game, Season, Team
 
         season = Season(year=2025, current_week=9, is_active=True)
         test_db.add(season)
@@ -172,7 +172,7 @@ class TestPredictionsDisplay:
         """Test filtering games by specific week"""
         # Arrange
         page, base_url = browser_page
-        from models import ConferenceType, Game, Season, Team
+        from src.models.models import ConferenceType, Game, Season, Team
 
         season = Season(year=2025, current_week=10, is_active=True)
         test_db.add(season)
@@ -223,7 +223,7 @@ class TestPredictionCards:
         page, base_url = browser_page
         from datetime import datetime, timedelta
 
-        from models import ConferenceType, Game, Season, Team
+        from src.models.models import ConferenceType, Game, Season, Team
 
         season = Season(year=2025, current_week=9, is_active=True)
         test_db.add(season)
@@ -278,7 +278,7 @@ class TestPredictionsAPIIntegration:
         """Test that page makes API call to /api/predictions or /api/games"""
         # Arrange
         page, base_url = browser_page
-        from models import Season
+        from src.models.models import Season
 
         season = Season(year=2025, current_week=10, is_active=True)
         test_db.add(season)
@@ -306,7 +306,7 @@ class TestPredictionsAPIIntegration:
         """Test that appropriate message shown when no games exist"""
         # Arrange
         page, base_url = browser_page
-        from models import Season
+        from src.models.models import Season
 
         # Create season but no games
         season = Season(year=2025, current_week=10, is_active=True)
@@ -370,7 +370,7 @@ class TestPredictionsUserWorkflow:
         """Test complete user journey: rankings -> games -> back to rankings"""
         # Arrange
         page, base_url = browser_page
-        from models import ConferenceType, Season, Team
+        from src.models.models import ConferenceType, Season, Team
 
         season = Season(year=2025, current_week=10, is_active=True)
         test_db.add(season)

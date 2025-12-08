@@ -3,8 +3,8 @@
 Test EPIC-024 refactored rankings
 """
 
-from database import SessionLocal
-from ranking_service import RankingService
+from src.models.database import SessionLocal
+from src.core.ranking_service import RankingService
 
 
 def test_rankings():

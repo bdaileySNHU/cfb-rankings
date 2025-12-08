@@ -8,9 +8,9 @@ by replaying all 2025 games in chronological order.
 
 import sys
 
-from database import SessionLocal
-from models import Game, Team
-from ranking_service import RankingService
+from src.models.database import SessionLocal
+from src.models.models import Game, Team
+from src.core.ranking_service import RankingService
 
 
 def recalculate_2025_rankings():

@@ -5,7 +5,7 @@ Add postseason_name column to games table
 
 from sqlalchemy import text
 
-from database import SessionLocal
+from src.models.database import SessionLocal
 
 
 def add_column():

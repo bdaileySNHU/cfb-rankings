@@ -22,9 +22,9 @@ import logging
 
 from sqlalchemy.orm import Session
 
-from database import SessionLocal
-from models import Game, RankingHistory, Team
-from ranking_service import RankingService
+from src.models.database import SessionLocal
+from src.models.models import Game, RankingHistory, Team
+from src.core.ranking_service import RankingService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

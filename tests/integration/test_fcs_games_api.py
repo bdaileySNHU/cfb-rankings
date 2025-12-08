@@ -15,9 +15,9 @@ from factories import GameFactory, TeamFactory, configure_factories
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from main import app
-from models import ConferenceType, Game, Team
-from ranking_service import RankingService
+from src.api.main import app
+from src.models.models import ConferenceType, Game, Team
+from src.core.ranking_service import RankingService
 
 
 @pytest.mark.integration

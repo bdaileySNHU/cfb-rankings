@@ -18,14 +18,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 # We'll need to import the app
-from main import app
-from models import Game, Prediction, Season, Team
+from src.api.main import app
+from src.models.models import Game, Prediction, Season, Team
 
 
 @pytest.fixture
 def client(test_db):
     """Create FastAPI test client with test database"""
-    from database import get_db
+    from src.models.database import get_db
 
     def override_get_db():
         yield test_db
@@ -100,7 +100,7 @@ class TestPredictionsEndpoint:
 
     def test_get_predictions_with_next_week_default(self, client):
         """Test that next_week=True is the default behavior"""
-        with patch('main.generate_predictions') as mock_generate:
+        with patch('src.api.main.generate_predictions') as mock_generate:
             mock_generate.return_value = []
 
             response = client.get("/api/predictions")
@@ -132,7 +132,7 @@ class TestPredictionsEndpoint:
             "is_neutral_site": False
         }
 
-        with patch('main.generate_predictions') as mock_generate:
+        with patch('src.api.main.generate_predictions') as mock_generate:
             mock_generate.return_value = [mock_prediction]
 
             response = client.get("/api/predictions?week=10&next_week=false")
@@ -144,7 +144,7 @@ class TestPredictionsEndpoint:
 
     def test_get_predictions_with_team_filter(self, client):
         """Test filtering predictions by team_id"""
-        with patch('main.generate_predictions') as mock_generate:
+        with patch('src.api.main.generate_predictions') as mock_generate:
             mock_generate.return_value = []
 
             response = client.get("/api/predictions?team_id=1&next_week=false")
@@ -156,7 +156,7 @@ class TestPredictionsEndpoint:
 
     def test_get_predictions_with_season_filter(self, client):
         """Test filtering predictions by season year"""
-        with patch('main.generate_predictions') as mock_generate:
+        with patch('src.api.main.generate_predictions') as mock_generate:
             mock_generate.return_value = []
 
             response = client.get("/api/predictions?season=2024&next_week=false")
@@ -173,7 +173,7 @@ class TestPredictionsEndpoint:
 
     def test_get_predictions_handles_errors_gracefully(self, client):
         """Test that endpoint returns 500 on internal errors"""
-        with patch('main.generate_predictions') as mock_generate:
+        with patch('src.api.main.generate_predictions') as mock_generate:
             mock_generate.side_effect = Exception("Database error")
 
             response = client.get("/api/predictions")
@@ -189,7 +189,7 @@ class TestRankingsEndpoint:
 
     def test_get_rankings_with_default_limit(self, client):
         """Test that default limit is 25"""
-        with patch('main.get_db') as mock_get_db:
+        with patch('src.api.main.get_db') as mock_get_db:
             mock_db = Mock()
             mock_get_db.return_value = mock_db
 
@@ -201,7 +201,7 @@ class TestRankingsEndpoint:
             mock_season_query.filter.return_value.first.return_value = mock_season
 
             # Mock RankingService
-            with patch('main.RankingService') as MockRankingService:
+            with patch('src.api.main.RankingService') as MockRankingService:
                 mock_service = Mock()
                 mock_service.get_current_rankings.return_value = []
                 MockRankingService.return_value = mock_service
@@ -219,7 +219,7 @@ class TestRankingsEndpoint:
 
     def test_get_rankings_with_custom_limit(self, client):
         """Test rankings with custom limit parameter"""
-        with patch('main.get_db') as mock_get_db:
+        with patch('src.api.main.get_db') as mock_get_db:
             mock_db = Mock()
             mock_get_db.return_value = mock_db
 
@@ -229,10 +229,10 @@ class TestRankingsEndpoint:
             mock_season.current_week = 10
             mock_season_query.filter.return_value.first.return_value = mock_season
 
-            with patch('main.RankingService') as MockRankingService:
+            with patch('src.api.main.RankingService') as MockRankingService:
                 mock_service = Mock()
                 # Return 50 rankings with all required fields
-                from models import ConferenceType
+                from src.models.models import ConferenceType
                 mock_service.get_current_rankings.return_value = [
                     {
                         "rank": i,
@@ -267,7 +267,7 @@ class TestRankingsEndpoint:
 
     def test_get_rankings_with_specific_season(self, client):
         """Test rankings for a specific season"""
-        with patch('main.get_db') as mock_get_db:
+        with patch('src.api.main.get_db') as mock_get_db:
             mock_db = Mock()
             mock_get_db.return_value = mock_db
 
@@ -277,7 +277,7 @@ class TestRankingsEndpoint:
             mock_season.current_week = 15
             mock_season_query.filter.return_value.first.return_value = mock_season
 
-            with patch('main.RankingService') as MockRankingService:
+            with patch('src.api.main.RankingService') as MockRankingService:
                 mock_service = Mock()
                 mock_service.get_current_rankings.return_value = []
                 MockRankingService.return_value = mock_service
@@ -296,7 +296,7 @@ class TestStatsEndpoint:
 
     def test_get_stats_returns_correct_structure(self, client):
         """Test that stats endpoint returns all expected fields"""
-        with patch('main.get_db') as mock_get_db:
+        with patch('src.api.main.get_db') as mock_get_db:
             mock_db = Mock()
             mock_get_db.return_value = mock_db
 
@@ -395,7 +395,7 @@ class TestPredictionAccuracyEndpoint:
             "low_confidence_accuracy": 65.0,
         }
 
-        with patch('main.get_overall_prediction_accuracy') as mock_get_accuracy:
+        with patch('src.api.main.get_overall_prediction_accuracy') as mock_get_accuracy:
             mock_get_accuracy.return_value = mock_stats
 
             response = client.get("/api/predictions/accuracy")
@@ -407,7 +407,7 @@ class TestPredictionAccuracyEndpoint:
 
     def test_get_prediction_accuracy_with_season_filter(self, client):
         """Test accuracy filtering by season"""
-        with patch('main.get_overall_prediction_accuracy') as mock_get_accuracy:
+        with patch('src.api.main.get_overall_prediction_accuracy') as mock_get_accuracy:
             mock_get_accuracy.return_value = {
                 "total_predictions": 50,
                 "evaluated_predictions": 40,
@@ -424,7 +424,7 @@ class TestPredictionAccuracyEndpoint:
 
     def test_get_prediction_accuracy_handles_errors(self, client):
         """Test error handling for accuracy endpoint"""
-        with patch('main.get_overall_prediction_accuracy') as mock_get_accuracy:
+        with patch('src.api.main.get_overall_prediction_accuracy') as mock_get_accuracy:
             mock_get_accuracy.side_effect = Exception("Database error")
 
             response = client.get("/api/predictions/accuracy")
@@ -450,7 +450,7 @@ class TestTeamPredictionAccuracyEndpoint:
             "as_underdog_accuracy": 70.0,
         }
 
-        with patch('main.get_team_prediction_accuracy') as mock_get_accuracy:
+        with patch('src.api.main.get_team_prediction_accuracy') as mock_get_accuracy:
             mock_get_accuracy.return_value = mock_stats
 
             response = client.get("/api/predictions/accuracy/team/1")
@@ -463,7 +463,7 @@ class TestTeamPredictionAccuracyEndpoint:
 
     def test_get_team_prediction_accuracy_with_season(self, client):
         """Test team accuracy with season filter"""
-        with patch('main.get_team_prediction_accuracy') as mock_get_accuracy:
+        with patch('src.api.main.get_team_prediction_accuracy') as mock_get_accuracy:
             mock_get_accuracy.return_value = {
                 "team_id": 1,
                 "team_name": "Ohio State",
@@ -525,7 +525,7 @@ class TestPredictionResponseFormat:
             "is_neutral_site": False,
         }
 
-        with patch('main.generate_predictions') as mock_generate:
+        with patch('src.api.main.generate_predictions') as mock_generate:
             mock_generate.return_value = [mock_prediction]
 
             response = client.get("/api/predictions?next_week=false&week=10")
@@ -568,7 +568,7 @@ class TestPredictionResponseFormat:
             "is_neutral_site": False,
         }
 
-        with patch('main.generate_predictions') as mock_generate:
+        with patch('src.api.main.generate_predictions') as mock_generate:
             mock_generate.return_value = [mock_prediction]
 
             response = client.get("/api/predictions?next_week=false&week=10")
@@ -587,7 +587,7 @@ class TestPredictionFiltering:
 
     def test_next_week_filter_behavior(self, client):
         """Test that next_week parameter works correctly"""
-        with patch('main.generate_predictions') as mock_generate:
+        with patch('src.api.main.generate_predictions') as mock_generate:
             mock_generate.return_value = []
 
             # Test next_week=True
@@ -604,7 +604,7 @@ class TestPredictionFiltering:
 
     def test_week_and_next_week_interaction(self, client):
         """Test behavior when both week and next_week are specified"""
-        with patch('main.generate_predictions') as mock_generate:
+        with patch('src.api.main.generate_predictions') as mock_generate:
             mock_generate.return_value = []
 
             # When week is specified, next_week should be set to False

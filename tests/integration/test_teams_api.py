@@ -25,7 +25,7 @@ from factories import (
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from models import ConferenceType, Game, RankingHistory, Season, Team
+from src.models.models import ConferenceType, Game, RankingHistory, Season, Team
 
 
 @pytest.mark.integration

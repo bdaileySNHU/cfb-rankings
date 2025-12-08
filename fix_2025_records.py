@@ -8,8 +8,8 @@ Solution: Recalculate wins/losses from 2025 games only
 
 import sys
 
-from database import SessionLocal
-from models import Game, Team
+from src.models.database import SessionLocal
+from src.models.models import Game, Team
 
 
 def fix_2025_records():

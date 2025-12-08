@@ -8,8 +8,8 @@ from datetime import datetime
 
 import pytest
 
-from models import ConferenceType, Game, Prediction, Team
-from ranking_service import (
+from src.models.models import ConferenceType, Game, Prediction, Team
+from src.core.ranking_service import (
     evaluate_prediction_accuracy,
     get_overall_prediction_accuracy,
     get_team_prediction_accuracy,

@@ -15,7 +15,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from models import ConferenceType, Game, RankingHistory, Season, Team
+from src.models.models import ConferenceType, Game, RankingHistory, Season, Team
 
 
 @pytest.mark.unit

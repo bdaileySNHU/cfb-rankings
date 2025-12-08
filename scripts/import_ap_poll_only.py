@@ -16,9 +16,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
 
-from cfbd_client import CFBDClient
-from database import SessionLocal
-from models import APPollRanking, Team
+from src.integrations.cfbd_client import CFBDClient
+from src.models.database import SessionLocal
+from src.models.models import APPollRanking, Team
 
 
 def import_ap_poll_for_week(cfbd: CFBDClient, db, year: int, week: int) -> int:

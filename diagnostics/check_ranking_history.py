@@ -12,8 +12,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import func
 
-from database import SessionLocal
-from models import RankingHistory, Team
+from src.models.database import SessionLocal
+from src.models.models import RankingHistory, Team
 
 
 def check_ranking_history():

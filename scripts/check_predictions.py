@@ -12,8 +12,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import func
 
-from database import SessionLocal
-from models import Game, Prediction
+from src.models.database import SessionLocal
+from src.models.models import Game, Prediction
 
 
 def main():

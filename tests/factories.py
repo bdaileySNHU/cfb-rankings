@@ -26,7 +26,7 @@ from datetime import datetime, timedelta
 import factory
 from factory.alchemy import SQLAlchemyModelFactory
 
-from models import ConferenceType, Game, RankingHistory, Season, Team
+from src.models.models import ConferenceType, Game, RankingHistory, Season, Team
 
 
 # Base factory that works with SQLAlchemy session

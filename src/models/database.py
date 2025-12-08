@@ -34,7 +34,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from models import Base
+from src.models.models import Base
 
 # SQLite database for development
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./cfb_rankings.db")

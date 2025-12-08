@@ -9,9 +9,9 @@ at the specified week.
 
 import sys
 
-from database import SessionLocal
-from models import Game, RankingHistory, Team
-from ranking_service import RankingService
+from src.models.database import SessionLocal
+from src.models.models import Game, RankingHistory, Team
+from src.core.ranking_service import RankingService
 
 
 def save_historical_rankings(season, week):

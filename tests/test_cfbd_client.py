@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from cfbd_client import CFBDClient
+from src.integrations.cfbd_client import CFBDClient
 
 
 class TestCFBDClient:
@@ -49,7 +49,7 @@ class TestCFBDClient:
     def test_get_current_season(self, client):
         """Test current season detection based on calendar year"""
         # Mock datetime to test different scenarios
-        with patch('cfbd_client.datetime') as mock_datetime:
+        with patch('src.integrations.cfbd_client.datetime') as mock_datetime:
             # Test January 2025 → should return 2025
             mock_datetime.now.return_value = datetime(2025, 1, 15)
             assert client.get_current_season() == 2025
@@ -161,7 +161,7 @@ class TestCFBDAPIEndpoints:
     def client(self):
         return CFBDClient(api_key="test_key")
 
-    @patch('cfbd_client.requests.get')
+    @patch('src.integrations.cfbd_client.requests.get')
     def test_get_teams(self, mock_get, client):
         """Test get_teams() method"""
         mock_response = Mock()
@@ -178,7 +178,7 @@ class TestCFBDAPIEndpoints:
         assert teams[0]['school'] == 'Ohio State'
         mock_get.assert_called_once()
 
-    @patch('cfbd_client.requests.get')
+    @patch('src.integrations.cfbd_client.requests.get')
     def test_get_games_with_week_filter(self, mock_get, client):
         """Test get_games() with week parameter"""
         mock_response = Mock()
@@ -195,7 +195,7 @@ class TestCFBDAPIEndpoints:
         assert params['week'] == 10
         assert params['seasonType'] == 'regular'
 
-    @patch('cfbd_client.requests.get')
+    @patch('src.integrations.cfbd_client.requests.get')
     def test_get_ap_poll(self, mock_get, client):
         """Test get_ap_poll() method"""
         mock_response = Mock()
@@ -238,7 +238,7 @@ class TestAPIUsageTracking:
         # Full testing would require database setup
         import inspect
 
-        from cfbd_client import track_api_usage
+        from src.integrations.cfbd_client import track_api_usage
 
         # Verify the decorator exists and is a function
         assert callable(track_api_usage)
@@ -253,7 +253,7 @@ class TestAPIUsageTracking:
         # For now, just verify the function exists and has correct signature
         import inspect
 
-        from cfbd_client import get_monthly_usage
+        from src.integrations.cfbd_client import get_monthly_usage
         sig = inspect.signature(get_monthly_usage)
         assert 'month' in sig.parameters
 
@@ -320,7 +320,7 @@ class TestErrorHandling:
     def client(self):
         return CFBDClient(api_key="test_key")
 
-    @patch('cfbd_client.requests.get')
+    @patch('src.integrations.cfbd_client.requests.get')
     def test_api_request_failure(self, mock_get, client):
         """Test handling of API request failures"""
         import requests
@@ -329,7 +329,7 @@ class TestErrorHandling:
         result = client._get('/games')
         assert result is None  # Should return None on error
 
-    @patch('cfbd_client.requests.get')
+    @patch('src.integrations.cfbd_client.requests.get')
     def test_http_error_handling(self, mock_get, client):
         """Test handling of HTTP errors (404, 500, etc.)"""
         import requests

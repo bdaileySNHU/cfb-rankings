@@ -13,10 +13,10 @@ import os
 import sys
 from datetime import datetime
 
-from cfbd_client import CFBDClient
-from database import SessionLocal
-from models import Game, Season, Team
-from ranking_service import RankingService
+from src.integrations.cfbd_client import CFBDClient
+from src.models.database import SessionLocal
+from src.models.models import Game, Season, Team
+from src.core.ranking_service import RankingService
 
 
 def get_active_season(db) -> int:

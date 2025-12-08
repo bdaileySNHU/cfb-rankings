@@ -14,8 +14,8 @@ import pytest
 from factories import GameFactory, TeamFactory, configure_factories
 from sqlalchemy.orm import Session
 
-from models import ConferenceType, Game, Team
-from ranking_service import RankingService
+from src.models.models import ConferenceType, Game, Team
+from src.core.ranking_service import RankingService
 
 
 @pytest.mark.unit

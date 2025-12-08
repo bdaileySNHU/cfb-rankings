@@ -12,8 +12,8 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from ap_poll_service import calculate_comparison_stats, get_ap_prediction_for_game, get_team_ap_rank
-from models import APPollRanking, ConferenceType, Game, Prediction, Season, Team
+from src.core.ap_poll_service import calculate_comparison_stats, get_ap_prediction_for_game, get_team_ap_rank
+from src.models.models import APPollRanking, ConferenceType, Game, Prediction, Season, Team
 
 
 @pytest.mark.unit
@@ -75,7 +75,7 @@ class TestAPPredictionLogic:
                 return 12
             return None
 
-        with patch('ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
+        with patch('src.core.ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
             predicted_winner_id = get_ap_prediction_for_game(mock_db, sample_game)
             # Home team is #5, away team is #12, so AP predicts home team wins
             assert predicted_winner_id == 10
@@ -89,7 +89,7 @@ class TestAPPredictionLogic:
                 return 3
             return None
 
-        with patch('ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
+        with patch('src.core.ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
             predicted_winner_id = get_ap_prediction_for_game(mock_db, sample_game)
             # Away team is #3, home team is #15, so AP predicts away team wins
             assert predicted_winner_id == 20
@@ -101,7 +101,7 @@ class TestAPPredictionLogic:
                 return 8
             return None  # Away team unranked
 
-        with patch('ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
+        with patch('src.core.ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
             predicted_winner_id = get_ap_prediction_for_game(mock_db, sample_game)
             # Only home team ranked, so AP predicts home team wins
             assert predicted_winner_id == 10
@@ -113,7 +113,7 @@ class TestAPPredictionLogic:
                 return 10
             return None  # Home team unranked
 
-        with patch('ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
+        with patch('src.core.ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
             predicted_winner_id = get_ap_prediction_for_game(mock_db, sample_game)
             # Only away team ranked, so AP predicts away team wins
             assert predicted_winner_id == 20
@@ -123,7 +123,7 @@ class TestAPPredictionLogic:
         def mock_ap_rank(db, team_id, season, week):
             return None  # Both unranked
 
-        with patch('ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
+        with patch('src.core.ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
             predicted_winner_id = get_ap_prediction_for_game(mock_db, sample_game)
             # Both unranked, no AP prediction possible
             assert predicted_winner_id is None
@@ -133,7 +133,7 @@ class TestAPPredictionLogic:
         def mock_ap_rank(db, team_id, season, week):
             return 10  # Both ranked #10 (very rare)
 
-        with patch('ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
+        with patch('src.core.ap_poll_service.get_team_ap_rank', side_effect=mock_ap_rank):
             predicted_winner_id = get_ap_prediction_for_game(mock_db, sample_game)
             # Equal ranks, no clear prediction
             assert predicted_winner_id is None

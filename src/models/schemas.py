@@ -38,7 +38,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from models import ConferenceType
+from src.models.models import ConferenceType
 
 
 # Team Schemas

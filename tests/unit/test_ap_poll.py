@@ -13,9 +13,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from cfbd_client import CFBDClient
+from src.integrations.cfbd_client import CFBDClient
 from import_real_data import import_ap_poll_rankings
-from models import APPollRanking, ConferenceType, Team
+from src.models.models import APPollRanking, ConferenceType, Team
 
 
 @pytest.mark.unit

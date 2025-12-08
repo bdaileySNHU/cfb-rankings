@@ -21,9 +21,9 @@ load_dotenv()
 
 from datetime import datetime
 
-from cfbd_client import CFBDClient
-from database import SessionLocal
-from models import Game, Team
+from src.integrations.cfbd_client import CFBDClient
+from src.models.database import SessionLocal
+from src.models.models import Game, Team
 
 
 def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: int):

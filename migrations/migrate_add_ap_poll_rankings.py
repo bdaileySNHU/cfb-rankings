@@ -11,8 +11,8 @@ from pathlib import Path
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from database import SessionLocal, engine
-from models import APPollRanking, Base
+from src.models.database import SessionLocal, engine
+from src.models.models import APPollRanking, Base
 
 
 def migrate():

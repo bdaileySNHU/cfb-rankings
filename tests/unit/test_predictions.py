@@ -4,8 +4,8 @@ Unit tests for prediction functions
 
 import pytest
 
-from models import ConferenceType, Game, Team
-from ranking_service import (
+from src.models.models import ConferenceType, Game, Team
+from src.core.ranking_service import (
     _calculate_game_prediction,
     _validate_prediction_teams,
     validate_game_for_prediction,

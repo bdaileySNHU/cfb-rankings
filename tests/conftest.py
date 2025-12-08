@@ -13,12 +13,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from database import get_db
-from main import app
+from src.models.database import get_db
+from src.api.main import app
 
 # Import Base and ALL models AFTER main to ensure models are registered
 # Importing main first ensures it has already imported and registered all models
-from models import (
+from src.models.models import (
     APIUsage,
     APPollRanking,
     Base,
@@ -299,7 +299,7 @@ def live_server():
 
     import uvicorn
 
-    from main import app
+    from src.api.main import app
 
     # Use a different port for E2E tests to avoid conflicts
     test_port = 8765

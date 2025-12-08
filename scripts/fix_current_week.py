@@ -11,8 +11,8 @@ import sys
 # Add parent directory to path to import database module
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database import SessionLocal
-from models import Season
+from src.models.database import SessionLocal
+from src.models.models import Season
 
 
 def update_current_week(year: int, week: int) -> bool:

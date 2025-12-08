@@ -66,7 +66,7 @@ class TestComparisonDataDisplay:
         """Test that comparison statistics are displayed"""
         # Arrange
         page, base_url = browser_page
-        from models import Season
+        from src.models.models import Season
 
         # Create active season for comparison data
         season = Season(year=2025, current_week=10, is_active=True)
@@ -84,7 +84,7 @@ class TestComparisonDataDisplay:
         """Test that accuracy percentages are displayed"""
         # Arrange
         page, base_url = browser_page
-        from models import Season
+        from src.models.models import Season
 
         season = Season(year=2025, current_week=10, is_active=True)
         test_db.add(season)
@@ -111,7 +111,7 @@ class TestComparisonChart:
         """Test that chart container element exists on page"""
         # Arrange
         page, base_url = browser_page
-        from models import Season
+        from src.models.models import Season
 
         season = Season(year=2025, current_week=10, is_active=True)
         test_db.add(season)
@@ -145,7 +145,7 @@ class TestComparisonAPIIntegration:
         """Test that page makes API call to /api/predictions/comparison"""
         # Arrange
         page, base_url = browser_page
-        from models import Season
+        from src.models.models import Season
 
         season = Season(year=2025, current_week=10, is_active=True)
         test_db.add(season)
@@ -173,7 +173,7 @@ class TestComparisonAPIIntegration:
         """Test page handles missing comparison data gracefully"""
         # Arrange
         page, base_url = browser_page
-        from models import Season
+        from src.models.models import Season
 
         # Create season but no prediction/AP poll data
         season = Season(year=2025, current_week=10, is_active=True)
@@ -237,7 +237,7 @@ class TestComparisonUserWorkflow:
         """Test navigation through all main pages"""
         # Arrange
         page, base_url = browser_page
-        from models import ConferenceType, Season, Team
+        from src.models.models import ConferenceType, Season, Team
 
         season = Season(year=2025, current_week=10, is_active=True)
         test_db.add(season)
@@ -291,7 +291,7 @@ class TestComparisonDataAccuracy:
         """Test that comparison allows season selection"""
         # Arrange
         page, base_url = browser_page
-        from models import Season
+        from src.models.models import Season
 
         # Create multiple seasons
         season_2024 = Season(year=2024, current_week=15, is_active=False)
@@ -312,7 +312,7 @@ class TestComparisonDataAccuracy:
         """Test that both ELO and AP Poll are referenced"""
         # Arrange
         page, base_url = browser_page
-        from models import Season
+        from src.models.models import Season
 
         season = Season(year=2025, current_week=10, is_active=True)
         test_db.add(season)

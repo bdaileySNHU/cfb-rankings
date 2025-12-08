@@ -39,7 +39,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from models import ConferenceType, Game, Prediction, RankingHistory, Season, Team
+from src.models.models import ConferenceType, Game, Prediction, RankingHistory, Season, Team
 
 
 class RankingService:

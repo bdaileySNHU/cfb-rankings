@@ -8,8 +8,8 @@ that played in championship games by applying the game rating changes.
 
 import sys
 
-from database import SessionLocal
-from models import Game, RankingHistory, Team
+from src.models.database import SessionLocal
+from src.models.models import Game, RankingHistory, Team
 
 
 def fix_championship_week_rankings(season=2024):

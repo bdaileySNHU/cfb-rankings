@@ -19,7 +19,7 @@ import pytest
 scripts_dir = Path(__file__).parent.parent / "scripts"
 sys.path.insert(0, str(scripts_dir))
 
-from models import APIUsage, UpdateTask
+from src.models.models import APIUsage, UpdateTask
 
 
 class TestUsageDashboardEndpoint:
