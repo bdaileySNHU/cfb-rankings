@@ -21,5 +21,10 @@ pytest-xdist==3.5.0        # Parallel test execution
 pytest-timeout==2.2.0      # Test timeout management
 freezegun==1.4.0           # Mock datetime for testing
 
+# Code Quality Tools
+black>=23.0.0              # Code formatter
+flake8>=6.0.0              # Linter
+isort>=5.12.0              # Import sorter
+
 # Production Dependencies (also needed for testing)
 -r requirements.txt
