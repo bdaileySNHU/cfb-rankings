@@ -858,14 +858,57 @@ The API supports CORS and is ready for frontend integration.
 - Automate weekly game updates
 - Pull live recruiting rankings from 247Sports
 
+## For Developers
+
+### Getting Started
+
+New to the project? Start here:
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Complete guide to setting up your development environment, running tests, and submitting contributions
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - In-depth architecture overview, design patterns, and common development tasks
+
+### Quick Links
+
+- **Setup:** See [CONTRIBUTING.md](CONTRIBUTING.md#development-environment-setup) for environment setup
+- **Architecture:** See [DEVELOPMENT.md](DEVELOPMENT.md#high-level-architecture) for system architecture
+- **Testing:** See [CONTRIBUTING.md](CONTRIBUTING.md#running-tests) for test commands
+- **API Docs:** Visit [http://localhost:8000/docs](http://localhost:8000/docs) when running locally
+
+### Key Resources
+
+- **Architecture Documentation:** [docs/architecture.md](docs/architecture.md) - Comprehensive system design
+- **Testing Guide:** [docs/TESTING.md](docs/TESTING.md) - Testing best practices
+- **CI/CD Pipeline:** [docs/CI-CD-PIPELINE.md](docs/CI-CD-PIPELINE.md) - Continuous integration docs
+
+### Development Workflow
+
+1. Fork and clone the repository
+2. Set up development environment (Python 3.11+, virtual env, dependencies)
+3. Create feature branch
+4. Make changes and add tests
+5. Run test suite: `pytest -v`
+6. Submit pull request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md#code-contribution-workflow) for detailed workflow.
+
+### Need Help?
+
+- **Bug Reports:** Open an issue with steps to reproduce
+- **Feature Requests:** Open an issue describing the feature
+- **Questions:** Open a discussion or comment on relevant issues
+
+---
+
 ## License
 
 MIT
 
 ## Contributing
 
-Pull requests welcome! Key areas for improvement:
-- Frontend web interface
+Pull requests welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+**Key areas for improvement:**
+- Frontend web interface enhancements
 - Additional ranking algorithms (for comparison)
 - Playoff probability calculations
 - Head-to-head record tracking
