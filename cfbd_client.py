@@ -1,6 +1,45 @@
-"""
-CollegeFootballData.com API Client
-Fetches real college football data for the ranking system
+"""CFBD API Client - CollegeFootballData.com Integration
+
+This module provides a comprehensive client for the CollegeFootballData.com
+(CFBD) API, enabling automated data imports for the ranking system.
+
+The client handles:
+    - Team data (FBS teams by season)
+    - Game data (scores, schedules, line scores for quarter-weighted ELO)
+    - Recruiting rankings (247Sports composite scores)
+    - Transfer portal data (incoming transfers and rankings)
+    - Returning production percentages
+    - AP Poll rankings (for prediction comparison)
+    - API usage tracking and quota monitoring
+
+Key Features:
+    - Automatic API usage tracking with threshold warnings (80%, 90%, 95%)
+    - Request/response logging for debugging
+    - Season and week detection utilities
+    - Quarter-by-quarter line score fetching for garbage time detection
+
+API Key:
+    Required for most endpoints. Get a free key at:
+    https://collegefootballdata.com/key
+
+    Set via environment variable:
+        export CFBD_API_KEY='your-key-here'
+
+Example:
+    Fetch teams and games:
+        >>> client = CFBDClient()
+        >>> teams = client.get_teams(2024)
+        >>> games = client.get_games(2024, week=5)
+        >>> print(f"Found {len(games)} games in Week 5")
+
+    Check API usage:
+        >>> usage = get_monthly_usage()
+        >>> print(f"Used {usage['total_calls']}/{usage['monthly_limit']} calls")
+
+Note:
+    Default monthly limit is 1000 API calls. Configure via CFBD_MONTHLY_LIMIT
+    environment variable. All API calls are automatically tracked in the
+    api_usage table for monitoring.
 """
 
 import requests
@@ -196,7 +235,26 @@ def check_usage_warnings(month: str):
 
 
 class CFBDClient:
-    """Client for CollegeFootballData.com API"""
+    """Client for CollegeFootballData.com API with comprehensive data fetching.
+
+    Provides methods to fetch all data types needed for the Modified ELO
+    ranking system, including teams, games, recruiting data, transfer portal
+    information, and AP Poll rankings.
+
+    Features automatic API usage tracking via the @track_api_usage decorator,
+    which logs every request to the api_usage table and checks threshold warnings.
+
+    Attributes:
+        BASE_URL: CFBD API base URL
+        api_key: API key for authentication (from env or constructor)
+        headers: HTTP headers including Bearer token authorization
+
+    Example:
+        >>> client = CFBDClient()
+        >>> teams = client.get_teams(2024)
+        >>> games = client.get_games(2024, week=5)
+        >>> recruiting = client.get_recruiting_rankings(2024)
+    """
 
     BASE_URL = "https://api.collegefootballdata.com"
 

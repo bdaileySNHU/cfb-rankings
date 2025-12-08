@@ -1,5 +1,36 @@
-"""
-Pydantic schemas for API request/response validation
+"""Pydantic Schemas - API Request/Response Validation
+
+This module defines all Pydantic schemas for FastAPI request validation
+and response serialization. Schemas provide automatic validation, type
+checking, and API documentation generation.
+
+Schema Categories:
+    - Team Schemas: Team creation, updates, and responses with preseason data
+    - Game Schemas: Game records, results, and processing responses
+    - Ranking Schemas: Current rankings and historical snapshots
+    - Prediction Schemas: Game predictions and accuracy tracking
+    - Stats Schemas: System statistics and schedules
+    - Admin Schemas: API usage monitoring and update task management
+    - AP Poll Schemas: Comparison analysis with AP Poll rankings
+
+Key Features:
+    - Automatic validation using Pydantic Field constraints (ge, le, max_length)
+    - Type hints for IDE autocomplete and type checking
+    - Field descriptions for auto-generated API documentation
+    - ORM compatibility via Config.from_attributes
+
+Example:
+    Create and validate a team:
+        >>> team_data = TeamCreate(
+        ...     name="Georgia",
+        ...     conference=ConferenceType.POWER_5,
+        ...     recruiting_rank=3
+        ... )
+        >>> # Pydantic automatically validates types and constraints
+
+Note:
+    Field descriptions are used by FastAPI to generate OpenAPI/Swagger docs
+    at /docs endpoint. Keep descriptions clear and concise.
 """
 
 from pydantic import BaseModel, Field
@@ -10,7 +41,15 @@ from models import ConferenceType
 
 # Team Schemas
 class TeamBase(BaseModel):
-    """Base team schema"""
+    """Base schema for team data with preseason factors.
+
+    Contains core team information including conference, recruiting data,
+    transfer portal metrics, and returning production. Used as the foundation
+    for team creation and update operations.
+
+    All fields have validation constraints and descriptions that appear in
+    the auto-generated API documentation at /docs.
+    """
     name: str = Field(..., description="Team name", max_length=100)
     conference: ConferenceType = Field(..., description="Conference type (P5, G5, FCS)")
     conference_name: Optional[str] = Field(None, description="Actual conference name (Big Ten, SEC, etc.)", max_length=50)
@@ -146,7 +185,15 @@ class RankingHistory(BaseModel):
 
 # Game Processing Schemas
 class GameResult(BaseModel):
-    """Result of processing a game"""
+    """Response schema for game processing results.
+
+    Returns comprehensive details about ELO rating changes after a game
+    is processed, including winner/loser information, rating changes,
+    new ratings, expected probabilities, and margin of victory multiplier.
+
+    Used by POST /api/games to show the immediate impact of processing
+    a game through the Modified ELO algorithm.
+    """
     game_id: int
     winner_name: str
     loser_name: str
