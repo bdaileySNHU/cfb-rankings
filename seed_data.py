@@ -2,10 +2,12 @@
 Seed script to populate database with sample teams and games
 """
 
-from database import SessionLocal, init_db, reset_db
-from models import Team, Game, Season, ConferenceType
-from ranking_service import RankingService
 from datetime import datetime
+
+from database import SessionLocal, init_db, reset_db
+from models import ConferenceType, Game, Season, Team
+from ranking_service import RankingService
+
 
 def seed_database():
     """Populate database with sample data"""

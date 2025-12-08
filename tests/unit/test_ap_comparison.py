@@ -7,12 +7,13 @@ Tests cover:
 - calculate_comparison_stats() statistics calculation
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
 from datetime import datetime
+from unittest.mock import MagicMock, Mock, patch
 
-from ap_poll_service import get_team_ap_rank, get_ap_prediction_for_game, calculate_comparison_stats
-from models import Game, Team, APPollRanking, Prediction, Season, ConferenceType
+import pytest
+
+from ap_poll_service import calculate_comparison_stats, get_ap_prediction_for_game, get_team_ap_rank
+from models import APPollRanking, ConferenceType, Game, Prediction, Season, Team
 
 
 @pytest.mark.unit

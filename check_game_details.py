@@ -3,9 +3,10 @@
 Check detailed information for a specific game
 """
 
-from database import SessionLocal
-from models import Team, Game
 import sys
+
+from database import SessionLocal
+from models import Game, Team
 
 
 def check_game_details(game_id):

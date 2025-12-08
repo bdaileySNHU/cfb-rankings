@@ -5,23 +5,26 @@ Usage:
     python scripts/generate_ranking_comparison_report.py --season YEAR --output report.md
 """
 
-import sys
-import os
 import argparse
-from typing import List, Tuple, Dict
+import os
+import sys
 from datetime import datetime
+from typing import Dict, List, Tuple
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
-from sqlalchemy.orm import Session
-from models import Team, RankingHistory, Game
-from ranking_service import RankingService
-from database import SessionLocal
 import logging
+
+from sqlalchemy.orm import Session
+
+from database import SessionLocal
+from models import Game, RankingHistory, Team
+from ranking_service import RankingService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

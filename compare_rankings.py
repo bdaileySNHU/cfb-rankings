@@ -3,11 +3,11 @@ Compare ELO Rankings with Official Polls
 Shows how our model compares to AP Poll, Coaches Poll, and CFP Rankings
 """
 
-from database import SessionLocal
-from ranking_service import RankingService
-from cfbd_client import CFBDClient
 import os
 
+from cfbd_client import CFBDClient
+from database import SessionLocal
+from ranking_service import RankingService
 
 # AP Poll Rankings (Week 5, 2024 - as reference)
 AP_POLL_WEEK_5 = {

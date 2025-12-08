@@ -66,8 +66,9 @@ class TestPredictionsDisplay:
         """Test that predictions are shown for upcoming games"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Game, Season, ConferenceType
         from datetime import datetime, timedelta
+
+        from models import ConferenceType, Game, Season, Team
 
         # Create active season
         season = Season(year=2025, current_week=9, is_active=True)
@@ -119,7 +120,7 @@ class TestPredictionsDisplay:
         """Test that completed games display actual scores"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Game, Season, ConferenceType
+        from models import ConferenceType, Game, Season, Team
 
         season = Season(year=2025, current_week=9, is_active=True)
         test_db.add(season)
@@ -171,7 +172,7 @@ class TestPredictionsDisplay:
         """Test filtering games by specific week"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Game, Season, ConferenceType
+        from models import ConferenceType, Game, Season, Team
 
         season = Season(year=2025, current_week=10, is_active=True)
         test_db.add(season)
@@ -220,8 +221,9 @@ class TestPredictionCards:
         """Test that prediction cards display both team names"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Game, Season, ConferenceType
         from datetime import datetime, timedelta
+
+        from models import ConferenceType, Game, Season, Team
 
         season = Season(year=2025, current_week=9, is_active=True)
         test_db.add(season)
@@ -368,7 +370,7 @@ class TestPredictionsUserWorkflow:
         """Test complete user journey: rankings -> games -> back to rankings"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Season, ConferenceType
+        from models import ConferenceType, Season, Team
 
         season = Season(year=2025, current_week=10, is_active=True)
         test_db.add(season)

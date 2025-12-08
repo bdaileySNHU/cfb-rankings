@@ -4,8 +4,9 @@ Used when fundamental changes affect game calculations (like conference reclassi
 """
 
 import sys
+
 from database import SessionLocal
-from models import Team, Game, Season, RankingHistory
+from models import Game, RankingHistory, Season, Team
 from ranking_service import RankingService
 
 

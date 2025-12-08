@@ -4,7 +4,9 @@ Debug script to check conference championship API responses
 """
 
 import os
+
 from dotenv import load_dotenv
+
 from cfbd_client import CFBDClient
 
 load_dotenv()

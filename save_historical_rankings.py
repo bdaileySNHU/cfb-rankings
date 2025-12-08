@@ -7,10 +7,11 @@ Instead, it replays all games chronologically and captures the state
 at the specified week.
 """
 
-from database import SessionLocal
-from models import Team, Game, RankingHistory
-from ranking_service import RankingService
 import sys
+
+from database import SessionLocal
+from models import Game, RankingHistory, Team
+from ranking_service import RankingService
 
 
 def save_historical_rankings(season, week):

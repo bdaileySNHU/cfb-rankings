@@ -7,10 +7,11 @@ backfill Week 15 rankings for seasons that already imported championships
 but didn't save the ranking history.
 """
 
-from database import SessionLocal
-from ranking_service import RankingService
-from models import Game
 import sys
+
+from database import SessionLocal
+from models import Game
+from ranking_service import RankingService
 
 
 def save_championship_week_rankings(season=2024):

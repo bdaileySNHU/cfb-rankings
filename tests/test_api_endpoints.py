@@ -10,15 +10,16 @@ These tests validate the FastAPI endpoints including:
 EPIC-013 Story 002: Improve Test Coverage - Phase 4
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 # We'll need to import the app
 from main import app
-from models import Team, Game, Season, Prediction
+from models import Game, Prediction, Season, Team
 
 
 @pytest.fixture

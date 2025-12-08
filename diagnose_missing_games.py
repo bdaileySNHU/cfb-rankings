@@ -2,10 +2,13 @@
 Diagnose missing games for specific teams
 """
 from dotenv import load_dotenv
+
 load_dotenv()
 
 import os
+
 from cfbd_client import CFBDClient
+
 
 def check_team_games(team_name: str, year: int = 2025, max_week: int = 6):
     """Check what games are available for a specific team"""

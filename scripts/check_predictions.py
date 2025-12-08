@@ -4,15 +4,17 @@ Check predictions in the database
 Quick diagnostic script to see what predictions exist
 """
 
-import sys
 import os
+import sys
 
 # Add parent directory to path so we can import modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database import SessionLocal
-from models import Prediction, Game
 from sqlalchemy import func
+
+from database import SessionLocal
+from models import Game, Prediction
+
 
 def main():
     print("=" * 60)

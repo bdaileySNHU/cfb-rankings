@@ -7,18 +7,19 @@ and configuration endpoints added in Story 003.
 Refactored to use test fixtures (test_client and test_db) for CI/CD compatibility.
 """
 
-import sys
-import pytest
-from datetime import datetime
-from unittest.mock import patch, MagicMock
 import json
+import sys
+from datetime import datetime
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add scripts directory to Python path so weekly_update can be imported
 scripts_dir = Path(__file__).parent.parent / "scripts"
 sys.path.insert(0, str(scripts_dir))
 
-from models import UpdateTask, APIUsage
+from models import APIUsage, UpdateTask
 
 
 class TestUsageDashboardEndpoint:

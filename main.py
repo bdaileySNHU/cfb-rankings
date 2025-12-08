@@ -31,25 +31,35 @@ Note:
     and optional CFBD API key for data imports.
 """
 
-from fastapi import FastAPI, Depends, HTTPException, Query
+import logging
+from datetime import datetime
+from typing import List, Optional
+
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from typing import List, Optional
-from datetime import datetime
-from dotenv import load_dotenv
-import logging
 
 # Load environment variables from .env file
 load_dotenv()
 
 import schemas
 from database import get_db, init_db
-from models import Team, Game, RankingHistory, Season, ConferenceType, APIUsage, UpdateTask, Prediction
+from models import (
+    APIUsage,
+    ConferenceType,
+    Game,
+    Prediction,
+    RankingHistory,
+    Season,
+    Team,
+    UpdateTask,
+)
 from ranking_service import (
     RankingService,
     generate_predictions,
     get_overall_prediction_accuracy,
-    get_team_prediction_accuracy
+    get_team_prediction_accuracy,
 )
 
 # Configure logging
@@ -1182,11 +1192,12 @@ async def get_api_usage(month: Optional[str] = None):
 # ADMIN ENDPOINTS - Manual Update Trigger
 # ============================================================================
 
-from fastapi import BackgroundTasks
-import subprocess
 import json
+import subprocess
 import sys
 from pathlib import Path
+
+from fastapi import BackgroundTasks
 
 # Global dictionary to track running updates (in-memory, resets on restart)
 _running_updates = {}
@@ -1314,7 +1325,8 @@ async def trigger_manual_update(background_tasks: BackgroundTasks, db: Session =
 
     # Import pre-flight check functions
     sys.path.insert(0, str(Path(__file__).parent / "scripts"))
-    from weekly_update import is_active_season, check_api_usage, get_current_week_wrapper
+    from weekly_update import check_api_usage, get_current_week_wrapper, is_active_season
+
     from cfbd_client import get_monthly_usage
 
     # Pre-flight check 1: Active season
@@ -1484,9 +1496,11 @@ async def get_usage_dashboard(month: Optional[str] = None, db: Session = Depends
     Returns:
         UsageDashboardResponse with comprehensive usage stats
     """
-    from cfbd_client import get_monthly_usage
-    from sqlalchemy import func
     import calendar
+
+    from sqlalchemy import func
+
+    from cfbd_client import get_monthly_usage
 
     if not month:
         month = datetime.now().strftime("%Y-%m")

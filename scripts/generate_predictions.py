@@ -4,16 +4,18 @@ Generate predictions for upcoming games
 Used after deployment to populate prediction data
 """
 
-import sys
 import os
+import sys
 
 # Add parent directory to path so we can import modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database import SessionLocal
-from ranking_service import generate_predictions
-from models import Prediction
 from datetime import datetime
+
+from database import SessionLocal
+from models import Prediction
+from ranking_service import generate_predictions
+
 
 def main():
     print("Generating predictions for upcoming games...")

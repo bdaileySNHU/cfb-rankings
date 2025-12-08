@@ -29,10 +29,12 @@ Note:
     ensuring connections are properly closed even if exceptions occur.
 """
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from models import Base
 import os
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+
+from models import Base
 
 # SQLite database for development
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./cfb_rankings.db")

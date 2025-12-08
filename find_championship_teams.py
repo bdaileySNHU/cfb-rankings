@@ -4,9 +4,10 @@ Find teams that played in conference championships
 Used for testing Story 22.2 frontend display
 """
 
+import sys
+
 from database import SessionLocal
 from models import Game, Team
-import sys
 
 
 def find_championship_teams():

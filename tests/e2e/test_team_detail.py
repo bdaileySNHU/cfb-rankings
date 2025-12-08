@@ -21,7 +21,7 @@ class TestTeamDetailPageLoad:
         """Test that team detail page loads successfully"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, ConferenceType
+        from models import ConferenceType, Team
 
         team = Team(
             name="Alabama",
@@ -44,7 +44,7 @@ class TestTeamDetailPageLoad:
         """Test that team name is displayed on page"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, ConferenceType
+        from models import ConferenceType, Team
 
         team = Team(
             name="Georgia",
@@ -74,7 +74,7 @@ class TestTeamDetailData:
         """Test that team stats are displayed correctly"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, ConferenceType
+        from models import ConferenceType, Team
 
         team = Team(
             name="Ohio State",
@@ -102,7 +102,7 @@ class TestTeamDetailData:
         """Test that team conference is displayed"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, ConferenceType
+        from models import ConferenceType, Team
 
         team = Team(
             name="Boise State",
@@ -133,7 +133,7 @@ class TestTeamSchedule:
         """Test that schedule table is rendered"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Game, ConferenceType
+        from models import ConferenceType, Game, Team
 
         home_team = Team(
             name="Alabama",
@@ -178,8 +178,9 @@ class TestTeamSchedule:
         """Test that schedule shows opponent name"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Game, ConferenceType
         from datetime import datetime
+
+        from models import ConferenceType, Game, Team
 
         home_team = Team(
             name="Michigan",
@@ -231,7 +232,7 @@ class TestTeamDetailNavigation:
         """Test that navigation back to rankings page works"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, ConferenceType
+        from models import ConferenceType, Team
 
         team = Team(
             name="Alabama",
@@ -277,7 +278,7 @@ class TestTeamDetailAPIIntegration:
         """Test that page makes API calls for team data and schedule"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, ConferenceType
+        from models import ConferenceType, Team
 
         team = Team(
             name="Alabama",
@@ -311,7 +312,7 @@ class TestTeamDetailAPIIntegration:
         """Test complete user workflow: rankings -> team detail -> back"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Season, ConferenceType
+        from models import ConferenceType, Season, Team
 
         season = Season(year=2024, is_active=True)
         test_db.add(season)

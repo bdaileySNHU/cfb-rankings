@@ -3,7 +3,7 @@ Demo script for College Football ELO Ranking System
 Tests the algorithm with sample teams and games
 """
 
-from cfb_elo_ranking import Team, Conference, ELORankingSystem
+from cfb_elo_ranking import Conference, ELORankingSystem, Team
 
 
 def create_sample_teams() -> ELORankingSystem:

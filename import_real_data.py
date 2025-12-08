@@ -13,14 +13,14 @@ except (PermissionError, FileNotFoundError):
     # Will fall back to system environment variables
     pass
 
-from database import SessionLocal, reset_db
-from models import Team, Game, Season, ConferenceType, APPollRanking
-from ranking_service import RankingService, create_and_store_prediction
-from cfbd_client import CFBDClient
-from datetime import datetime
-import sys
 import argparse
+import sys
+from datetime import datetime
 
+from cfbd_client import CFBDClient
+from database import SessionLocal, reset_db
+from models import APPollRanking, ConferenceType, Game, Season, Team
+from ranking_service import RankingService, create_and_store_prediction
 
 # Conference mapping from CFBD to our system
 CONFERENCE_MAP = {

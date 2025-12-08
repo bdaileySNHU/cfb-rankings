@@ -4,9 +4,11 @@ Database migration script to add Predictions table for EPIC-009
 Adds the predictions table to store pre-game predictions for accuracy tracking.
 """
 
+import sys
+
 from database import SessionLocal, engine
 from models import Base, Prediction
-import sys
+
 
 def migrate():
     """Add predictions table to database"""

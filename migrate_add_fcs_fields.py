@@ -7,8 +7,9 @@ Adds:
 - Game.excluded_from_rankings (boolean, default=False, indexed)
 """
 
-import sqlite3
 import os
+import sqlite3
+
 
 def migrate():
     """Run migration to add FCS fields"""

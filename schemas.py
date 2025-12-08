@@ -33,9 +33,11 @@ Note:
     at /docs endpoint. Keep descriptions clear and concise.
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional, List
 from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
+
 from models import ConferenceType
 
 

@@ -9,19 +9,21 @@ Useful for:
 - Refreshing game data without losing rankings/predictions
 """
 
-from dotenv import load_dotenv
 import os
 import sys
+
+from dotenv import load_dotenv
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
 
+from datetime import datetime
+
+from cfbd_client import CFBDClient
 from database import SessionLocal
 from models import Game, Team
-from cfbd_client import CFBDClient
-from datetime import datetime
 
 
 def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: int):

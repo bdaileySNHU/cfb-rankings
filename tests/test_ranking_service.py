@@ -10,20 +10,21 @@ These tests validate the ranking and prediction generation logic including:
 EPIC-013 Story 002: Improve Test Coverage - Phase 3
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
 from datetime import datetime
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 from sqlalchemy.orm import Session
 
+from models import Game, Season, Team
 from ranking_service import (
-    generate_predictions,
-    MIN_VALID_RATING,
     MAX_PREDICTED_SCORE,
-    MIN_PREDICTED_SCORE,
-    MIN_WEEK,
     MAX_WEEK,
+    MIN_PREDICTED_SCORE,
+    MIN_VALID_RATING,
+    MIN_WEEK,
+    generate_predictions,
 )
-from models import Game, Team, Season
 
 
 class TestGeneratePredictions:

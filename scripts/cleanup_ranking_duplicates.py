@@ -7,15 +7,16 @@ ranking records for the same season/week combination. It keeps the most
 recent entry (highest ID) for each team/season/week.
 """
 
-import sys
 import os
+import sys
 
 # Add parent directory to path so we can import from project
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from sqlalchemy import and_, func
+
 from database import SessionLocal
 from models import RankingHistory
-from sqlalchemy import func, and_
 
 
 def find_duplicates(db):

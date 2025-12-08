@@ -3,9 +3,10 @@
 Count actual games played by a team in a season
 """
 
+import sys
+
 from database import SessionLocal
 from models import Game, Team
-import sys
 
 
 def count_team_games(team_id, season):

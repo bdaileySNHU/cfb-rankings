@@ -6,6 +6,7 @@ Test EPIC-024 refactored rankings
 from database import SessionLocal
 from ranking_service import RankingService
 
+
 def test_rankings():
     db = SessionLocal()
     ranking_service = RankingService(db)

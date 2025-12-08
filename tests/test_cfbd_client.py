@@ -10,9 +10,11 @@ These tests validate the CFBD API client functionality including:
 EPIC-013 Story 002: Improve Test Coverage - Phase 2
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timedelta
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
 from cfbd_client import CFBDClient
 
 
@@ -234,8 +236,9 @@ class TestAPIUsageTracking:
         """Test that API usage tracking decorator exists"""
         # This is a basic test to verify the decorator is in place
         # Full testing would require database setup
-        from cfbd_client import track_api_usage
         import inspect
+
+        from cfbd_client import track_api_usage
 
         # Verify the decorator exists and is a function
         assert callable(track_api_usage)
@@ -245,12 +248,12 @@ class TestAPIUsageTracking:
 
     def test_get_monthly_usage(self):
         """Test monthly usage calculation"""
-        from cfbd_client import get_monthly_usage
-
         # This requires database access, so we'll test the structure
         # In a real test, we'd use a test database
         # For now, just verify the function exists and has correct signature
         import inspect
+
+        from cfbd_client import get_monthly_usage
         sig = inspect.signature(get_monthly_usage)
         assert 'month' in sig.parameters
 

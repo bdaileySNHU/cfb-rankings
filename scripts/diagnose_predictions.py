@@ -3,14 +3,15 @@
 Diagnostic script to check why predictions aren't being generated
 """
 
-import sys
 import os
+import sys
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database import SessionLocal
 from models import Game, Season
+
 
 def main():
     db = SessionLocal()

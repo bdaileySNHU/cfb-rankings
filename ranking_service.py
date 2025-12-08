@@ -33,11 +33,13 @@ Note:
 """
 
 import math
-from typing import List, Tuple, Optional, Dict, Any
-from sqlalchemy.orm import Session
-from sqlalchemy import or_
-from models import Team, Game, RankingHistory, Season, ConferenceType, Prediction
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+from sqlalchemy import or_
+from sqlalchemy.orm import Session
+
+from models import ConferenceType, Game, Prediction, RankingHistory, Season, Team
 
 
 class RankingService:

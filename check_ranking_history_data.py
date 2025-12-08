@@ -3,9 +3,10 @@
 Check what data exists in ranking_history table
 """
 
+from sqlalchemy import func
+
 from database import SessionLocal
 from models import RankingHistory
-from sqlalchemy import func
 
 
 def check_ranking_history():

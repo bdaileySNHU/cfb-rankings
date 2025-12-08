@@ -6,10 +6,11 @@ After fixing win/loss records, we need to recalculate ELO ratings
 by replaying all 2025 games in chronological order.
 """
 
-from database import SessionLocal
-from models import Team, Game
-from ranking_service import RankingService
 import sys
+
+from database import SessionLocal
+from models import Game, Team
+from ranking_service import RankingService
 
 
 def recalculate_2025_rankings():

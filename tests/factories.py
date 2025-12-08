@@ -21,11 +21,12 @@ Usage:
     team2 = TeamFactory()  # "Team 2"
 """
 
-import factory
-from factory.alchemy import SQLAlchemyModelFactory
 from datetime import datetime, timedelta
 
-from models import Team, Game, RankingHistory, Season, ConferenceType
+import factory
+from factory.alchemy import SQLAlchemyModelFactory
+
+from models import ConferenceType, Game, RankingHistory, Season, Team
 
 
 # Base factory that works with SQLAlchemy session

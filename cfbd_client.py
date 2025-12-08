@@ -42,12 +42,13 @@ Note:
     api_usage table for monitoring.
 """
 
-import requests
-import os
 import functools
 import logging
-from typing import List, Dict, Optional
+import os
 from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+
+import requests
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -133,9 +134,10 @@ def get_monthly_usage(month: str = None, db: "Session" = None) -> dict:
     Returns:
         dict: Usage statistics including total calls, limit, percentage, etc.
     """
+    from sqlalchemy import func
+
     from database import SessionLocal
     from models import APIUsage
-    from sqlalchemy import func
 
     if not month:
         month = datetime.now().strftime("%Y-%m")

@@ -6,18 +6,19 @@ This script imports AP Poll rankings for an existing season without
 resetting the database or re-importing games.
 """
 
-from dotenv import load_dotenv
 import os
 import sys
+
+from dotenv import load_dotenv
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
 
-from database import SessionLocal
-from models import Team, APPollRanking
 from cfbd_client import CFBDClient
+from database import SessionLocal
+from models import APPollRanking, Team
 
 
 def import_ap_poll_for_week(cfbd: CFBDClient, db, year: int, week: int) -> int:

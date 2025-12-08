@@ -3,15 +3,17 @@
 Test what data CFBD returns for future weeks
 """
 
-from dotenv import load_dotenv
 import os
 import sys
+
+from dotenv import load_dotenv
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
 
 from cfbd_client import CFBDClient
+
 
 def main():
     api_key = os.getenv('CFBD_API_KEY')

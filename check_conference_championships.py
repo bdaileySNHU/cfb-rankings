@@ -3,9 +3,10 @@
 Check conference championship games in database for Story 22.3
 """
 
+import sys
+
 from database import SessionLocal
 from models import Game
-import sys
 
 
 def check_conference_championships(season=2025):

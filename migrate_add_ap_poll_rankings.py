@@ -5,9 +5,11 @@ Adds the ap_poll_rankings table to store weekly AP Poll rankings
 for comparison with ELO predictions.
 """
 
-from database import SessionLocal, engine
-from models import Base, APPollRanking
 import sys
+
+from database import SessionLocal, engine
+from models import APPollRanking, Base
+
 
 def migrate():
     """Add ap_poll_rankings table to database"""

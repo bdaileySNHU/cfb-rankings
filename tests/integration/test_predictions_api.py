@@ -11,19 +11,15 @@ Tests cover:
 - Error cases
 """
 
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
+import sys
 from datetime import datetime
 
-from models import Team, Game, Season, ConferenceType
-import sys
-from factories import (
-    TeamFactory,
-    GameFactory,
-    SeasonFactory,
-    configure_factories
-)
+import pytest
+from factories import GameFactory, SeasonFactory, TeamFactory, configure_factories
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from models import ConferenceType, Game, Season, Team
 
 
 @pytest.mark.integration

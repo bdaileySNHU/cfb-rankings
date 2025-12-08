@@ -6,10 +6,11 @@ The 2024 ranking_history contains cumulative records from 2023+2024.
 This script recalculates the entire 2024 season from scratch.
 """
 
-from database import SessionLocal
-from models import Team, Game, RankingHistory
-from ranking_service import RankingService
 import sys
+
+from database import SessionLocal
+from models import Game, RankingHistory, Team
+from ranking_service import RankingService
 
 
 def recalculate_2024_rankings():

@@ -10,21 +10,22 @@ Tests cover:
 - Error cases (404, 400, etc.)
 """
 
+import sys
+
 import pytest
+from factories import (
+    EliteTeamFactory,
+    G5ChampionFactory,
+    GameFactory,
+    RankingHistoryFactory,
+    SeasonFactory,
+    TeamFactory,
+    configure_factories,
+)
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from models import Team, Game, Season, RankingHistory, ConferenceType
-import sys
-from factories import (
-    TeamFactory,
-    GameFactory,
-    SeasonFactory,
-    RankingHistoryFactory,
-    EliteTeamFactory,
-    G5ChampionFactory,
-    configure_factories
-)
+from models import ConferenceType, Game, RankingHistory, Season, Team
 
 
 @pytest.mark.integration

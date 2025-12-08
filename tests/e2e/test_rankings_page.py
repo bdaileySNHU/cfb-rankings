@@ -75,7 +75,7 @@ class TestRankingsTableDisplay:
         """Test that rankings table is rendered"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Season, ConferenceType
+        from models import ConferenceType, Season, Team
 
         # Create test data
         season = Season(year=2024, current_week=5, is_active=True)
@@ -111,7 +111,7 @@ class TestRankingsTableDisplay:
         """Test that rankings table displays team data correctly"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Season, ConferenceType
+        from models import ConferenceType, Season, Team
 
         season = Season(year=2024, current_week=1, is_active=True)
         test_db.add(season)
@@ -140,7 +140,7 @@ class TestRankingsTableDisplay:
         """Test that teams are sorted by ELO rating descending"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Season, ConferenceType
+        from models import ConferenceType, Season, Team
 
         season = Season(year=2024, is_active=True)
         test_db.add(season)
@@ -167,7 +167,7 @@ class TestRankingsTableDisplay:
         """Test that team conference is displayed"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Season, ConferenceType
+        from models import ConferenceType, Season, Team
 
         season = Season(year=2024, is_active=True)
         test_db.add(season)
@@ -200,7 +200,7 @@ class TestRankingsPageInteractions:
         """Test clicking a team name navigates to team detail page"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Season, ConferenceType
+        from models import ConferenceType, Season, Team
 
         season = Season(year=2024, is_active=True)
         test_db.add(season)

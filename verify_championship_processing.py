@@ -4,9 +4,10 @@ Verify conference championship games are processed correctly in rankings
 For Story 22.3 acceptance criteria verification
 """
 
-from database import SessionLocal
-from models import Team, Game, RankingHistory
 import sys
+
+from database import SessionLocal
+from models import Game, RankingHistory, Team
 
 
 def verify_championship_processing(team_id, season=2024):

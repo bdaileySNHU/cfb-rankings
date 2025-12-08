@@ -8,16 +8,16 @@ Tests cover:
 - Complete flow from import to API response
 """
 
+import sys
+
 import pytest
+from factories import GameFactory, TeamFactory, configure_factories
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from main import app
-from models import Team, Game, ConferenceType
+from models import ConferenceType, Game, Team
 from ranking_service import RankingService
-
-import sys
-from factories import TeamFactory, GameFactory, configure_factories
 
 
 @pytest.mark.integration

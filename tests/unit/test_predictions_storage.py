@@ -4,12 +4,12 @@ Unit tests for prediction storage (EPIC-009 Story 001)
 Tests the Prediction model and create_and_store_prediction function.
 """
 
-import pytest
 from datetime import datetime
-from models import Team, Game, Prediction, ConferenceType
+
+import pytest
+
+from models import ConferenceType, Game, Prediction, Team
 from ranking_service import create_and_store_prediction
-
-
 
 
 @pytest.fixture

@@ -4,9 +4,9 @@ Modified ELO with recruiting, transfers, and returning production
 """
 
 import math
-from typing import Dict, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List, Tuple
 
 
 class Conference(Enum):

@@ -3,9 +3,10 @@
 Check games for a specific team to diagnose missing games
 """
 
-from database import SessionLocal
-from models import Team, Game
 import sys
+
+from database import SessionLocal
+from models import Game, Team
 
 
 def check_team_games(team_id, season):

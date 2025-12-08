@@ -4,12 +4,13 @@ Compare different K-factor strategies to find optimal configuration
 Tests multiple K-factor schedules to determine which produces best prediction accuracy.
 """
 
-import sys
-from database import SessionLocal
-from models import Team, Game, Season, ConferenceType
-from typing import Dict, List, Tuple
 import math
+import sys
 from copy import deepcopy
+from typing import Dict, List, Tuple
+
+from database import SessionLocal
+from models import ConferenceType, Game, Season, Team
 
 
 class KFactorSystem:

@@ -8,14 +8,15 @@ Tests cover:
 - Preseason data integration (recruiting, talent, returning production)
 """
 
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
+import sys
 from unittest.mock import Mock, patch
 
-from models import Team, Game, Season, ConferenceType
-import sys
+import pytest
 from factories import configure_factories
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from models import ConferenceType, Game, Season, Team
 
 
 @pytest.mark.integration
@@ -142,7 +143,7 @@ class TestGameImportWithMock:
     def test_import_games_with_mock_data(self, test_db: Session, mock_cfbd_client):
         """Test importing games using mocked CFBD data"""
         # Arrange
-        from import_real_data import import_teams, import_games
+        from import_real_data import import_games, import_teams
 
         # First import teams
         team_objects = import_teams(mock_cfbd_client, test_db, year=2025)
@@ -164,7 +165,7 @@ class TestGameImportWithMock:
     def test_import_games_updates_team_records(self, test_db: Session, mock_cfbd_client):
         """Test that game import updates team win/loss records"""
         # Arrange
-        from import_real_data import import_teams, import_games
+        from import_real_data import import_games, import_teams
 
         team_objects = import_teams(mock_cfbd_client, test_db, year=2025)
 
@@ -184,7 +185,7 @@ class TestGameImportWithMock:
     def test_import_games_skips_incomplete_games(self, test_db: Session, mock_cfbd_client):
         """Test that import handles games without scores as future games"""
         # Arrange
-        from import_real_data import import_teams, import_games
+        from import_real_data import import_games, import_teams
 
         # Modify mock to include incomplete game
         mock_cfbd_client.get_games.return_value = [
@@ -210,7 +211,7 @@ class TestGameImportWithMock:
     def test_import_games_skips_fcs_opponents(self, test_db: Session, mock_cfbd_client):
         """Test that import creates FCS games with excluded_from_rankings flag"""
         # Arrange
-        from import_real_data import import_teams, import_games
+        from import_real_data import import_games, import_teams
         from models import Game
 
         # Modify mock to include FCS opponent
@@ -243,7 +244,7 @@ class TestGameImportWithMock:
     def test_import_games_handles_neutral_site(self, test_db: Session, mock_cfbd_client):
         """Test that neutral site flag is properly imported"""
         # Arrange
-        from import_real_data import import_teams, import_games
+        from import_real_data import import_games, import_teams
 
         # Modify mock to include neutral site game
         mock_cfbd_client.get_games.return_value = [
@@ -274,8 +275,9 @@ class TestMockClientErrorHandling:
     def test_mock_client_handles_api_failures(self, test_db: Session):
         """Test handling when CFBD API returns None (failure)"""
         # Arrange
-        from import_real_data import import_teams
         from unittest.mock import Mock
+
+        from import_real_data import import_teams
 
         mock_client = Mock()
         mock_client.get_teams.return_value = None  # Simulate API failure
@@ -289,8 +291,9 @@ class TestMockClientErrorHandling:
     def test_mock_client_with_missing_data_fields(self, test_db: Session):
         """Test robustness when API returns incomplete data"""
         # Arrange
-        from import_real_data import import_teams
         from unittest.mock import Mock
+
+        from import_real_data import import_teams
 
         mock_client = Mock()
         mock_client.get_teams.return_value = [

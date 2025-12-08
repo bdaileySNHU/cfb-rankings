@@ -3,8 +3,9 @@
 Check if postseason_name column exists in games table
 """
 
-from database import SessionLocal
 from sqlalchemy import text
+
+from database import SessionLocal
 
 
 def check_column():

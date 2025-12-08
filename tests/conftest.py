@@ -9,9 +9,9 @@ This module provides test fixtures for:
 """
 
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
 from database import get_db
 from main import app
@@ -19,8 +19,15 @@ from main import app
 # Import Base and ALL models AFTER main to ensure models are registered
 # Importing main first ensures it has already imported and registered all models
 from models import (
-    Base, Team, Game, RankingHistory, Season,
-    APIUsage, UpdateTask, Prediction, APPollRanking
+    APIUsage,
+    APPollRanking,
+    Base,
+    Game,
+    Prediction,
+    RankingHistory,
+    Season,
+    Team,
+    UpdateTask,
 )
 
 
@@ -136,15 +143,16 @@ def factories(test_db: Session):
             game = factories['game'](home_team=team)
     """
     import sys
+
     from factories import (
-        configure_factories,
-        TeamFactory,
-        GameFactory,
-        SeasonFactory,
-        RankingHistoryFactory,
         EliteTeamFactory,
+        FCSTeamFactory,
         G5ChampionFactory,
-        FCSTeamFactory
+        GameFactory,
+        RankingHistoryFactory,
+        SeasonFactory,
+        TeamFactory,
+        configure_factories,
     )
 
     # Configure all factories with test database
@@ -286,9 +294,11 @@ def live_server():
     Yields:
         str: Base URL of the running server (e.g., "http://localhost:8765")
     """
-    import uvicorn
     import threading
     import time
+
+    import uvicorn
+
     from main import app
 
     # Use a different port for E2E tests to avoid conflicts

@@ -3,7 +3,7 @@ Check actual prediction accuracy from database
 """
 
 from database import SessionLocal
-from models import Prediction, Game
+from models import Game, Prediction
 
 db = SessionLocal()
 

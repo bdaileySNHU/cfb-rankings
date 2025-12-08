@@ -10,10 +10,11 @@ All database and external API calls are properly mocked for CI/CD compatibility.
 """
 
 import sys
-import pytest
 from datetime import datetime
-from unittest.mock import patch, MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add scripts directory to Python path
 scripts_dir = Path(__file__).parent.parent / "scripts"

@@ -6,9 +6,10 @@ Simpler approach: Copy Week 14 rankings to Week 15, then update teams
 that played in championship games by applying the game rating changes.
 """
 
-from database import SessionLocal
-from models import Team, Game, RankingHistory
 import sys
+
+from database import SessionLocal
+from models import Game, RankingHistory, Team
 
 
 def fix_championship_week_rankings(season=2024):

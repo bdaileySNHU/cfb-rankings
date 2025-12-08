@@ -13,8 +13,8 @@ Author: EPIC-026 Story 26.3
 Date: 2025-12-02
 """
 
-from typing import Dict, List, Tuple
 from collections import defaultdict
+from typing import Dict, List, Tuple
 
 
 class TransferPortalService:

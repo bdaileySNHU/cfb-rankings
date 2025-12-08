@@ -4,12 +4,15 @@ Tests the @track_api_usage decorator and get_monthly_usage() function
 """
 
 import os
+
 os.environ['CFBD_MONTHLY_LIMIT'] = '1000'  # Set limit for testing
+
+from datetime import datetime
 
 from cfbd_client import CFBDClient, get_monthly_usage
 from database import SessionLocal
 from models import APIUsage
-from datetime import datetime
+
 
 def test_tracking():
     """Test that API calls are tracked in the database"""

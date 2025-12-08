@@ -3,15 +3,16 @@ Unit tests for prediction functions
 """
 
 import pytest
+
+from models import ConferenceType, Game, Team
 from ranking_service import (
     _calculate_game_prediction,
     _validate_prediction_teams,
-    validate_week,
-    validate_team_for_prediction,
+    validate_game_for_prediction,
     validate_predicted_score,
-    validate_game_for_prediction
+    validate_team_for_prediction,
+    validate_week,
 )
-from models import Game, Team, ConferenceType
 
 
 class TestWinProbabilityCalculation:

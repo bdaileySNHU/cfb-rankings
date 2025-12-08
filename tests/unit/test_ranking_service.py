@@ -9,13 +9,14 @@ Tests cover:
 - Game processing logic
 """
 
-import pytest
 import math
 from datetime import datetime
+
+import pytest
 from sqlalchemy.orm import Session
 
+from models import ConferenceType, Game, Team
 from ranking_service import RankingService
-from models import Team, Game, ConferenceType
 
 
 @pytest.mark.unit

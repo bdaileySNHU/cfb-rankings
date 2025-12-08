@@ -10,23 +10,26 @@ Options:
     --limit N: Limit to N games (for testing)
 """
 
-import sys
-import os
-import time
 import argparse
-from typing import List, Dict, Tuple
+import os
+import sys
+import time
+from typing import Dict, List, Tuple
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
+import logging
+
 from sqlalchemy.orm import Session
-from models import Game
+
 from cfbd_client import CFBDClient
 from database import SessionLocal
-import logging
+from models import Game
 
 # Configure logging
 logging.basicConfig(

@@ -6,9 +6,10 @@ Problem: Teams table has cumulative records across seasons
 Solution: Recalculate wins/losses from 2025 games only
 """
 
-from database import SessionLocal
-from models import Team, Game
 import sys
+
+from database import SessionLocal
+from models import Game, Team
 
 
 def fix_2025_records():

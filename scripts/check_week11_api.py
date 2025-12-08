@@ -12,8 +12,10 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from cfbd_client import CFBDClient
 import json
+
+from cfbd_client import CFBDClient
+
 
 def main():
     print("Checking CFBD API for Week 11 data...")

@@ -5,11 +5,12 @@ This script backtests various HFA values to determine which produces
 the best prediction accuracy.
 """
 
-import sys
-from database import SessionLocal
-from models import Team, Game
 import math
+import sys
 from typing import List, Tuple
+
+from database import SessionLocal
+from models import Game, Team
 
 
 def calculate_expected_score(rating_a: float, rating_b: float) -> float:

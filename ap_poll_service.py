@@ -5,9 +5,11 @@ Handles AP Poll prediction logic and comparison with ELO predictions.
 Part of EPIC-010: AP Poll Prediction Comparison.
 """
 
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
+
 from sqlalchemy.orm import Session
-from models import Game, Team, APPollRanking, Prediction
+
+from models import APPollRanking, Game, Prediction, Team
 
 
 def get_team_ap_rank(db: Session, team_id: int, season: int, week: int) -> Optional[int]:

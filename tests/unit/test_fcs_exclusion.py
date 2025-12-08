@@ -8,14 +8,14 @@ Tests cover:
 - RankingService explicitly rejects processing excluded games
 """
 
+import sys
+
 import pytest
+from factories import GameFactory, TeamFactory, configure_factories
 from sqlalchemy.orm import Session
 
-from models import Team, Game, ConferenceType
+from models import ConferenceType, Game, Team
 from ranking_service import RankingService
-
-import sys
-from factories import TeamFactory, GameFactory, configure_factories
 
 
 @pytest.mark.unit

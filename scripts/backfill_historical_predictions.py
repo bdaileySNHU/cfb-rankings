@@ -15,10 +15,10 @@ Usage:
 Part of EPIC-017: Retrospective Prediction Generation
 """
 
+import argparse
+import logging
 import os
 import sys
-import logging
-import argparse
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -27,7 +27,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from database import SessionLocal
-from models import Game, Prediction, Team, RankingHistory
+from models import Game, Prediction, RankingHistory, Team
 
 # Configure logging
 logging.basicConfig(

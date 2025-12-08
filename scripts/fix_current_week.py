@@ -4,9 +4,9 @@ Quick script to update the current_week in the seasons table.
 Usage: python3 scripts/fix_current_week.py --year 2024 --week 10
 """
 
-import sys
-import os
 import argparse
+import os
+import sys
 
 # Add parent directory to path to import database module
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

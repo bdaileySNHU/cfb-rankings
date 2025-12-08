@@ -9,12 +9,13 @@ Tests cover:
 - Database constraints and uniqueness
 """
 
-import pytest
 from datetime import datetime
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
 
-from models import Team, Game, RankingHistory, Season, ConferenceType
+import pytest
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from models import ConferenceType, Game, RankingHistory, Season, Team
 
 
 @pytest.mark.unit

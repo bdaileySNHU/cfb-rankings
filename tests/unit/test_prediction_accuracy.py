@@ -4,13 +4,15 @@ Unit tests for prediction accuracy evaluation (EPIC-009 Story 002)
 Tests the evaluate_prediction_accuracy function and accuracy statistics.
 """
 
-import pytest
 from datetime import datetime
-from models import Team, Game, Prediction, ConferenceType
+
+import pytest
+
+from models import ConferenceType, Game, Prediction, Team
 from ranking_service import (
     evaluate_prediction_accuracy,
     get_overall_prediction_accuracy,
-    get_team_prediction_accuracy
+    get_team_prediction_accuracy,
 )
 
 
@@ -255,6 +257,7 @@ class TestPredictionAccuracyStats:
     def test_overall_accuracy_calculation(self, test_db):
         """Test overall accuracy statistics calculation"""
         import random
+
         # Use a unique test season to avoid conflicts with existing data
         test_season = random.randint(2050, 2099)
         unique_id = random.randint(10000, 99999)
@@ -334,6 +337,7 @@ class TestPredictionAccuracyStats:
     def test_team_accuracy_calculation(self, test_db):
         """Test team-specific accuracy calculation"""
         import random
+
         # Use a unique test season to avoid conflicts with existing data
         test_season = random.randint(2050, 2099)
         unique_id = random.randint(10000, 99999)

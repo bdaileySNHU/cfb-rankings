@@ -237,7 +237,7 @@ class TestComparisonUserWorkflow:
         """Test navigation through all main pages"""
         # Arrange
         page, base_url = browser_page
-        from models import Team, Season, ConferenceType
+        from models import ConferenceType, Season, Team
 
         season = Season(year=2025, current_week=10, is_active=True)
         test_db.add(season)

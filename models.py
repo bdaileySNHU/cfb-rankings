@@ -29,11 +29,23 @@ Example:
         >>> session.commit()
 """
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, Enum, Index, UniqueConstraint
+import enum
+from datetime import datetime
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from datetime import datetime
-import enum
 
 Base = declarative_base()
 

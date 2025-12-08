@@ -9,13 +9,14 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from database import SessionLocal
-from models import Team, Game, Season
-from ranking_service import RankingService
-from cfbd_client import CFBDClient
-from datetime import datetime
-import sys
 import os
+import sys
+from datetime import datetime
+
+from cfbd_client import CFBDClient
+from database import SessionLocal
+from models import Game, Season, Team
+from ranking_service import RankingService
 
 
 def get_active_season(db) -> int:

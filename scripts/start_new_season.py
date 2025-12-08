@@ -13,15 +13,15 @@ Usage:
     python scripts/start_new_season.py --season 2025 --dry-run
 """
 
-import sys
 import os
+import sys
 from datetime import datetime
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database import SessionLocal
-from models import Season, Team, RankingHistory, Game
+from models import Game, RankingHistory, Season, Team
 from ranking_service import RankingService
 
 

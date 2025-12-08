@@ -3,16 +3,18 @@
 Debug the actual CFBD API response structure
 """
 
-from dotenv import load_dotenv
+import json
 import os
 import sys
-import json
+
+from dotenv import load_dotenv
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
 
 from cfbd_client import CFBDClient
+
 
 def main():
     api_key = os.getenv('CFBD_API_KEY')

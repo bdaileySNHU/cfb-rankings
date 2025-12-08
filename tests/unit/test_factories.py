@@ -9,21 +9,22 @@ Tests verify that Factory Boy factories:
 - Integrate with test database
 """
 
+import sys
+
 import pytest
+from factories import (
+    EliteTeamFactory,
+    FCSTeamFactory,
+    G5ChampionFactory,
+    GameFactory,
+    RankingHistoryFactory,
+    SeasonFactory,
+    TeamFactory,
+    configure_factories,
+)
 from sqlalchemy.orm import Session
 
-from models import Team, Game, Season, RankingHistory, ConferenceType
-import sys
-from factories import (
-    TeamFactory,
-    GameFactory,
-    SeasonFactory,
-    RankingHistoryFactory,
-    EliteTeamFactory,
-    G5ChampionFactory,
-    FCSTeamFactory,
-    configure_factories
-)
+from models import ConferenceType, Game, RankingHistory, Season, Team
 
 
 @pytest.mark.unit

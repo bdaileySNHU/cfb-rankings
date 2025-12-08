@@ -8,13 +8,14 @@ Tests cover:
 - Team lookup and matching
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
 
 from cfbd_client import CFBDClient
-from models import Team, APPollRanking, ConferenceType
 from import_real_data import import_ap_poll_rankings
+from models import APPollRanking, ConferenceType, Team
 
 
 @pytest.mark.unit

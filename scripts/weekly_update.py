@@ -17,10 +17,10 @@ Exit Codes:
     1 - Failure (check failed or import error)
 """
 
-import sys
-import os
 import logging
+import os
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -224,7 +224,8 @@ def update_current_week(season_year: int, db: "Session" = None) -> int:
     try:
         # Import here to avoid circular imports
         from sqlalchemy import func
-        from models import Season, Game
+
+        from models import Game, Season
 
         # Use provided session or create new one
         db_provided = db is not None

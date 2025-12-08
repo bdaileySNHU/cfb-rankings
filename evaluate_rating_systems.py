@@ -13,12 +13,13 @@ Metrics:
 - Mean prediction confidence (how confident were predictions)
 """
 
-import sys
-from database import SessionLocal
-from models import Team, Game, Season, ConferenceType
-from typing import Dict, List, Tuple
 import math
+import sys
 from copy import deepcopy
+from typing import Dict, List, Tuple
+
+from database import SessionLocal
+from models import ConferenceType, Game, Season, Team
 
 
 class RatingSystem:

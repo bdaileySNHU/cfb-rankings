@@ -4,12 +4,15 @@ Simulates high API usage to test 80%, 90%, and 95% warning thresholds
 """
 
 import os
+
 os.environ['CFBD_MONTHLY_LIMIT'] = '100'  # Set low limit for easy testing
 
+from datetime import datetime
+
+from cfbd_client import check_usage_warnings, get_monthly_usage
 from database import SessionLocal
 from models import APIUsage
-from datetime import datetime
-from cfbd_client import get_monthly_usage, check_usage_warnings
+
 
 def create_fake_usage_records(count: int, month: str = None):
     """Create fake API usage records for testing"""

@@ -10,9 +10,10 @@ Tests cover:
 - Edge cases: off-season, week boundaries, API failures
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 from freezegun import freeze_time
 
 from cfbd_client import CFBDClient

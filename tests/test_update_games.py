@@ -7,9 +7,10 @@ from the CFBD API without resetting the database.
 EPIC-013 Story 002: Improve Test Coverage
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 from sqlalchemy.orm import Session
 
 # Import the function we're testing (we'll need to refactor update_games.py to make it testable)
