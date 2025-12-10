@@ -767,6 +767,12 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
         home_team_name = game_data.get("homeTeam")
         away_team_name = game_data.get("awayTeam")
         week = game_data.get("week", 16)  # Bowl games typically week 16+
+
+        # BUGFIX: CFBD sometimes returns week=1 for unscheduled bowl games
+        # Bowl games should be weeks 15-17, so override invalid values
+        if week < 15:
+            week = 16  # Default to week 16 for bowl games
+
         notes = game_data.get("notes", "") or "Bowl Game"
 
         # Extract bowl name from notes (e.g., "Rose Bowl Game", "Sugar Bowl")
@@ -982,6 +988,9 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
         else:
             # Fallback - use API week or default
             week = game_data.get("week", 17)
+            # BUGFIX: Validate week number for playoff games
+            if week < 15:
+                week = 17  # Default to week 17 for unidentified playoff games
 
         # Skip if teams not found
         if home_team_name not in team_objects or away_team_name not in team_objects:
