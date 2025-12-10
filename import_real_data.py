@@ -159,7 +159,7 @@ def import_teams(cfbd: CFBDClient, db, year: int):
     print(f"  Retrieved {len(transfer_data)} transfers")
 
     print("Calculating transfer portal rankings...")
-    from transfer_portal_service import TransferPortalService
+    from src.core.transfer_portal_service import TransferPortalService
 
     tp_service = TransferPortalService()
     team_scores, team_ranks = tp_service.get_team_stats(transfer_data)
@@ -664,8 +664,7 @@ def import_conference_championships(
             print(f"  ✓ {notes}: {home_team_name} vs {away_team_name} (scheduled)")
 
             # EPIC-009: Store prediction for future championship game
-            from ranking_service import create_and_store_prediction
-
+            # Note: create_and_store_prediction is imported at top of file
             prediction = create_and_store_prediction(db, game)
             if prediction:
                 print(f"      → Prediction stored ({prediction.predicted_winner.name} favored)")
