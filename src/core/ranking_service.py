@@ -19,8 +19,8 @@ Key Components:
 
 Example:
     Initialize service and process a game:
-        >>> from database import get_db
-        >>> from ranking_service import RankingService
+        >>> from src.models.database import get_db
+        >>> from src.core.ranking_service import RankingService
         >>> db = next(get_db())
         >>> service = RankingService(db)
         >>> result = service.process_game(game)
@@ -490,7 +490,7 @@ class RankingService:
         Returns:
             Tuple of (wins, losses) for the season
         """
-        from models import Game
+        from src.models.models import Game
 
         # Count wins (games where team won and game is processed)
         wins = (

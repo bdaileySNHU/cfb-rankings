@@ -144,7 +144,7 @@ class TransferPortalService:
 
 # Example usage (for testing)
 if __name__ == "__main__":
-    from cfbd_client import CFBDClient
+    from src.integrations.cfbd_client import CFBDClient
 
     print("Testing Transfer Portal Service...")
     print("=" * 60)
