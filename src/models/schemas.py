@@ -132,6 +132,8 @@ class GameBase(BaseModel):
     season: int = Field(..., description="Season year", ge=2000, le=2100)
     is_neutral_site: bool = Field(False, description="Is this a neutral site game?")
     game_date: Optional[datetime] = Field(None, description="Game date and time")
+    game_type: Optional[str] = Field(None, description="Game classification: 'conference_championship', 'bowl', 'playoff', or None for regular season")
+    postseason_name: Optional[str] = Field(None, description="Bowl or playoff name (e.g., 'Rose Bowl Game', 'CFP Semifinal')")
 
 
 class GameCreate(GameBase):
