@@ -8,6 +8,12 @@ Tests cover:
 - Labor Day calculation (_find_labor_day)
 - Season start calculation (_find_season_start)
 - Edge cases: off-season, week boundaries, API failures
+
+CFBD API Response Schema (verified 2025-12-16, STORY-CFBD-01):
+- Score fields use camelCase: homePoints, awayPoints
+- Week field uses lowercase: week
+- Reference: docs/stories/story-cfbd-01-investigate-api-schema.md
+- All test mocks must use camelCase to accurately reflect real API responses
 """
 
 from datetime import datetime
@@ -70,11 +76,11 @@ class TestWeekDetection:
 
         # Mock the get_games method to return sample games
         mock_games = [
-            {"week": 1, "home_points": 35, "away_points": 28},
-            {"week": 2, "home_points": 21, "away_points": 24},
-            {"week": 8, "home_points": 42, "away_points": 17},
-            {"week": 8, "home_points": 14, "away_points": 31},
-            {"week": 9, "home_points": None, "away_points": None},  # Future game
+            {"week": 1, "homePoints": 35, "awayPoints": 28},
+            {"week": 2, "homePoints": 21, "awayPoints": 24},
+            {"week": 8, "homePoints": 42, "awayPoints": 17},
+            {"week": 8, "homePoints": 14, "awayPoints": 31},
+            {"week": 9, "homePoints": None, "awayPoints": None},  # Future game
         ]
 
         with patch.object(client, "get_games", return_value=mock_games):
@@ -94,9 +100,9 @@ class TestWeekDetection:
         client = CFBDClient()
 
         mock_games = [
-            {"week": 1, "home_points": None, "away_points": None},
-            {"week": 2, "home_points": None, "away_points": None},
-            {"week": 3, "home_points": None, "away_points": None},
+            {"week": 1, "homePoints": None, "awayPoints": None},
+            {"week": 2, "homePoints": None, "awayPoints": None},
+            {"week": 3, "homePoints": None, "awayPoints": None},
         ]
 
         with patch.object(client, "get_games", return_value=mock_games):
@@ -124,8 +130,8 @@ class TestWeekDetection:
         client = CFBDClient()
 
         mock_games = [
-            {"week": 1, "home_points": 28, "away_points": 14},
-            {"week": 1, "home_points": 35, "away_points": 21},
+            {"week": 1, "homePoints": 28, "awayPoints": 14},
+            {"week": 1, "homePoints": 35, "awayPoints": 21},
         ]
 
         with patch.object(client, "get_games", return_value=mock_games):
@@ -137,9 +143,9 @@ class TestWeekDetection:
         client = CFBDClient()
 
         mock_games = [
-            {"week": 5, "home_points": 28, "away_points": 14},
-            {"home_points": 35, "away_points": 21},  # Missing week
-            {"week": 3, "home_points": 42, "away_points": 7},
+            {"week": 5, "homePoints": 28, "awayPoints": 14},
+            {"homePoints": 35, "awayPoints": 21},  # Missing week
+            {"week": 3, "homePoints": 42, "awayPoints": 7},
         ]
 
         with patch.object(client, "get_games", return_value=mock_games):
@@ -284,9 +290,9 @@ class TestEdgeCases:
         client = CFBDClient()
 
         mock_games = [
-            {"week": 5, "home_points": 28, "away_points": 14},  # Completed game
-            {"week": 6, "home_points": 0, "away_points": 0},  # Future game (0-0 placeholder)
-            {"week": 7, "home_points": None, "away_points": None},  # Future game (None)
+            {"week": 5, "homePoints": 28, "awayPoints": 14},  # Completed game
+            {"week": 6, "homePoints": 0, "awayPoints": 0},  # Future game (0-0 placeholder)
+            {"week": 7, "homePoints": None, "awayPoints": None},  # Future game (None)
         ]
 
         with patch.object(client, "get_games", return_value=mock_games):
@@ -301,19 +307,19 @@ class TestEdgeCases:
 
         mock_games = [
             # Weeks 1-9 have completed games
-            {"week": 1, "home_points": 35, "away_points": 28},
-            {"week": 2, "home_points": 21, "away_points": 14},
-            {"week": 3, "home_points": 28, "away_points": 24},
-            {"week": 4, "home_points": 42, "away_points": 17},
-            {"week": 5, "home_points": 31, "away_points": 28},
-            {"week": 6, "home_points": 24, "away_points": 21},
-            {"week": 7, "home_points": 35, "away_points": 14},
-            {"week": 8, "home_points": 28, "away_points": 27},
-            {"week": 9, "home_points": 42, "away_points": 38},
+            {"week": 1, "homePoints": 35, "awayPoints": 28},
+            {"week": 2, "homePoints": 21, "awayPoints": 14},
+            {"week": 3, "homePoints": 28, "awayPoints": 24},
+            {"week": 4, "homePoints": 42, "awayPoints": 17},
+            {"week": 5, "homePoints": 31, "awayPoints": 28},
+            {"week": 6, "homePoints": 24, "awayPoints": 21},
+            {"week": 7, "homePoints": 35, "awayPoints": 14},
+            {"week": 8, "homePoints": 28, "awayPoints": 27},
+            {"week": 9, "homePoints": 42, "awayPoints": 38},
             # Week 10 has future games with 0-0 placeholder scores
-            {"week": 10, "home_points": 0, "away_points": 0},
-            {"week": 10, "home_points": 0, "away_points": 0},
-            {"week": 10, "home_points": 0, "away_points": 0},
+            {"week": 10, "homePoints": 0, "awayPoints": 0},
+            {"week": 10, "homePoints": 0, "awayPoints": 0},
+            {"week": 10, "homePoints": 0, "awayPoints": 0},
         ]
 
         with patch.object(client, "get_games", return_value=mock_games):
@@ -326,11 +332,11 @@ class TestEdgeCases:
         client = CFBDClient()
 
         mock_games = [
-            {"week": 1, "home_points": 35, "away_points": 28},
-            {"week": 3, "home_points": 21, "away_points": 24},
-            {"week": 5, "home_points": None, "away_points": None},
-            {"week": 2, "home_points": 42, "away_points": 17},
-            {"week": 4, "home_points": None, "away_points": None},
+            {"week": 1, "homePoints": 35, "awayPoints": 28},
+            {"week": 3, "homePoints": 21, "awayPoints": 24},
+            {"week": 5, "homePoints": None, "awayPoints": None},
+            {"week": 2, "homePoints": 42, "awayPoints": 17},
+            {"week": 4, "homePoints": None, "awayPoints": None},
         ]
 
         with patch.object(client, "get_games", return_value=mock_games):
