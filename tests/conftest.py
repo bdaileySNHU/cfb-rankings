@@ -9,7 +9,7 @@ This module provides test fixtures for:
 """
 
 import pytest
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -97,10 +97,10 @@ def test_client(test_db: Session):
     # Override dependency before creating client
     app.dependency_overrides[get_db] = override_get_db
 
-    # Create test client (will trigger startup event, but should use overridden DB)
-    client = TestClient(app)
-
-    yield client
+    # Create test client using context manager for proper cleanup
+    # This ensures TestClient properly initializes with the ASGI app
+    with TestClient(app) as client:
+        yield client
 
     # Clean up
     app.dependency_overrides.clear()
