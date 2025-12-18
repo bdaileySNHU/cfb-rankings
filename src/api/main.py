@@ -1186,7 +1186,7 @@ async def get_api_usage(month: Optional[str] = None):
         GET /api/admin/api-usage
         GET /api/admin/api-usage?month=2025-01
     """
-    from cfbd_client import get_monthly_usage
+    from src.integrations.cfbd_client import get_monthly_usage
 
     try:
         usage_stats = get_monthly_usage(month)
@@ -1333,7 +1333,7 @@ async def trigger_manual_update(background_tasks: BackgroundTasks, db: Session =
     sys.path.insert(0, str(Path(__file__).parent / "scripts"))
     from weekly_update import check_api_usage, get_current_week_wrapper, is_active_season
 
-    from cfbd_client import get_monthly_usage
+    from src.integrations.cfbd_client import get_monthly_usage
 
     # Pre-flight check 1: Active season
     if not is_active_season():
@@ -1493,7 +1493,7 @@ async def get_usage_dashboard(month: Optional[str] = None, db: Session = Depends
 
     from sqlalchemy import func
 
-    from cfbd_client import get_monthly_usage
+    from src.integrations.cfbd_client import get_monthly_usage
 
     if not month:
         month = datetime.now().strftime("%Y-%m")

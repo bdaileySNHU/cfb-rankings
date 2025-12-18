@@ -90,8 +90,8 @@ def track_api_usage(func):
 
             # Track usage in database
             try:
-                from database import SessionLocal
-                from models import APIUsage
+                from src.models.database import SessionLocal
+                from src.models.models import APIUsage
 
                 month = start_time.strftime("%Y-%m")
 
@@ -137,8 +137,8 @@ def get_monthly_usage(month: str = None, db: "Session" = None) -> dict:
     """
     from sqlalchemy import func
 
-    from database import SessionLocal
-    from models import APIUsage
+    from src.models.database import SessionLocal
+    from src.models.models import APIUsage
 
     if not month:
         month = datetime.now().strftime("%Y-%m")
