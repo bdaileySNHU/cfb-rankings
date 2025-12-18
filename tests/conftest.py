@@ -260,6 +260,10 @@ def mock_cfbd_client(monkeypatch):
         {"school": "Michigan", "rank": 5, "firstPlaceVotes": 0, "points": 1300},
     ]
 
+    # Mock get_game_line_scores() - Returns None (line scores are optional)
+    # This prevents TypeError when import_games tries to subscript the return value
+    mock_client.get_game_line_scores.return_value = None
+
     return mock_client
 
 

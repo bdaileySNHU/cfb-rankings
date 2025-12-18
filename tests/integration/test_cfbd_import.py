@@ -303,6 +303,7 @@ class TestMockClientErrorHandling:
         mock_client.get_recruiting_rankings.return_value = []
         mock_client.get_team_talent.return_value = []
         mock_client.get_returning_production.return_value = []
+        mock_client.get_transfer_portal.return_value = []
 
         # Act
         team_objects = import_teams(mock_client, test_db, year=2025)
