@@ -577,7 +577,7 @@ def test_get_team_calculates_rank(self, test_client, test_db):
 - [x] No regression in other tests (109 currently passing continue to pass)
 - [x] Full integration suite passes: 117 passing, 0 failing
 - [x] Changes committed with clear message explaining test data setup fixes
-- [ ] CI/CD pipeline verified (100% integration test pass rate)
+- [x] CI/CD pipeline verified (100% integration test pass rate)
 
 ---
 

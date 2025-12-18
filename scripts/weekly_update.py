@@ -377,6 +377,7 @@ def main():
         logger.info("Weekly update will resume automatically in August")
         logger.info("=" * 80)
         sys.exit(0)  # Graceful exit - not an error
+        return  # Prevent execution from continuing in tests where sys.exit is mocked
 
     logger.info("✓ Active season confirmed")
 
@@ -391,11 +392,13 @@ def main():
             )
             logger.info("=" * 80)
             sys.exit(1)
+            return  # Prevent execution from continuing in tests where sys.exit is mocked
         logger.info(f"✓ Current week: {current_week}")
     except Exception as e:
         logger.error(f"Week detection failed: {e}")
         logger.info("=" * 80)
         sys.exit(1)
+        return  # Prevent execution from continuing in tests where sys.exit is mocked
 
     # Check 3: API usage
     logger.info("Check 3: Verifying API usage is below 90% threshold...")
@@ -403,6 +406,7 @@ def main():
         logger.error("API usage threshold exceeded - aborting to prevent quota exhaustion")
         logger.info("=" * 80)
         sys.exit(1)
+        return  # Prevent execution from continuing in tests where sys.exit is mocked
     logger.info("✓ API usage check passed")
 
     # Execute import

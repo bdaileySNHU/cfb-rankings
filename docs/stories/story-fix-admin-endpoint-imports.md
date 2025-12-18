@@ -244,7 +244,7 @@ pytest -m integration -v
 - [x] No ModuleNotFoundError in test output
 - [x] No regression in other tests (104 currently passing continue to pass)
 - [x] Changes committed with clear message: "Fix admin endpoint import paths to use src.integrations.cfbd_client"
-- [ ] CI/CD pipeline verified (integration tests improve from 104 to 109 passing)
+- [x] CI/CD pipeline verified (integration tests improve from 104 to 109 passing)
 
 ---
 

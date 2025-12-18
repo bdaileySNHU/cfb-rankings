@@ -1231,12 +1231,13 @@ def run_weekly_update_task(task_id: str, db_session):
 
     logger = logging.getLogger(__name__)
 
-    project_root = Path(__file__).parent
+    # Navigate from src/api/main.py to project root
+    project_root = Path(__file__).parent.parent.parent
     script_path = project_root / "scripts" / "weekly_update.py"
 
     try:
         # Update status to running
-        from models import UpdateTask
+        from src.models.models import UpdateTask
 
         task = db_session.query(UpdateTask).filter(UpdateTask.task_id == task_id).first()
         if task:
@@ -1343,14 +1344,11 @@ async def trigger_manual_update(background_tasks: BackgroundTasks, db: Session =
         )
 
     # Pre-flight check 2: Current week detection
-    try:
-        current_week = get_current_week_wrapper()
-        if not current_week:
-            raise HTTPException(
-                status_code=400, detail="No current week detected - season may not have started yet"
-            )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to detect current week: {str(e)}")
+    current_week = get_current_week_wrapper()
+    if not current_week:
+        raise HTTPException(
+            status_code=400, detail="No current week detected - season may not have started yet"
+        )
 
     # Pre-flight check 3: API usage
     if not check_api_usage(db=db):
