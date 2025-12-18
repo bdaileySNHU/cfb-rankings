@@ -55,10 +55,28 @@ class TestGetRankings:
         season = SeasonFactory(year=2024, is_active=True, current_week=5)
 
         # Create teams with different ratings
-        team1 = TeamFactory(name="Alabama", elo_rating=1850.0, wins=5, losses=0)
-        team2 = TeamFactory(name="Georgia", elo_rating=1840.0, wins=4, losses=1)
-        team3 = TeamFactory(name="Ohio State", elo_rating=1830.0, wins=5, losses=0)
-        team4 = TeamFactory(name="Michigan", elo_rating=1820.0, wins=4, losses=1)
+        team1 = TeamFactory(name="Alabama", elo_rating=1850.0)
+        team2 = TeamFactory(name="Georgia", elo_rating=1840.0)
+        team3 = TeamFactory(name="Ohio State", elo_rating=1830.0)
+        team4 = TeamFactory(name="Michigan", elo_rating=1820.0)
+
+        # Create RankingHistory records for current week (API queries this table)
+        RankingHistoryFactory(
+            team=team1, season=2024, week=5, rank=1,
+            elo_rating=1850.0, wins=5, losses=0, sos=65.0, sos_rank=1
+        )
+        RankingHistoryFactory(
+            team=team2, season=2024, week=5, rank=2,
+            elo_rating=1840.0, wins=4, losses=1, sos=64.0, sos_rank=2
+        )
+        RankingHistoryFactory(
+            team=team3, season=2024, week=5, rank=3,
+            elo_rating=1830.0, wins=5, losses=0, sos=63.0, sos_rank=3
+        )
+        RankingHistoryFactory(
+            team=team4, season=2024, week=5, rank=4,
+            elo_rating=1820.0, wins=4, losses=1, sos=62.0, sos_rank=4
+        )
         test_db.commit()
 
         # Act
@@ -84,11 +102,17 @@ class TestGetRankings:
         """Test rankings limit parameter"""
         # Arrange
         configure_factories(test_db)
-        season = SeasonFactory(year=2024, is_active=True)
+        season = SeasonFactory(year=2024, is_active=True, current_week=1)
 
-        # Create 10 teams
+        # Create 10 teams and RankingHistory records
+        teams = []
         for i in range(10):
-            TeamFactory(elo_rating=1500.0 + i)
+            team = TeamFactory(elo_rating=1500.0 + i)
+            teams.append(team)
+            RankingHistoryFactory(
+                team=team, season=2024, week=1, rank=10-i,
+                elo_rating=1500.0 + i, wins=i, losses=0, sos=50.0 + i, sos_rank=10-i
+            )
         test_db.commit()
 
         # Act
@@ -103,13 +127,20 @@ class TestGetRankings:
         """Test that rankings include strength of schedule"""
         # Arrange
         configure_factories(test_db)
-        season = SeasonFactory(year=2024, is_active=True)
+        season = SeasonFactory(year=2024, is_active=True, current_week=1)
 
         team1 = TeamFactory(name="Alabama", elo_rating=1800.0)
         team2 = TeamFactory(name="Georgia", elo_rating=1750.0)
 
-        # Create a game so team1 has SOS
-        GameFactory(home_team=team1, away_team=team2, season=2024, is_processed=True)
+        # Create RankingHistory with SOS calculated
+        RankingHistoryFactory(
+            team=team1, season=2024, week=1, rank=1,
+            elo_rating=1800.0, wins=1, losses=0, sos=1750.0, sos_rank=1
+        )
+        RankingHistoryFactory(
+            team=team2, season=2024, week=1, rank=2,
+            elo_rating=1750.0, wins=0, losses=1, sos=1800.0, sos_rank=2
+        )
         test_db.commit()
 
         # Act
@@ -146,9 +177,15 @@ class TestGetRankings:
         """Test that rankings include conference information"""
         # Arrange
         configure_factories(test_db)
-        season = SeasonFactory(year=2024, is_active=True)
+        season = SeasonFactory(year=2024, is_active=True, current_week=1)
 
         team = TeamFactory(name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1800.0)
+
+        # Create RankingHistory record for current week
+        RankingHistoryFactory(
+            team=team, season=2024, week=1, rank=1,
+            elo_rating=1800.0, wins=0, losses=0, sos=0.0, sos_rank=1
+        )
         test_db.commit()
 
         # Act
@@ -261,7 +298,21 @@ class TestSaveRankings:
         """Test that save creates proper history records"""
         # Arrange
         configure_factories(test_db)
-        team = TeamFactory(name="Alabama", elo_rating=1850.0, wins=5, losses=0)
+        season = SeasonFactory(year=2024, current_week=5)
+        team = TeamFactory(name="Alabama", elo_rating=1850.0)
+        opponent = TeamFactory(name="LSU", elo_rating=1800.0)
+
+        # Create 5 games where Alabama won (get_season_record counts actual games)
+        for i in range(5):
+            GameFactory(
+                home_team=team if i % 2 == 0 else opponent,
+                away_team=opponent if i % 2 == 0 else team,
+                home_score=35 if i % 2 == 0 else 21,
+                away_score=21 if i % 2 == 0 else 35,
+                season=2024,
+                week=i+1,
+                is_processed=True  # CRITICAL: get_season_record only counts processed games
+            )
         test_db.commit()
 
         # Act

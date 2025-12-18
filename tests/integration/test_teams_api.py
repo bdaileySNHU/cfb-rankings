@@ -266,9 +266,24 @@ class TestGetTeamDetail:
         """Test that team detail includes calculated rank"""
         # Arrange
         configure_factories(test_db)
+        season = SeasonFactory(year=2024, is_active=True, current_week=1)
         team1 = TeamFactory(name="Alabama", elo_rating=1850.0)
         team2 = TeamFactory(name="Georgia", elo_rating=1840.0)
         team3 = TeamFactory(name="Ohio State", elo_rating=1830.0)
+
+        # Create RankingHistory records (API queries this for rank)
+        RankingHistoryFactory(
+            team=team1, season=2024, week=1, rank=1,
+            elo_rating=1850.0, wins=0, losses=0, sos=0.0
+        )
+        RankingHistoryFactory(
+            team=team2, season=2024, week=1, rank=2,
+            elo_rating=1840.0, wins=0, losses=0, sos=0.0
+        )
+        RankingHistoryFactory(
+            team=team3, season=2024, week=1, rank=3,
+            elo_rating=1830.0, wins=0, losses=0, sos=0.0
+        )
         test_db.commit()
 
         # Act - Get the second-ranked team (Georgia)
@@ -284,9 +299,24 @@ class TestGetTeamDetail:
         """Test rank calculation when teams have same ELO rating"""
         # Arrange
         configure_factories(test_db)
+        season = SeasonFactory(year=2024, is_active=True, current_week=1)
         team1 = TeamFactory(name="Alabama", elo_rating=1850.0)
         team2 = TeamFactory(name="Georgia", elo_rating=1850.0)  # Tied with Alabama
         team3 = TeamFactory(name="Ohio State", elo_rating=1830.0)
+
+        # Create RankingHistory records (tied teams can have same or sequential ranks)
+        RankingHistoryFactory(
+            team=team1, season=2024, week=1, rank=1,
+            elo_rating=1850.0, wins=0, losses=0, sos=0.0
+        )
+        RankingHistoryFactory(
+            team=team2, season=2024, week=1, rank=2,
+            elo_rating=1850.0, wins=0, losses=0, sos=0.0
+        )
+        RankingHistoryFactory(
+            team=team3, season=2024, week=1, rank=3,
+            elo_rating=1830.0, wins=0, losses=0, sos=0.0
+        )
         test_db.commit()
 
         # Act
@@ -302,7 +332,14 @@ class TestGetTeamDetail:
         """Test that team with no games has SOS of 0"""
         # Arrange
         configure_factories(test_db)
+        season = SeasonFactory(year=2024, is_active=True, current_week=1)
         team = TeamFactory(name="Alabama")
+
+        # Create RankingHistory with SOS=0.0 (no games played)
+        RankingHistoryFactory(
+            team=team, season=2024, week=1, rank=1,
+            elo_rating=1500.0, wins=0, losses=0, sos=0.0, sos_rank=1
+        )
         test_db.commit()
 
         # Act
