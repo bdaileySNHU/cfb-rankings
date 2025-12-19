@@ -342,9 +342,9 @@ class CFBDClient:
             max_week = 0
             for game in games:
                 # Check if game has been played (has scores)
-                # API uses snake_case field names
-                home_points = game.get("home_points")
-                away_points = game.get("away_points")
+                # Support both snake_case and camelCase field names for different API versions/tests
+                home_points = game.get("home_points") or game.get("homePoints")
+                away_points = game.get("away_points") or game.get("awayPoints")
 
                 # Exclude future games (0-0 placeholder scores from EPIC-008)
                 # College football games cannot end 0-0 due to overtime rules
