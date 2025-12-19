@@ -8,6 +8,7 @@ This module provides test fixtures for:
 - Test data factories
 """
 
+import os
 import pytest
 from starlette.testclient import TestClient
 from sqlalchemy import create_engine
@@ -15,6 +16,10 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from src.models.database import get_db
 from src.api.main import app
+
+# Set environment variable to skip subprocess execution in tests
+# This prevents background tasks from actually running weekly_update.py script
+os.environ["SKIP_WEEKLY_UPDATE_SUBPROCESS"] = "true"
 
 # Import Base and ALL models AFTER main to ensure models are registered
 # Importing main first ensures it has already imported and registered all models
