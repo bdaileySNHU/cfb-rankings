@@ -37,7 +37,7 @@ Example:
         >>> print(f"Used {usage['total_calls']}/{usage['monthly_limit']} calls")
 
 Note:
-    Default monthly limit is 1000 API calls. Configure via CFBD_MONTHLY_LIMIT
+    Default monthly limit is 30000 API calls. Configure via CFBD_MONTHLY_LIMIT
     environment variable. All API calls are automatically tracked in the
     api_usage table for monitoring.
 """
@@ -152,8 +152,8 @@ def get_monthly_usage(month: str = None, db: "Session" = None) -> dict:
         # Total calls for month
         total_calls = db.query(APIUsage).filter(APIUsage.month == month).count()
 
-        # Monthly limit from environment
-        monthly_limit = int(os.getenv("CFBD_MONTHLY_LIMIT", "1000"))
+        # Monthly limit from environment (default 30000 for upgraded API tier)
+        monthly_limit = int(os.getenv("CFBD_MONTHLY_LIMIT", "30000"))
 
         # Calculate metrics
         percentage_used = (total_calls / monthly_limit) * 100 if monthly_limit > 0 else 0

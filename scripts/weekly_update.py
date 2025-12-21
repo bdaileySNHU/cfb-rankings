@@ -144,15 +144,15 @@ def validate_week_number(week: int, season_year: int) -> bool:
     Validate that a week number is reasonable for college football.
 
     College football regular season runs from Week 1 through Week 14-15,
-    with Week 0 used for preseason and early games, and weeks up to 15
-    for bowl games and playoffs.
+    with Week 0 used for preseason and early games, and weeks 16-19
+    for playoff games (12-team format).
 
     Args:
         week: Week number to validate
         season_year: Year of the season (for logging context)
 
     Returns:
-        bool: True if valid (0-15), False otherwise
+        bool: True if valid (0-19), False otherwise
 
     Side Effects:
         - Logs ERROR for invalid week values
@@ -163,7 +163,9 @@ def validate_week_number(week: int, season_year: int) -> bool:
         True
         >>> validate_week_number(0, 2025)  # Valid preseason week
         True
-        >>> validate_week_number(15, 2025)  # Valid bowl/playoff week
+        >>> validate_week_number(15, 2025)  # Valid bowl week
+        True
+        >>> validate_week_number(17, 2025)  # Valid playoff week
         True
         >>> validate_week_number(20, 2025)  # Invalid - too high
         False
@@ -171,7 +173,7 @@ def validate_week_number(week: int, season_year: int) -> bool:
         False
     """
     MIN_WEEK = 0  # Preseason / Week 0 games
-    MAX_WEEK = 15  # Includes bowl season and playoffs
+    MAX_WEEK = 19  # Includes bowl season and playoffs (weeks 16-19 for CFP)
 
     # Type check
     if not isinstance(week, int):

@@ -1457,9 +1457,9 @@ async def update_current_week_manual(year: int, week: int, db: Session = Depends
     Example:
         POST /api/admin/update-current-week?year=2025&week=8
     """
-    # Validate week
-    if not (0 <= week <= 15):
-        raise HTTPException(status_code=400, detail=f"Week must be between 0 and 15, got {week}")
+    # Validate week (0-15 regular season, 16-19 playoff)
+    if not (0 <= week <= 19):
+        raise HTTPException(status_code=400, detail=f"Week must be between 0 and 19, got {week}")
 
     # Get season
     season = db.query(Season).filter(Season.year == year).first()

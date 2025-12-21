@@ -14,11 +14,11 @@ def update_current_week(week: int, season: int = 2025):
     Update the current week for a given season.
 
     Args:
-        week: The week number to set (1-15)
+        week: The week number to set (1-19, includes playoff weeks 16-19)
         season: The season year (default: 2025)
     """
-    if not (1 <= week <= 15):
-        print(f"❌ Error: Week must be between 1 and 15 (got {week})")
+    if not (1 <= week <= 19):
+        print(f"❌ Error: Week must be between 1 and 19 (got {week})")
         return False
 
     try:
@@ -76,7 +76,7 @@ def main():
             sys.exit(1)
     else:
         # Prompt user for week
-        week_input = input("Enter the current week number (1-15): ").strip()
+        week_input = input("Enter the current week number (1-19): ").strip()
         try:
             week = int(week_input)
         except ValueError:

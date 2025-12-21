@@ -21,13 +21,13 @@ def update_current_week(year: int, week: int) -> bool:
 
     Args:
         year: Season year
-        week: Week number to set (0-15)
+        week: Week number to set (0-19, includes playoff weeks 16-19)
 
     Returns:
         bool: True if successful, False otherwise
     """
-    if not (0 <= week <= 15):
-        print(f"Error: Week must be between 0 and 15, got {week}")
+    if not (0 <= week <= 19):
+        print(f"Error: Week must be between 0 and 19, got {week}")
         return False
 
     db = SessionLocal()
@@ -68,7 +68,7 @@ Examples:
     )
 
     parser.add_argument("--year", type=int, required=True, help="Season year to update")
-    parser.add_argument("--week", type=int, required=True, help="Week number to set (0-15)")
+    parser.add_argument("--week", type=int, required=True, help="Week number to set (0-19, includes playoff weeks)")
 
     args = parser.parse_args()
 

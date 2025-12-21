@@ -363,7 +363,9 @@ class RankingService:
             )
 
         # Validation: Ensure valid week and season
-        if not (0 <= game.week <= 15):
+        # Week 0-15: Regular season and conference championships
+        # Week 16-19: Playoff games (12-team format: first round, quarterfinals, semifinals, championship)
+        if not (0 <= game.week <= 19):
             raise ValueError(f"Game {game.id} has invalid week: {game.week}")
 
         if not (2020 <= game.season <= 2030):
