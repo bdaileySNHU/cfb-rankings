@@ -1480,7 +1480,12 @@ def import_games(
                     continue
 
                 elif existing_game.is_processed:
-                    # Already processed - skip
+                    # Already processed - but check if we need to update game_date
+                    new_game_date = parse_game_date(game_data)
+                    if new_game_date and existing_game.game_date != new_game_date:
+                        print(f"    Updating game date: {game_desc} -> {new_game_date.strftime('%Y-%m-%d')}")
+                        existing_game.game_date = new_game_date
+                        db.commit()
                     continue
                 else:
                     # Has scores but not processed yet - process it
