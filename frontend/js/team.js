@@ -327,6 +327,21 @@ function createScheduleRow(game) {
   weekCell.style.fontWeight = '600';
   row.appendChild(weekCell);
 
+  // Date - EPIC-GAME-DATE-SORTING Story 3
+  const dateCell = document.createElement('td');
+  const formattedDate = formatGameDate(game.game_date, false); // No relative dates for schedules
+  const fullDateTime = getFullDateTime(game.game_date);
+  dateCell.textContent = formattedDate;
+  dateCell.className = 'game-date';
+  dateCell.title = fullDateTime;
+  dateCell.style.color = 'var(--text-secondary)';
+  dateCell.style.whiteSpace = 'nowrap';
+  dateCell.style.fontSize = '0.9em';
+  if (!isPlayed) {
+    dateCell.style.fontStyle = 'italic';
+  }
+  row.appendChild(dateCell);
+
   // Opponent
   const oppCell = document.createElement('td');
   const oppLink = document.createElement('a');

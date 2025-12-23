@@ -410,6 +410,7 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
             {
                 "game_id": game.id,
                 "week": game.week,
+                "game_date": game.game_date.isoformat() if game.game_date else None,  # EPIC-GAME-DATE-SORTING: Include game date
                 "opponent_id": opponent.id,
                 "opponent_name": opponent.name,
                 "opponent_conference": opponent.conference.value if opponent.conference else None,

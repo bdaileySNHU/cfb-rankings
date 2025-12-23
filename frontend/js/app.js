@@ -386,26 +386,15 @@ function createPredictionCard(prediction) {
   const homeIsWinner = prediction.predicted_winner === prediction.home_team;
   const awayIsWinner = prediction.predicted_winner === prediction.away_team;
 
-  // Format game date
-  let gameDate = '';
-  if (prediction.game_date) {
-    const date = new Date(prediction.game_date);
-    gameDate = date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit'
-    });
-  } else {
-    // Show TBD for games without scheduled dates
-    gameDate = 'TBD';
-  }
+  // Format game date with relative dates for upcoming games
+  // EPIC-GAME-DATE-SORTING Story 3: Use shared utilities with relative dates
+  const gameDate = formatGameDate(prediction.game_date, true); // Enable relative dates
+  const fullDateTime = getFullDateTime(prediction.game_date);
 
   card.innerHTML = `
     <div class="prediction-header">
       <span class="prediction-badge">PREDICTED</span>
-      <span class="game-info">Week ${prediction.week}${gameDate ? ' • ' + gameDate : ''}</span>
+      <span class="game-info" title="${fullDateTime}">Week ${prediction.week}${gameDate ? ' • ' + gameDate : ''}</span>
     </div>
 
     <div class="matchup">

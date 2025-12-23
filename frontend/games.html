@@ -95,56 +95,10 @@
   </footer>
 
   <script src="js/api.js"></script>
+  <script src="js/date-utils.js"></script>
   <script>
     let allGames = [];
     let teams = {};
-
-    /**
-     * Format game date for display
-     * @param {string|null} dateString - ISO date string from API
-     * @returns {string} Formatted date or "TBD"
-     */
-    function formatGameDate(dateString) {
-      if (!dateString) {
-        return 'TBD';
-      }
-
-      try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric'
-        });
-      } catch (e) {
-        console.warn('Invalid date format:', dateString);
-        return 'TBD';
-      }
-    }
-
-    /**
-     * Get full date/time string for tooltips
-     * @param {string|null} dateString - ISO date string from API
-     * @returns {string} Full formatted date/time or empty string
-     */
-    function getFullDateTime(dateString) {
-      if (!dateString) return '';
-
-      try {
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-          timeZoneName: 'short'
-        });
-      } catch (e) {
-        return '';
-      }
-    }
 
     document.addEventListener('DOMContentLoaded', () => {
       loadGames();
