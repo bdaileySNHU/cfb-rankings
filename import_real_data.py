@@ -592,8 +592,74 @@ def import_conference_championships(
         )
 
         if existing_game:
-            print(f"  ⚠️  {notes}: Already exists (Week {week})")
-            skipped += 1
+            # Get scores to check if game has been played
+            home_score = game_data.get("homePoints", 0) or 0
+            away_score = game_data.get("awayPoints", 0) or 0
+            is_future_game = home_score == 0 and away_score == 0
+
+            # Update game_type if not set
+            if not existing_game.game_type:
+                existing_game.game_type = "conference_championship"
+
+            # Update game_date if available
+            new_game_date = parse_game_date(game_data)
+            if new_game_date and existing_game.game_date != new_game_date:
+                existing_game.game_date = new_game_date
+
+            # Check if we need to update scores (future game that now has scores)
+            if existing_game.home_score == 0 and existing_game.away_score == 0 and not is_future_game:
+                print(f"  ✓ Updating scores for {notes}: {away_team_name} vs {home_team_name} ({away_score}-{home_score})")
+                existing_game.home_score = home_score
+                existing_game.away_score = away_score
+                existing_game.is_neutral_site = game_data.get("neutralSite", True)
+                existing_game.is_processed = False  # Mark for reprocessing
+
+                # Fetch and update quarter scores
+                line_scores = cfbd.get_game_line_scores(
+                    game_id=game_data.get("id", 0),
+                    year=year,
+                    week=week,
+                    home_team=home_team_name,
+                    away_team=away_team_name,
+                )
+                if line_scores:
+                    existing_game.q1_home = line_scores["home"][0]
+                    existing_game.q1_away = line_scores["away"][0]
+                    existing_game.q2_home = line_scores["home"][1]
+                    existing_game.q2_away = line_scores["away"][1]
+                    existing_game.q3_home = line_scores["home"][2]
+                    existing_game.q3_away = line_scores["away"][2]
+                    existing_game.q4_home = line_scores["home"][3]
+                    existing_game.q4_away = line_scores["away"][3]
+
+                    try:
+                        existing_game.validate_quarter_scores()
+                    except ValueError as e:
+                        print(f"    ⚠️  Quarter validation failed: {e}")
+                        existing_game.q1_home = existing_game.q1_away = None
+                        existing_game.q2_home = existing_game.q2_away = None
+                        existing_game.q3_home = existing_game.q3_away = None
+                        existing_game.q4_home = existing_game.q4_away = None
+
+                db.commit()
+                db.refresh(existing_game)
+
+                # Process game for rankings
+                result = ranking_service.process_game(existing_game)
+                winner = result["winner_name"]
+                loser = result["loser_name"]
+                score = result["score"]
+                print(f"    ✓ Processed: {winner} defeats {loser} {score}")
+                processed += 1
+                imported += 1
+            else:
+                # Just commit metadata updates
+                db.commit()
+                if not is_future_game and existing_game.is_processed:
+                    print(f"  ✓ {notes}: Already processed (Week {week})")
+                else:
+                    print(f"  ✓ {notes}: Updated metadata (Week {week})")
+                skipped += 1
             continue
 
         # Get scores
@@ -801,15 +867,75 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
         )
 
         if existing_game:
+            # Get scores to check if game has been played
+            home_score = game_data.get("homePoints", 0) or 0
+            away_score = game_data.get("awayPoints", 0) or 0
+            is_future_game = home_score == 0 and away_score == 0
+
             # Update game_type and postseason_name if not set
             if not existing_game.game_type or not existing_game.postseason_name:
                 existing_game.game_type = "bowl"
                 existing_game.postseason_name = bowl_name
+
+            # Update game_date if available
+            new_game_date = parse_game_date(game_data)
+            if new_game_date and existing_game.game_date != new_game_date:
+                existing_game.game_date = new_game_date
+
+            # Check if we need to update scores (future game that now has scores)
+            if existing_game.home_score == 0 and existing_game.away_score == 0 and not is_future_game:
+                print(f"  ✓ Updating scores for {bowl_name}: {away_team_name} vs {home_team_name} ({away_score}-{home_score})")
+                existing_game.home_score = home_score
+                existing_game.away_score = away_score
+                existing_game.is_neutral_site = game_data.get("neutralSite", True)
+                existing_game.is_processed = False  # Mark for reprocessing
+
+                # Fetch and update quarter scores
+                line_scores = cfbd.get_game_line_scores(
+                    game_id=game_data.get("id", 0),
+                    year=year,
+                    week=week,
+                    home_team=home_team_name,
+                    away_team=away_team_name,
+                )
+                if line_scores:
+                    existing_game.q1_home = line_scores["home"][0]
+                    existing_game.q1_away = line_scores["away"][0]
+                    existing_game.q2_home = line_scores["home"][1]
+                    existing_game.q2_away = line_scores["away"][1]
+                    existing_game.q3_home = line_scores["home"][2]
+                    existing_game.q3_away = line_scores["away"][2]
+                    existing_game.q4_home = line_scores["home"][3]
+                    existing_game.q4_away = line_scores["away"][3]
+
+                    try:
+                        existing_game.validate_quarter_scores()
+                    except ValueError as e:
+                        print(f"    ⚠️  Quarter validation failed: {e}")
+                        existing_game.q1_home = existing_game.q1_away = None
+                        existing_game.q2_home = existing_game.q2_away = None
+                        existing_game.q3_home = existing_game.q3_away = None
+                        existing_game.q4_home = existing_game.q4_away = None
+
                 db.commit()
-                print(f"  ✓ Updated: {bowl_name} (Week {week})")
+                db.refresh(existing_game)
+
+                # Process game for rankings
+                try:
+                    ranking_service.process_game(existing_game)
+                    processed += 1
+                    print(f"    ✓ Processed for rankings")
+                except Exception as e:
+                    print(f"    ⚠️  Processing failed: {str(e)}")
+
                 imported += 1
             else:
-                print(f"  ⚠️  {bowl_name}: Already exists (Week {week})")
+                # Just commit metadata updates
+                db.commit()
+                if not is_future_game and existing_game.is_processed:
+                    print(f"  ✓ {bowl_name}: Already processed")
+                else:
+                    print(f"  ✓ {bowl_name}: Updated metadata")
                 skipped += 1
             continue
 
@@ -1015,15 +1141,75 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
         )
 
         if existing_game:
+            # Get scores to check if game has been played
+            home_score = game_data.get("homePoints", 0) or 0
+            away_score = game_data.get("awayPoints", 0) or 0
+            is_future_game = home_score == 0 and away_score == 0
+
             # Update game_type and postseason_name if not set
             if not existing_game.game_type or existing_game.game_type != "playoff":
                 existing_game.game_type = "playoff"
                 existing_game.postseason_name = playoff_round
+
+            # Update game_date if available
+            new_game_date = parse_game_date(game_data)
+            if new_game_date and existing_game.game_date != new_game_date:
+                existing_game.game_date = new_game_date
+
+            # Check if we need to update scores (future game that now has scores)
+            if existing_game.home_score == 0 and existing_game.away_score == 0 and not is_future_game:
+                print(f"  ✓ Updating scores for {playoff_round}: {away_team_name} vs {home_team_name} ({away_score}-{home_score})")
+                existing_game.home_score = home_score
+                existing_game.away_score = away_score
+                existing_game.is_neutral_site = game_data.get("neutralSite", True)
+                existing_game.is_processed = False  # Mark for reprocessing
+
+                # Fetch and update quarter scores
+                line_scores = cfbd.get_game_line_scores(
+                    game_id=game_data.get("id", 0),
+                    year=year,
+                    week=week,
+                    home_team=home_team_name,
+                    away_team=away_team_name,
+                )
+                if line_scores:
+                    existing_game.q1_home = line_scores["home"][0]
+                    existing_game.q1_away = line_scores["away"][0]
+                    existing_game.q2_home = line_scores["home"][1]
+                    existing_game.q2_away = line_scores["away"][1]
+                    existing_game.q3_home = line_scores["home"][2]
+                    existing_game.q3_away = line_scores["away"][2]
+                    existing_game.q4_home = line_scores["home"][3]
+                    existing_game.q4_away = line_scores["away"][3]
+
+                    try:
+                        existing_game.validate_quarter_scores()
+                    except ValueError as e:
+                        print(f"    ⚠️  Quarter validation failed: {e}")
+                        existing_game.q1_home = existing_game.q1_away = None
+                        existing_game.q2_home = existing_game.q2_away = None
+                        existing_game.q3_home = existing_game.q3_away = None
+                        existing_game.q4_home = existing_game.q4_away = None
+
                 db.commit()
-                print(f"  ✓ Updated: {playoff_round} (Week {week})")
+                db.refresh(existing_game)
+
+                # Process game for rankings
+                try:
+                    ranking_service.process_game(existing_game)
+                    processed += 1
+                    print(f"    ✓ Processed for rankings")
+                except Exception as e:
+                    print(f"    ⚠️  Processing failed: {str(e)}")
+
                 imported += 1
             else:
-                print(f"  ⚠️  {playoff_round}: Already exists (Week {week})")
+                # Just commit metadata updates
+                db.commit()
+                if not is_future_game and existing_game.is_processed:
+                    print(f"  ✓ {playoff_round}: Already processed")
+                else:
+                    print(f"  ✓ {playoff_round}: Updated metadata")
                 skipped += 1
             continue
 
@@ -1222,8 +1408,13 @@ def import_games(
             if existing_game:
                 # Game exists - decide whether to update, skip, or process
                 if is_future_game:
-                    # Still a future game (no scores yet) - skip
-                    # This can happen if we re-import the same future week
+                    # Still a future game (no scores yet)
+                    # But update game_date if available and not already set
+                    new_game_date = parse_game_date(game_data)
+                    if new_game_date and existing_game.game_date != new_game_date:
+                        print(f"    Updating game date: {game_desc} -> {new_game_date.strftime('%Y-%m-%d')}")
+                        existing_game.game_date = new_game_date
+                        db.commit()
                     continue
 
                 # Game now has scores - check if we should update
