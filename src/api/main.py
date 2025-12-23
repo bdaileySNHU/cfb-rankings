@@ -379,13 +379,16 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
         raise HTTPException(status_code=404, detail="Team not found")
 
     # Get all games for this team (including FCS games)
+    # Sort by: week ascending (chronological schedule)
+    #          → game_date ascending (earliest date first within week)
+    # Note: nulls_last() ensures games without dates appear after games with dates
     games = (
         db.query(Game)
         .filter(
             ((Game.home_team_id == team_id) | (Game.away_team_id == team_id))
             & (Game.season == season)
         )
-        .order_by(Game.week)
+        .order_by(Game.week.asc(), Game.game_date.asc().nulls_last())
         .all()
     )
 
@@ -442,12 +445,14 @@ async def get_games(
     """Get games with flexible filtering options.
 
     Retrieves a paginated list of games with support for filtering by season,
-    week, team, and processing status. Results are sorted by week (descending)
-    and game ID (descending) to show most recent games first.
+    week, team, and processing status. Results are sorted by week (descending),
+    then by game date (descending), then by game ID (descending) to show most
+    recent games first in chronological order. Games without dates appear last
+    within each week.
 
     Args:
         season: Filter by season year (e.g., 2024)
-        week: Filter by specific week number (0-15)
+        week: Filter by specific week number (0-19, includes playoff weeks 16-19)
         team_id: Filter games involving specific team (home or away)
         processed: Filter by processing status (True=completed, False=scheduled)
         skip: Number of records to skip for pagination (default: 0)
@@ -455,7 +460,8 @@ async def get_games(
         db: Database session (injected by FastAPI)
 
     Returns:
-        List[schemas.Game]: List of game objects matching filters
+        List[schemas.Game]: List of game objects matching filters, sorted
+        chronologically (week DESC → date DESC → id DESC)
 
     Example:
         Get all Week 5 games in 2024:
@@ -475,7 +481,18 @@ async def get_games(
     if processed is not None:
         query = query.filter(Game.is_processed == processed)
 
-    games = query.order_by(Game.week.desc(), Game.id.desc()).offset(skip).limit(limit).all()
+    # Sort by: week descending (most recent first)
+    #          → game_date descending (most recent date first within week)
+    #          → id descending (consistent tiebreaker)
+    # Note: nulls_last() ensures games without dates appear after games with dates
+    games = (
+        query.order_by(
+            Game.week.desc(), Game.game_date.desc().nulls_last(), Game.id.desc()
+        )
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     return games
 
 
