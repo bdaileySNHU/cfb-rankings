@@ -43,7 +43,7 @@ def parse_game_date(game_data: dict) -> datetime:
     Parse game date from CFBD API response.
 
     EPIC-008: CFBD provides dates in ISO 8601 format:
-    "start_date": "2025-09-06T19:00:00.000Z"
+    "startDate": "2025-09-06T19:00:00.000Z"
 
     Args:
         game_data: Game data dictionary from CFBD API
@@ -56,7 +56,8 @@ def parse_game_date(game_data: dict) -> datetime:
         This prevents showing incorrect import timestamps as game dates.
         Frontend will display "TBD" for games without scheduled dates.
     """
-    date_str = game_data.get("start_date")
+    # BUGFIX: CFBD API uses camelCase "startDate", not snake_case "start_date"
+    date_str = game_data.get("startDate")
     if date_str:
         try:
             # CFBD uses ISO 8601 format with Z suffix (UTC)
