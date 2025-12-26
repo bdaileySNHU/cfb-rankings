@@ -253,6 +253,7 @@ class ScheduleGame(BaseModel):
 
     game_id: int
     week: int
+    game_date: Optional[str] = Field(None, description="Game date in ISO format (EPIC-GAME-DATE-SORTING)")
     opponent_id: int
     opponent_name: str
     opponent_conference: Optional[str] = None
