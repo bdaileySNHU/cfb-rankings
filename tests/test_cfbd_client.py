@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from src.integrations.cfbd_client import CFBDClient
+from src.integrations.cfbd_client import CFBDClient, get_season_end_date
 
 
 class TestCFBDClient:
@@ -46,13 +46,18 @@ class TestCFBDClient:
         client = CFBDClient()
         assert client.api_key == "env_key_456"
 
-    def test_get_current_season(self, client):
-        """Test current season detection based on calendar year"""
+    @patch("src.integrations.cfbd_client.get_season_end_date")
+    def test_get_current_season(self, mock_end_date, client):
+        """Test current season detection with season end date logic"""
+        mock_end_date.return_value = (2, 1)  # Feb 1
+
         # Mock datetime to test different scenarios
         with patch("src.integrations.cfbd_client.datetime") as mock_datetime:
-            # Test January 2025 → should return 2025
+            mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+
+            # Test January 2025 → should return 2024 (playoffs ongoing)
             mock_datetime.now.return_value = datetime(2025, 1, 15)
-            assert client.get_current_season() == 2025
+            assert client.get_current_season() == 2024
 
             # Test August 2025 → should return 2025
             mock_datetime.now.return_value = datetime(2025, 8, 1)
@@ -60,6 +65,10 @@ class TestCFBDClient:
 
             # Test December 2025 → should return 2025
             mock_datetime.now.return_value = datetime(2025, 12, 31)
+            assert client.get_current_season() == 2025
+
+            # Test February 2025 → should return 2025 (offseason)
+            mock_datetime.now.return_value = datetime(2025, 2, 2)
             assert client.get_current_season() == 2025
 
 
@@ -343,3 +352,172 @@ class TestErrorHandling:
 
         result = client._get("/games")
         assert result is None
+
+
+class TestGetSeasonEndDate:
+    """Tests for get_season_end_date() configuration function"""
+
+    def test_get_season_end_date_default(self, monkeypatch):
+        """Test default season end date when env var not set."""
+        # Clear env var if set
+        monkeypatch.delenv("CFB_SEASON_END_DATE", raising=False)
+        month, day = get_season_end_date()
+        assert month == 2
+        assert day == 1
+
+    def test_get_season_end_date_custom(self, monkeypatch):
+        """Test custom season end date."""
+        monkeypatch.setenv("CFB_SEASON_END_DATE", "01-20")
+        month, day = get_season_end_date()
+        assert month == 1
+        assert day == 20
+
+    def test_get_season_end_date_invalid_format(self, monkeypatch):
+        """Test invalid date format raises error."""
+        monkeypatch.setenv("CFB_SEASON_END_DATE", "invalid")
+        with pytest.raises(ValueError, match="MM-DD format"):
+            get_season_end_date()
+
+    def test_get_season_end_date_invalid_values(self, monkeypatch):
+        """Test invalid month/day values raise error."""
+        monkeypatch.setenv("CFB_SEASON_END_DATE", "13-45")  # Invalid month and day
+        with pytest.raises(ValueError):
+            get_season_end_date()
+
+    def test_get_season_end_date_invalid_month(self, monkeypatch):
+        """Test invalid month (0 or > 12) raises error."""
+        monkeypatch.setenv("CFB_SEASON_END_DATE", "00-15")
+        with pytest.raises(ValueError):
+            get_season_end_date()
+
+        monkeypatch.setenv("CFB_SEASON_END_DATE", "13-15")
+        with pytest.raises(ValueError):
+            get_season_end_date()
+
+    def test_get_season_end_date_invalid_day(self, monkeypatch):
+        """Test invalid day (0 or > 31) raises error."""
+        monkeypatch.setenv("CFB_SEASON_END_DATE", "02-00")
+        with pytest.raises(ValueError):
+            get_season_end_date()
+
+        monkeypatch.setenv("CFB_SEASON_END_DATE", "02-32")
+        with pytest.raises(ValueError):
+            get_season_end_date()
+
+    def test_get_season_end_date_missing_separator(self, monkeypatch):
+        """Test missing separator in date string raises error."""
+        monkeypatch.setenv("CFB_SEASON_END_DATE", "0201")
+        with pytest.raises(ValueError, match="MM-DD format"):
+            get_season_end_date()
+
+    def test_get_season_end_date_various_valid_dates(self, monkeypatch):
+        """Test various valid date configurations."""
+        test_cases = [
+            ("01-15", 1, 15),
+            ("02-01", 2, 1),
+            ("12-31", 12, 31),
+            ("06-15", 6, 15),
+        ]
+        for date_str, expected_month, expected_day in test_cases:
+            monkeypatch.setenv("CFB_SEASON_END_DATE", date_str)
+            month, day = get_season_end_date()
+            assert month == expected_month, f"Failed for {date_str}"
+            assert day == expected_day, f"Failed for {date_str}"
+
+
+class TestGetCurrentSeasonWithDateLogic:
+    """Comprehensive tests for get_current_season() with date-based season detection"""
+
+    @pytest.fixture
+    def client(self):
+        return CFBDClient(api_key="test_key")
+
+    @patch("src.integrations.cfbd_client.get_season_end_date")
+    @patch("src.integrations.cfbd_client.datetime")
+    def test_get_current_season_december(self, mock_datetime, mock_end_date, client):
+        """December should return current calendar year."""
+        mock_end_date.return_value = (2, 1)  # Feb 1
+        mock_datetime.now.return_value = datetime(2025, 12, 31)
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+
+        assert client.get_current_season() == 2025
+
+    @patch("src.integrations.cfbd_client.get_season_end_date")
+    @patch("src.integrations.cfbd_client.datetime")
+    def test_get_current_season_january_early(self, mock_datetime, mock_end_date, client):
+        """January 1st should return previous calendar year (playoffs ongoing)."""
+        mock_end_date.return_value = (2, 1)  # Feb 1
+        mock_datetime.now.return_value = datetime(2026, 1, 1)
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+
+        assert client.get_current_season() == 2025
+
+    @patch("src.integrations.cfbd_client.get_season_end_date")
+    @patch("src.integrations.cfbd_client.datetime")
+    def test_get_current_season_january_championship(self, mock_datetime, mock_end_date, client):
+        """January 20th (typical championship date) should return previous year."""
+        mock_end_date.return_value = (2, 1)  # Feb 1
+        mock_datetime.now.return_value = datetime(2026, 1, 20)
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+
+        assert client.get_current_season() == 2025
+
+    @patch("src.integrations.cfbd_client.get_season_end_date")
+    @patch("src.integrations.cfbd_client.datetime")
+    def test_get_current_season_after_season_end(self, mock_datetime, mock_end_date, client):
+        """February 1st (season end date) should return current year (offseason)."""
+        mock_end_date.return_value = (2, 1)  # Feb 1
+        mock_datetime.now.return_value = datetime(2026, 2, 1)
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+
+        assert client.get_current_season() == 2026
+
+    @patch("src.integrations.cfbd_client.get_season_end_date")
+    @patch("src.integrations.cfbd_client.datetime")
+    def test_get_current_season_august(self, mock_datetime, mock_end_date, client):
+        """August (season start) should return current year."""
+        mock_end_date.return_value = (2, 1)  # Feb 1
+        mock_datetime.now.return_value = datetime(2026, 8, 1)
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+
+        assert client.get_current_season() == 2026
+
+    @patch("src.integrations.cfbd_client.get_season_end_date")
+    @patch("src.integrations.cfbd_client.datetime")
+    def test_get_current_season_custom_end_date_before(self, mock_datetime, mock_end_date, client):
+        """Test with custom season end date (Jan 20) - before end date."""
+        mock_end_date.return_value = (1, 20)  # Jan 20
+        mock_datetime.now.return_value = datetime(2026, 1, 19)
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+
+        assert client.get_current_season() == 2025  # Before end date
+
+    @patch("src.integrations.cfbd_client.get_season_end_date")
+    @patch("src.integrations.cfbd_client.datetime")
+    def test_get_current_season_custom_end_date_on(self, mock_datetime, mock_end_date, client):
+        """Test with custom season end date (Jan 20) - on end date."""
+        mock_end_date.return_value = (1, 20)  # Jan 20
+        mock_datetime.now.return_value = datetime(2026, 1, 20)
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+
+        assert client.get_current_season() == 2026  # On end date
+
+    @patch("src.integrations.cfbd_client.get_season_end_date")
+    @patch("src.integrations.cfbd_client.datetime")
+    def test_get_current_season_year_boundary_dec31(self, mock_datetime, mock_end_date, client):
+        """Test transition from Dec 31 to Jan 1 - Dec 31."""
+        mock_end_date.return_value = (2, 1)  # Feb 1
+        mock_datetime.now.return_value = datetime(2025, 12, 31, 23, 59, 59)
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+
+        assert client.get_current_season() == 2025
+
+    @patch("src.integrations.cfbd_client.get_season_end_date")
+    @patch("src.integrations.cfbd_client.datetime")
+    def test_get_current_season_year_boundary_jan1(self, mock_datetime, mock_end_date, client):
+        """Test transition from Dec 31 to Jan 1 - Jan 1."""
+        mock_end_date.return_value = (2, 1)  # Feb 1
+        mock_datetime.now.return_value = datetime(2026, 1, 1, 0, 0, 0)
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+
+        assert client.get_current_season() == 2025  # Playoffs ongoing

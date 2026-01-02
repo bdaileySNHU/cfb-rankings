@@ -28,7 +28,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.integrations.cfbd_client import CFBDClient, get_monthly_usage
+from src.integrations.cfbd_client import CFBDClient, get_monthly_usage, get_season_end_date
 
 # Configure logging
 logging.basicConfig(
@@ -43,24 +43,43 @@ def is_active_season() -> bool:
     """
     Check if current date is during active CFB season.
 
-    Active season runs from August 1 through January 31.
-    This accounts for the season spanning two calendar years
-    (e.g., 2025 season runs Aug 2025 - Jan 2026).
+    Active season runs from August through the configured season end date
+    (typically early February to account for playoffs). This accounts for the
+    season spanning two calendar years (e.g., 2025 season runs Aug 2025 - Feb 2026).
+
+    The season end date is configured via CFB_SEASON_END_DATE environment variable
+    (default: February 1st).
 
     Returns:
-        bool: True if current month is August through January, False otherwise
+        bool: True if current date is within active season, False otherwise
 
     Examples:
         >>> # August 15, 2025 → True
         >>> # December 20, 2025 → True
-        >>> # January 10, 2026 → True
+        >>> # January 10, 2026 → True (before Feb 1 default end date)
+        >>> # February 2, 2026 → False (after Feb 1 default end date)
         >>> # March 5, 2026 → False
     """
     today = datetime.now()
     month = today.month
+    day = today.day
 
-    # Active season: August (8) through December (12) OR January (1)
-    return month >= 8 or month <= 1
+    # Get configured season end date
+    season_end_month, season_end_day = get_season_end_date()
+
+    # Active season: August (8) through December (12)
+    if month >= 8:
+        return True
+
+    # Or January through season end date
+    if month < season_end_month:
+        # Months before end month (e.g., January when end is Feb)
+        return True
+    elif month == season_end_month and day < season_end_day:
+        # Before end date in end month
+        return True
+
+    return False
 
 
 def check_api_usage(db: "Session" = None) -> bool:

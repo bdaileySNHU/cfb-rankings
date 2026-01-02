@@ -98,6 +98,50 @@ class TestIsActiveSeason:
             mock_datetime.now.return_value = datetime(2026, 7, 25)
             assert weekly_update.is_active_season() is False
 
+    @patch("weekly_update.get_season_end_date")
+    def test_january_31_with_feb1_end_date_is_active(self, mock_end_date):
+        """January 31 should be active when end date is Feb 1"""
+        mock_end_date.return_value = (2, 1)  # Feb 1
+        with patch("weekly_update.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(2026, 1, 31)
+            assert weekly_update.is_active_season() is True
+
+    @patch("weekly_update.get_season_end_date")
+    def test_february_1_with_feb1_end_date_is_not_active(self, mock_end_date):
+        """February 1 should NOT be active when end date is Feb 1"""
+        mock_end_date.return_value = (2, 1)  # Feb 1
+        with patch("weekly_update.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(2026, 2, 1)
+            assert weekly_update.is_active_season() is False
+
+    @patch("weekly_update.get_season_end_date")
+    def test_custom_end_date_january_20_before(self, mock_end_date):
+        """January 19 should be active when end date is Jan 20"""
+        mock_end_date.return_value = (1, 20)  # Jan 20
+        with patch("weekly_update.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(2026, 1, 19)
+            assert weekly_update.is_active_season() is True
+
+    @patch("weekly_update.get_season_end_date")
+    def test_custom_end_date_january_20_on_date(self, mock_end_date):
+        """January 20 should NOT be active when end date is Jan 20"""
+        mock_end_date.return_value = (1, 20)  # Jan 20
+        with patch("weekly_update.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(2026, 1, 20)
+            assert weekly_update.is_active_season() is False
+
+    @patch("weekly_update.get_season_end_date")
+    def test_custom_end_date_february_15(self, mock_end_date):
+        """February 14 should be active when end date is Feb 15"""
+        mock_end_date.return_value = (2, 15)  # Feb 15
+        with patch("weekly_update.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(2026, 2, 14)
+            assert weekly_update.is_active_season() is True
+
+            # February 15 should NOT be active (on end date)
+            mock_datetime.now.return_value = datetime(2026, 2, 15)
+            assert weekly_update.is_active_season() is False
+
 
 class TestCheckApiUsage:
     """Tests for check_api_usage() function"""

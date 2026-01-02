@@ -242,6 +242,44 @@ def check_usage_warnings(month: str):
         _warning_thresholds_logged["80%"].add(month)
 
 
+def get_season_end_date() -> tuple[int, int]:
+    """
+    Get the configured season end date (month, day).
+
+    College football seasons span two calendar years (e.g., 2025-2026 season).
+    The season typically ends in January or early February with the College
+    Football Playoff National Championship.
+
+    The end date is configured via the CFB_SEASON_END_DATE environment variable
+    in MM-DD format (e.g., "02-01" for February 1st).
+
+    Returns:
+        tuple[int, int]: (month, day) when CFB season ends
+
+    Raises:
+        ValueError: If CFB_SEASON_END_DATE format is invalid
+
+    Example:
+        >>> month, day = get_season_end_date()
+        >>> print(f"Season ends on month {month}, day {day}")
+        Season ends on month 2, day 1
+    """
+    default_end = "02-01"  # February 1st
+    end_date_str = os.getenv("CFB_SEASON_END_DATE", default_end)
+
+    try:
+        month, day = map(int, end_date_str.split("-"))
+        # Validate month and day ranges
+        if not (1 <= month <= 12) or not (1 <= day <= 31):
+            raise ValueError(f"Invalid date components: month={month}, day={day}")
+        return (month, day)
+    except (ValueError, AttributeError) as e:
+        raise ValueError(
+            f"CFB_SEASON_END_DATE must be in MM-DD format (e.g., '02-01'). "
+            f"Got: '{end_date_str}'. Error: {e}"
+        )
+
+
 class CFBDClient:
     """Client for CollegeFootballData.com API with comprehensive data fetching.
 
@@ -295,24 +333,44 @@ class CFBDClient:
         """
         Determine the current college football season year based on calendar date.
 
-        Season year logic:
-        - August 1 through December 31: Current calendar year
-        - January 1 through July 31: Current calendar year
+        College football seasons span two calendar years (e.g., 2025-2026 season).
+        The season starts in August of year N and ends in January/February of year N+1
+        with the College Football Playoff National Championship.
 
-        Examples:
-            July 31, 2025 → 2025 season
-            August 1, 2025 → 2025 season (new season starts)
-            December 31, 2025 → 2025 season
-            January 15, 2026 → 2026 season (next year's planning)
+        Season year logic:
+        - August through December: Current calendar year
+        - January 1 through season end date: Previous calendar year (playoffs ongoing)
+        - After season end date through July: Current calendar year (offseason)
+
+        The season end date is configured via CFB_SEASON_END_DATE environment variable
+        (default: February 1st).
 
         Returns:
-            int: The current season year (e.g., 2025)
+            int: The current season year (e.g., when it's January 15, 2026, returns 2025)
+
+        Examples:
+            December 31, 2025 → returns 2025
+            January 15, 2026 → returns 2025 (playoffs still ongoing)
+            February 2, 2026 → returns 2026 (offseason)
+            August 1, 2026 → returns 2026 (new season starting)
         """
         now = datetime.now()
-        # Season year is always the current calendar year
-        # The college football season runs from August of year N to January of year N+1
-        # But we consider January-July of year N+1 as planning for year N+1 season
-        return now.year
+        current_month = now.month
+        current_day = now.day
+
+        # Get configured season end date from Story 1
+        season_end_month, season_end_day = get_season_end_date()
+
+        # Before season end date: previous year (playoffs ongoing)
+        if current_month < season_end_month:
+            # Months before end month: previous year
+            return now.year - 1
+        elif current_month == season_end_month and current_day < season_end_day:
+            # Before end date in end month: previous year
+            return now.year - 1
+        else:
+            # After season end date through December: current year
+            return now.year
 
     def get_current_week(self, season: int) -> Optional[int]:
         """

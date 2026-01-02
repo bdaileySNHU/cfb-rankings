@@ -84,6 +84,7 @@ The system automatically tracks all CFBD API calls to help monitor usage against
 Add to your `.env` file:
 ```bash
 CFBD_MONTHLY_LIMIT=1000  # Default: 1000 (free tier)
+CFB_SEASON_END_DATE=02-01  # Default: 02-01 (February 1st) - Season end date in MM-DD format
 ```
 
 ### Monitoring Endpoint
@@ -423,6 +424,7 @@ Create a `.env` file (see `.env.example`):
 CFBD_API_KEY=your_api_key_here
 DATABASE_URL=sqlite:///./cfb_rankings.db
 CFBD_MONTHLY_LIMIT=1000
+CFB_SEASON_END_DATE=02-01  # Optional: Season end date (MM-DD format), default: 02-01
 ```
 
 3. **Initialize database with sample data:**
