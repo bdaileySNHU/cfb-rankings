@@ -149,6 +149,10 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
             "both_wrong": 0,
             "by_week": [],
             "disagreements": [],
+            "overall_elo_accuracy": 0.0,
+            "overall_elo_total": 0,
+            "overall_elo_correct": 0,
+            "message": "Comparison data will be available once AP Poll rankings are imported for this season.",
         }
 
     # Track statistics

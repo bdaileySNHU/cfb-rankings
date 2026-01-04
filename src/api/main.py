@@ -823,15 +823,37 @@ async def get_prediction_comparison(
         # Calculate comparison statistics
         comparison_stats = calculate_comparison_stats(db, season)
 
+        # Check if we have any comparison data - return graceful empty state
+        if comparison_stats.get("total_games_compared", 0) == 0:
+            logger.info(f"No comparison data available for season {season} - returning empty state")
+
         return comparison_stats
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error calculating prediction comparison: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Error calculating prediction comparison: {str(e)}"
-        )
+        # Log error with full traceback for debugging
+        logger.error(f"Error calculating prediction comparison: {str(e)}", exc_info=True)
+        # Return graceful empty state instead of 500 error
+        return {
+            "season": season if season else 2025,
+            "elo_accuracy": 0.0,
+            "ap_accuracy": 0.0,
+            "elo_advantage": 0.0,
+            "total_games_compared": 0,
+            "elo_correct": 0,
+            "ap_correct": 0,
+            "both_correct": 0,
+            "elo_only_correct": 0,
+            "ap_only_correct": 0,
+            "both_wrong": 0,
+            "by_week": [],
+            "disagreements": [],
+            "overall_elo_accuracy": 0.0,
+            "overall_elo_total": 0,
+            "overall_elo_correct": 0,
+            "message": "Comparison data is currently unavailable. Please try again later.",
+        }
 
 
 # ============================================================================

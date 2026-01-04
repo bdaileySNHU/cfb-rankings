@@ -597,3 +597,6 @@ class ComparisonStats(BaseModel):
     )
     overall_elo_total: int = Field(..., description="Total ELO predictions evaluated", ge=0)
     overall_elo_correct: int = Field(..., description="Total ELO predictions correct", ge=0)
+    message: Optional[str] = Field(
+        None, description="Optional message for empty state or error conditions"
+    )

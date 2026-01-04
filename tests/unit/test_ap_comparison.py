@@ -240,7 +240,7 @@ class TestComparisonStatistics:
         return db
 
     def test_calculate_comparison_stats_no_data(self):
-        """Test comparison stats with no games"""
+        """Test comparison stats with no games (empty state)"""
         db = Mock()
         db.query.return_value.filter.return_value.all.return_value = []
 
@@ -252,6 +252,12 @@ class TestComparisonStatistics:
         assert stats["ap_accuracy"] == 0.0
         assert len(stats["by_week"]) == 0
         assert len(stats["disagreements"]) == 0
+        # Check for new empty state fields
+        assert stats["overall_elo_accuracy"] == 0.0
+        assert stats["overall_elo_total"] == 0
+        assert stats["overall_elo_correct"] == 0
+        assert "message" in stats
+        assert "available once" in stats["message"].lower()
 
     def test_calculate_comparison_stats_structure(self):
         """Test that comparison stats returns correct structure"""
@@ -274,6 +280,11 @@ class TestComparisonStatistics:
         assert "both_wrong" in stats
         assert "by_week" in stats
         assert "disagreements" in stats
+        # Check for overall ELO stats and message field
+        assert "overall_elo_accuracy" in stats
+        assert "overall_elo_total" in stats
+        assert "overall_elo_correct" in stats
+        assert "message" in stats
 
     def test_elo_advantage_calculation(self):
         """Test ELO advantage calculation"""

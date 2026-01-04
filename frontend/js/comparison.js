@@ -29,6 +29,21 @@ async function loadComparisonData() {
     // Fetch comparison data
     const comparison = await api.getPredictionComparison(activeSeason);
 
+    // Check if we have comparison data (empty state)
+    if (comparison.total_games_compared === 0) {
+      const message = comparison.message || "No comparison data available for this season yet.";
+      loading.innerHTML = `
+        <div class="empty-state" style="text-align: center; padding: 3rem 2rem;">
+          <p style="font-size: 1.3rem; margin-bottom: 1rem; color: var(--text-primary);">📊 No Comparison Data Yet</p>
+          <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">${message}</p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">
+            AP Poll rankings will be available once games with rankings are imported.
+          </p>
+        </div>
+      `;
+      return;
+    }
+
     // Hide loading, show content
     loading.classList.add('hidden');
     content.classList.remove('hidden');
