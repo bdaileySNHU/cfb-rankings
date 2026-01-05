@@ -10,8 +10,17 @@ echo "  - Miami at Ole Miss (Fiesta Bowl) - Jan 9, 2026"
 echo "  - Oregon at Indiana (Peach Bowl) - Jan 10, 2026"
 echo
 
-echo "Step 1: Importing games from CFBD API..."
+# Load environment variables
 cd /var/www/cfb-rankings
+if [ -f .env ]; then
+    export $(cat .env | grep -v '^#' | xargs)
+    echo "✓ Environment variables loaded from .env"
+else
+    echo "⚠ Warning: .env file not found"
+fi
+echo
+
+echo "Step 1: Importing games from CFBD API..."
 source venv/bin/activate && python3 scripts/weekly_update.py
 
 echo
@@ -21,15 +30,15 @@ source venv/bin/activate && python3 scripts/generate_predictions.py
 echo
 echo "=== Verification ==="
 echo "Checking imported playoff games..."
-cd /var/www/cfb-rankings && sqlite3 cfb_rankings.db 'SELECT COUNT(*) FROM games WHERE season = 2025 AND is_processed = FALSE AND postseason_name IS NOT NULL;'
+sqlite3 cfb_rankings.db 'SELECT COUNT(*) FROM games WHERE season = 2025 AND is_processed = FALSE AND postseason_name IS NOT NULL;'
 
 echo
 echo "Checking generated predictions..."
-cd /var/www/cfb-rankings && sqlite3 cfb_rankings.db 'SELECT COUNT(*) FROM predictions p JOIN games g ON p.game_id = g.id WHERE g.season = 2025 AND g.postseason_name IS NOT NULL AND g.is_processed = FALSE;'
+sqlite3 cfb_rankings.db 'SELECT COUNT(*) FROM predictions p JOIN games g ON p.game_id = g.id WHERE g.season = 2025 AND g.postseason_name IS NOT NULL AND g.is_processed = FALSE;'
 
 echo
 echo "=== Showing Playoff Games Details ==="
-cd /var/www/cfb-rankings && sqlite3 -header -column cfb_rankings.db 'SELECT id, home_team, away_team, game_date, postseason_name FROM games WHERE season = 2025 AND is_processed = FALSE AND postseason_name IS NOT NULL ORDER BY game_date;'
+sqlite3 -header -column cfb_rankings.db 'SELECT id, home_team, away_team, game_date, postseason_name FROM games WHERE season = 2025 AND is_processed = FALSE AND postseason_name IS NOT NULL ORDER BY game_date;'
 
 echo
 echo "=== Done ==="
