@@ -30,15 +30,29 @@ source venv/bin/activate && python3 scripts/generate_predictions.py
 echo
 echo "=== Verification ==="
 echo "Checking imported playoff games..."
-sqlite3 cfb_rankings.db 'SELECT COUNT(*) FROM games WHERE season = 2025 AND is_processed = FALSE AND postseason_name IS NOT NULL;'
+sqlite3 cfb_rankings.db 'SELECT COUNT(*) FROM games WHERE season = 2025 AND is_processed = 0 AND postseason_name IS NOT NULL;'
 
 echo
 echo "Checking generated predictions..."
-sqlite3 cfb_rankings.db 'SELECT COUNT(*) FROM predictions p JOIN games g ON p.game_id = g.id WHERE g.season = 2025 AND g.postseason_name IS NOT NULL AND g.is_processed = FALSE;'
+sqlite3 cfb_rankings.db 'SELECT COUNT(*) FROM predictions p JOIN games g ON p.game_id = g.id WHERE g.season = 2025 AND g.postseason_name IS NOT NULL AND g.is_processed = 0;'
 
 echo
 echo "=== Showing Playoff Games Details ==="
-sqlite3 -header -column cfb_rankings.db 'SELECT id, home_team, away_team, game_date, postseason_name FROM games WHERE season = 2025 AND is_processed = FALSE AND postseason_name IS NOT NULL ORDER BY game_date;'
+sqlite3 -header -column cfb_rankings.db "
+SELECT
+    g.id,
+    ht.name as home_team,
+    at.name as away_team,
+    g.game_date,
+    g.postseason_name
+FROM games g
+JOIN teams ht ON g.home_team_id = ht.id
+JOIN teams at ON g.away_team_id = at.id
+WHERE g.season = 2025
+  AND g.is_processed = 0
+  AND g.postseason_name IS NOT NULL
+ORDER BY g.game_date;
+"
 
 echo
 echo "=== Done ==="
