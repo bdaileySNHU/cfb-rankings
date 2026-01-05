@@ -24,8 +24,9 @@ echo "Step 1: Importing games from CFBD API..."
 source venv/bin/activate && python3 scripts/weekly_update.py
 
 echo
-echo "Step 2: Generating predictions..."
-source venv/bin/activate && python3 scripts/generate_predictions.py
+echo "Step 2: Generating predictions for all unprocessed games..."
+echo "Note: Using backfill_predictions.py to generate predictions for playoff games"
+source venv/bin/activate && python3 scripts/backfill_predictions.py --season 2025
 
 echo
 echo "=== Verification ==="
