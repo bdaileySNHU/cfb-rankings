@@ -811,7 +811,7 @@ async def get_prediction_comparison(
     ```
     """
     try:
-        from ap_poll_service import calculate_comparison_stats
+        from src.core.ap_poll_service import calculate_comparison_stats
 
         # Get active season if not specified
         if not season:
