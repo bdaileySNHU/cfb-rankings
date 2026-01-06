@@ -650,6 +650,18 @@ async def get_predictions(
             result = []
             for pred in stored_predictions:
                 game = pred.game
+
+                # Calculate confidence level based on win probability
+                win_prob = pred.win_probability * 100
+                if win_prob >= 80:
+                    confidence = "Very High"
+                elif win_prob >= 70:
+                    confidence = "High"
+                elif win_prob >= 60:
+                    confidence = "Medium"
+                else:
+                    confidence = "Low"
+
                 result.append({
                     "game_id": game.id,
                     "home_team_id": game.home_team_id,
@@ -664,6 +676,8 @@ async def get_predictions(
                     "predicted_away_score": pred.predicted_away_score,
                     "home_win_probability": pred.win_probability * 100 if pred.predicted_winner_id == game.home_team_id else (1 - pred.win_probability) * 100,
                     "away_win_probability": pred.win_probability * 100 if pred.predicted_winner_id == game.away_team_id else (1 - pred.win_probability) * 100,
+                    "is_neutral_site": game.is_neutral_site,
+                    "confidence": confidence,
                     "week": game.week,
                     "season": game.season,
                 })
