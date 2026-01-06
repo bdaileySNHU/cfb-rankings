@@ -4,6 +4,7 @@ Generate predictions for ALL upcoming games (not just next week)
 Useful for playoff games and special cases
 """
 
+import argparse
 import os
 import sys
 
@@ -15,15 +16,32 @@ from datetime import datetime
 from src.models.database import SessionLocal
 from src.models.models import Prediction
 from src.core.ranking_service import generate_predictions
+from src.integrations.cfbd_client import CFBDClient
 
 
 def main():
-    print("Generating predictions for ALL upcoming games...")
+    parser = argparse.ArgumentParser(description="Generate predictions for all upcoming games")
+    parser.add_argument(
+        "--season",
+        type=int,
+        help="Season year (defaults to current CFB season, which handles Jan playoffs correctly)",
+    )
+    args = parser.parse_args()
+
+    # Determine season year using CFB season logic
+    # This correctly handles January playoffs as part of previous year's season
+    if args.season:
+        season_year = args.season
+    else:
+        client = CFBDClient()
+        season_year = client.get_current_season()
+
+    print(f"Generating predictions for ALL upcoming games in {season_year} season...")
 
     db = SessionLocal()
     try:
         # Generate predictions for ALL unprocessed games (next_week=False)
-        prediction_dicts = generate_predictions(db, next_week=False)
+        prediction_dicts = generate_predictions(db, next_week=False, season_year=season_year)
         print(f"\n📊 Generated {len(prediction_dicts)} prediction calculations")
 
         if not prediction_dicts:
