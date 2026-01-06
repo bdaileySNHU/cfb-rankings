@@ -599,7 +599,7 @@ async def create_game(game: schemas.GameCreate, db: Session = Depends(get_db)):
 
 @app.get("/api/predictions", response_model=List[schemas.GamePrediction], tags=["Predictions"])
 async def get_predictions(
-    week: Optional[int] = Query(None, ge=0, le=15, description="Specific week number (0-15)"),
+    week: Optional[int] = Query(None, ge=0, le=20, description="Specific week number (0-20, includes playoffs)"),
     team_id: Optional[int] = Query(None, ge=1, description="Filter by team ID"),
     next_week: bool = Query(True, description="Only show next week's games"),
     season: Optional[int] = Query(None, ge=2020, description="Season year"),
@@ -613,7 +613,7 @@ async def get_predictions(
     but applied in reverse to forecast outcomes.
 
     **Query Parameters:**
-    - **week**: Get predictions for specific week (0-15)
+    - **week**: Get predictions for specific week (0-20, includes playoff weeks)
     - **team_id**: Filter predictions involving specific team
     - **next_week**: Only show next week's games (default: true)
     - **season**: Season year (defaults to current year)
@@ -704,7 +704,7 @@ async def get_team_prediction_accuracy_endpoint(
 )
 async def get_stored_predictions(
     season: Optional[int] = Query(None, description="Filter by season year"),
-    week: Optional[int] = Query(None, ge=0, le=15, description="Filter by week"),
+    week: Optional[int] = Query(None, ge=0, le=20, description="Filter by week (includes playoffs)"),
     team_id: Optional[int] = Query(None, description="Filter by team ID"),
     evaluated_only: bool = Query(False, description="Only return evaluated predictions"),
     db: Session = Depends(get_db),
@@ -717,7 +717,7 @@ async def get_stored_predictions(
 
     **Query Parameters:**
     - **season**: Filter by season year
-    - **week**: Filter by week number
+    - **week**: Filter by week number (0-20, includes playoff weeks)
     - **team_id**: Filter by team ID (home or away)
     - **evaluated_only**: Only return predictions that have been evaluated
 
