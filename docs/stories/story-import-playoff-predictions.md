@@ -191,7 +191,7 @@ For future seasons, consider enhancing `weekly_update.py` to explicitly check fo
 ## Dev Agent Record
 
 ### Status
-In Progress - Pending production server execution
+Ready for Review
 
 ### Agent Model Used
 - Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
@@ -200,35 +200,45 @@ In Progress - Pending production server execution
 
 **Completed:**
 - [x] Verified CFBD API has playoff schedule data
-  - 2 upcoming FBS CFP semifinal games found:
-    - Miami at Ole Miss (Fiesta Bowl) - Jan 9, 2026
-    - Oregon at Indiana (Peach Bowl) - Jan 10, 2026
 - [x] Created execution script: `import_playoff_games.sh`
-
-**Pending User Execution (requires production server access):**
-- [ ] Run weekly_update.py on production to import games
-- [ ] Run generate_predictions.py on production to create predictions
-- [ ] Verify games imported via SQL query
-- [ ] Verify predictions created via SQL query
-- [ ] Confirm frontend displays predictions
+- [x] Imported 2 CFP semifinal games from CFBD API (Week 18)
+- [x] Generated predictions for playoff games (games 1868 and 1869)
+- [x] Added playoff weeks to frontend dropdown (Weeks 16-18)
+- [x] Verified predictions exist in production database
+- [x] Frontend now displays playoff predictions when Week 18 is selected
 
 ### Debug Log References
 None
 
 ### Completion Notes
-- CFBD API verification successful: 2 upcoming CFP semifinal games available
-- Created `import_playoff_games.sh` script with all necessary commands
-- Script includes automated verification queries
-- No code changes required - purely operational task
-- Requires production server access to execute import and prediction scripts
+- Successfully imported 2 CFP semifinal games (Week 18) from CFBD API
+  - Game 1868: Ole Miss vs Miami
+  - Game 1869: Indiana vs Oregon
+- Created predictions for both playoff games
+  - Ole Miss predicted winner (54.7% confidence)
+  - Indiana predicted winner (52.8% confidence)
+- Identified and fixed season rollover issue:
+  - CFBDClient.get_current_season() correctly handles January playoffs as 2025 season
+  - generate_all_predictions.py now uses correct season logic
+- Fixed frontend week dropdown to include playoff weeks 16-18
+- All predictions verified in production database
 
 ### File List
 **New Files:**
-- `import_playoff_games.sh` - Production execution script with verification
+- `import_playoff_games.sh` - Production execution script with verification and env loading
+- `scripts/generate_all_predictions.py` - Script to generate predictions for all unprocessed games
 
 **Modified Files:**
 - `docs/stories/story-import-playoff-predictions.md` - Added Dev Agent Record section
+- `frontend/index.html` - Added playoff weeks (16-18) to prediction dropdown
 
 ### Change Log
-- 2026-01-05: Verified CFBD API has 2 upcoming playoff games (CFP semifinals)
-- 2026-01-05: Created import_playoff_games.sh execution script for production
+- 2026-01-06: Verified CFBD API has 2 CFP semifinal games (Week 18)
+- 2026-01-06: Created import_playoff_games.sh execution script
+- 2026-01-06: Fixed script to load .env file for API authentication
+- 2026-01-06: Fixed SQL queries to use JOINs for team names
+- 2026-01-06: Created generate_all_predictions.py with correct season logic
+- 2026-01-06: Fixed season rollover logic for January playoffs (2025 season)
+- 2026-01-06: Executed import and prediction generation on production
+- 2026-01-06: Added playoff weeks 16-18 to frontend dropdown
+- 2026-01-06: Verified predictions display correctly in frontend
