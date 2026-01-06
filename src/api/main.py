@@ -622,13 +622,62 @@ async def get_predictions(
     - Array of predictions with winner, scores, probabilities, and confidence
     """
     try:
+        from sqlalchemy import or_
+
+        # Determine season year
+        if not season:
+            from src.integrations.cfbd_client import CFBDClient
+            client = CFBDClient()
+            season = client.get_current_season()
+
+        # First, check if we have stored predictions for unprocessed games
+        query = db.query(Prediction).join(Game).filter(
+            Game.is_processed == False,
+            Game.season == season
+        )
+
+        # Apply filters
+        if week is not None:
+            query = query.filter(Game.week == week)
+        if team_id:
+            query = query.filter(or_(Game.home_team_id == team_id, Game.away_team_id == team_id))
+
+        stored_predictions = query.all()
+
+        # If we have stored predictions, return those
+        if stored_predictions:
+            logger.info(f"Returning {len(stored_predictions)} stored predictions")
+            result = []
+            for pred in stored_predictions:
+                game = pred.game
+                result.append({
+                    "game_id": game.id,
+                    "home_team_id": game.home_team_id,
+                    "home_team": game.home_team.name,
+                    "home_team_rating": pred.home_elo_at_prediction,
+                    "away_team_id": game.away_team_id,
+                    "away_team": game.away_team.name,
+                    "away_team_rating": pred.away_elo_at_prediction,
+                    "predicted_winner_id": pred.predicted_winner_id,
+                    "predicted_winner": pred.predicted_winner.name if pred.predicted_winner else None,
+                    "predicted_home_score": pred.predicted_home_score,
+                    "predicted_away_score": pred.predicted_away_score,
+                    "home_win_probability": pred.win_probability * 100 if pred.predicted_winner_id == game.home_team_id else (1 - pred.win_probability) * 100,
+                    "away_win_probability": pred.win_probability * 100 if pred.predicted_winner_id == game.away_team_id else (1 - pred.win_probability) * 100,
+                    "week": game.week,
+                    "season": game.season,
+                })
+            return result
+
+        # Otherwise, generate predictions on-the-fly
+        logger.info("No stored predictions found, generating new predictions")
         predictions = generate_predictions(
             db=db, week=week, team_id=team_id, next_week=next_week, season_year=season
         )
         return predictions
     except Exception as e:
-        logger.error(f"Error generating predictions: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error generating predictions: {str(e)}")
+        logger.error(f"Error getting predictions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting predictions: {str(e)}")
 
 
 @app.get(
