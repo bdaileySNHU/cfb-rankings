@@ -124,6 +124,7 @@ async function loadComparisonData(season = null) {
     // Display all sections
     displayHeroStats(comparison);
     displayBreakdownStats(comparison);
+    displayPostseasonStats(comparison);  // EPIC-COMPARISON-BOWL-PLAYOFF
     displayAccuracyChart(comparison);
     displayDisagreements(comparison);
 
@@ -187,6 +188,94 @@ function displayBreakdownStats(comparison) {
 }
 
 /**
+ * Display postseason vs regular season statistics
+ * EPIC-COMPARISON-BOWL-PLAYOFF: Story 3
+ */
+function displayPostseasonStats(comparison) {
+  const postseasonCard = document.getElementById('postseason-stats-card');
+  const postseasonEmptyState = document.getElementById('postseason-empty-state');
+
+  // Check if we have postseason data (any week >= 16 in by_week array)
+  const hasPostseasonData = comparison.by_week && comparison.by_week.some(w => w.week >= 16);
+
+  // Show the card
+  postseasonCard.style.display = 'block';
+
+  if (!hasPostseasonData) {
+    // Show empty state if no postseason data
+    postseasonEmptyState.style.display = 'block';
+    // Hide postseason stats section
+    document.querySelector('#postseason-stats-card > div:nth-child(3)').style.display = 'none';
+    return;
+  }
+
+  // Hide empty state and show postseason stats
+  postseasonEmptyState.style.display = 'none';
+  document.querySelector('#postseason-stats-card > div:nth-child(3)').style.display = 'block';
+
+  // Calculate game counts for regular season and postseason
+  const regularSeasonGames = comparison.by_week
+    .filter(w => w.week <= 15)
+    .reduce((sum, w) => sum + w.games, 0);
+  const postseasonGames = comparison.by_week
+    .filter(w => w.week >= 16)
+    .reduce((sum, w) => sum + w.games, 0);
+
+  // Regular Season Stats
+  const regularSeasonEloAccuracy = (comparison.regular_season_elo_accuracy * 100).toFixed(1);
+  const regularSeasonApAccuracy = (comparison.regular_season_ap_accuracy * 100).toFixed(1);
+
+  document.getElementById('regular-season-elo-accuracy').textContent = `${regularSeasonEloAccuracy}%`;
+  document.getElementById('regular-season-ap-accuracy').textContent = `${regularSeasonApAccuracy}%`;
+  document.getElementById('regular-season-elo-subtext').textContent = `${regularSeasonGames} game${regularSeasonGames !== 1 ? 's' : ''}`;
+  document.getElementById('regular-season-ap-subtext').textContent = `${regularSeasonGames} game${regularSeasonGames !== 1 ? 's' : ''}`;
+
+  // Postseason Stats
+  const postseasonEloAccuracy = (comparison.postseason_elo_accuracy * 100).toFixed(1);
+  const postseasonApAccuracy = (comparison.postseason_ap_accuracy * 100).toFixed(1);
+
+  document.getElementById('postseason-elo-accuracy').textContent = `${postseasonEloAccuracy}%`;
+  document.getElementById('postseason-ap-accuracy').textContent = `${postseasonApAccuracy}%`;
+  document.getElementById('postseason-elo-subtext').textContent = `${postseasonGames} game${postseasonGames !== 1 ? 's' : ''}`;
+  document.getElementById('postseason-ap-subtext').textContent = `${postseasonGames} game${postseasonGames !== 1 ? 's' : ''}`;
+}
+
+/**
+ * Get descriptive week label for chart
+ * EPIC-COMPARISON-BOWL-PLAYOFF: Maps week numbers to user-friendly labels
+ *
+ * @param {number} week - Week number (1-20)
+ * @param {string|null} gameType - Game type ('bowl', 'playoff', 'conference_championship', or null)
+ * @param {string|null} postseasonName - Full postseason name (e.g., "CFP Semifinal - Rose Bowl")
+ * @returns {string} Formatted week label
+ */
+function getWeekLabel(week, gameType, postseasonName) {
+  // Regular season weeks (1-15)
+  if (week <= 15) {
+    return `Week ${week}`;
+  }
+
+  // Postseason weeks (16-20): Use postseason_name if available
+  if (postseasonName) {
+    // Abbreviate common terms for chart readability
+    return postseasonName
+      .replace('College Football Playoff', 'CFP')
+      .replace('Conference Championship', 'Conf. Champ.');
+  }
+
+  // Fallback generic labels based on week number
+  const postseasonLabels = {
+    16: 'Bowl Week 1',
+    17: 'Bowl Week 2',
+    18: 'CFP Semifinals',
+    19: 'Conf. Championships',
+    20: 'CFP Championship'
+  };
+
+  return postseasonLabels[week] || `Week ${week}`;
+}
+
+/**
  * Display accuracy over time chart
  */
 function displayAccuracyChart(comparison) {
@@ -198,9 +287,14 @@ function displayAccuracyChart(comparison) {
   }
 
   // Prepare data
-  const weeks = comparison.by_week.map(w => `Week ${w.week}`);
+  // EPIC-COMPARISON-BOWL-PLAYOFF: Use descriptive labels for postseason weeks
+  const weeks = comparison.by_week.map(w => getWeekLabel(w.week, w.game_type, w.postseason_name));
   const eloData = comparison.by_week.map(w => (w.elo_accuracy * 100).toFixed(1));
   const apData = comparison.by_week.map(w => (w.ap_accuracy * 100).toFixed(1));
+
+  // EPIC-COMPARISON-BOWL-PLAYOFF: Find index where postseason starts (week 16+)
+  const postseasonStartIndex = comparison.by_week.findIndex(w => w.week >= 16);
+  const hasPostseason = postseasonStartIndex !== -1;
 
   // Create chart
   comparisonChart = new Chart(ctx, {
@@ -232,6 +326,38 @@ function displayAccuracyChart(comparison) {
         }
       ]
     },
+    // EPIC-COMPARISON-BOWL-PLAYOFF: Add custom plugin for postseason visual separator
+    plugins: hasPostseason ? [{
+      id: 'postseasonSeparator',
+      afterDraw: (chart) => {
+        const ctx = chart.ctx;
+        const xAxis = chart.scales.x;
+        const yAxis = chart.scales.y;
+
+        // Draw vertical line after week 15 (before postseason)
+        if (postseasonStartIndex > 0) {
+          const x = xAxis.getPixelForValue(postseasonStartIndex - 0.5);
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 5]);
+          ctx.moveTo(x, yAxis.top);
+          ctx.lineTo(x, yAxis.bottom);
+          ctx.stroke();
+          ctx.restore();
+
+          // Add "Postseason" label
+          ctx.save();
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+          ctx.font = '12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('← Regular Season | Postseason →', x, yAxis.top - 5);
+          ctx.restore();
+        }
+      }
+    }] : [],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -252,6 +378,14 @@ function displayAccuracyChart(comparison) {
           callbacks: {
             label: function(context) {
               return `${context.dataset.label}: ${context.parsed.y}%`;
+            },
+            // EPIC-COMPARISON-BOWL-PLAYOFF: Show game count in tooltip
+            afterLabel: function(context) {
+              const weekData = comparison.by_week[context.dataIndex];
+              if (weekData && weekData.games) {
+                return `(${weekData.games} game${weekData.games !== 1 ? 's' : ''})`;
+              }
+              return '';
             }
           }
         }
@@ -320,9 +454,12 @@ function displayDisagreements(comparison) {
       resultBadge = '<span style="color: var(--text-secondary);">Both Wrong</span>';
     }
 
+    // EPIC-COMPARISON-BOWL-PLAYOFF: Use descriptive week labels for postseason
+    const weekLabel = getWeekLabel(game.week, game.game_type, game.postseason_name);
+
     return `
       <tr>
-        <td>${game.week}</td>
+        <td>${weekLabel}</td>
         <td><strong>${game.matchup}</strong></td>
         <td>${game.elo_predicted}</td>
         <td>${game.ap_predicted}</td>

@@ -106,6 +106,64 @@
         </div>
       </div>
 
+      <!-- EPIC-COMPARISON-BOWL-PLAYOFF: Postseason vs Regular Season Stats -->
+      <div class="card" id="postseason-stats-card" style="display: none;">
+        <div class="card-header">
+          <h2 class="card-title">Regular Season vs Postseason Accuracy</h2>
+          <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+            How well do the systems predict during bowl games and playoffs?
+          </p>
+        </div>
+
+        <!-- Regular Season Stats -->
+        <div style="margin-bottom: 2rem;">
+          <h3 style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
+            📅 Regular Season (Weeks 1-15)
+          </h3>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">ELO Accuracy</div>
+              <div class="stat-value" id="regular-season-elo-accuracy">--</div>
+              <div class="stat-subtext" id="regular-season-elo-subtext">--</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">AP Poll Accuracy</div>
+              <div class="stat-value" id="regular-season-ap-accuracy">--</div>
+              <div class="stat-subtext" id="regular-season-ap-subtext">--</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Postseason Stats -->
+        <div>
+          <h3 style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
+            🏆 Postseason (Weeks 16-20)
+          </h3>
+          <div class="stats-grid">
+            <div class="stat-card" style="background-color: var(--primary-bg);">
+              <div class="stat-label">ELO Accuracy</div>
+              <div class="stat-value" id="postseason-elo-accuracy" style="color: var(--primary-color);">--</div>
+              <div class="stat-subtext" id="postseason-elo-subtext">--</div>
+            </div>
+            <div class="stat-card" style="background-color: var(--warning-bg);">
+              <div class="stat-label">AP Poll Accuracy</div>
+              <div class="stat-value" id="postseason-ap-accuracy" style="color: var(--warning-color);">--</div>
+              <div class="stat-subtext" id="postseason-ap-subtext">--</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Postseason Empty State -->
+        <div id="postseason-empty-state" style="display: none; text-align: center; padding: 2rem; background-color: var(--background-secondary); border-radius: 8px; margin-top: 1rem;">
+          <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 0.5rem;">
+            ⏳ Postseason data not yet available
+          </p>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">
+            Bowl games and playoff data will appear here once postseason games are played.
+          </p>
+        </div>
+      </div>
+
       <!-- Accuracy Over Time Chart -->
       <div class="card">
         <div class="card-header">

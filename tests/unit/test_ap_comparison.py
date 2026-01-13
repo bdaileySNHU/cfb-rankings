@@ -295,3 +295,265 @@ class TestComparisonStatistics:
 
         # With no data, advantage should be 0
         assert stats["elo_advantage"] == stats["elo_accuracy"] - stats["ap_accuracy"]
+
+    def test_postseason_fields_in_empty_state(self):
+        """Test that postseason fields are included in empty state response"""
+        db = Mock()
+        db.query.return_value.filter.return_value.all.return_value = []
+
+        stats = calculate_comparison_stats(db, 2024)
+
+        # EPIC-COMPARISON-BOWL-PLAYOFF: Verify postseason fields present
+        assert "regular_season_elo_accuracy" in stats
+        assert "regular_season_ap_accuracy" in stats
+        assert "postseason_elo_accuracy" in stats
+        assert "postseason_ap_accuracy" in stats
+        # All should be 0.0 in empty state
+        assert stats["regular_season_elo_accuracy"] == 0.0
+        assert stats["regular_season_ap_accuracy"] == 0.0
+        assert stats["postseason_elo_accuracy"] == 0.0
+        assert stats["postseason_ap_accuracy"] == 0.0
+
+    def test_postseason_game_included_in_calculations(self):
+        """Test that postseason games (weeks 16-20) are included in comparison"""
+        db = Mock()
+
+        # Create a postseason game (week 17 - CFP Quarterfinal)
+        postseason_game = Mock(spec=Game)
+        postseason_game.id = 100
+        postseason_game.season = 2024
+        postseason_game.week = 17  # Postseason
+        postseason_game.home_team_id = 10
+        postseason_game.away_team_id = 20
+        postseason_game.home_score = 35
+        postseason_game.away_score = 31
+        postseason_game.is_processed = True
+        postseason_game.excluded_from_rankings = False
+        postseason_game.game_type = "playoff"
+        postseason_game.postseason_name = "CFP Quarterfinal"
+
+        games = [postseason_game]
+
+        # Setup mock query chain for games
+        mock_game_query = Mock()
+        mock_game_query.all.return_value = games
+
+        # Create prediction for postseason game
+        postseason_pred = Mock()
+        postseason_pred.game_id = 100
+        postseason_pred.predicted_winner_id = 10  # Predicted home team (correct)
+        postseason_pred.was_correct = True
+
+        # Mock AP rank function
+        def mock_ap_rank(db_arg, team_id, season, week):
+            if team_id == 10:  # Home team
+                return 3  # Ranked #3
+            elif team_id == 20:  # Away team
+                return 7  # Ranked #7
+            return None
+
+        # Mock Team query
+        mock_team = Mock()
+        mock_team.name = "Team"
+
+        def mock_query(model):
+            if model == Game:
+                return Mock(filter=Mock(return_value=mock_game_query))
+            elif model == Prediction:
+                mock_pred_query = Mock()
+
+                def filter_pred(game_id_filter):
+                    mock_pred_query.first.return_value = postseason_pred
+                    return mock_pred_query
+
+                mock_pred_query.filter = filter_pred
+                # For overall ELO accuracy query
+                mock_pred_query.join.return_value.filter.return_value.all.return_value = [postseason_pred]
+                return mock_pred_query
+            elif model == Team:
+                return Mock(filter=Mock(return_value=Mock(first=Mock(return_value=mock_team))))
+            return Mock()
+
+        db.query = mock_query
+
+        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank):
+            stats = calculate_comparison_stats(db, 2024)
+
+        # EPIC-COMPARISON-BOWL-PLAYOFF: Verify postseason game was included
+        assert stats["total_games_compared"] == 1
+        assert stats["postseason_elo_accuracy"] == 1.0  # 100% accurate (1/1 correct)
+        assert stats["postseason_ap_accuracy"] == 1.0  # AP also correct (lower rank wins)
+        assert stats["regular_season_elo_accuracy"] == 0.0  # No regular season games
+        assert stats["regular_season_ap_accuracy"] == 0.0
+
+    def test_game_type_and_postseason_name_in_by_week(self):
+        """Test that game_type and postseason_name are included in by_week breakdown"""
+        db = Mock()
+
+        # Create postseason game with game_type and postseason_name
+        playoff_game = Mock(spec=Game)
+        playoff_game.id = 200
+        playoff_game.season = 2024
+        playoff_game.week = 18  # CFP Semifinal week
+        playoff_game.home_team_id = 10
+        playoff_game.away_team_id = 20
+        playoff_game.home_score = 42
+        playoff_game.away_score = 35
+        playoff_game.is_processed = True
+        playoff_game.excluded_from_rankings = False
+        playoff_game.game_type = "playoff"
+        playoff_game.postseason_name = "CFP Semifinal - Rose Bowl"
+
+        games = [playoff_game]
+
+        # Setup mocks
+        mock_game_query = Mock()
+        mock_game_query.all.return_value = games
+
+        playoff_pred = Mock()
+        playoff_pred.game_id = 200
+        playoff_pred.predicted_winner_id = 10  # Correct
+        playoff_pred.was_correct = True
+
+        def mock_ap_rank(db_arg, team_id, season, week):
+            if team_id == 10:
+                return 2
+            elif team_id == 20:
+                return 5
+            return None
+
+        mock_team = Mock()
+        mock_team.name = "Team"
+
+        def mock_query(model):
+            if model == Game:
+                return Mock(filter=Mock(return_value=mock_game_query))
+            elif model == Prediction:
+                mock_pred_query = Mock()
+                mock_pred_query.filter = Mock(return_value=Mock(first=Mock(return_value=playoff_pred)))
+                mock_pred_query.join.return_value.filter.return_value.all.return_value = [playoff_pred]
+                return mock_pred_query
+            elif model == Team:
+                return Mock(filter=Mock(return_value=Mock(first=Mock(return_value=mock_team))))
+            return Mock()
+
+        db.query = mock_query
+
+        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank):
+            stats = calculate_comparison_stats(db, 2024)
+
+        # EPIC-COMPARISON-BOWL-PLAYOFF: Verify game_type and postseason_name in by_week
+        assert len(stats["by_week"]) == 1
+        week_18_stats = stats["by_week"][0]
+        assert week_18_stats["week"] == 18
+        assert week_18_stats["game_type"] == "playoff"
+        assert week_18_stats["postseason_name"] == "CFP Semifinal - Rose Bowl"
+        assert week_18_stats["elo_accuracy"] == 1.0
+        assert week_18_stats["ap_accuracy"] == 1.0
+        assert week_18_stats["games"] == 1
+
+    def test_mixed_regular_and_postseason_games(self):
+        """Test comparison with both regular season and postseason games"""
+        db = Mock()
+
+        # Regular season game (week 10)
+        regular_game = Mock(spec=Game)
+        regular_game.id = 1
+        regular_game.season = 2024
+        regular_game.week = 10
+        regular_game.home_team_id = 10
+        regular_game.away_team_id = 20
+        regular_game.home_score = 28
+        regular_game.away_score = 24
+        regular_game.is_processed = True
+        regular_game.excluded_from_rankings = False
+        regular_game.game_type = None
+        regular_game.postseason_name = None
+
+        # Postseason game (week 16 - Bowl game)
+        bowl_game = Mock(spec=Game)
+        bowl_game.id = 2
+        bowl_game.season = 2024
+        bowl_game.week = 16
+        bowl_game.home_team_id = 30
+        bowl_game.away_team_id = 40
+        bowl_game.home_score = 35
+        bowl_game.away_score = 31
+        bowl_game.is_processed = True
+        bowl_game.excluded_from_rankings = False
+        bowl_game.game_type = "bowl"
+        bowl_game.postseason_name = "Fiesta Bowl"
+
+        games = [regular_game, bowl_game]
+
+        mock_game_query = Mock()
+        mock_game_query.all.return_value = games
+
+        # Predictions: regular season correct, bowl game wrong
+        regular_pred = Mock()
+        regular_pred.game_id = 1
+        regular_pred.predicted_winner_id = 10  # Correct
+        regular_pred.was_correct = True
+
+        bowl_pred = Mock()
+        bowl_pred.game_id = 2
+        bowl_pred.predicted_winner_id = 40  # Wrong (predicted away, but home won)
+        bowl_pred.was_correct = False
+
+        def mock_ap_rank(db_arg, team_id, season, week):
+            if week == 10:
+                if team_id == 10:
+                    return 8
+                elif team_id == 20:
+                    return 15
+            elif week == 16:
+                if team_id == 30:
+                    return 12
+                elif team_id == 40:
+                    return 10  # AP predicts away team (wrong)
+            return None
+
+        mock_team = Mock()
+        mock_team.name = "Team"
+
+        def mock_query(model):
+            if model == Game:
+                return Mock(filter=Mock(return_value=mock_game_query))
+            elif model == Prediction:
+                mock_pred_query = Mock()
+
+                def filter_pred(game_id_filter):
+                    if hasattr(game_id_filter, "right") and hasattr(game_id_filter.right, "value"):
+                        game_id = game_id_filter.right.value
+                        if game_id == 1:
+                            mock_pred_query.first.return_value = regular_pred
+                        elif game_id == 2:
+                            mock_pred_query.first.return_value = bowl_pred
+                    return mock_pred_query
+
+                mock_pred_query.filter = filter_pred
+                mock_pred_query.join.return_value.filter.return_value.all.return_value = [
+                    regular_pred,
+                    bowl_pred,
+                ]
+                return mock_pred_query
+            elif model == Team:
+                return Mock(filter=Mock(return_value=Mock(first=Mock(return_value=mock_team))))
+            return Mock()
+
+        db.query = mock_query
+
+        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank):
+            stats = calculate_comparison_stats(db, 2024)
+
+        # EPIC-COMPARISON-BOWL-PLAYOFF: Verify separate tracking
+        assert stats["total_games_compared"] == 2
+        # Regular season: 1 game, 1 correct (100%)
+        assert stats["regular_season_elo_accuracy"] == 1.0
+        assert stats["regular_season_ap_accuracy"] == 1.0
+        # Postseason: 1 game, 0 correct (0%)
+        assert stats["postseason_elo_accuracy"] == 0.0
+        assert stats["postseason_ap_accuracy"] == 0.0
+        # Overall: 2 games, 1 ELO correct, 1 AP correct
+        assert stats["elo_correct"] == 1
+        assert stats["ap_correct"] == 1

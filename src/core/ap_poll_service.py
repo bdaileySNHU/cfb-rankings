@@ -152,6 +152,11 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
             "overall_elo_accuracy": 0.0,
             "overall_elo_total": 0,
             "overall_elo_correct": 0,
+            # EPIC-COMPARISON-BOWL-PLAYOFF: Include postseason fields in empty state
+            "regular_season_elo_accuracy": 0.0,
+            "regular_season_ap_accuracy": 0.0,
+            "postseason_elo_accuracy": 0.0,
+            "postseason_ap_accuracy": 0.0,
             "message": "Comparison data will be available once AP Poll rankings are imported for this season.",
         }
 
@@ -163,6 +168,14 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
     elo_only_correct_count = 0
     ap_only_correct_count = 0
     both_wrong_count = 0
+
+    # EPIC-COMPARISON-BOWL-PLAYOFF: Track regular season vs postseason separately
+    regular_season_games = 0
+    regular_season_elo_correct = 0
+    regular_season_ap_correct = 0
+    postseason_games = 0
+    postseason_elo_correct = 0
+    postseason_ap_correct = 0
 
     by_week_stats = {}
     disagreements = []
@@ -209,10 +222,32 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
         else:
             both_wrong_count += 1
 
+        # EPIC-COMPARISON-BOWL-PLAYOFF: Track regular season (weeks 1-15) vs postseason (weeks 16-20)
+        if week <= 15:
+            regular_season_games += 1
+            if elo_correct:
+                regular_season_elo_correct += 1
+            if ap_correct:
+                regular_season_ap_correct += 1
+        else:
+            postseason_games += 1
+            if elo_correct:
+                postseason_elo_correct += 1
+            if ap_correct:
+                postseason_ap_correct += 1
+
         # Track by week
         week = game.week
         if week not in by_week_stats:
-            by_week_stats[week] = {"week": week, "games": 0, "elo_correct": 0, "ap_correct": 0}
+            # EPIC-COMPARISON-BOWL-PLAYOFF: Include game_type and postseason_name for frontend labeling
+            by_week_stats[week] = {
+                "week": week,
+                "games": 0,
+                "elo_correct": 0,
+                "ap_correct": 0,
+                "game_type": game.game_type,  # 'bowl', 'playoff', 'conference_championship', or None
+                "postseason_name": game.postseason_name,  # Bowl/playoff name
+            }
         by_week_stats[week]["games"] += 1
         if elo_correct:
             by_week_stats[week]["elo_correct"] += 1
@@ -228,10 +263,13 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
             )
             ap_predicted_team = db.query(Team).filter(Team.id == ap_predicted_winner_id).first()
 
+            # EPIC-COMPARISON-BOWL-PLAYOFF: Include game_type and postseason_name for frontend labeling
             disagreements.append(
                 {
                     "game_id": game.id,
                     "week": week,
+                    "game_type": game.game_type,
+                    "postseason_name": game.postseason_name,
                     "matchup": f"{away_team.name} @ {home_team.name}",
                     "elo_predicted": elo_predicted_team.name if elo_predicted_team else "Unknown",
                     "ap_predicted": ap_predicted_team.name if ap_predicted_team else "Unknown",
@@ -253,12 +291,15 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
     for week_num in sorted(by_week_stats.keys()):
         stats = by_week_stats[week_num]
         games_count = stats["games"]
+        # EPIC-COMPARISON-BOWL-PLAYOFF: Include game_type and postseason_name in output
         by_week.append(
             {
                 "week": week_num,
                 "elo_accuracy": stats["elo_correct"] / games_count if games_count > 0 else 0.0,
                 "ap_accuracy": stats["ap_correct"] / games_count if games_count > 0 else 0.0,
                 "games": games_count,
+                "game_type": stats.get("game_type"),
+                "postseason_name": stats.get("postseason_name"),
             }
         )
 
@@ -273,6 +314,18 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
     overall_elo_total = len(all_predictions)
     overall_elo_correct = sum(1 for p in all_predictions if p.was_correct)
     overall_elo_accuracy = overall_elo_correct / overall_elo_total if overall_elo_total > 0 else 0.0
+
+    # EPIC-COMPARISON-BOWL-PLAYOFF: Calculate postseason-specific accuracies
+    regular_season_elo_accuracy = (
+        regular_season_elo_correct / regular_season_games if regular_season_games > 0 else 0.0
+    )
+    regular_season_ap_accuracy = (
+        regular_season_ap_correct / regular_season_games if regular_season_games > 0 else 0.0
+    )
+    postseason_elo_accuracy = (
+        postseason_elo_correct / postseason_games if postseason_games > 0 else 0.0
+    )
+    postseason_ap_accuracy = postseason_ap_correct / postseason_games if postseason_games > 0 else 0.0
 
     return {
         "season": season,
@@ -292,4 +345,9 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
         "overall_elo_accuracy": round(overall_elo_accuracy, 4),
         "overall_elo_total": overall_elo_total,
         "overall_elo_correct": overall_elo_correct,
+        # EPIC-COMPARISON-BOWL-PLAYOFF: Postseason-specific statistics
+        "regular_season_elo_accuracy": round(regular_season_elo_accuracy, 4),
+        "regular_season_ap_accuracy": round(regular_season_ap_accuracy, 4),
+        "postseason_elo_accuracy": round(postseason_elo_accuracy, 4),
+        "postseason_ap_accuracy": round(postseason_ap_accuracy, 4),
     }
