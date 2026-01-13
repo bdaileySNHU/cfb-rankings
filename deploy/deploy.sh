@@ -32,8 +32,10 @@ pip install --upgrade pip
 pip install -r requirements-prod.txt
 
 # Run database migrations (if any)
-echo "🗄️  Setting up database..."
-python3 -c "from database import init_db; init_db()"
+# Note: Only needed for initial setup or schema changes
+# Commenting out for regular deployments
+# echo "🗄️  Setting up database..."
+# python3 -c "from src.models.database import init_db; init_db()"
 
 # Restart the service
 echo "🔄 Restarting service..."
