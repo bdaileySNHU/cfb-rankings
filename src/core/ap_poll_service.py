@@ -223,7 +223,7 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
             both_wrong_count += 1
 
         # EPIC-COMPARISON-BOWL-PLAYOFF: Track regular season (weeks 1-15) vs postseason (weeks 16-20)
-        if week <= 15:
+        if game.week <= 15:
             regular_season_games += 1
             if elo_correct:
                 regular_season_elo_correct += 1
