@@ -544,6 +544,8 @@ class DisagreementDetail(BaseModel):
 
     game_id: int
     week: int
+    game_type: Optional[str] = Field(None, description="Game type (bowl, playoff, conference_championship)")
+    postseason_name: Optional[str] = Field(None, description="Postseason game name (e.g., CFP Semifinal - Rose Bowl)")
     matchup: str = Field(..., description="Game matchup (Away @ Home)")
     elo_predicted: str = Field(..., description="Team ELO predicted to win")
     ap_predicted: str = Field(..., description="Team AP Poll predicted to win")
@@ -559,6 +561,8 @@ class WeeklyComparisonStats(BaseModel):
     elo_accuracy: float = Field(..., ge=0, le=1.0)
     ap_accuracy: float = Field(..., ge=0, le=1.0)
     games: int = Field(..., ge=0)
+    game_type: Optional[str] = Field(None, description="Game type (bowl, playoff, conference_championship)")
+    postseason_name: Optional[str] = Field(None, description="Postseason game name (e.g., CFP Semifinal - Rose Bowl)")
 
 
 class ComparisonStats(BaseModel):
@@ -597,6 +601,19 @@ class ComparisonStats(BaseModel):
     )
     overall_elo_total: int = Field(..., description="Total ELO predictions evaluated", ge=0)
     overall_elo_correct: int = Field(..., description="Total ELO predictions correct", ge=0)
+    # EPIC-COMPARISON-BOWL-PLAYOFF: Postseason-specific statistics
+    regular_season_elo_accuracy: float = Field(
+        ..., description="ELO accuracy for regular season games (weeks 1-15)", ge=0, le=1.0
+    )
+    regular_season_ap_accuracy: float = Field(
+        ..., description="AP Poll accuracy for regular season games (weeks 1-15)", ge=0, le=1.0
+    )
+    postseason_elo_accuracy: float = Field(
+        ..., description="ELO accuracy for postseason games (weeks 16-20)", ge=0, le=1.0
+    )
+    postseason_ap_accuracy: float = Field(
+        ..., description="AP Poll accuracy for postseason games (weeks 16-20)", ge=0, le=1.0
+    )
     message: Optional[str] = Field(
         None, description="Optional message for empty state or error conditions"
     )
