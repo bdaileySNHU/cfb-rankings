@@ -131,9 +131,29 @@ def reprocess_season(db, season: int, dry_run: bool = False):
 
     try:
         ranking_service = RankingService(db)
-        ranking_service.process_season_games(season)
+
+        # Get all unprocessed games (excluding FCS games) ordered by week and date
+        games = db.query(Game).filter(
+            Game.season == season,
+            Game.is_processed == False,
+            Game.excluded_from_rankings == False
+        ).order_by(Game.week, Game.game_date).all()
+
+        print(f"  Processing {len(games)} games...")
+
+        processed_count = 0
+        for game in games:
+            try:
+                ranking_service.process_game(game)
+                processed_count += 1
+                if processed_count % 100 == 0:
+                    print(f"  Processed {processed_count}/{len(games)} games...")
+            except Exception as e:
+                print(f"  ⚠ Error processing game {game.id} (Week {game.week}): {e}")
+                continue
+
         db.commit()
-        print("✓ Successfully reprocessed all games")
+        print(f"✓ Successfully reprocessed {processed_count}/{len(games)} games")
         return True
     except Exception as e:
         print(f"✗ Error reprocessing season: {e}")
