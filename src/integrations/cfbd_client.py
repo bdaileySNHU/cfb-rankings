@@ -320,15 +320,24 @@ class CFBDClient:
 
     @track_api_usage
     def _get(self, endpoint: str, params: dict = None) -> dict:
-        """Make GET request to CFBD API"""
+        """Make GET request to CFBD API with retry on 429 rate limit."""
+        import time
         url = f"{self.BASE_URL}{endpoint}"
-        try:
-            response = requests.get(url, headers=self.headers, params=params)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"API Error: {e}")
-            return None
+        for attempt in range(4):
+            try:
+                response = requests.get(url, headers=self.headers, params=params)
+                if response.status_code == 429:
+                    wait = 30 * (attempt + 1)
+                    print(f"  Rate limited (429). Waiting {wait}s before retry {attempt + 1}/3...")
+                    time.sleep(wait)
+                    continue
+                response.raise_for_status()
+                return response.json()
+            except requests.exceptions.RequestException as e:
+                print(f"API Error: {e}")
+                return None
+        print(f"API Error: 429 rate limit persists after retries for {endpoint}")
+        return None
 
     def get_current_season(self) -> int:
         """

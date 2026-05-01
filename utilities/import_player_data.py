@@ -16,6 +16,7 @@ Part of: Preseason Enhancement Epic - Story 1.4
 
 import argparse
 import sys
+import time
 from pathlib import Path
 
 # Add project root to Python path
@@ -224,6 +225,9 @@ def import_all_teams(
             errors.append(error_msg)
             print(f"✗ Error: {e}")
             continue
+
+        # Polite delay between teams to avoid rate limiting (CFBD allows ~1 req/sec)
+        time.sleep(1.5)
 
     return teams_processed, total_imported, total_updated, errors
 
