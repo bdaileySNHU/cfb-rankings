@@ -1,6 +1,6 @@
 # EPIC-011: Fix FCS Badge Display on Future Games
 
-**Status:** Planning
+**Status:** ✅ Completed
 **Priority:** Medium
 **Complexity:** Low
 **Estimated Effort:** 1-2 hours
@@ -106,10 +106,10 @@ Add `is_fcs_game` boolean field to `games` table, set during import:
 ### Story 001: Frontend Badge Logic Fix
 
 **Acceptance Criteria:**
-- [ ] FCS badge only appears on games against actual FCS opponents
-- [ ] FCS badge does NOT appear on future FBS vs FBS games
-- [ ] Past FCS games still show badge correctly
-- [ ] No database migration required
+- [x] FCS badge only appears on games against actual FCS opponents
+- [x] FCS badge does NOT appear on future FBS vs FBS games
+- [x] Past FCS games still show badge correctly
+- [x] No database migration required
 
 **Files to Modify:**
 - `frontend/js/team.js` - Update badge display logic
