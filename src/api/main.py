@@ -428,6 +428,230 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
     return {"team_id": team_id, "team_name": team.name, "season": season, "games": schedule_games}
 
 
+@app.get("/api/teams/{team_id}/players", response_model=schemas.TeamPlayersResponse, tags=["Teams"])
+async def get_team_players(
+    team_id: int,
+    recruiting_year: Optional[int] = None,
+    position: Optional[str] = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    """Get player recruiting data for a specific team.
+
+    Retrieves a paginated list of players on a team's roster, with optional
+    filtering by recruiting year and position. Used to display team rosters
+    and analyze position group strength.
+
+    Part of: Preseason Enhancement Epic - Story 1.5
+
+    Args:
+        team_id: Unique team identifier
+        recruiting_year: Optional filter by recruiting class year (e.g., 2024)
+        position: Optional filter by position (e.g., "QB", "OL")
+        skip: Number of records to skip for pagination (default: 0)
+        limit: Maximum number of records to return (default: 100, max: 500)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        schemas.TeamPlayersResponse: Team player data including:
+            - team_id: Team identifier
+            - team_name: Team name
+            - total: Total count of matching players
+            - players: List of player objects with recruiting data
+
+    Raises:
+        HTTPException: 404 if team not found
+
+    Example:
+        Get all players for Georgia:
+            GET /api/teams/42/players
+
+        Get 2024 recruiting class:
+            GET /api/teams/42/players?recruiting_year=2024
+
+        Get all quarterbacks:
+            GET /api/teams/42/players?position=QB
+
+        Get 2024 offensive linemen:
+            GET /api/teams/42/players?recruiting_year=2024&position=OL
+    """
+    from src.models.models import Player
+
+    # Verify team exists
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    # Build query
+    query = db.query(Player).filter(Player.team_id == team_id)
+
+    if recruiting_year:
+        query = query.filter(Player.recruiting_year == recruiting_year)
+
+    if position:
+        query = query.filter(Player.position == position)
+
+    # Get total count for pagination metadata
+    total = query.count()
+
+    # Get paginated results, ordered by rating (best first)
+    players = query.order_by(Player.rating.desc().nulls_last()).offset(skip).limit(limit).all()
+
+    return {
+        "team_id": team_id,
+        "team_name": team.name,
+        "total": total,
+        "players": players,
+    }
+
+
+@app.get("/api/teams/{team_id}/position-strength", tags=["Teams"])
+async def get_team_position_strength(
+    team_id: int,
+    recruiting_year: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    """Calculate position group strength for a team.
+
+    Computes position-weighted strength scores based on player recruiting
+    rankings. Returns both individual position group scores and the overall
+    position strength bonus that would be applied to preseason ratings.
+
+    Part of: Preseason Enhancement Epic - Story 1.5
+
+    Args:
+        team_id: Unique team identifier
+        recruiting_year: Optional recruiting year to filter players (defaults to most recent)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        dict: Position strength analysis including:
+            - team_id: Team identifier
+            - team_name: Team name
+            - enabled: Whether position strength feature is enabled
+            - position_scores: Score (0-100) for each position group
+            - position_bonus: Overall bonus points (0-max_bonus)
+            - max_bonus: Maximum possible bonus from configuration
+            - weights: Position weights from configuration
+            - recruiting_year: Year used for player data
+
+    Raises:
+        HTTPException: 404 if team not found
+        HTTPException: 500 if position strength calculation fails
+
+    Example:
+        GET /api/teams/42/position-strength
+        GET /api/teams/42/position-strength?recruiting_year=2024
+
+    Response:
+        {
+            "team_id": 42,
+            "team_name": "Georgia",
+            "enabled": true,
+            "position_scores": {
+                "QB": 95.5,
+                "OL": 92.3,
+                "DL": 89.7,
+                "DB": 88.2,
+                ...
+            },
+            "position_bonus": 137.85,
+            "max_bonus": 150,
+            "weights": {
+                "QB": 0.30,
+                "OL": 0.25,
+                ...
+            },
+            "recruiting_year": 2024
+        }
+
+    Note:
+        - Returns 0.0 bonus if team has no player data
+        - Respects enabled flag in position_weights.json
+        - Uses most recent recruiting year if not specified
+    """
+    from src.core.position_service import (
+        calculate_position_strength,
+        get_position_group_scores,
+        load_position_weights,
+    )
+    from src.models.models import Player
+
+    # Verify team exists
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    # Load configuration
+    try:
+        config = load_position_weights()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load position weights configuration: {str(e)}"
+        )
+
+    # Determine recruiting year
+    if not recruiting_year:
+        # Use most recent recruiting year for this team
+        most_recent = (
+            db.query(Player.recruiting_year)
+            .filter(Player.team_id == team_id)
+            .order_by(Player.recruiting_year.desc())
+            .first()
+        )
+        recruiting_year = most_recent[0] if most_recent else None
+
+    # If still no recruiting year, team has no player data
+    if not recruiting_year:
+        return {
+            "team_id": team_id,
+            "team_name": team.name,
+            "enabled": config["enabled"],
+            "position_scores": {group: 0.0 for group in config["weights"].keys()},
+            "position_bonus": 0.0,
+            "max_bonus": config["max_bonus"],
+            "weights": config["weights"],
+            "recruiting_year": None,
+            "message": "No player data available for this team"
+        }
+
+    # Calculate position scores
+    try:
+        position_scores = get_position_group_scores(team_id, db, config)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to calculate position scores: {str(e)}"
+        )
+
+    # Calculate overall position bonus
+    try:
+        position_bonus = calculate_position_strength(
+            team_id,
+            config["weights"],
+            db,
+            config["max_bonus"]
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to calculate position strength: {str(e)}"
+        )
+
+    return {
+        "team_id": team_id,
+        "team_name": team.name,
+        "enabled": config["enabled"],
+        "position_scores": position_scores,
+        "position_bonus": position_bonus,
+        "max_bonus": config["max_bonus"],
+        "weights": config["weights"],
+        "recruiting_year": recruiting_year,
+    }
+
+
 # ============================================================================
 # GAME ENDPOINTS
 # ============================================================================

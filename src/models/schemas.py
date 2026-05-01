@@ -120,6 +120,63 @@ class TeamDetail(Team):
     rank: Optional[int] = Field(None, description="Current ranking")
 
 
+# Player Schemas
+class PlayerBase(BaseModel):
+    """Base schema for player data with recruiting information.
+
+    Contains individual player recruiting data including position, star rating,
+    and national ranking. Used for position group strength calculations in the
+    preseason rating enhancement.
+
+    Part of Preseason Enhancement Epic: Player Position Metrics
+    """
+
+    name: str = Field(..., description="Player full name", max_length=100)
+    cfbd_athlete_id: int = Field(..., description="CollegeFootballData.com athlete ID")
+    team_id: int = Field(..., description="Team ID (committed team)")
+    position: str = Field(..., description="Position abbreviation (QB, OL, RB, etc.)", max_length=10)
+    stars: Optional[int] = Field(None, description="Star rating 1-5", ge=1, le=5)
+    rating: Optional[float] = Field(None, description="Numerical recruiting rating score")
+    ranking: Optional[int] = Field(None, description="Overall national recruit ranking (1=best)", ge=1)
+    recruiting_year: int = Field(..., description="Recruiting class year", ge=2000, le=2100)
+
+
+class PlayerCreate(PlayerBase):
+    """Schema for creating a new player record.
+
+    Used during player data import from CollegeFootballData API.
+    """
+
+    pass
+
+
+class PlayerResponse(PlayerBase):
+    """Schema for player response in API endpoints.
+
+    Includes database-generated fields (id, created_at) for complete
+    player information display.
+    """
+
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TeamPlayersResponse(BaseModel):
+    """Schema for /api/teams/{id}/players endpoint response.
+
+    Returns paginated list of players for a team with metadata including
+    total count and team information.
+    """
+
+    team_id: int
+    team_name: str
+    total: int
+    players: List[PlayerResponse]
+
+
 # Game Schemas
 class GameBase(BaseModel):
     """Base game schema"""

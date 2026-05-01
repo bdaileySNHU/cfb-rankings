@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "enabled": false,
+  "weights": {
+    "QB": 0.30,
+    "OL": 0.25,
+    "DL": 0.20,
+    "DB": 0.15,
+    "LB": 0.05,
+    "RB": 0.025,
+    "WR": 0.025,
+    "TE": 0.0,
+    "ST": 0.0
+  },
+  "max_bonus": 150,
+  "top_players_per_position": {
+    "QB": 3,
+    "OL": 5,
+    "DL": 5,
+    "DB": 4,
+    "LB": 3,
+    "RB": 2,
+    "WR": 3,
+    "TE": 2,
+    "ST": 1
+  },
+  "_comments": {
+    "enabled": "Feature flag - set to true to enable position strength calculations in preseason ratings",
+    "weights": "Position group weights (must sum to 1.0) - reflects relative importance of each position to team success",
+    "max_bonus": "Maximum bonus points contribution to preseason rating (base 1500 + other bonuses + this)",
+    "top_players_per_position": "Number of top recruits to consider when calculating position group strength",
+    "rationale": {
+      "QB_30_percent": "Quarterback is most valuable position in college football",
+      "OL_DL_45_percent": "Line play (OL + DL) determines game outcomes - games won in trenches",
+      "DB_15_percent": "Secondary coverage critical in modern passing game",
+      "skill_positions_low": "RB/WR/TE less predictive - scheme-dependent, coaching impact greater",
+      "LB_moderate": "Important but less impactful than DL or DB in modern spread offenses"
+    },
+    "tuning_strategy": "Import 3-5 seasons of historical data, correlate position strength with end-of-season ELO, adjust weights to maximize correlation"
+  }
+}

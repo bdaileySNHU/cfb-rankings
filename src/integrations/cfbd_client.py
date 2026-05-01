@@ -555,6 +555,83 @@ class CFBDClient:
         """
         return self._get("/recruiting/teams", params={"year": year})
 
+    def get_recruiting_players(
+        self,
+        year: int,
+        team: Optional[str] = None,
+        position: Optional[str] = None,
+        classification: str = "HighSchool",
+    ) -> List[Dict]:
+        """
+        Get individual player recruiting rankings from the CFBD API.
+
+        Fetches player-level recruiting data including star ratings, positions,
+        and national rankings. Used for position group strength calculations in
+        the preseason rating enhancement.
+
+        Part of: Preseason Enhancement Epic - Story 1.2
+
+        Args:
+            year: Recruiting class year (e.g., 2024)
+            team: Optional team name filter (e.g., "Georgia")
+            position: Optional position filter (e.g., "QB", "OL")
+            classification: Recruit classification (default: "HighSchool")
+                Options: "HighSchool", "JUCO", "PrepSchool"
+
+        Returns:
+            List of player recruit dictionaries, each containing:
+                - id: int - Recruit record ID
+                - athleteId: int - CFBD athlete identifier
+                - name: str - Player full name
+                - position: str - Position abbreviation
+                - stars: int - Star rating (1-5)
+                - rating: float - Numerical recruiting rating
+                - ranking: int - Overall national ranking (1=best)
+                - committedTo: str - Team committed to
+                - year: int - Recruiting class year
+                - school: str - High school attended
+                - city, state, county: str - Location information
+                - height: str - Player height
+                - weight: int - Player weight
+
+            Returns empty list if API call fails or no data available.
+
+        Example:
+            >>> client = CFBDClient()
+            >>> # Get all Georgia recruits for 2024 class
+            >>> players = client.get_recruiting_players(year=2024, team="Georgia")
+            >>> qbs = [p for p in players if p.get("position") == "QB"]
+            >>> print(f"Georgia has {len(qbs)} QB recruits")
+
+            >>> # Get all 5-star QBs nationally
+            >>> all_players = client.get_recruiting_players(year=2024, position="QB")
+            >>> five_stars = [p for p in all_players if p.get("stars") == 5]
+
+        Note:
+            - Automatically tracked via @track_api_usage decorator (through _get)
+            - Gracefully handles API errors by returning empty list
+            - Filters to HighSchool recruits by default (excludes JUCO/Prep)
+            - API endpoint: GET /recruiting/players
+        """
+        params = {"year": year, "classification": classification}
+
+        if team:
+            params["team"] = team
+
+        if position:
+            params["position"] = position
+
+        result = self._get("/recruiting/players", params=params)
+
+        # Handle None response (API error) gracefully
+        if result is None:
+            logger.warning(
+                f"Failed to fetch recruiting players for year={year}, team={team}, position={position}"
+            )
+            return []
+
+        return result
+
     def get_team_talent(self, year: int) -> List[Dict]:
         """
         Get team talent composite scores

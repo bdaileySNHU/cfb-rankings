@@ -147,9 +147,78 @@ class Team(Base):
     home_games = relationship("Game", foreign_keys="Game.home_team_id", back_populates="home_team")
     away_games = relationship("Game", foreign_keys="Game.away_team_id", back_populates="away_team")
     ranking_history = relationship("RankingHistory", back_populates="team")
+    players = relationship("Player", back_populates="team")
 
     def __repr__(self):
         return f"<Team(name='{self.name}', rating={self.elo_rating:.2f}, record={self.wins}-{self.losses})>"
+
+
+class Player(Base):
+    """SQLAlchemy ORM model representing a college football player.
+
+    Stores individual player recruiting data including position, star rating,
+    and recruiting rankings. Used to calculate position group strength for
+    enhanced preseason rating calculations.
+
+    Part of Preseason Enhancement Epic: Player Position Metrics
+
+    Attributes:
+        id: Unique player identifier (primary key)
+        cfbd_athlete_id: CollegeFootballData.com athlete ID (unique, indexed)
+        name: Player full name
+        team_id: Foreign key to team (committed team)
+        position: Position abbreviation (QB, OL, RB, WR, TE, DL, LB, DB, etc.)
+        stars: Star rating 1-5 (247Sports/composite rating)
+        rating: Numerical recruiting rating score
+        ranking: Overall national recruit ranking (1=best recruit)
+        recruiting_year: Year of recruiting class (e.g., 2024)
+        created_at: Record creation timestamp
+
+    Relationships:
+        team: Team object for committed team
+
+    Indexes:
+        - Unique constraint on cfbd_athlete_id
+        - Composite index on (team_id, position) for position group queries
+        - Index on recruiting_year for season filtering
+
+    Example:
+        >>> player = Player(
+        ...     cfbd_athlete_id=12345,
+        ...     name="John Smith",
+        ...     team_id=1,
+        ...     position="QB",
+        ...     stars=5,
+        ...     rating=98.5,
+        ...     ranking=3,
+        ...     recruiting_year=2024
+        ... )
+        >>> db.add(player)
+        >>> db.commit()
+    """
+
+    __tablename__ = "players"
+    __table_args__ = (
+        Index("idx_players_team_position", "team_id", "position"),
+        Index("idx_players_recruiting_year", "recruiting_year"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    cfbd_athlete_id = Column(Integer, unique=True, nullable=False, index=True)
+    name = Column(String(100), nullable=False)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    position = Column(String(10), nullable=False)
+    stars = Column(Integer, nullable=True)  # Nullable for players without star rating
+    rating = Column(Float, nullable=True)  # Numerical rating score
+    ranking = Column(Integer, nullable=True)  # Overall national ranking
+    recruiting_year = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    team = relationship("Team", back_populates="players")
+
+    def __repr__(self):
+        return f"<Player(name='{self.name}', position={self.position}, stars={self.stars}, team={self.team.name if self.team else 'Unknown'})>"
 
 
 class Game(Base):

@@ -32,12 +32,15 @@ Note:
     later (K=32) for improved preseason rating correction.
 """
 
+import logging
 import math
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 from src.models.models import ConferenceType, Game, Prediction, RankingHistory, Season, Team
 
@@ -127,13 +130,24 @@ class RankingService:
 
     def calculate_preseason_rating(self, team: Team) -> float:
         """
-        Calculate preseason ELO rating based on recruiting, transfers, and returning production
+        Calculate preseason ELO rating based on recruiting, transfers, and returning production.
+
+        Includes optional position strength bonus based on player-level recruiting data
+        when feature is enabled in configuration.
+
+        Part of: Preseason Enhancement Epic - Story 1.6
 
         Args:
             team: Team object with preseason data
 
         Returns:
-            Calculated preseason rating
+            Calculated preseason rating including all applicable bonuses
+
+        Note:
+            Position strength bonus is added only when:
+            - Configuration enabled flag is True (position_weights.json)
+            - Team has player data imported
+            Otherwise, gracefully falls back to 0.0 bonus (no impact)
         """
         # Base rating
         if team.conference == ConferenceType.FCS:
@@ -174,7 +188,90 @@ class RankingService:
         elif team.returning_production >= 0.40:
             returning_bonus = 10.0
 
-        return base + recruiting_bonus + transfer_bonus + returning_bonus
+        # Position strength bonus (EPIC: Preseason Enhancement - Story 1.6)
+        # Only included when feature is enabled in configuration
+        position_strength_bonus = self._calculate_position_strength_bonus(team)
+
+        return (
+            base
+            + recruiting_bonus
+            + transfer_bonus
+            + returning_bonus
+            + position_strength_bonus
+        )
+
+    def _calculate_position_strength_bonus(self, team: Team) -> float:
+        """
+        Calculate position strength bonus for a team (feature-flagged).
+
+        Computes position group strength bonus based on player recruiting data.
+        Returns 0.0 if feature is disabled or no player data exists.
+
+        Part of: Preseason Enhancement Epic - Story 1.6
+
+        Args:
+            team: Team object to calculate bonus for
+
+        Returns:
+            float: Position strength bonus (0.0 to max_bonus points)
+                   Returns 0.0 if:
+                   - Feature is disabled in configuration
+                   - No player data exists for team
+                   - Error occurs during calculation
+
+        Note:
+            Graceful degradation ensures this feature never breaks preseason
+            rating calculation. Errors are logged but don't raise exceptions.
+        """
+        try:
+            # Import here to avoid circular dependency and allow module to load
+            # even if position_service has issues
+            from src.core.position_service import (
+                calculate_position_strength,
+                load_position_weights,
+            )
+
+            # Load configuration
+            config = load_position_weights()
+
+            # Check if feature is enabled
+            if not config.get("enabled", False):
+                # Feature disabled - return 0.0 (no bonus)
+                logger.debug(
+                    f"Position strength feature disabled for team {team.id} ({team.name})"
+                )
+                return 0.0
+
+            # Calculate position strength
+            bonus = calculate_position_strength(
+                team_id=team.id,
+                weights=config["weights"],
+                db=self.db,
+                max_bonus=config["max_bonus"],
+            )
+
+            logger.info(
+                f"Position strength bonus for team {team.id} ({team.name}): "
+                f"{bonus:.2f} points"
+            )
+
+            return bonus
+
+        except FileNotFoundError as e:
+            # Configuration file missing - disable feature
+            logger.warning(
+                f"Position weights config not found for team {team.id} ({team.name}): {e}. "
+                f"Position strength bonus = 0.0"
+            )
+            return 0.0
+
+        except Exception as e:
+            # Any other error - disable feature gracefully
+            logger.error(
+                f"Error calculating position strength for team {team.id} ({team.name}): {e}. "
+                f"Position strength bonus = 0.0"
+            )
+            return 0.0
 
     def initialize_team_rating(self, team: Team) -> None:
         """
