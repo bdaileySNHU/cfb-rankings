@@ -29,7 +29,7 @@ class TestPositionStrengthIntegration:
             name="Georgia",
             conference=ConferenceType.POWER_5,
             recruiting_rank=1,
-            transfer_rank=1,
+            transfer_portal_rank=1,
             returning_production=0.85,
         )
         test_db.add(team)
@@ -98,7 +98,7 @@ class TestPositionStrengthIntegration:
                 name="Alabama",
                 conference=ConferenceType.POWER_5,
                 recruiting_rank=2,
-                transfer_rank=5,
+                transfer_portal_rank=5,
                 returning_production=0.70,
             )
             test_db.add(team)
@@ -152,7 +152,7 @@ class TestPositionStrengthIntegration:
             name="Team With No Players",
             conference=ConferenceType.POWER_5,
             recruiting_rank=10,
-            transfer_rank=10,
+            transfer_portal_rank=10,
             returning_production=0.60,
         )
         test_db.add(team)
@@ -192,7 +192,7 @@ class TestPositionStrengthIntegration:
             name="Test Team",
             conference=ConferenceType.POWER_5,
             recruiting_rank=5,
-            transfer_rank=5,
+            transfer_portal_rank=5,
             returning_production=0.80,
         )
         test_db.add(team)
@@ -217,7 +217,7 @@ class TestPositionStrengthIntegration:
             name="Test Team",
             conference=ConferenceType.POWER_5,
             recruiting_rank=1,
-            transfer_rank=1,
+            transfer_portal_rank=1,
             returning_production=0.85,
         )
         test_db.add(team)
@@ -252,7 +252,7 @@ class TestPositionStrengthIntegration:
             name="Clemson",
             conference=ConferenceType.POWER_5,
             recruiting_rank=3,
-            transfer_rank=8,
+            transfer_portal_rank=8,
             returning_production=0.75,
         )
         test_db.add(team)
@@ -292,7 +292,7 @@ class TestPositionStrengthIntegration:
             name="FCS Team",
             conference=ConferenceType.FCS,
             recruiting_rank=999,
-            transfer_rank=999,
+            transfer_portal_rank=999,
             returning_production=0.30,
         )
         test_db.add(team)
@@ -311,7 +311,7 @@ class TestPositionStrengthIntegration:
             name="Super Team",
             conference=ConferenceType.POWER_5,
             recruiting_rank=1,
-            transfer_rank=1,
+            transfer_portal_rank=1,
             returning_production=0.90,
         )
         test_db.add(team)

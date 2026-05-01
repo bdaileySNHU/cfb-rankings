@@ -31,7 +31,7 @@ class TestPreseasonRating:
             name="Test FBS Team",
             conference=ConferenceType.POWER_5,
             recruiting_rank=999,  # Unranked (no bonuses)
-            transfer_rank=999,
+            transfer_portal_rank=999,
             returning_production=0.0,
         )
 
@@ -49,7 +49,7 @@ class TestPreseasonRating:
             name="Test FCS Team",
             conference=ConferenceType.FCS,
             recruiting_rank=999,
-            transfer_rank=999,
+            transfer_portal_rank=999,
             returning_production=0.0,
         )
 
@@ -75,7 +75,7 @@ class TestPreseasonRating:
             name=f"Test {conference_type.value} Team",
             conference=conference_type,
             recruiting_rank=999,
-            transfer_rank=999,
+            transfer_portal_rank=999,
             returning_production=0.0,
         )
 
@@ -111,7 +111,7 @@ class TestPreseasonRating:
             name=f"Test Team Recruiting {recruiting_rank}",
             conference=ConferenceType.POWER_5,
             recruiting_rank=recruiting_rank,
-            transfer_rank=999,
+            transfer_portal_rank=999,
             returning_production=0.0,
         )
 
@@ -148,7 +148,7 @@ class TestPreseasonRating:
             name=f"Test Team Transfer {transfer_rank}",
             conference=ConferenceType.POWER_5,
             recruiting_rank=999,
-            transfer_rank=transfer_rank,
+            transfer_portal_rank=transfer_rank,
             returning_production=0.0,
         )
 
@@ -188,7 +188,7 @@ class TestPreseasonRating:
             name=f"Test Team Returning {returning_production}",
             conference=ConferenceType.POWER_5,
             recruiting_rank=999,
-            transfer_rank=999,
+            transfer_portal_rank=999,
             returning_production=returning_production,
         )
 
@@ -209,7 +209,7 @@ class TestPreseasonRating:
             name="Alabama",  # Elite program example
             conference=ConferenceType.POWER_5,
             recruiting_rank=1,  # Top 5: +200
-            transfer_rank=3,  # Top 5: +100
+            transfer_portal_rank=3,  # Top 5: +100
             returning_production=0.85,  # 80%+: +40
         )
 
@@ -228,7 +228,7 @@ class TestPreseasonRating:
             name="Typical P5 Team",
             conference=ConferenceType.POWER_5,
             recruiting_rank=35,  # Top 50: +50
-            transfer_rank=20,  # Top 25: +50
+            transfer_portal_rank=20,  # Top 25: +50
             returning_production=0.65,  # 60-79%: +25
         )
 
@@ -247,7 +247,7 @@ class TestPreseasonRating:
             name="G5 Team",
             conference=ConferenceType.GROUP_5,
             recruiting_rank=80,  # Unranked: +0
-            transfer_rank=60,  # Unranked: +0
+            transfer_portal_rank=60,  # Unranked: +0
             returning_production=0.55,  # 40-59%: +10
         )
 
@@ -266,7 +266,7 @@ class TestPreseasonRating:
             name="Top FCS Team",
             conference=ConferenceType.FCS,
             recruiting_rank=30,  # Top 50: +50
-            transfer_rank=15,  # Top 25: +50
+            transfer_portal_rank=15,  # Top 25: +50
             returning_production=0.75,  # 60-79%: +25
         )
 
@@ -287,7 +287,7 @@ class TestPreseasonRating:
             name="Unranked Team",
             conference=ConferenceType.GROUP_5,
             recruiting_rank=999,  # Default unranked
-            transfer_rank=999,  # Default unranked
+            transfer_portal_rank=999,  # Default unranked
             returning_production=0.5,  # Default (39-59%: +10 originally, but 50% is boundary case)
         )
 
@@ -306,7 +306,7 @@ class TestPreseasonRating:
             name="Test Team",
             conference=ConferenceType.POWER_5,
             recruiting_rank=10,  # Top 10: +150
-            transfer_rank=999,
+            transfer_portal_rank=999,
             returning_production=0.0,
         )
         test_db.add(team)
@@ -332,7 +332,7 @@ class TestPreseasonRating:
             name="Persistence Test Team",
             conference=ConferenceType.POWER_5,
             recruiting_rank=25,
-            transfer_rank=999,
+            transfer_portal_rank=999,
             returning_production=0.0,
         )
         test_db.add(team)

@@ -168,15 +168,17 @@ class RankingService:
         elif team.recruiting_rank <= 75:
             recruiting_bonus = 25.0
 
-        # Transfer portal bonus (half weight of recruiting)
+        # Transfer portal bonus — uses calculated transfer_portal_rank (EPIC-026)
+        # Falls back to 999 (no bonus) for teams without portal data
+        transfer_portal_rank = team.transfer_portal_rank or 999
         transfer_bonus = 0.0
-        if team.transfer_rank <= 5:
+        if transfer_portal_rank <= 5:
             transfer_bonus = 100.0
-        elif team.transfer_rank <= 10:
+        elif transfer_portal_rank <= 10:
             transfer_bonus = 75.0
-        elif team.transfer_rank <= 25:
+        elif transfer_portal_rank <= 25:
             transfer_bonus = 50.0
-        elif team.transfer_rank <= 50:
+        elif transfer_portal_rank <= 50:
             transfer_bonus = 25.0
 
         # Returning production bonus

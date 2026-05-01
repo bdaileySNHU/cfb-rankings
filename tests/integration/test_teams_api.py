@@ -396,7 +396,7 @@ class TestCreateTeam:
             "name": "Alabama",
             "conference": "P5",  # Use enum value
             "recruiting_rank": 1,  # Top recruiting = +200
-            "transfer_rank": 1,  # Top transfer = +100
+            "transfer_portal_rank": 1,  # Top transfer portal = +100
             "returning_production": 0.85,  # High returning production
         }
 
