@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "enabled": false,
+  "enabled": true,
   "weights": {
     "QB": 0.30,
     "OL": 0.25,

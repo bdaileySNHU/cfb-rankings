@@ -1,6 +1,6 @@
 # EPIC-029: 2026 Preseason Setup with Position Strength
 
-**Status:** 🚧 In Progress
+**Status:** 🚧 In Progress (Stories 29.1, 29.2, and 29.4 partial complete)
 **Priority:** High
 **Created:** 2026-05-01
 **Target Release:** Before 2026 Season Kickoff
@@ -46,11 +46,11 @@ The system is between the 2025 and 2026 seasons with several unresolved data iss
 **Problem:** 140 games with final scores were never processed through ELO. The weekly update loop ran through Week 14 but bowl games and CFP games (Weeks 15–17) were imported but not processed.
 
 **Tasks:**
-- [ ] Backup the database before making changes
-- [ ] Run `reprocess_season.py --season 2025` to reset and replay all 2025 games in order
-- [ ] Verify all 895 games are processed (`is_processed=True`)
-- [ ] Confirm season current_week reflects full season completion
-- [ ] Spot-check: verify CFP champion has correct final ELO
+- [x] Backup the database before making changes
+- [x] Run `reprocess_season.py --season 2025` to reset and replay all 2025 games in order
+- [x] Verify all 895 games are processed (`is_processed=True`)
+- [x] Confirm season current_week reflects full season completion
+- [x] Spot-check: verify CFP champion has correct final ELO
 
 **Command:**
 ```bash
@@ -79,9 +79,9 @@ arch -x86_64 /usr/local/bin/python3.11 utilities/reprocess_season.py --season 20
 **Problem:** Both 2024 and 2025 are marked `is_active=True`. Only the most recently completed season should be active until 2026 begins.
 
 **Tasks:**
-- [ ] Set `Season(year=2024).is_active = False`
-- [ ] Confirm `Season(year=2025).is_active = True`
-- [ ] Verify `/api/rankings` returns 2025 data by default
+- [x] Set `Season(year=2024).is_active = False`
+- [x] Confirm `Season(year=2025).is_active = True`
+- [x] Verify `/api/rankings` returns 2025 data by default
 
 **Command:**
 ```bash
@@ -172,11 +172,11 @@ db.close()
 - [ ] Save Week 0 rankings to `ranking_history` for the 2026 season
 - [ ] Verify top teams are in expected order (Alabama, Georgia, Ohio State, etc. near top)
 
-**Step 1 — Enable feature flag** (code change):
+**Step 1 — Enable feature flag** ✅ Done (2026-05-01):
 ```json
 // src/core/position_weights.json
 {
-  "enabled": true,  // ← change this
+  "enabled": true,
   ...
 }
 ```
