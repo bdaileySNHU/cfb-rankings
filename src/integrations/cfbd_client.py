@@ -72,6 +72,7 @@ def track_api_usage(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        """Execute the wrapped API call with usage tracking and threshold warnings."""
         start_time = datetime.now()
         status_code = 200
         endpoint = "unknown"

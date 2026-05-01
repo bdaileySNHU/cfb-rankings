@@ -43,6 +43,12 @@ from sqlalchemy.orm import Session
 # Load environment variables from .env file
 load_dotenv()
 
+from src.core.ranking_service import (
+    RankingService,
+    generate_predictions,
+    get_overall_prediction_accuracy,
+    get_team_prediction_accuracy,
+)
 from src.models import schemas
 from src.models.database import get_db, init_db
 from src.models.models import (
@@ -54,12 +60,6 @@ from src.models.models import (
     Season,
     Team,
     UpdateTask,
-)
-from src.core.ranking_service import (
-    RankingService,
-    generate_predictions,
-    get_overall_prediction_accuracy,
-    get_team_prediction_accuracy,
 )
 
 # Configure logging

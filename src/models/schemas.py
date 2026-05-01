@@ -110,6 +110,8 @@ class Team(TeamBase):
     updated_at: datetime
 
     class Config:
+        """Pydantic config enabling ORM model attribute reading."""
+
         from_attributes = True
 
 
@@ -161,6 +163,8 @@ class PlayerResponse(PlayerBase):
     created_at: datetime
 
     class Config:
+        """Pydantic config enabling ORM model attribute reading."""
+
         from_attributes = True
 
 
@@ -209,6 +213,8 @@ class Game(GameBase):
     created_at: datetime
 
     class Config:
+        """Pydantic config enabling ORM model attribute reading."""
+
         from_attributes = True
 
 
@@ -265,6 +271,8 @@ class RankingHistory(BaseModel):
     sos: float
 
     class Config:
+        """Pydantic config enabling ORM model attribute reading."""
+
         from_attributes = True
 
 
@@ -371,6 +379,8 @@ class SeasonResponse(BaseModel):
     updated_at: datetime
 
     class Config:
+        """Pydantic config enabling ORM model attribute reading."""
+
         from_attributes = True
 
 
@@ -519,6 +529,8 @@ class GamePrediction(BaseModel):
     away_team_rating: float
 
     class Config:
+        """Pydantic config enabling ORM model attribute reading."""
+
         from_attributes = True
 
 
@@ -590,6 +602,8 @@ class StoredPrediction(BaseModel):
     season: Optional[int] = None
 
     class Config:
+        """Pydantic config enabling ORM model attribute reading."""
+
         from_attributes = True
 
 

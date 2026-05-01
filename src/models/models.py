@@ -150,6 +150,7 @@ class Team(Base):
     players = relationship("Player", back_populates="team")
 
     def __repr__(self):
+        """Return string representation showing name, rating, and record."""
         return f"<Team(name='{self.name}', rating={self.elo_rating:.2f}, record={self.wins}-{self.losses})>"
 
 
@@ -218,6 +219,7 @@ class Player(Base):
     team = relationship("Team", back_populates="players")
 
     def __repr__(self):
+        """Return string representation showing name, position, stars, and team."""
         return f"<Player(name='{self.name}', position={self.position}, stars={self.stars}, team={self.team.name if self.team else 'Unknown'})>"
 
 
@@ -377,6 +379,7 @@ class Game(Base):
                 )
 
     def __repr__(self):
+        """Return string representation showing week and matchup with scores."""
         return f"<Game(week={self.week}, {self.home_team.name} {self.home_score} vs {self.away_team.name} {self.away_score})>"
 
 
@@ -443,6 +446,7 @@ class RankingHistory(Base):
     team = relationship("Team", back_populates="ranking_history")
 
     def __repr__(self):
+        """Return string representation showing week, rank, team, and rating."""
         return f"<RankingHistory(week={self.week}, rank={self.rank}, team={self.team.name}, rating={self.elo_rating:.2f})>"
 
 
@@ -483,6 +487,7 @@ class Season(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self):
+        """Return string representation showing year, current week, and active status."""
         return f"<Season(year={self.year}, week={self.current_week}, active={self.is_active})>"
 
 
@@ -524,6 +529,7 @@ class APIUsage(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     def __repr__(self):
+        """Return string representation showing endpoint, status code, and month."""
         return f"<APIUsage(endpoint='{self.endpoint}', status={self.status_code}, month='{self.month}')>"
 
 
@@ -572,6 +578,7 @@ class UpdateTask(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self):
+        """Return string representation showing task ID, status, and trigger type."""
         return f"<UpdateTask(task_id='{self.task_id}', status='{self.status}', trigger_type='{self.trigger_type}')>"
 
 
@@ -618,6 +625,7 @@ class Prediction(Base):
         return abs(self.predicted_home_score - self.predicted_away_score)
 
     def __repr__(self):
+        """Return string representation showing game, predicted winner, probability, and correctness."""
         correct_str = "✓" if self.was_correct else "✗" if self.was_correct is False else "?"
         return f"<Prediction(game_id={self.game_id}, winner={self.predicted_winner.name if self.predicted_winner else 'Unknown'}, prob={self.win_probability:.1%}, correct={correct_str})>"
 
@@ -665,4 +673,5 @@ class APPollRanking(Base):
     )
 
     def __repr__(self):
+        """Return string representation showing season, week, rank, and team."""
         return f"<APPollRanking(season={self.season}, week={self.week}, rank=#{self.rank}, team={self.team.name if self.team else 'Unknown'})>"
