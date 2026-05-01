@@ -1,5 +1,9 @@
 # EPIC-020: Reorder Game Predictions by Ranking - Brownfield Enhancement
 
+**Status:** ✅ Completed
+**Completed:** 2026-05-01
+**Notes:** Stories 1 & 2 fully implemented. Story 3 (ranking badges on prediction cards) is optional and deferred.
+
 ## Epic Goal
 
 Improve the main page UX by reordering game predictions to show the most compelling matchups first (based on team rankings) and repositioning the predictions section below the rankings table for better page flow.
