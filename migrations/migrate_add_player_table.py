@@ -27,6 +27,8 @@ from pathlib import Path
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from sqlalchemy import text
+
 from src.models.database import SessionLocal, engine
 from src.models.models import Base, Player
 
@@ -85,7 +87,7 @@ def verify_indexes():
         db = SessionLocal()
         try:
             # Query database for index information (SQLite specific)
-            result = db.execute("PRAGMA index_list(players)")
+            result = db.execute(text("PRAGMA index_list(players)"))
             indexes = {row[1] for row in result.fetchall()}
 
             expected_indexes = {
