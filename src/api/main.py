@@ -1988,6 +1988,90 @@ async def update_system_config(config_update: schemas.ConfigUpdate):
     return await get_system_config()
 
 
+@app.get(
+    "/api/admin/preseason-weights",
+    response_model=schemas.PreseasonWeightsResponse,
+    tags=["Admin"],
+)
+async def get_preseason_weights():
+    """Get current EPIC-030 regression parameters from position_weights.json.
+
+    Used by the preseason simulator to seed slider defaults with the
+    currently active official parameter values.
+
+    Returns:
+        PreseasonWeightsResponse with the three tunable regression params.
+    """
+    from src.core.position_service import load_position_weights
+    try:
+        config = load_position_weights()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read config: {e}")
+    return schemas.PreseasonWeightsResponse(
+        previous_season_weight=config.get("previous_season_weight", 0.0),
+        mean_regression_factor=config.get("mean_regression_factor", 0.60),
+        returning_regression_scale=config.get("returning_regression_scale", 0.60),
+    )
+
+
+@app.put(
+    "/api/admin/preseason-weights",
+    response_model=schemas.PreseasonWeightsResponse,
+    tags=["Admin"],
+)
+async def update_preseason_weights(weights: schemas.PreseasonWeightsUpdate):
+    """Update EPIC-030 regression parameters in position_weights.json (EPIC-032).
+
+    Writes the three tunable regression parameters directly to
+    src/core/position_weights.json. All other config values (position
+    group weights, max_bonus, enabled flag, etc.) are preserved unchanged.
+
+    Note: Saving new weights does NOT automatically reinitialize preseason
+    ratings. Run the preseason init script separately to apply the changes
+    to team ratings.
+
+    Args:
+        weights: New values for previous_season_weight, mean_regression_factor,
+                 and returning_regression_scale.
+
+    Returns:
+        PreseasonWeightsResponse confirming the saved values.
+
+    Raises:
+        HTTPException 500: If the config file cannot be read or written.
+    """
+    import json as _json
+    from src.core.position_service import DEFAULT_CONFIG_PATH
+
+    try:
+        with open(DEFAULT_CONFIG_PATH, "r") as f:
+            config = _json.load(f)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read config: {e}")
+
+    config["previous_season_weight"] = weights.previous_season_weight
+    config["mean_regression_factor"] = weights.mean_regression_factor
+    config["returning_regression_scale"] = weights.returning_regression_scale
+
+    try:
+        with open(DEFAULT_CONFIG_PATH, "w") as f:
+            _json.dump(config, f, indent=2)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to write config: {e}")
+
+    logger.info(
+        f"Preseason weights updated: prev_weight={weights.previous_season_weight}, "
+        f"regression={weights.mean_regression_factor}, "
+        f"ret_scale={weights.returning_regression_scale}"
+    )
+
+    return schemas.PreseasonWeightsResponse(
+        previous_season_weight=weights.previous_season_weight,
+        mean_regression_factor=weights.mean_regression_factor,
+        returning_regression_scale=weights.returning_regression_scale,
+    )
+
+
 if __name__ == "__main__":
     import uvicorn
 

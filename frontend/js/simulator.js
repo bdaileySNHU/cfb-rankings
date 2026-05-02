@@ -1,6 +1,6 @@
-// Preseason Rating Simulator (EPIC-032 Story 32.2)
+// Preseason Rating Simulator (EPIC-032 Story 32.2 / 32.3)
 
-// ---- Constants (official defaults) ----
+// ---- Constants (official defaults — seeded from API on boot) ----
 var OFFICIAL_WEIGHTS = {
   recruiting_scale: 1.0,
   transfer_scale: 1.0,
@@ -9,6 +9,16 @@ var OFFICIAL_WEIGHTS = {
   prev_season_weight: 0.35,
   mean_regression: 0.60,
   returning_regression_scale: 0.60,
+};
+
+// EPIC-030 keys that map to the saved config (the rest are simulator-only)
+var EPIC030_KEYS = ['prev_season_weight', 'mean_regression', 'returning_regression_scale'];
+
+// Track the live server values for the EPIC-030 params
+var officialEpic030 = {
+  prev_season_weight: OFFICIAL_WEIGHTS.prev_season_weight,
+  mean_regression: OFFICIAL_WEIGHTS.mean_regression,
+  returning_regression_scale: OFFICIAL_WEIGHTS.returning_regression_scale,
 };
 
 var currentWeights = {};
@@ -22,18 +32,22 @@ var renderScheduled = false;
 
 // ---- Boot ----
 document.addEventListener('DOMContentLoaded', function() {
-  loadComponents().then(function() {
+  var baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:8000/api'
+    : '/api';
+
+  Promise.all([
+    loadComponents(baseUrl),
+    loadOfficialWeights(baseUrl),
+  ]).then(function() {
     initSliders();
+    checkForChanges();
     render();
   });
 });
 
 // ---- Data fetch ----
-function loadComponents() {
-  var baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:8000/api'
-    : '/api';
-
+function loadComponents(baseUrl) {
   return fetch(baseUrl + '/preseason/components')
     .then(function(resp) {
       if (!resp.ok) {
@@ -54,6 +68,34 @@ function loadComponents() {
       document.getElementById('sim-error').classList.remove('hidden');
       document.getElementById('sim-error-message').textContent =
         ' ' + err.message + '. Make sure the API server is running.';
+    });
+}
+
+function loadOfficialWeights(baseUrl) {
+  return fetch(baseUrl + '/admin/preseason-weights')
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.json();
+    })
+    .then(function(data) {
+      // API field names → JS key names
+      var mapping = {
+        previous_season_weight:    'prev_season_weight',
+        mean_regression_factor:    'mean_regression',
+        returning_regression_scale: 'returning_regression_scale',
+      };
+      Object.keys(mapping).forEach(function(apiKey) {
+        var jsKey = mapping[apiKey];
+        if (data[apiKey] != null) {
+          OFFICIAL_WEIGHTS[jsKey] = data[apiKey];
+          officialEpic030[jsKey]  = data[apiKey];
+          currentWeights[jsKey]   = data[apiKey];
+        }
+      });
+    })
+    .catch(function(err) {
+      // Non-fatal: fall back to hardcoded JS defaults
+      console.warn('Could not load official preseason weights:', err.message);
     });
 }
 
@@ -281,10 +323,81 @@ function toggleShowAll() {
   render();
 }
 
+// ---- Save as Official (Story 32.3) ----
+function checkForChanges() {
+  var changed = EPIC030_KEYS.some(function(k) {
+    return Math.abs(currentWeights[k] - officialEpic030[k]) > 0.001;
+  });
+  var btn = document.getElementById('save-official-btn');
+  if (btn) {
+    btn.classList.toggle('hidden', !changed);
+  }
+}
+
+function saveAsOfficial() {
+  var baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:8000/api'
+    : '/api';
+
+  var payload = {
+    previous_season_weight:    currentWeights.prev_season_weight,
+    mean_regression_factor:    currentWeights.mean_regression,
+    returning_regression_scale: currentWeights.returning_regression_scale,
+  };
+
+  var btn = document.getElementById('save-official-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  fetch(baseUrl + '/admin/preseason-weights', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(function(resp) {
+      if (!resp.ok) return resp.json().then(function(e) { throw new Error(e.detail || 'HTTP ' + resp.status); });
+      return resp.json();
+    })
+    .then(function() {
+      // Sync official values to current
+      EPIC030_KEYS.forEach(function(k) {
+        OFFICIAL_WEIGHTS[k] = currentWeights[k];
+        officialEpic030[k]  = currentWeights[k];
+      });
+      if (btn) { btn.disabled = false; btn.textContent = '✓ Saved'; btn.classList.add('hidden'); }
+      showSaveNotice(true);
+    })
+    .catch(function(err) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Save as Official'; }
+      showSaveNotice(false, err.message);
+    });
+}
+
+function showSaveNotice(success, errMsg) {
+  var el = document.getElementById('save-notice');
+  if (!el) return;
+  el.className = 'save-notice ' + (success ? 'save-notice-success' : 'save-notice-error');
+  el.innerHTML = success
+    ? '<strong>Weights saved.</strong> Re-run preseason initialization to apply these values to the live rankings.'
+    : '<strong>Save failed:</strong> ' + escapeHtml(errMsg || 'Unknown error');
+  el.classList.remove('hidden');
+  if (success) {
+    // Auto-hide after 8 seconds
+    setTimeout(function() { el.classList.add('hidden'); }, 8000);
+  }
+}
+
 // ---- Sliders ----
 function initSliders() {
-  // Nothing extra needed — values already set via HTML defaults.
-  // This function exists for parity with the spec interface.
+  // Seed slider positions to match whatever OFFICIAL_WEIGHTS now holds
+  // (may have been updated by loadOfficialWeights before initSliders runs)
+  EPIC030_KEYS.forEach(function(key) {
+    var input = document.getElementById(key);
+    if (input) input.value = currentWeights[key];
+    var valEl = document.getElementById('val-' + key);
+    if (valEl) {
+      valEl.textContent = currentWeights[key].toFixed(2);
+    }
+  });
 }
 
 function onSliderChange(key, value) {
@@ -296,6 +409,7 @@ function onSliderChange(key, value) {
         ? 2 : 1
     );
   }
+  checkForChanges();
   scheduleRender();
 }
 
@@ -313,6 +427,7 @@ function resetSlider(key) {
         ? 2 : 1
     );
   }
+  checkForChanges();
   scheduleRender();
 }
 

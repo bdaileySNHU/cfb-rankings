@@ -34,8 +34,14 @@
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">Simulator Controls</h2>
-        <button class="btn btn-primary" id="reset-all-btn" onclick="resetAll()">Reset All to Official</button>
+        <div class="card-header-actions">
+          <button class="btn btn-success hidden" id="save-official-btn" onclick="saveAsOfficial()">Save as Official</button>
+          <button class="btn btn-primary" id="reset-all-btn" onclick="resetAll()">Reset All to Official</button>
+        </div>
       </div>
+
+      <!-- Save Notice (hidden until save attempt) -->
+      <div id="save-notice" class="save-notice hidden"></div>
 
       <div class="simulator-controls">
 
