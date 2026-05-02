@@ -1161,3 +1161,230 @@ footer {
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
+/* ============================================================
+   Preseason Simulator (EPIC-032)
+   ============================================================ */
+
+/* Two-column grid on desktop, single col on mobile */
+.simulator-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .simulator-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Labeled slider section */
+.slider-group {
+  background: var(--bg-secondary);
+  border-radius: 0.5rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.slider-group h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.slider-group-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+/* Slider row: label | value | input | reset link */
+.slider-row {
+  display: grid;
+  grid-template-columns: 10rem 3.5rem 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.slider-row label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* Monospace, fixed width so layout doesn't jump */
+.slider-value {
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  text-align: right;
+  min-width: 2.5rem;
+}
+
+/* Full-width accent-colored slider */
+.slider-row input[type=range] {
+  width: 100%;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+/* Small muted reset link */
+.slider-reset {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.slider-reset:hover {
+  color: var(--primary-color);
+}
+
+/* Info banner */
+.sim-info-banner {
+  background: #ebf8ff;
+  border-left: 4px solid #3182ce;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #2c5282;
+  margin-top: 0.5rem;
+}
+
+/* Sim status text */
+.sim-status-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* Delta cells */
+.delta-positive { color: var(--success-color); font-weight: 600; }
+.delta-negative { color: var(--error-color);   font-weight: 600; }
+.delta-neutral  { color: var(--text-secondary); }
+
+/* Breakdown row */
+.breakdown-row td {
+  background: var(--bg-secondary);
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Hide empty breakdown rows so they don't add phantom spacing */
+.breakdown-row td:empty {
+  padding: 0;
+  border: none;
+}
+
+/* Stacked bar chart */
+.breakdown-bar {
+  display: flex;
+  height: 28px;
+  border-radius: 4px;
+  overflow: hidden;
+  gap: 2px;
+  margin-bottom: 0.5rem;
+}
+
+.breakdown-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+  min-width: 30px;
+  overflow: hidden;
+  transition: width 0.3s ease;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.seg-recruiting  { background: #3182ce; }
+.seg-transfer    { background: #805ad5; }
+.seg-returning   { background: #38a169; }
+.seg-position    { background: #d69e2e; }
+.seg-prev-season { background: #e53e3e; }
+
+/* Breakdown detail grid */
+.breakdown-details-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.4rem;
+}
+
+/* Details toggle button */
+.details-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.details-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Show All / Show Top 25 button */
+.show-all-btn {
+  display: block;
+  margin: 1rem auto;
+  padding: 0.5rem 2rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.show-all-btn:hover {
+  background: var(--secondary-color);
+}
+
+/* Responsive slider rows on small screens */
+@media (max-width: 600px) {
+  .slider-row {
+    grid-template-columns: 1fr 3rem;
+    grid-template-rows: auto auto;
+  }
+
+  .slider-row label {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .slider-value {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: right;
+  }
+
+  .slider-row input[type=range] {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .slider-reset {
+    grid-column: 2;
+    grid-row: 2;
+    text-align: right;
+  }
+}

@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "FastAPI (dev)",
-      "runtimeExecutable": "/usr/local/bin/python3.11",
-      "runtimeArgs": ["-m", "uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
+      "runtimeExecutable": "arch",
+      "runtimeArgs": ["-x86_64", "/usr/local/bin/python3.11", "-m", "uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
       "port": 8000
     },
     {

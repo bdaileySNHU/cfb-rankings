@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preseason Rating Simulator - College Football Rankings</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <h1>College Football Rankings</h1>
+      <p class="subtitle">Preseason Rating Simulator</p>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="nav-link">Rankings</a>
+      <a href="teams.html" class="nav-link">All Teams</a>
+      <a href="games.html" class="nav-link">Games</a>
+      <a href="comparison.html" class="nav-link">Prediction Comparison</a>
+      <a href="elo-formula.html" class="nav-link">How It Works</a>
+      <a href="simulator.html" class="nav-link active">Simulator</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+
+    <!-- Controls Card -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Simulator Controls</h2>
+        <button class="btn btn-primary" id="reset-all-btn" onclick="resetAll()">Reset All to Official</button>
+      </div>
+
+      <div class="simulator-controls">
+
+        <!-- Group 1: Formula Weights -->
+        <div class="slider-group">
+          <h3>Formula Weights</h3>
+          <p class="slider-group-desc">Multipliers on existing bonuses (1.0 = official formula)</p>
+
+          <div class="slider-row">
+            <label for="recruiting_scale">Recruiting</label>
+            <span class="slider-value" id="val-recruiting_scale">1.0</span>
+            <input type="range" id="recruiting_scale" min="0.0" max="2.0" step="0.1" value="1.0"
+                   oninput="onSliderChange('recruiting_scale', this.value)">
+            <a href="#" class="slider-reset" onclick="resetSlider('recruiting_scale'); return false;">reset</a>
+          </div>
+
+          <div class="slider-row">
+            <label for="transfer_scale">Transfer Portal</label>
+            <span class="slider-value" id="val-transfer_scale">1.0</span>
+            <input type="range" id="transfer_scale" min="0.0" max="2.0" step="0.1" value="1.0"
+                   oninput="onSliderChange('transfer_scale', this.value)">
+            <a href="#" class="slider-reset" onclick="resetSlider('transfer_scale'); return false;">reset</a>
+          </div>
+
+          <div class="slider-row">
+            <label for="returning_scale">Returning Production</label>
+            <span class="slider-value" id="val-returning_scale">1.0</span>
+            <input type="range" id="returning_scale" min="0.0" max="2.0" step="0.1" value="1.0"
+                   oninput="onSliderChange('returning_scale', this.value)">
+            <a href="#" class="slider-reset" onclick="resetSlider('returning_scale'); return false;">reset</a>
+          </div>
+
+          <div class="slider-row">
+            <label for="position_scale">Position Strength</label>
+            <span class="slider-value" id="val-position_scale">1.0</span>
+            <input type="range" id="position_scale" min="0.0" max="2.0" step="0.1" value="1.0"
+                   oninput="onSliderChange('position_scale', this.value)">
+            <a href="#" class="slider-reset" onclick="resetSlider('position_scale'); return false;">reset</a>
+          </div>
+        </div>
+
+        <!-- Group 2: Previous Season Regression -->
+        <div class="slider-group">
+          <h3>Previous Season Regression (EPIC-030)</h3>
+          <p class="slider-group-desc">Controls how much prior season performance influences the preseason rating</p>
+
+          <div class="slider-row">
+            <label for="prev_season_weight">Prev Season Weight</label>
+            <span class="slider-value" id="val-prev_season_weight">0.35</span>
+            <input type="range" id="prev_season_weight" min="0.00" max="0.70" step="0.05" value="0.35"
+                   oninput="onSliderChange('prev_season_weight', this.value)">
+            <a href="#" class="slider-reset" onclick="resetSlider('prev_season_weight'); return false;">reset</a>
+          </div>
+
+          <div class="slider-row">
+            <label for="mean_regression">Mean Regression Factor</label>
+            <span class="slider-value" id="val-mean_regression">0.60</span>
+            <input type="range" id="mean_regression" min="0.30" max="0.85" step="0.05" value="0.60"
+                   oninput="onSliderChange('mean_regression', this.value)">
+            <a href="#" class="slider-reset" onclick="resetSlider('mean_regression'); return false;">reset</a>
+          </div>
+
+          <div class="slider-row">
+            <label for="returning_regression_scale">Returning Regression Scale</label>
+            <span class="slider-value" id="val-returning_regression_scale">0.60</span>
+            <input type="range" id="returning_regression_scale" min="0.00" max="1.00" step="0.05" value="0.60"
+                   oninput="onSliderChange('returning_regression_scale', this.value)">
+            <a href="#" class="slider-reset" onclick="resetSlider('returning_regression_scale'); return false;">reset</a>
+          </div>
+        </div>
+
+      </div><!-- /.simulator-controls -->
+
+      <!-- Info Banner -->
+      <div class="sim-info-banner">
+        <strong>About this simulator:</strong> Sliders adjust how each factor is weighted.
+        The table updates instantly — no changes are saved until you click
+        <em>Save as Official</em>.
+      </div>
+    </div><!-- /.card (controls) -->
+
+    <!-- Rankings Card -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Simulated Rankings</h2>
+        <div id="sim-status" class="sim-status-text">Loading...</div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="sim-loading" class="loading">
+        <div class="spinner"></div>
+        <span>Loading preseason components...</span>
+      </div>
+
+      <!-- Error State -->
+      <div id="sim-error" class="error hidden">
+        <strong>Error loading data.</strong>
+        <span id="sim-error-message"></span>
+      </div>
+
+      <!-- Rankings Table -->
+      <div id="sim-table-container" class="hidden">
+        <div class="table-container">
+          <table class="rankings-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Team</th>
+                <th>Conference</th>
+                <th>Sim Rating</th>
+                <th>&Delta; Official</th>
+                <th>Components</th>
+              </tr>
+            </thead>
+            <tbody id="sim-tbody">
+              <!-- Rows injected by simulator.js -->
+            </tbody>
+          </table>
+        </div>
+        <button class="show-all-btn" id="show-all-btn" onclick="toggleShowAll()">Show All Teams</button>
+      </div>
+    </div><!-- /.card (rankings) -->
+
+  </div><!-- /.container -->
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2024 College Football Ranking System</p>
+      <p style="margin-top: 0.5rem; opacity: 0.8;">
+        Modified ELO Algorithm | Data updates in real-time
+      </p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/simulator.js"></script>
+</body>
+</html>
