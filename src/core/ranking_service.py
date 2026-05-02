@@ -128,6 +128,71 @@ class RankingService:
         else:
             return self.K_FACTOR_LATE  # 32: Stable ratings
 
+    def _calculate_preseason_bonuses(self, team: Team) -> dict:
+        """
+        Calculate individual preseason bonus components for a team.
+
+        Extracted from calculate_preseason_rating() so the same logic can be
+        used by the preseason simulator endpoint (EPIC-032) without recomputing.
+
+        Args:
+            team: Team object with preseason data
+
+        Returns:
+            Dict with keys: base, recruiting_bonus, transfer_bonus,
+            returning_bonus, position_strength_bonus
+        """
+        # Base rating
+        if team.conference == ConferenceType.FCS:
+            base = 1300.0
+        else:
+            base = 1500.0
+
+        # Recruiting bonus
+        recruiting_bonus = 0.0
+        if team.recruiting_rank <= 5:
+            recruiting_bonus = 200.0
+        elif team.recruiting_rank <= 10:
+            recruiting_bonus = 150.0
+        elif team.recruiting_rank <= 25:
+            recruiting_bonus = 100.0
+        elif team.recruiting_rank <= 50:
+            recruiting_bonus = 50.0
+        elif team.recruiting_rank <= 75:
+            recruiting_bonus = 25.0
+
+        # Transfer portal bonus
+        transfer_portal_rank = team.transfer_portal_rank or 999
+        transfer_bonus = 0.0
+        if transfer_portal_rank <= 5:
+            transfer_bonus = 100.0
+        elif transfer_portal_rank <= 10:
+            transfer_bonus = 75.0
+        elif transfer_portal_rank <= 25:
+            transfer_bonus = 50.0
+        elif transfer_portal_rank <= 50:
+            transfer_bonus = 25.0
+
+        # Returning production bonus
+        returning_bonus = 0.0
+        if team.returning_production >= 0.80:
+            returning_bonus = 40.0
+        elif team.returning_production >= 0.60:
+            returning_bonus = 25.0
+        elif team.returning_production >= 0.40:
+            returning_bonus = 10.0
+
+        # Position strength bonus
+        position_strength_bonus = self._calculate_position_strength_bonus(team)
+
+        return {
+            "base": base,
+            "recruiting_bonus": recruiting_bonus,
+            "transfer_bonus": transfer_bonus,
+            "returning_bonus": returning_bonus,
+            "position_strength_bonus": position_strength_bonus,
+        }
+
     def calculate_preseason_rating(self, team: Team, season: int = None) -> float:
         """
         Calculate preseason ELO rating based on recruiting, transfers, and returning production.
@@ -150,60 +215,16 @@ class RankingService:
             - Team has player data imported
             Otherwise, gracefully falls back to 0.0 bonus (no impact)
         """
-        # Base rating
-        if team.conference == ConferenceType.FCS:
-            base = 1300.0
-        else:
-            base = 1500.0
-
-        # Recruiting bonus
-        recruiting_bonus = 0.0
-        if team.recruiting_rank <= 5:
-            recruiting_bonus = 200.0
-        elif team.recruiting_rank <= 10:
-            recruiting_bonus = 150.0
-        elif team.recruiting_rank <= 25:
-            recruiting_bonus = 100.0
-        elif team.recruiting_rank <= 50:
-            recruiting_bonus = 50.0
-        elif team.recruiting_rank <= 75:
-            recruiting_bonus = 25.0
-
-        # Transfer portal bonus — uses calculated transfer_portal_rank (EPIC-026)
-        # Falls back to 999 (no bonus) for teams without portal data
-        transfer_portal_rank = team.transfer_portal_rank or 999
-        transfer_bonus = 0.0
-        if transfer_portal_rank <= 5:
-            transfer_bonus = 100.0
-        elif transfer_portal_rank <= 10:
-            transfer_bonus = 75.0
-        elif transfer_portal_rank <= 25:
-            transfer_bonus = 50.0
-        elif transfer_portal_rank <= 50:
-            transfer_bonus = 25.0
-
-        # Returning production bonus
-        returning_bonus = 0.0
-        if team.returning_production >= 0.80:
-            returning_bonus = 40.0
-        elif team.returning_production >= 0.60:
-            returning_bonus = 25.0
-        elif team.returning_production >= 0.40:
-            returning_bonus = 10.0
-
-        # Position strength bonus (EPIC: Preseason Enhancement - Story 1.6)
-        # Only included when feature is enabled in configuration
-        position_strength_bonus = self._calculate_position_strength_bonus(team)
-
+        bonuses = self._calculate_preseason_bonuses(team)
         base_formula_rating = (
-            base
-            + recruiting_bonus
-            + transfer_bonus
-            + returning_bonus
-            + position_strength_bonus
+            bonuses["base"]
+            + bonuses["recruiting_bonus"]
+            + bonuses["transfer_bonus"]
+            + bonuses["returning_bonus"]
+            + bonuses["position_strength_bonus"]
         )
 
-        # Previous season regression blend (EPIC-030)
+        # Previous season regression blend (EPIC-030) — keep this block exactly as-is
         try:
             from src.core.position_service import load_position_weights
             config = load_position_weights()
@@ -395,6 +416,48 @@ class RankingService:
         self.db.commit()
         logger.info(f"Saved final season snapshot for {season}: {count} teams at week=999")
         return count
+
+    def get_preseason_components(self, season: int) -> list:
+        """
+        Return raw preseason bonus components for all FBS teams (EPIC-032).
+
+        Used by the preseason simulator endpoint to let clients recalculate
+        rankings client-side with custom weight multipliers.
+
+        Args:
+            season: Season year (used to look up previous season ELO)
+
+        Returns:
+            List of dicts, one per FBS team, with keys:
+            team_id, team_name, conference, is_fcs, recruiting_rank,
+            transfer_portal_rank, returning_production, base,
+            recruiting_bonus, transfer_bonus, returning_bonus,
+            position_strength_bonus, prev_season_elo, current_rating
+        """
+        teams = self.db.query(Team).filter(Team.is_fcs == False).all()
+        result = []
+        for team in teams:
+            bonuses = self._calculate_preseason_bonuses(team)
+            prev_elo = self._get_previous_season_elo(team.id, season)
+            result.append({
+                "team_id": team.id,
+                "team_name": team.name,
+                "conference": team.conference.value if team.conference else None,
+                "is_fcs": team.is_fcs or False,
+                "recruiting_rank": team.recruiting_rank or 999,
+                "transfer_portal_rank": team.transfer_portal_rank or 999,
+                "returning_production": team.returning_production or 0.5,
+                "base": bonuses["base"],
+                "recruiting_bonus": bonuses["recruiting_bonus"],
+                "transfer_bonus": bonuses["transfer_bonus"],
+                "returning_bonus": bonuses["returning_bonus"],
+                "position_strength_bonus": round(bonuses["position_strength_bonus"], 2),
+                "prev_season_elo": round(prev_elo, 2) if prev_elo else None,
+                "current_rating": round(team.elo_rating, 2),
+            })
+        # Sort by current_rating descending
+        result.sort(key=lambda x: x["current_rating"], reverse=True)
+        return result
 
     def calculate_expected_score(self, team_a_rating: float, team_b_rating: float) -> float:
         """

@@ -1226,6 +1226,42 @@ async def get_ranking_history(team_id: int, season: int, db: Session = Depends(g
     return history
 
 
+@app.get(
+    "/api/preseason/components",
+    response_model=List[schemas.PreseasonComponent],
+    tags=["Rankings"],
+)
+async def get_preseason_components(
+    season: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    """Get raw preseason rating components for all FBS teams (EPIC-032).
+
+    Returns each team's individual bonus contributions so the preseason
+    simulator can recalculate rankings client-side with custom weights
+    without making a server request on every slider change.
+
+    Args:
+        season: Season year (defaults to active season). Used to look up
+                previous season ELO from ranking_history.
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        List of PreseasonComponent objects sorted by current_rating desc,
+        one per FBS team. Each item includes base rating, all bonus
+        components, previous season ELO, and current official rating.
+
+    Example:
+        GET /api/preseason/components?season=2026
+    """
+    if not season:
+        active_season = db.query(Season).filter(Season.is_active == True).first()
+        season = active_season.year if active_season else datetime.now().year
+
+    ranking_service = RankingService(db)
+    return ranking_service.get_preseason_components(season)
+
+
 @app.post("/api/rankings/save", response_model=schemas.SuccessResponse, tags=["Rankings"])
 async def save_rankings(season: int, week: int, db: Session = Depends(get_db)):
     """Save current rankings to historical snapshots.

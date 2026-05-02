@@ -502,6 +502,45 @@ class ConfigUpdate(BaseModel):
 
 
 # ============================================================================
+# Preseason Simulator Schemas (EPIC-032)
+# ============================================================================
+
+
+class PreseasonComponent(BaseModel):
+    """Raw preseason rating components for a single team.
+
+    Returned by GET /api/preseason/components to allow client-side
+    recalculation of preseason ratings with custom weight multipliers.
+    The simulator uses these to rerank teams without server round-trips.
+    """
+
+    team_id: int = Field(..., description="Team database ID")
+    team_name: str = Field(..., description="Team name")
+    conference: Optional[str] = Field(None, description="Conference type value")
+    is_fcs: bool = Field(False, description="True if FCS team")
+
+    # Input factors
+    recruiting_rank: int = Field(999, description="247Sports recruiting rank")
+    transfer_portal_rank: int = Field(999, description="Transfer portal national rank")
+    returning_production: float = Field(0.5, description="Returning production percentage")
+
+    # Bonus components (additive contributions to base_formula_rating)
+    base: float = Field(..., description="Base ELO (1500 FBS / 1300 FCS)")
+    recruiting_bonus: float = Field(..., description="Recruiting rank bonus (0–200)")
+    transfer_bonus: float = Field(..., description="Transfer portal bonus (0–100)")
+    returning_bonus: float = Field(..., description="Returning production bonus (0–40)")
+    position_strength_bonus: float = Field(..., description="Position strength bonus (0–150)")
+
+    # Previous season data (for EPIC-030 regression blend)
+    prev_season_elo: Optional[float] = Field(
+        None, description="Team's final ELO from previous season (None if no data)"
+    )
+
+    # Current official rating (for computing Δ in the simulator)
+    current_rating: float = Field(..., description="Current official preseason ELO rating")
+
+
+# ============================================================================
 # Prediction Schemas
 # ============================================================================
 
