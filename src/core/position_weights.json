@@ -33,7 +33,7 @@
     "max_bonus": "Maximum bonus points contribution to preseason rating (base 1500 + other bonuses + this)",
     "previous_season_weight": "EPIC-030: How much previous season ELO blends into preseason (0=disabled, 0.35=recommended). Start at 0.0 until validated.",
     "mean_regression_factor": "EPIC-030: Base regression toward 1500 before blending (0=full reset, 1=no regression). Default 0.60.",
-    "returning_regression_scale": "EPIC-030: How much returning_production modulates regression. Formula: clamp(base + (ret_prod - 0.5) * scale, 0.30, 0.85). Default 0.60."
+    "returning_regression_scale": "EPIC-030: How much returning_production modulates regression. Formula: clamp(base + (ret_prod - 0.5) * scale, 0.30, 0.85). Default 0.60.",
     "top_players_per_position": "Number of top recruits to consider when calculating position group strength",
     "rationale": {
       "QB_30_percent": "Quarterback is most valuable position in college football",

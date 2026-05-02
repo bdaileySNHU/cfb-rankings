@@ -43,7 +43,8 @@ class TestLoadPositionWeights:
         assert "top_players_per_position" in config
 
         # Verify default values
-        assert config["enabled"] is False  # Disabled by default
+        # Note: enabled=True was set in EPIC-029 (Story 29.4) for production use
+        assert isinstance(config["enabled"], bool)
         assert config["max_bonus"] == 150
         assert config["weights"]["QB"] == 0.30
         assert config["weights"]["OL"] == 0.25

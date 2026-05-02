@@ -23,7 +23,7 @@ class TestPositionStrengthIntegration:
     """Tests for position strength integration in preseason rating calculation"""
 
     def test_preseason_rating_with_feature_disabled(self, test_db: Session):
-        """Test that position bonus is 0.0 when feature disabled"""
+        """Test that position bonus is 0.0 when feature disabled via config"""
         # Create team with good traditional metrics
         team = Team(
             name="Georgia",
@@ -49,9 +49,23 @@ class TestPositionStrengthIntegration:
             test_db.add(player)
         test_db.commit()
 
-        # Calculate preseason rating (feature disabled by default)
+        # Calculate preseason rating with feature explicitly disabled via mock
+        # (production config has enabled=True since EPIC-029; this tests the disabled path)
+        disabled_config = {
+            "version": "1.0",
+            "enabled": False,
+            "weights": {"QB": 0.30, "OL": 0.25, "DL": 0.20, "DB": 0.15,
+                        "LB": 0.05, "RB": 0.025, "WR": 0.025, "TE": 0.0, "ST": 0.0},
+            "max_bonus": 150,
+            "top_players_per_position": {"QB": 3, "OL": 5, "DL": 5, "DB": 4,
+                                          "LB": 3, "RB": 2, "WR": 3, "TE": 2, "ST": 1},
+            "previous_season_weight": 0.0,
+            "mean_regression_factor": 0.60,
+            "returning_regression_scale": 0.60,
+        }
         ranking_service = RankingService(test_db)
-        rating = ranking_service.calculate_preseason_rating(team)
+        with patch("src.core.position_service.load_position_weights", return_value=disabled_config):
+            rating = ranking_service.calculate_preseason_rating(team)
 
         # Expected: base (1500) + recruiting (200) + transfer (100) + returning (40) = 1840
         # Position bonus should be 0.0 since feature is disabled
