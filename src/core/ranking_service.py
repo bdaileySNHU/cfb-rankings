@@ -128,7 +128,7 @@ class RankingService:
         else:
             return self.K_FACTOR_LATE  # 32: Stable ratings
 
-    def calculate_preseason_rating(self, team: Team) -> float:
+    def calculate_preseason_rating(self, team: Team, season: int = None) -> float:
         """
         Calculate preseason ELO rating based on recruiting, transfers, and returning production.
 
@@ -139,6 +139,7 @@ class RankingService:
 
         Args:
             team: Team object with preseason data
+            season: Season year for previous season regression (optional, EPIC-030)
 
         Returns:
             Calculated preseason rating including all applicable bonuses
@@ -194,13 +195,45 @@ class RankingService:
         # Only included when feature is enabled in configuration
         position_strength_bonus = self._calculate_position_strength_bonus(team)
 
-        return (
+        base_formula_rating = (
             base
             + recruiting_bonus
             + transfer_bonus
             + returning_bonus
             + position_strength_bonus
         )
+
+        # Previous season regression blend (EPIC-030)
+        try:
+            from src.core.position_service import load_position_weights
+            config = load_position_weights()
+            prev_weight = config.get("previous_season_weight", 0.0)
+
+            if prev_weight > 0 and season is not None:
+                prev_elo = self._get_previous_season_elo(team.id, season)
+                if prev_elo is not None:
+                    base_regression = config.get("mean_regression_factor", 0.60)
+                    returning_scale = config.get("returning_regression_scale", 0.60)
+                    returning_prod = getattr(team, "returning_production", None)
+
+                    if returning_prod is not None:
+                        dynamic_regression = base_regression + (returning_prod - 0.5) * returning_scale
+                        regression = max(0.30, min(0.85, dynamic_regression))
+                    else:
+                        regression = base_regression
+
+                    prev_regressed = 1500.0 + (prev_elo - 1500.0) * regression
+                    blended = (prev_regressed * prev_weight) + (base_formula_rating * (1.0 - prev_weight))
+                    logger.debug(
+                        f"{team.name}: prev_elo={prev_elo:.1f} returning={returning_prod} "
+                        f"regression={regression:.3f} → regressed={prev_regressed:.1f} "
+                        f"→ blended={blended:.1f} (weight={prev_weight})"
+                    )
+                    return blended
+        except Exception as e:
+            logger.warning(f"Previous season regression failed for {team.name}: {e}")
+
+        return base_formula_rating
 
     def _calculate_position_strength_bonus(self, team: Team) -> float:
         """
@@ -275,17 +308,93 @@ class RankingService:
             )
             return 0.0
 
-    def initialize_team_rating(self, team: Team) -> None:
+    def initialize_team_rating(self, team: Team, season: int = None) -> None:
         """
         Initialize a team's ELO rating based on preseason factors
 
         Args:
             team: Team to initialize
+            season: Season year for previous season regression (optional)
         """
-        rating = self.calculate_preseason_rating(team)
+        rating = self.calculate_preseason_rating(team, season=season)
         team.elo_rating = rating
         team.initial_rating = rating
         self.db.commit()
+
+    def _get_previous_season_elo(self, team_id: int, current_season: int) -> Optional[float]:
+        """Get team's final ELO from the previous season via ranking_history.
+
+        Prefers the sentinel week=999 snapshot (postseason-complete) if available,
+        otherwise falls back to the highest recorded week (e.g., regular season final).
+
+        Args:
+            team_id: Team database ID
+            current_season: The season being initialized (we look at current_season - 1)
+
+        Returns:
+            ELO rating float, or None if no previous season data exists
+        """
+        prev_season = current_season - 1
+        record = (
+            self.db.query(RankingHistory)
+            .filter(
+                RankingHistory.team_id == team_id,
+                RankingHistory.season == prev_season,
+            )
+            .order_by(RankingHistory.week.desc())
+            .first()
+        )
+        return record.elo_rating if record else None
+
+    def save_final_season_snapshot(self, season: int) -> int:
+        """Capture the true postseason-final ELO for all teams into ranking_history.
+
+        Writes a sentinel week=999 entry for every team using their current
+        teams.elo_rating value. Must be called BEFORE initializing preseason
+        ratings for the next season, otherwise the postseason ELO will be
+        overwritten and lost.
+
+        Idempotent: re-running updates existing week=999 entries rather than
+        creating duplicates.
+
+        Args:
+            season: The season just completed (e.g., 2025)
+
+        Returns:
+            Number of team snapshots saved
+        """
+        teams = self.db.query(Team).all()
+        count = 0
+
+        for team in teams:
+            existing = (
+                self.db.query(RankingHistory)
+                .filter(
+                    RankingHistory.team_id == team.id,
+                    RankingHistory.season == season,
+                    RankingHistory.week == 999,
+                )
+                .first()
+            )
+            if existing:
+                existing.elo_rating = team.elo_rating
+            else:
+                wins, losses = self.get_season_record(team.id, season)
+                self.db.add(RankingHistory(
+                    team_id=team.id,
+                    season=season,
+                    week=999,
+                    rank=0,  # Not meaningful for final snapshot; re-rank on read if needed
+                    elo_rating=team.elo_rating,
+                    wins=wins,
+                    losses=losses,
+                    sos=0.0,
+                ))
+            count += 1
+
+        self.db.commit()
+        logger.info(f"Saved final season snapshot for {season}: {count} teams at week=999")
+        return count
 
     def calculate_expected_score(self, team_a_rating: float, team_b_rating: float) -> float:
         """
