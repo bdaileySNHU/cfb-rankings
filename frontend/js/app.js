@@ -335,14 +335,25 @@ function setActiveFilterButton(buttonId) {
 async function loadPredictions(filters = { nextWeek: true }) {
   const loading = document.getElementById('predictions-loading');
   const empty = document.getElementById('predictions-empty');
+  const historical = document.getElementById('predictions-historical');
   const error = document.getElementById('predictions-error');
   const container = document.getElementById('predictions-container');
 
-  // Show loading
-  loading.classList.remove('hidden');
+  // Hide all states first
+  loading.classList.add('hidden');
   empty.classList.add('hidden');
+  if (historical) historical.classList.add('hidden');
   error.classList.add('hidden');
   container.innerHTML = '';
+
+  // Historical seasons have no upcoming games — predictions don't apply
+  if (currentSeason && activeSeason && currentSeason !== activeSeason) {
+    if (historical) historical.classList.remove('hidden');
+    return;
+  }
+
+  // Show loading
+  loading.classList.remove('hidden');
 
   try {
     // Always include the currently selected season
