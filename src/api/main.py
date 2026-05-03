@@ -920,6 +920,138 @@ async def get_predictions(
 
 
 @app.get(
+    "/api/predictions/historical",
+    response_model=schemas.HistoricalPredictionSummary,
+    tags=["Predictions"],
+)
+async def get_historical_predictions(
+    season: int = Query(..., ge=2020, description="Season year"),
+    week: int = Query(..., ge=1, le=20, description="Week number"),
+    db: Session = Depends(get_db),
+):
+    """Simulate predictions for a completed historical week using ranking_history ELO.
+
+    For each processed game in the specified season/week, retrieves both teams'
+    ELO ratings from ranking_history at that point in time, runs the standard
+    win-probability formula, and compares the simulated prediction against the
+    actual game result.
+
+    Useful for backtesting algorithm changes: adjust weights in the simulator,
+    then check this endpoint to see how those weights would have performed on
+    real historical matchups.
+    """
+    try:
+        # Fetch all processed games for this season/week
+        games = (
+            db.query(Game)
+            .filter(Game.season == season, Game.week == week, Game.is_processed == True)
+            .all()
+        )
+
+        predictions = []
+        for game in games:
+            home_team = db.query(Team).filter(Team.id == game.home_team_id).first()
+            away_team = db.query(Team).filter(Team.id == game.away_team_id).first()
+            if not home_team or not away_team:
+                continue
+
+            # Look up historical ELO — prefer the snapshot from this week,
+            # fall back to the most recent snapshot before this week
+            def get_elo_at_week(team_id: int) -> float:
+                row = (
+                    db.query(RankingHistory.elo_rating)
+                    .filter(
+                        RankingHistory.team_id == team_id,
+                        RankingHistory.season == season,
+                        RankingHistory.week <= week,
+                        RankingHistory.week != 999,
+                    )
+                    .order_by(RankingHistory.week.desc())
+                    .first()
+                )
+                if row:
+                    return row[0]
+                # No history — fall back to team's current rating
+                return home_team.elo_rating if team_id == home_team.id else away_team.elo_rating
+
+            home_elo = get_elo_at_week(home_team.id)
+            away_elo = get_elo_at_week(away_team.id)
+
+            # Win probability (home field advantage: +65 unless neutral)
+            home_adj = home_elo + (0 if game.is_neutral_site else 65)
+            home_win_prob = 1 / (1 + 10 ** ((away_elo - home_adj) / 400))
+            away_win_prob = 1 - home_win_prob
+
+            # Score estimate
+            rating_diff = home_adj - away_elo
+            score_adj = (rating_diff / 100) * 3.5
+            pred_home = max(0, min(150, round(30 + score_adj)))
+            pred_away = max(0, min(150, round(30 - score_adj)))
+
+            # Confidence
+            margin = abs(home_win_prob - 0.5)
+            confidence = "High" if margin > 0.3 else "Medium" if margin > 0.15 else "Low"
+
+            predicted_winner_is_home = home_win_prob >= 0.5
+
+            # Actual result
+            actual_home = game.home_score
+            actual_away = game.away_score
+            actual_winner_id = None
+            actual_winner = None
+            prediction_correct = None
+            if actual_home is not None and actual_away is not None:
+                actual_winner_id = home_team.id if actual_home > actual_away else away_team.id
+                actual_winner = home_team.name if actual_home > actual_away else away_team.name
+                predicted_winner_id = home_team.id if predicted_winner_is_home else away_team.id
+                prediction_correct = (predicted_winner_id == actual_winner_id)
+
+            predictions.append(schemas.HistoricalPrediction(
+                game_id=game.id,
+                week=game.week,
+                season=game.season,
+                game_date=game.game_date.isoformat() if game.game_date else None,
+                is_neutral_site=game.is_neutral_site,
+                home_team_id=home_team.id,
+                home_team=home_team.name,
+                home_team_rating=round(home_elo, 1),
+                home_win_probability=round(home_win_prob * 100, 1),
+                away_team_id=away_team.id,
+                away_team=away_team.name,
+                away_team_rating=round(away_elo, 1),
+                away_win_probability=round(away_win_prob * 100, 1),
+                predicted_winner=home_team.name if predicted_winner_is_home else away_team.name,
+                predicted_winner_id=home_team.id if predicted_winner_is_home else away_team.id,
+                predicted_home_score=pred_home,
+                predicted_away_score=pred_away,
+                confidence=confidence,
+                actual_home_score=actual_home,
+                actual_away_score=actual_away,
+                actual_winner=actual_winner,
+                actual_winner_id=actual_winner_id,
+                prediction_correct=prediction_correct,
+            ))
+
+        games_with_results = sum(1 for p in predictions if p.prediction_correct is not None)
+        correct = sum(1 for p in predictions if p.prediction_correct is True)
+        accuracy = round(correct / games_with_results * 100, 1) if games_with_results > 0 else None
+
+        return schemas.HistoricalPredictionSummary(
+            season=season,
+            week=week,
+            total_games=len(predictions),
+            games_with_results=games_with_results,
+            correct_predictions=correct,
+            accuracy_percentage=accuracy,
+            predictions=predictions,
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating historical predictions: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating historical predictions: {e}")
+
+
+@app.get(
     "/api/predictions/accuracy",
     response_model=schemas.PredictionAccuracyStats,
     tags=["Predictions"],

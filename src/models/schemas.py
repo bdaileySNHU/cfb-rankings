@@ -604,6 +604,64 @@ class GamePrediction(BaseModel):
 
 
 # ============================================================================
+# Historical Prediction Simulation Schema
+# ============================================================================
+
+
+class HistoricalPrediction(BaseModel):
+    """A simulated prediction for a completed historical game.
+
+    Returned by GET /api/predictions/historical — runs the current ELO
+    prediction formula against the teams' ratings as they were at game time
+    (from ranking_history) and compares against the actual result.
+    """
+
+    game_id: int
+    week: int
+    season: int
+    game_date: Optional[str] = None
+    is_neutral_site: bool
+
+    home_team_id: int
+    home_team: str
+    home_team_rating: float          # ELO at game time from ranking_history
+    home_win_probability: float      # 0–100
+
+    away_team_id: int
+    away_team: str
+    away_team_rating: float
+    away_win_probability: float
+
+    predicted_winner: str
+    predicted_winner_id: int
+    predicted_home_score: int
+    predicted_away_score: int
+    confidence: str
+
+    # Actual result (game is already processed)
+    actual_home_score: Optional[int] = None
+    actual_away_score: Optional[int] = None
+    actual_winner: Optional[str] = None
+    actual_winner_id: Optional[int] = None
+    prediction_correct: Optional[bool] = None   # None if no result recorded
+
+    class Config:
+        from_attributes = True
+
+
+class HistoricalPredictionSummary(BaseModel):
+    """Summary stats for a week of historical predictions."""
+
+    season: int
+    week: int
+    total_games: int
+    games_with_results: int
+    correct_predictions: int
+    accuracy_percentage: Optional[float] = None   # None if no results yet
+    predictions: List[HistoricalPrediction]
+
+
+# ============================================================================
 # Prediction Accuracy Schemas (EPIC-009)
 # ============================================================================
 

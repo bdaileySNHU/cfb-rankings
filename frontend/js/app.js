@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadPredictions();
   setupEventListeners();
   setupPredictionListeners();
+  setupHistoricalSimListeners();
 });
 
 // Setup Event Listeners
@@ -469,4 +470,131 @@ async function loadPredictionAccuracy() {
     console.error('Error loading prediction accuracy:', error);
     // Don't show error - just hide the banner
   }
+}
+
+// ============================================================================
+// HISTORICAL PREDICTION SIMULATOR
+// ============================================================================
+
+function setupHistoricalSimListeners() {
+  const weekSel = document.getElementById('historical-week-selector');
+  if (weekSel) {
+    weekSel.addEventListener('change', (e) => {
+      const week = parseInt(e.target.value);
+      if (week && currentSeason) loadHistoricalPredictions(currentSeason, week);
+    });
+  }
+}
+
+async function loadHistoricalPredictions(season, week) {
+  const loading  = document.getElementById('historical-sim-loading');
+  const empty    = document.getElementById('historical-sim-empty');
+  const summary  = document.getElementById('historical-sim-summary');
+  const container = document.getElementById('historical-sim-container');
+
+  loading.classList.remove('hidden');
+  empty.classList.add('hidden');
+  summary.classList.add('hidden');
+  container.innerHTML = '';
+
+  try {
+    const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:8000/api' : '/api';
+    const resp = await fetch(`${baseUrl}/predictions/historical?season=${season}&week=${week}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    loading.classList.add('hidden');
+
+    if (!data.predictions || data.predictions.length === 0) {
+      empty.classList.remove('hidden');
+      return;
+    }
+
+    // Accuracy summary bar
+    if (data.games_with_results > 0) {
+      const pct = data.accuracy_percentage;
+      const colour = pct >= 70 ? 'var(--success-color)' : pct >= 55 ? 'var(--warning-color)' : 'var(--error-color, #e53e3e)';
+      summary.innerHTML = `
+        <span>Week ${week} — <strong>${data.correct_predictions}/${data.games_with_results}</strong> correct
+        (<strong style="color:${colour}">${pct}%</strong>)</span>
+        <span style="color:var(--text-secondary);font-size:0.85rem;">${data.total_games} games total</span>`;
+      summary.classList.remove('hidden');
+    }
+
+    // Sort: incorrect first (more interesting), then correct, then no-result
+    const sorted = [...data.predictions].sort((a, b) => {
+      const rank = p => p.prediction_correct === false ? 0 : p.prediction_correct === true ? 1 : 2;
+      return rank(a) - rank(b);
+    });
+
+    container.innerHTML = sorted.map(p => createHistoricalCard(p)).join('');
+
+  } catch (err) {
+    loading.classList.add('hidden');
+    console.error('Historical predictions error:', err);
+    empty.classList.remove('hidden');
+    empty.querySelector('p').textContent = `Error loading simulations: ${err.message}`;
+  }
+}
+
+function createHistoricalCard(p) {
+  const homeWinner = p.predicted_winner_id === p.home_team_id;
+  const homeProb   = p.home_win_probability.toFixed(1);
+  const awayProb   = p.away_win_probability.toFixed(1);
+
+  // Result badge
+  let resultBadge = '';
+  if (p.prediction_correct === true) {
+    resultBadge = `<span class="hist-result-badge hist-correct">✓ Correct</span>`;
+  } else if (p.prediction_correct === false) {
+    resultBadge = `<span class="hist-result-badge hist-wrong">✗ Wrong</span>`;
+  }
+
+  // Actual score line
+  let actualLine = '';
+  if (p.actual_home_score !== null && p.actual_away_score !== null) {
+    const homeWon = p.actual_home_score > p.actual_away_score;
+    actualLine = `
+      <div class="hist-actual">
+        <span class="hist-actual-label">Actual:</span>
+        <span class="${homeWon ? 'hist-winner' : ''}">${p.home_team} ${p.actual_home_score}</span>
+        <span class="hist-vs">–</span>
+        <span class="${!homeWon ? 'hist-winner' : ''}">${p.away_team} ${p.actual_away_score}</span>
+      </div>`;
+  }
+
+  const gameDate = p.game_date ? ` • ${new Date(p.game_date).toLocaleDateString('en-US', {month:'short', day:'numeric'})}` : '';
+
+  return `
+    <div class="prediction-card hist-card${p.prediction_correct === false ? ' hist-card-wrong' : p.prediction_correct === true ? ' hist-card-correct' : ''}">
+      <div class="prediction-header">
+        <span class="prediction-badge hist-badge">SIMULATED</span>
+        <span class="game-info">Week ${p.week}${gameDate}</span>
+        ${resultBadge}
+      </div>
+      <div class="prediction-matchup">
+        <div class="team ${homeWinner ? 'predicted-winner' : ''}">
+          <span class="team-name">${p.home_team}</span>
+          <span class="score">${p.predicted_home_score}</span>
+        </div>
+        <div class="vs-divider">vs</div>
+        <div class="team ${!homeWinner ? 'predicted-winner' : ''}">
+          <span class="team-name">${p.away_team}</span>
+          <span class="score">${p.predicted_away_score}</span>
+        </div>
+      </div>
+      <div class="prediction-details">
+        <div class="win-probabilities">
+          <span>${p.home_team}: ${homeProb}%</span>
+          <span>${p.away_team}: ${awayProb}%</span>
+        </div>
+        <div class="confidence-indicator confidence-${p.confidence.toLowerCase()}">
+          <span class="confidence-label">Confidence:</span>
+          <span class="confidence-value">${p.confidence}</span>
+        </div>
+        ${p.is_neutral_site ? '<div class="neutral-site-badge">Neutral Site</div>' : ''}
+      </div>
+      ${actualLine}
+    </div>`;
 }
