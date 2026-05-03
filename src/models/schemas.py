@@ -249,6 +249,14 @@ class RankingEntry(BaseModel):
     )
     recruiting_rank: Optional[int] = Field(None, description="247Sports recruiting rank")
 
+    # EPIC-031 Story 31.2: Rank change and ELO trend sparkline
+    rank_change: Optional[int] = Field(
+        None, description="Change in rank from prior week (positive=moved up, negative=moved down, None=new entry)"
+    )
+    elo_history: Optional[List[float]] = Field(
+        None, description="Last 8 weekly ELO values for sparkline (ascending week order)"
+    )
+
 
 class RankingsResponse(BaseModel):
     """Response for rankings endpoint"""

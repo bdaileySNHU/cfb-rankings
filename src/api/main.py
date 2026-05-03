@@ -1322,6 +1322,61 @@ async def get_rankings(
     ranking_service = RankingService(db)
     rankings = ranking_service.get_current_rankings(season, limit=limit)
 
+    # EPIC-031 Story 31.2: Compute rank changes and ELO history in batch
+    team_ids = [r["team_id"] for r in rankings]
+
+    # --- Rank change: batch-query ALL teams at (week - 1) ---
+    prior_rank_by_team_id: dict = {}
+    if current_week > 0:
+        prior_week = current_week - 1
+        prior_records = (
+            db.query(RankingHistory.team_id, RankingHistory.elo_rating)
+            .filter(
+                RankingHistory.season == season,
+                RankingHistory.week == prior_week,
+            )
+            .all()
+        )
+        if prior_records:
+            # Sort by ELO descending to derive prior-week ranks
+            sorted_prior = sorted(prior_records, key=lambda r: r.elo_rating, reverse=True)
+            for prior_rank, row in enumerate(sorted_prior, start=1):
+                prior_rank_by_team_id[row.team_id] = prior_rank
+
+    # --- ELO history: batch-query for all teams in the result set ---
+    elo_history_by_team_id: dict = {}
+    if team_ids:
+        history_records = (
+            db.query(RankingHistory.team_id, RankingHistory.week, RankingHistory.elo_rating)
+            .filter(
+                RankingHistory.season == season,
+                RankingHistory.team_id.in_(team_ids),
+                RankingHistory.week != 999,
+            )
+            .order_by(RankingHistory.team_id, RankingHistory.week.asc())
+            .all()
+        )
+        # Group by team_id; take last 8 entries
+        from collections import defaultdict
+        history_map: dict = defaultdict(list)
+        for row in history_records:
+            history_map[row.team_id].append(row.elo_rating)
+        for tid, elos in history_map.items():
+            elo_history_by_team_id[tid] = elos[-8:]
+
+    # Attach rank_change and elo_history to each ranking entry
+    for entry in rankings:
+        tid = entry["team_id"]
+        current_rank = entry["rank"]
+
+        if current_week == 0 or tid not in prior_rank_by_team_id:
+            entry["rank_change"] = None
+        else:
+            prior_rank = prior_rank_by_team_id[tid]
+            entry["rank_change"] = prior_rank - current_rank  # positive = moved up
+
+        entry["elo_history"] = elo_history_by_team_id.get(tid, [])
+
     return {
         "week": current_week,
         "season": season,

@@ -177,6 +177,20 @@ function createRankingRow(team) {
   rankCell.appendChild(rankBadge);
   row.appendChild(rankCell);
 
+  // EPIC-031 Story 31.2: Rank change cell (column 2)
+  const changeCell = document.createElement('td');
+  changeCell.className = 'rank-change-cell col-change';
+  if (team.rank_change === null || team.rank_change === undefined) {
+    changeCell.innerHTML = '<span class="rank-new">NEW</span>';
+  } else if (team.rank_change > 0) {
+    changeCell.innerHTML = `<span class="rank-up">▲${team.rank_change}</span>`;
+  } else if (team.rank_change < 0) {
+    changeCell.innerHTML = `<span class="rank-down">▼${Math.abs(team.rank_change)}</span>`;
+  } else {
+    changeCell.innerHTML = '<span class="rank-same">—</span>';
+  }
+  row.appendChild(changeCell);
+
   // Team Name
   const teamCell = document.createElement('td');
   const teamName = document.createElement('span');
@@ -234,8 +248,19 @@ function createRankingRow(team) {
   eloCell.style.fontWeight = '600';
   row.appendChild(eloCell);
 
+  // EPIC-031 Story 31.2: Sparkline cell (column 7)
+  const sparkCell = document.createElement('td');
+  sparkCell.className = 'sparkline-cell col-sparkline';
+  if (team.elo_history && team.elo_history.length >= 2) {
+    sparkCell.innerHTML = createSparklineSVG(team.elo_history);
+  } else {
+    sparkCell.innerHTML = '<span style="color:var(--text-muted);font-size:0.75rem;">—</span>';
+  }
+  row.appendChild(sparkCell);
+
   // SOS
   const sosCell = document.createElement('td');
+  sosCell.className = 'col-sos';
   const sosIndicator = document.createElement('span');
   sosIndicator.className = 'sos-indicator';
   if (team.sos >= 1700) {
@@ -254,11 +279,36 @@ function createRankingRow(team) {
 
   // SOS Rank
   const sosRankCell = document.createElement('td');
+  sosRankCell.className = 'col-sos';
   sosRankCell.textContent = team.sos_rank || '--';
   sosRankCell.style.color = 'var(--text-secondary)';
   row.appendChild(sosRankCell);
 
   return row;
+}
+
+// EPIC-031 Story 31.2: Create SVG sparkline for ELO trend
+function createSparklineSVG(values) {
+  const W = 64, H = 24, pad = 2;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const n = values.length;
+
+  const pts = values.map((v, i) => {
+    const x = pad + (i / (n - 1)) * (W - pad * 2);
+    const y = H - pad - ((v - min) / range) * (H - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+
+  // Colour: compare last vs first value
+  const trend = values[values.length - 1] - values[0];
+  const colour = trend > 0 ? 'var(--success-color)' : trend < 0 ? 'var(--error-color)' : 'var(--text-muted)';
+
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="sparkline-svg">
+    <polyline points="${pts.join(' ')}" fill="none" stroke="${colour}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${pts[pts.length-1].split(',')[0]}" cy="${pts[pts.length-1].split(',')[1]}" r="2" fill="${colour}"/>
+  </svg>`;
 }
 
 // Utility: Format Date

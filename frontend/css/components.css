@@ -1162,9 +1162,9 @@
     padding-right: 0.75rem;
   }
 
-  /* Hide SOS Rank column (7th) */
-  .rankings-table th:nth-child(7),
-  .rankings-table td:nth-child(7) {
+  /* Hide SOS Rank column (9th) — also handled by .col-sos class */
+  .rankings-table th:nth-child(9),
+  .rankings-table td:nth-child(9) {
     display: none;
   }
 
@@ -1234,10 +1234,11 @@
 }
 
 @media (max-width: 480px) {
-  .rankings-table th:nth-child(6),
-  .rankings-table td:nth-child(6),
-  .rankings-table th:nth-child(7),
-  .rankings-table td:nth-child(7) {
+  /* Hide SOS (8), SOS Rank (9) — also handled by .col-sos class */
+  .rankings-table th:nth-child(8),
+  .rankings-table td:nth-child(8),
+  .rankings-table th:nth-child(9),
+  .rankings-table td:nth-child(9) {
     display: none;
   }
 
@@ -1248,11 +1249,13 @@
   .rankings-table th:nth-child(1),
   .rankings-table td:nth-child(1) { width: 60px; }
 
-  .rankings-table th:nth-child(2),
-  .rankings-table td:nth-child(2) { min-width: 150px; }
+  /* column 3 = Team name (was 2 before new change column) */
+  .rankings-table th:nth-child(3),
+  .rankings-table td:nth-child(3) { min-width: 150px; }
 
-  .rankings-table th:nth-child(4),
-  .rankings-table td:nth-child(4) { width: 70px; }
+  /* column 5 = Record (was 4 before) */
+  .rankings-table th:nth-child(5),
+  .rankings-table td:nth-child(5) { width: 70px; }
 
   .info-box {
     font-size: 0.875rem;
@@ -1264,12 +1267,13 @@
 }
 
 @media (max-width: 375px) {
-  .rankings-table th:nth-child(3),
-  .rankings-table td:nth-child(3),
-  .rankings-table th:nth-child(6),
-  .rankings-table td:nth-child(6),
-  .rankings-table th:nth-child(7),
-  .rankings-table td:nth-child(7) {
+  /* Hide Conference (4), SOS (8), SOS Rank (9) */
+  .rankings-table th:nth-child(4),
+  .rankings-table td:nth-child(4),
+  .rankings-table th:nth-child(8),
+  .rankings-table td:nth-child(8),
+  .rankings-table th:nth-child(9),
+  .rankings-table td:nth-child(9) {
     display: none;
   }
 
@@ -1286,4 +1290,32 @@
 #prediction-accuracy-card {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
   border-left: 3px solid var(--accent);
+}
+
+/* ── Rank change indicators (EPIC-031 Story 31.2) ───────── */
+.rank-change-cell {
+  text-align: center;
+  white-space: nowrap;
+  width: 48px;
+}
+.rank-up   { color: var(--success-color); font-size: 0.8rem; font-weight: 600; }
+.rank-down { color: var(--error-color);   font-size: 0.8rem; font-weight: 600; }
+.rank-same { color: var(--text-muted);    font-size: 0.9rem; }
+.rank-new  { color: var(--accent);        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.03em; }
+
+/* ── Sparklines (EPIC-031 Story 31.2) ───────────────────── */
+.sparkline-cell { padding: 0.25rem 0.5rem; }
+.sparkline-svg  { display: block; overflow: visible; }
+
+/* ── Sticky table header ────────────────────────────────── */
+.rankings-table thead th {
+  position: sticky;
+  top: 108px; /* header (60px) + nav (48px) */
+  z-index: 10;
+  background: var(--bg-secondary);
+}
+
+/* ── Mobile: hide less-important columns ───────────────── */
+@media (max-width: 767px) {
+  .col-change, .col-sparkline, .col-sos { display: none; }
 }
