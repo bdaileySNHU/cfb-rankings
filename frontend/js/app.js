@@ -33,6 +33,7 @@ function setupEventListeners() {
       currentSeason = e.target.value ? parseInt(e.target.value) : activeSeason;
       updateHistoricalBanner();
       loadRankings();
+      loadPredictions({ nextWeek: currentSeason === activeSeason });
     });
   }
 
@@ -44,6 +45,7 @@ function setupEventListeners() {
       document.getElementById('season-select').value = activeSeason;
       updateHistoricalBanner();
       loadRankings();
+      loadPredictions({ nextWeek: true });
     });
   }
 }
@@ -343,7 +345,9 @@ async function loadPredictions(filters = { nextWeek: true }) {
   container.innerHTML = '';
 
   try {
-    const predictions = await api.getPredictions(filters);
+    // Always include the currently selected season
+    const seasonFilters = { ...filters, season: currentSeason };
+    const predictions = await api.getPredictions(seasonFilters);
 
     // Hide loading
     loading.classList.add('hidden');
