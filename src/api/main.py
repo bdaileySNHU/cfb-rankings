@@ -32,11 +32,12 @@ Note:
 """
 
 import logging
+import os
 from datetime import datetime
 from typing import List, Optional
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -2019,8 +2020,14 @@ async def get_preseason_weights():
     response_model=schemas.PreseasonWeightsResponse,
     tags=["Admin"],
 )
-async def update_preseason_weights(weights: schemas.PreseasonWeightsUpdate):
+async def update_preseason_weights(
+    weights: schemas.PreseasonWeightsUpdate,
+    x_admin_key: str = Header(default=None, alias="X-Admin-Key"),
+):
     """Update EPIC-030 regression parameters in position_weights.json (EPIC-032).
+
+    Requires X-Admin-Key header matching the ADMIN_SECRET environment variable.
+    If ADMIN_SECRET is not set the endpoint is disabled (403).
 
     Writes the three tunable regression parameters directly to
     src/core/position_weights.json. All other config values (position
@@ -2038,8 +2045,13 @@ async def update_preseason_weights(weights: schemas.PreseasonWeightsUpdate):
         PreseasonWeightsResponse confirming the saved values.
 
     Raises:
+        HTTPException 403: If the admin key is missing or incorrect.
         HTTPException 500: If the config file cannot be read or written.
     """
+    admin_secret = os.environ.get("ADMIN_SECRET", "")
+    if not admin_secret or x_admin_key != admin_secret:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
     import json as _json
     from src.core.position_service import DEFAULT_CONFIG_PATH
 

@@ -30,6 +30,9 @@ var teamsData = [];      // raw from /api/preseason/components
 var showAll = false;
 var renderScheduled = false;
 
+// ---- Admin mode: Save as Official only visible with ?admin in the URL ----
+var isAdminMode = (window.location.search.indexOf('admin') !== -1);
+
 // ---- Boot ----
 document.addEventListener('DOMContentLoaded', function() {
   var baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -325,6 +328,7 @@ function toggleShowAll() {
 
 // ---- Save as Official (Story 32.3) ----
 function checkForChanges() {
+  if (!isAdminMode) return;   // button stays hidden for public visitors
   var changed = EPIC030_KEYS.some(function(k) {
     return Math.abs(currentWeights[k] - officialEpic030[k]) > 0.001;
   });
@@ -334,10 +338,22 @@ function checkForChanges() {
   }
 }
 
+function getAdminKey() {
+  var key = sessionStorage.getItem('admin_key');
+  if (!key) {
+    key = window.prompt('Enter admin key:');
+    if (key) sessionStorage.setItem('admin_key', key);
+  }
+  return key || '';
+}
+
 function saveAsOfficial() {
   var baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:8000/api'
     : '/api';
+
+  var adminKey = getAdminKey();
+  if (!adminKey) return;
 
   var payload = {
     previous_season_weight:    currentWeights.prev_season_weight,
@@ -350,7 +366,10 @@ function saveAsOfficial() {
 
   fetch(baseUrl + '/admin/preseason-weights', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Admin-Key': adminKey,
+    },
     body: JSON.stringify(payload),
   })
     .then(function(resp) {
@@ -368,6 +387,10 @@ function saveAsOfficial() {
     })
     .catch(function(err) {
       if (btn) { btn.disabled = false; btn.textContent = 'Save as Official'; }
+      // If the key was wrong, clear it so the next attempt prompts again
+      if (err.message && err.message.indexOf('403') !== -1) {
+        sessionStorage.removeItem('admin_key');
+      }
       showSaveNotice(false, err.message);
     });
 }

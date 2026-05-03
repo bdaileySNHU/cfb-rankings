@@ -16,6 +16,7 @@ Patch notes:
 """
 
 import json
+import os
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -114,10 +115,14 @@ class TestGetPreseasonWeights:
 # ---------------------------------------------------------------------------
 
 
+ADMIN_KEY = "test-secret-key"
+ADMIN_HEADERS = {"X-Admin-Key": ADMIN_KEY}
+
+
 class TestPutPreseasonWeights:
     """Tests for PUT /api/admin/preseason-weights"""
 
-    # ---- Success path ----
+    # ---- Helpers ----
 
     def _write_temp_config(self, extra=None):
         """Write a temp config file and return its Path."""
@@ -130,13 +135,64 @@ class TestPutPreseasonWeights:
             json.dump(config, tmp)
             return Path(tmp.name)
 
+    def _put(self, client, payload=None, headers=None, tmp_path=None):
+        """Helper: PUT with correct admin header and optional temp config path."""
+        if payload is None:
+            payload = VALID_WEIGHTS_PAYLOAD
+        if headers is None:
+            headers = ADMIN_HEADERS
+        ctx = patch("src.core.position_service.DEFAULT_CONFIG_PATH", tmp_path) \
+              if tmp_path else patch("src.core.position_service.DEFAULT_CONFIG_PATH",
+                                     Path("/tmp/nonexistent_xyz.json"))
+        with ctx:
+            return client.put(
+                "/api/admin/preseason-weights", json=payload, headers=headers
+            )
+
+    # ---- Auth ----
+
+    def test_returns_403_without_key(self, test_db):
+        client = make_client(test_db)
+        with patch.dict("os.environ", {"ADMIN_SECRET": ADMIN_KEY}):
+            response = client.put("/api/admin/preseason-weights", json=VALID_WEIGHTS_PAYLOAD)
+        assert response.status_code == 403
+
+    def test_returns_403_with_wrong_key(self, test_db):
+        client = make_client(test_db)
+        with patch.dict("os.environ", {"ADMIN_SECRET": ADMIN_KEY}):
+            response = client.put(
+                "/api/admin/preseason-weights",
+                json=VALID_WEIGHTS_PAYLOAD,
+                headers={"X-Admin-Key": "wrong-key"},
+            )
+        assert response.status_code == 403
+
+    def test_returns_403_when_no_secret_configured(self, test_db):
+        """Endpoint is disabled when ADMIN_SECRET env var is not set."""
+        client = make_client(test_db)
+        with patch.dict("os.environ", {}, clear=True):
+            # Remove ADMIN_SECRET if present
+            import os as _os
+            _os.environ.pop("ADMIN_SECRET", None)
+            response = client.put(
+                "/api/admin/preseason-weights",
+                json=VALID_WEIGHTS_PAYLOAD,
+                headers=ADMIN_HEADERS,
+            )
+        assert response.status_code == 403
+
+    # ---- Success path ----
+
     def test_returns_200_on_valid_payload(self, test_db):
         client = make_client(test_db)
         tmp_path = self._write_temp_config()
         try:
-            with patch("src.core.position_service.DEFAULT_CONFIG_PATH", tmp_path):
+            with patch("src.core.position_service.DEFAULT_CONFIG_PATH", tmp_path), \
+                 patch.dict("os.environ", {"ADMIN_SECRET": ADMIN_KEY}):
                 response = client.put(
-                    "/api/admin/preseason-weights", json=VALID_WEIGHTS_PAYLOAD
+                    "/api/admin/preseason-weights",
+                    json=VALID_WEIGHTS_PAYLOAD,
+                    headers=ADMIN_HEADERS,
                 )
             assert response.status_code == 200
         finally:
@@ -146,9 +202,12 @@ class TestPutPreseasonWeights:
         client = make_client(test_db)
         tmp_path = self._write_temp_config()
         try:
-            with patch("src.core.position_service.DEFAULT_CONFIG_PATH", tmp_path):
+            with patch("src.core.position_service.DEFAULT_CONFIG_PATH", tmp_path), \
+                 patch.dict("os.environ", {"ADMIN_SECRET": ADMIN_KEY}):
                 data = client.put(
-                    "/api/admin/preseason-weights", json=VALID_WEIGHTS_PAYLOAD
+                    "/api/admin/preseason-weights",
+                    json=VALID_WEIGHTS_PAYLOAD,
+                    headers=ADMIN_HEADERS,
                 ).json()
             assert data["previous_season_weight"] == pytest.approx(0.40)
             assert data["mean_regression_factor"] == pytest.approx(0.55)
@@ -160,9 +219,13 @@ class TestPutPreseasonWeights:
         client = make_client(test_db)
         tmp_path = self._write_temp_config()
         try:
-            with patch("src.core.position_service.DEFAULT_CONFIG_PATH", tmp_path):
-                client.put("/api/admin/preseason-weights", json=VALID_WEIGHTS_PAYLOAD)
-
+            with patch("src.core.position_service.DEFAULT_CONFIG_PATH", tmp_path), \
+                 patch.dict("os.environ", {"ADMIN_SECRET": ADMIN_KEY}):
+                client.put(
+                    "/api/admin/preseason-weights",
+                    json=VALID_WEIGHTS_PAYLOAD,
+                    headers=ADMIN_HEADERS,
+                )
             saved = json.loads(tmp_path.read_text())
             assert saved["previous_season_weight"] == pytest.approx(0.40)
             assert saved["mean_regression_factor"] == pytest.approx(0.55)
@@ -175,16 +238,20 @@ class TestPutPreseasonWeights:
         client = make_client(test_db)
         tmp_path = self._write_temp_config(extra={"custom_key": "do not delete"})
         try:
-            with patch("src.core.position_service.DEFAULT_CONFIG_PATH", tmp_path):
-                client.put("/api/admin/preseason-weights", json=VALID_WEIGHTS_PAYLOAD)
-
+            with patch("src.core.position_service.DEFAULT_CONFIG_PATH", tmp_path), \
+                 patch.dict("os.environ", {"ADMIN_SECRET": ADMIN_KEY}):
+                client.put(
+                    "/api/admin/preseason-weights",
+                    json=VALID_WEIGHTS_PAYLOAD,
+                    headers=ADMIN_HEADERS,
+                )
             saved = json.loads(tmp_path.read_text())
             assert saved.get("custom_key") == "do not delete"
             assert saved.get("enabled") is True
         finally:
             tmp_path.unlink(missing_ok=True)
 
-    # ---- Validation ----
+    # ---- Validation (auth-independent — 422 fires before auth check) ----
 
     def test_rejects_prev_season_weight_above_1(self, test_db):
         client = make_client(test_db)
@@ -234,9 +301,12 @@ class TestPutPreseasonWeights:
     def test_returns_500_when_config_file_missing(self, test_db):
         client = make_client(test_db)
         missing_path = Path("/tmp/nonexistent_config_xyz.json")
-        with patch("src.core.position_service.DEFAULT_CONFIG_PATH", missing_path):
+        with patch("src.core.position_service.DEFAULT_CONFIG_PATH", missing_path), \
+             patch.dict("os.environ", {"ADMIN_SECRET": ADMIN_KEY}):
             response = client.put(
-                "/api/admin/preseason-weights", json=VALID_WEIGHTS_PAYLOAD
+                "/api/admin/preseason-weights",
+                json=VALID_WEIGHTS_PAYLOAD,
+                headers=ADMIN_HEADERS,
             )
         assert response.status_code == 500
 
