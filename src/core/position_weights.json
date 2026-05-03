@@ -2,9 +2,9 @@
   "version": "1.0",
   "enabled": true,
   "weights": {
-    "QB": 0.30,
+    "QB": 0.3,
     "OL": 0.25,
-    "DL": 0.20,
+    "DL": 0.2,
     "DB": 0.15,
     "LB": 0.05,
     "RB": 0.025,
@@ -13,9 +13,9 @@
     "ST": 0.0
   },
   "max_bonus": 150,
-  "previous_season_weight": 0.0,
-  "mean_regression_factor": 0.60,
-  "returning_regression_scale": 0.60,
+  "previous_season_weight": 0.4,
+  "mean_regression_factor": 0.55,
+  "returning_regression_scale": 2.0,
   "top_players_per_position": {
     "QB": 3,
     "OL": 5,

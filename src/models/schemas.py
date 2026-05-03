@@ -506,6 +506,36 @@ class ConfigUpdate(BaseModel):
 # ============================================================================
 
 
+class PreseasonWeightsUpdate(BaseModel):
+    """Request body for PUT /api/admin/preseason-weights.
+
+    Updates the EPIC-030 regression parameters in position_weights.json.
+    Only the three tunable regression params are exposed here; position
+    group weights and bonus tiers are not changed via this endpoint.
+    """
+
+    previous_season_weight: float = Field(
+        ..., ge=0.0, le=1.0,
+        description="Blend weight for previous season ELO (0=disabled, 0.35=recommended)"
+    )
+    mean_regression_factor: float = Field(
+        ..., ge=0.0, le=1.0,
+        description="Base regression toward 1500 (0=full reset, 1=no regression)"
+    )
+    returning_regression_scale: float = Field(
+        ..., ge=0.0, le=2.0,
+        description="How much returning_production modulates the regression factor"
+    )
+
+
+class PreseasonWeightsResponse(BaseModel):
+    """Response body for GET/PUT /api/admin/preseason-weights."""
+
+    previous_season_weight: float
+    mean_regression_factor: float
+    returning_regression_scale: float
+
+
 class PreseasonComponent(BaseModel):
     """Raw preseason rating components for a single team.
 
