@@ -49,7 +49,7 @@
     }
 
     .constant {
-      color: #e74c3c;
+      color: var(--error-color);
       font-weight: 600;
     }
 
@@ -88,8 +88,8 @@
     }
 
     .example-box {
-      background: #f0f8ff;
-      border: 1px solid #3498db;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--info-color);
       border-radius: 4px;
       padding: 1rem;
       margin: 1rem 0;
@@ -97,7 +97,7 @@
 
     .example-title {
       font-weight: 700;
-      color: #2980b9;
+      color: var(--info-color);
       margin-bottom: 0.5rem;
     }
 
@@ -382,9 +382,9 @@ Capped at: <span class="constant">2.5</span>
         </table>
       </div>
 
-      <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 1rem; margin: 1rem 0;">
-        <strong style="color: #856404;">⚠️ Garbage Time Adjustment (EPIC-021)</strong><br>
-        <span style="color: #856404;">If point differential > 21 after Q3, the 4th quarter is weighted at only 25% to reduce garbage time inflation.</span>
+      <div style="background: var(--bg-tertiary); border: 1px solid var(--warning-color); border-radius: 4px; padding: 1rem; margin: 1rem 0;">
+        <strong style="color: var(--warning-color);">⚠️ Garbage Time Adjustment (EPIC-021)</strong><br>
+        <span style="color: var(--text-secondary);">If point differential > 21 after Q3, the 4th quarter is weighted at only 25% to reduce garbage time inflation.</span>
       </div>
     </div>
 
