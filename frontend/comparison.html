@@ -4,25 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prediction Accuracy Comparison - College Football Rankings</title>
+  <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <header>
-    <div class="header-content">
-      <h1>College Football Rankings</h1>
-      <p class="subtitle">ELO vs AP Poll: Prediction Accuracy Comparison</p>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" width="28" height="28" fill="var(--accent)"><ellipse cx="12" cy="12" rx="10" ry="6.5" transform="rotate(-30 12 12)"/></svg>
+        <span class="brand-name">Stat-urday</span>
+        <span class="brand-sub">College Football Analytics</span>
+      </div>
+      <div class="header-actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+      </div>
     </div>
   </header>
 
-  <nav>
-    <div class="nav-container">
-      <a href="index.html" class="nav-link">Rankings</a>
-      <a href="teams.html" class="nav-link">All Teams</a>
-      <a href="games.html" class="nav-link">Games</a>
-      <a href="comparison.html" class="nav-link active">Prediction Comparison</a>
-      <a href="elo-formula.html" class="nav-link">How It Works</a>
-      <a href="simulator.html" class="nav-link">Simulator</a>
+  <nav class="site-nav" id="site-nav">
+    <div class="nav-inner">
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu" onclick="document.getElementById('site-nav').classList.toggle('nav-open')">☰</button>
+      <div class="nav-links" id="nav-links">
+        <a href="index.html" class="nav-link">Rankings</a>
+        <a href="teams.html" class="nav-link">All Teams</a>
+        <a href="games.html" class="nav-link">Games</a>
+        <a href="comparison.html" class="nav-link active">Prediction Comparison</a>
+        <a href="elo-formula.html" class="nav-link">How It Works</a>
+        <a href="simulator.html" class="nav-link">Simulator</a>
+      </div>
     </div>
   </nav>
 
@@ -240,12 +250,10 @@
     </div>
   </div>
 
-  <footer>
-    <div class="footer-content">
-      <p>&copy; 2025 College Football Ranking System</p>
-      <p style="margin-top: 0.5rem; opacity: 0.8;">
-        ELO Algorithm | EPIC-010: AP Poll Prediction Comparison
-      </p>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>&copy; 2026 Stat-urday</p>
+      <p><a href="elo-formula.html">How It Works</a> | <a href="https://github.com" target="_blank" rel="noopener">GitHub</a></p>
     </div>
   </footer>
 

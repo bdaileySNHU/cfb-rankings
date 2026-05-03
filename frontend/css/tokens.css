@@ -1,0 +1,112 @@
+/* ============================================================
+   DESIGN TOKENS — Stat-urday College Football Analytics
+   Dark-first; light theme via [data-theme="light"] or system pref
+   ============================================================ */
+
+:root {
+  /* Surfaces */
+  --bg-primary: #0f1117;
+  --bg-secondary: #1a1d27;
+  --bg-tertiary: #232736;
+  --bg-card: #1a1d27;
+
+  /* Borders */
+  --border-color: #2d3148;
+  --border-subtle: #1e2235;
+
+  /* Text */
+  --text-primary: #f0f2f8;
+  --text-secondary: #9aa0b8;
+  --text-muted: #5c6380;
+
+  /* Accent — gold trophy */
+  --accent: #d69e2e;
+  --accent-color: #d69e2e; /* alias for legacy code */
+  --accent-hover: #ecc94b;
+  --accent-dim: rgba(214, 158, 46, 0.15);
+
+  /* Semantic */
+  --success-color: #48bb78;
+  --success-bg: rgba(72, 187, 120, 0.1);
+  --warning-color: #ed8936;
+  --warning-bg: rgba(237, 137, 54, 0.1);
+  --error-color: #fc8181;
+  --danger-color: #fc8181;
+  --info-color: #63b3ed;
+
+  /* Legacy aliases */
+  --primary-color: #4a7cc7;
+  --secondary-color: #3a6ab5;
+
+  /* Nav */
+  --nav-bg: #13161f;
+  --nav-height: 56px;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Spacing / Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Shadows */
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.6);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+}
+
+/* ── Light theme override ────────────────────────────────── */
+[data-theme="light"] {
+  --bg-primary: #f7f8fc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #eef0f7;
+  --bg-card: #ffffff;
+  --border-color: #dde1ef;
+  --border-subtle: #eef0f7;
+  --text-primary: #1a1d27;
+  --text-secondary: #4a5068;
+  --text-muted: #8b92ab;
+  --nav-bg: #1a2344;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --accent-dim: rgba(214, 158, 46, 0.12);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --primary-color: #1a365d;
+  --secondary-color: #2c5282;
+  --success-bg: #f0fdf4;
+  --warning-bg: #fffbeb;
+}
+
+/* ── System prefers light — only when no [data-theme] set ── */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --bg-primary: #f7f8fc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #eef0f7;
+    --bg-card: #ffffff;
+    --border-color: #dde1ef;
+    --border-subtle: #eef0f7;
+    --text-primary: #1a1d27;
+    --text-secondary: #4a5068;
+    --text-muted: #8b92ab;
+    --nav-bg: #1a2344;
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --accent-dim: rgba(214, 158, 46, 0.12);
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --primary-color: #1a365d;
+    --secondary-color: #2c5282;
+    --success-bg: #f0fdf4;
+    --warning-bg: #fffbeb;
+  }
+}
