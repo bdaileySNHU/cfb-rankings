@@ -523,7 +523,7 @@ class PreseasonWeightsUpdate(BaseModel):
         description="Base regression toward 1500 (0=full reset, 1=no regression)"
     )
     returning_regression_scale: float = Field(
-        ..., ge=0.0, le=2.0,
+        ..., ge=0.0, le=1.0,
         description="How much returning_production modulates the regression factor"
     )
 

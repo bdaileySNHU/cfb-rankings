@@ -277,10 +277,10 @@ class TestPutPreseasonWeights:
         response = client.put("/api/admin/preseason-weights", json=bad_payload)
         assert response.status_code == 422
 
-    def test_rejects_returning_regression_scale_above_2(self, test_db):
-        """returning_regression_scale has le=2.0 per schema."""
+    def test_rejects_returning_regression_scale_above_1(self, test_db):
+        """returning_regression_scale has le=1.0 per schema (matches slider max)."""
         client = make_client(test_db)
-        bad_payload = {**VALID_WEIGHTS_PAYLOAD, "returning_regression_scale": 2.5}
+        bad_payload = {**VALID_WEIGHTS_PAYLOAD, "returning_regression_scale": 1.5}
         response = client.put("/api/admin/preseason-weights", json=bad_payload)
         assert response.status_code == 422
 

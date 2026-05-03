@@ -13,9 +13,9 @@
     "ST": 0.0
   },
   "max_bonus": 150,
-  "previous_season_weight": 0.4,
-  "mean_regression_factor": 0.55,
-  "returning_regression_scale": 2.0,
+  "previous_season_weight": 0.35,
+  "mean_regression_factor": 0.60,
+  "returning_regression_scale": 0.60,
   "top_players_per_position": {
     "QB": 3,
     "OL": 5,
