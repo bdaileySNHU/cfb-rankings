@@ -347,11 +347,18 @@ async function loadPredictions(filters = { nextWeek: true }) {
   error.classList.add('hidden');
   container.innerHTML = '';
 
-  // Historical seasons have no upcoming games — predictions don't apply
+  // Toggle live controls visibility based on historical vs current season
+  const liveControls = document.getElementById('predictions-live-controls');
+
+  // Historical seasons have no upcoming games — show simulator instead
   if (currentSeason && activeSeason && currentSeason !== activeSeason) {
+    if (liveControls) liveControls.style.display = 'none';
     if (historical) historical.classList.remove('hidden');
     return;
   }
+
+  // Current season: show live controls
+  if (liveControls) liveControls.style.display = '';
 
   // Show loading
   loading.classList.remove('hidden');
