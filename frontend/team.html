@@ -55,15 +55,18 @@
     <div id="team-content" class="hidden">
       <!-- Team Header -->
       <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: start;">
-          <div>
-            <h1 id="team-name" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 0.5rem;">--</h1>
-            <div style="display: flex; gap: 1rem; align-items: center;">
-              <span id="conference-badge" class="conference-badge">--</span>
-              <span id="team-record" class="record" style="font-size: 1.25rem;">--</span>
+        <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
+          <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <div id="team-logo"></div>
+            <div>
+              <h1 id="team-name" style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 0.5rem;">--</h1>
+              <div style="display: flex; gap: 1rem; align-items: center;">
+                <span id="conference-badge" class="conference-badge">--</span>
+                <span id="team-record" class="record" style="font-size: 1.25rem;">--</span>
+              </div>
             </div>
           </div>
-          <div style="text-align: right;">
+          <div style="text-align: right; flex-shrink: 0;">
             <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Current Rank</div>
             <div id="team-rank" class="rank-badge top-5" style="width: 4rem; height: 4rem; font-size: 2rem;">--</div>
           </div>
@@ -123,6 +126,26 @@
             <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);" id="returning-production">--</div>
             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">% returning starters</div>
           </div>
+        </div>
+      </div>
+
+      <!-- ELO History Chart -->
+      <div class="card" id="elo-chart-card">
+        <div class="card-header">
+          <h2 class="card-title">ELO History</h2>
+        </div>
+        <div style="padding: 0 0 1rem;">
+          <div id="elo-chart-container"></div>
+        </div>
+      </div>
+
+      <!-- Game Log -->
+      <div class="card" id="game-log-card">
+        <div class="card-header">
+          <h2 class="card-title">Game Log</h2>
+        </div>
+        <div id="game-log-container" style="padding: 0 0 0.5rem;">
+          <div class="loading"><div class="spinner"></div><span>Loading games...</span></div>
         </div>
       </div>
 

@@ -69,8 +69,18 @@ async function loadTeamDetails() {
     // Populate team info (will use historical data if available)
     populateTeamInfo(teamData);
 
+    // Render team logo
+    renderTeamLogo(teamData);
+
     // EPIC-009: Load prediction accuracy
     loadPredictionAccuracy();
+
+    // EPIC-031 Story 31.4: Load ELO history chart and game log in parallel
+    const [history, games] = await Promise.all([
+      loadEloHistory(teamId, season),
+      loadGameLog(teamId, season),
+    ]);
+    renderEloChart(history, games);
 
     // Load schedule
     loadSchedule();
@@ -532,4 +542,187 @@ function showError(message) {
   loading.classList.add('hidden');
   error.classList.remove('hidden');
   document.getElementById('error-message').textContent = ` ${message}`;
+}
+
+// ── EPIC-031 Story 31.4: ELO History Chart ────────────────────────────────
+
+async function loadEloHistory(teamId, season) {
+  const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+  const url = season
+    ? `${baseUrl}/teams/${teamId}/elo-history?season=${season}`
+    : `${baseUrl}/teams/${teamId}/elo-history`;
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return [];
+    return await resp.json();
+  } catch (err) {
+    console.error('Error loading ELO history:', err);
+    return [];
+  }
+}
+
+function renderEloChart(data, games) {
+  const container = document.getElementById('elo-chart-container');
+  if (!container || data.length < 2) {
+    if (container) {
+      container.innerHTML = '<p style="color:var(--text-muted,var(--text-secondary));padding:1rem;">Not enough data to display chart.</p>';
+    }
+    return;
+  }
+
+  const W = container.clientWidth || 600;
+  const H = 200;
+  const padL = 56, padR = 16, padT = 16, padB = 32;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const weeks = data.map(d => d.week);
+  const elos = data.map(d => d.elo_rating);
+  const minW = Math.min(...weeks), maxW = Math.max(...weeks);
+  const minE = Math.min(...elos) - 20, maxE = Math.max(...elos) + 20;
+
+  const xScale = w => padL + ((w - minW) / (maxW - minW || 1)) * chartW;
+  const yScale = e => padT + chartH - ((e - minE) / (maxE - minE || 1)) * chartH;
+
+  // Build polyline points
+  const pts = data.map(d => `${xScale(d.week).toFixed(1)},${yScale(d.elo_rating).toFixed(1)}`).join(' ');
+
+  // Y-axis grid lines (4 lines)
+  const gridLines = [];
+  const yTicks = 4;
+  for (let i = 0; i <= yTicks; i++) {
+    const e = minE + (i / yTicks) * (maxE - minE);
+    const y = yScale(e);
+    gridLines.push(`
+      <line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="var(--border-color)" stroke-width="1"/>
+      <text x="${(padL - 4).toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--text-secondary)">${Math.round(e)}</text>
+    `);
+  }
+
+  // X-axis week labels
+  const xLabels = data.map(d => `
+    <text x="${xScale(d.week).toFixed(1)}" y="${(H - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--text-secondary)">W${d.week}</text>
+  `).join('');
+
+  // Game result dots
+  const gameMap = {};
+  if (games) games.forEach(g => { gameMap[g.week] = g; });
+
+  const dots = data.map(d => {
+    const g = gameMap[d.week];
+    if (!g || !g.result) return '';
+    const cx = xScale(d.week).toFixed(1);
+    const cy = yScale(d.elo_rating).toFixed(1);
+    const color = g.result === 'W' ? 'var(--success-color)' : 'var(--danger-color)';
+    const delta = g.elo_delta != null ? (g.elo_delta > 0 ? `+${g.elo_delta}` : g.elo_delta) : '';
+    const tip = `${g.result} vs ${g.opponent} ${g.team_score}-${g.opponent_score}${delta ? ' (' + delta + ')' : ''}`;
+    return `<circle cx="${cx}" cy="${cy}" r="5" fill="${color}" stroke="var(--bg-card)" stroke-width="2"><title>${tip}</title></circle>`;
+  }).join('');
+
+  // Gradient fill under the line
+  const fillPts = `${padL.toFixed(1)},${(padT + chartH).toFixed(1)} ${pts} ${(W - padR).toFixed(1)},${(padT + chartH).toFixed(1)}`;
+
+  container.innerHTML = `
+    <svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" class="elo-chart-svg" style="overflow:visible">
+      <defs>
+        <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      ${gridLines.join('')}
+      <polygon points="${fillPts}" fill="url(#chartFill)"/>
+      <polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+      ${xLabels}
+    </svg>
+  `;
+}
+
+// ── EPIC-031 Story 31.4: Game Log ─────────────────────────────────────────
+
+async function loadGameLog(teamId, season) {
+  const container = document.getElementById('game-log-container');
+  if (!container) return [];
+
+  const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+  const url = season
+    ? `${baseUrl}/teams/${teamId}/games?season=${season}`
+    : `${baseUrl}/teams/${teamId}/games`;
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('Failed to load games');
+    const games = await resp.json();
+
+    if (games.length === 0) {
+      container.innerHTML = '<p style="color:var(--text-secondary);padding:1rem 0;">No games played yet this season.</p>';
+      return [];
+    }
+
+    const rows = games.map(g => {
+      const deltaClass = g.elo_delta > 0 ? 'elo-delta-up' : g.elo_delta < 0 ? 'elo-delta-down' : '';
+      const deltaText = g.elo_delta != null ? (g.elo_delta > 0 ? `+${g.elo_delta}` : g.elo_delta) : '—';
+      const resultClass = g.result === 'W' ? 'result-win' : g.result === 'L' ? 'result-loss' : '';
+      const locIcon = g.location === 'Home' ? '🏠' : g.location === 'Away' ? '✈' : '⚖';
+      const score = g.team_score != null ? `${g.team_score}–${g.opponent_score}` : '—';
+      const fcsNote = g.is_fcs ? ' <span class="record-note">FCS</span>' : '';
+      return `<tr>
+        <td>Wk ${g.week}</td>
+        <td><span title="${g.location}">${locIcon}</span> <a href="team.html?id=${g.opponent_id}" class="team-link">${g.opponent}</a>${fcsNote}</td>
+        <td><span class="result-badge ${resultClass}">${g.result || '—'}</span></td>
+        <td class="tabular">${score}</td>
+        <td class="tabular">${g.elo_before != null ? g.elo_before : '—'}</td>
+        <td class="tabular">${g.elo_after != null ? g.elo_after : '—'}</td>
+        <td class="tabular"><span class="${deltaClass}">${deltaText}</span></td>
+      </tr>`;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="table-container">
+        <table class="game-log-table">
+          <thead><tr>
+            <th>Week</th><th>Opponent</th><th>Result</th><th>Score</th>
+            <th>ELO Before</th><th>ELO After</th><th>Δ ELO</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+
+    return games;
+  } catch (err) {
+    container.innerHTML = `<p style="color:var(--danger-color,var(--error-color));padding:1rem 0;">Error loading games: ${err.message}</p>`;
+    return [];
+  }
+}
+
+// ── EPIC-031 Story 31.4: Team Logo ────────────────────────────────────────
+
+function renderTeamLogo(team) {
+  const logoContainer = document.getElementById('team-logo');
+  if (!logoContainer) return;
+
+  if (team.espn_id) {
+    const img = document.createElement('img');
+    img.src = `https://a.espncdn.com/i/teamlogos/ncaa/500/${team.espn_id}.png`;
+    img.alt = team.name;
+    img.className = 'team-logo-img';
+    img.onerror = () => { logoContainer.innerHTML = initialsAvatar(team.name); };
+    logoContainer.innerHTML = '';
+    logoContainer.appendChild(img);
+  } else {
+    logoContainer.innerHTML = initialsAvatar(team.name);
+  }
+}
+
+function initialsAvatar(name) {
+  const words = name.split(' ').filter(Boolean);
+  const initials = words.length >= 2
+    ? words[0][0] + words[words.length - 1][0]
+    : name.substring(0, 2);
+  // Deterministic color from name hash
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  return `<div class="team-logo-initials" style="background:hsl(${hue},55%,35%)">${initials.toUpperCase()}</div>`;
 }

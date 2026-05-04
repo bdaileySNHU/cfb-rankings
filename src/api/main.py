@@ -52,6 +52,8 @@ from src.core.ranking_service import (
 )
 from src.models import schemas
 from src.models.database import get_db, init_db
+from sqlalchemy import or_
+
 from src.models.models import (
     APIUsage,
     ConferenceType,
@@ -651,6 +653,162 @@ async def get_team_position_strength(
         "weights": config["weights"],
         "recruiting_year": recruiting_year,
     }
+
+
+@app.get("/api/teams/{team_id}/elo-history", tags=["Teams"])
+def get_team_elo_history(team_id: int, season: int = None, db: Session = Depends(get_db)):
+    """Get week-by-week ELO history for a team in a given season.
+
+    Returns ELO rating snapshots ordered by week, excluding the synthetic
+    week-999 final-snapshot entries. Week 0 is the preseason rating.
+
+    Args:
+        team_id: Unique team identifier
+        season: Season year (defaults to active season)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        List of {week, elo_rating} dicts ordered by week ascending.
+    """
+    if season is None:
+        active = db.query(Season).filter(Season.is_active == True).first()
+        season = active.year if active else 2025
+
+    rows = (
+        db.query(RankingHistory)
+        .filter(
+            RankingHistory.team_id == team_id,
+            RankingHistory.season == season,
+            RankingHistory.week != 999,
+        )
+        .order_by(RankingHistory.week.asc())
+        .all()
+    )
+
+    return [{"week": r.week, "elo_rating": round(r.elo_rating, 2)} for r in rows]
+
+
+@app.get("/api/teams/{team_id}/games", tags=["Teams"])
+def get_team_games(team_id: int, season: int = None, db: Session = Depends(get_db)):
+    """Get game log with ELO deltas for a team in a given season.
+
+    Returns all processed games for a team, enriched with ELO before/after
+    and the delta for each game. Games are ordered by week ascending.
+
+    Args:
+        team_id: Unique team identifier
+        season: Season year (defaults to active season)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        List of game objects with opponent info, scores, result, and ELO data.
+    """
+    if season is None:
+        active = db.query(Season).filter(Season.is_active == True).first()
+        season = active.year if active else 2025
+
+    games = (
+        db.query(Game)
+        .filter(
+            Game.season == season,
+            Game.is_processed == True,
+            or_(Game.home_team_id == team_id, Game.away_team_id == team_id),
+        )
+        .order_by(Game.week.asc())
+        .all()
+    )
+
+    result = []
+    for g in games:
+        is_home = g.home_team_id == team_id
+        opp_id = g.away_team_id if is_home else g.home_team_id
+        opp = db.query(Team).filter(Team.id == opp_id).first()
+
+        team_score = g.home_score if is_home else g.away_score
+        opp_score = g.away_score if is_home else g.home_score
+        won = (
+            team_score > opp_score
+            if (team_score is not None and opp_score is not None)
+            else None
+        )
+
+        # ELO after this week from ranking_history
+        elo_after_row = (
+            db.query(RankingHistory)
+            .filter(
+                RankingHistory.team_id == team_id,
+                RankingHistory.season == season,
+                RankingHistory.week == g.week,
+            )
+            .first()
+        )
+        # ELO before this week (prior week snapshot)
+        elo_before_row = (
+            db.query(RankingHistory)
+            .filter(
+                RankingHistory.team_id == team_id,
+                RankingHistory.season == season,
+                RankingHistory.week == g.week - 1,
+            )
+            .first()
+        )
+
+        elo_after = round(elo_after_row.elo_rating, 2) if elo_after_row else None
+        elo_before = round(elo_before_row.elo_rating, 2) if elo_before_row else None
+        elo_delta = (
+            round(elo_after - elo_before, 2)
+            if (elo_after is not None and elo_before is not None)
+            else None
+        )
+
+        location = "Home" if is_home else ("Neutral" if g.is_neutral_site else "Away")
+
+        result.append(
+            {
+                "week": g.week,
+                "opponent": opp.name if opp else "Unknown",
+                "opponent_id": opp_id,
+                "location": location,
+                "team_score": team_score,
+                "opponent_score": opp_score,
+                "result": ("W" if won else ("L" if won is False else None)),
+                "elo_before": elo_before,
+                "elo_after": elo_after,
+                "elo_delta": elo_delta,
+                "is_fcs": getattr(opp, "is_fcs", False) if opp else False,
+            }
+        )
+
+    return result
+
+
+@app.get("/api/teams/{team_id}/preseason", tags=["Teams"])
+def get_team_preseason(team_id: int, season: int = None, db: Session = Depends(get_db)):
+    """Get preseason ELO rating for a team (week 0 snapshot).
+
+    Args:
+        team_id: Unique team identifier
+        season: Season year (defaults to active season)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        dict with preseason_elo value (or None if no week-0 snapshot exists).
+    """
+    if season is None:
+        active = db.query(Season).filter(Season.is_active == True).first()
+        season = active.year if active else 2025
+
+    row = (
+        db.query(RankingHistory)
+        .filter(
+            RankingHistory.team_id == team_id,
+            RankingHistory.season == season,
+            RankingHistory.week == 0,
+        )
+        .first()
+    )
+
+    return {"preseason_elo": round(row.elo_rating, 2) if row else None}
 
 
 # ============================================================================
