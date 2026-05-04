@@ -40,11 +40,21 @@
       <div class="card-header">
         <h2 class="card-title">All Teams</h2>
         <div class="filters">
-          <select class="filter-select" id="conference-filter">
-            <option value="">All Conferences</option>
-            <option value="P5">Power 5</option>
-            <option value="G5">Group of 5</option>
-            <option value="FCS">FCS</option>
+          <input
+            type="search"
+            class="teams-search"
+            id="teams-search"
+            placeholder="Search teams..."
+            autocomplete="off"
+          >
+          <button class="filter-btn active" data-conf="all">All</button>
+          <button class="filter-btn" data-conf="p4">Power 4</button>
+          <button class="filter-btn" data-conf="g5">Group of 5</button>
+          <button class="filter-btn" data-conf="fcs">FCS</button>
+          <select class="filter-select" id="sort-select">
+            <option value="elo">ELO</option>
+            <option value="alpha">Alphabetical</option>
+            <option value="record">Record</option>
           </select>
         </div>
       </div>
@@ -55,21 +65,7 @@
       </div>
 
       <div id="teams-container" class="hidden">
-        <div class="table-container">
-          <table class="rankings-table">
-            <thead>
-              <tr>
-                <th>Team</th>
-                <th>Conference</th>
-                <th>Record</th>
-                <th>ELO Rating</th>
-                <th>Recruiting Rank</th>
-                <th>Transfer Rank</th>
-              </tr>
-            </thead>
-            <tbody id="teams-tbody"></tbody>
-          </table>
-        </div>
+        <div class="teams-grid" id="teams-grid"></div>
       </div>
     </div>
   </div>
@@ -84,47 +80,157 @@
   <script src="js/api.js"></script>
   <script>
     let allTeams = [];
+    let activeConference = 'all';
+    let activeSort = 'elo';
+    let searchQuery = '';
 
-    document.addEventListener('DOMContentLoaded', () => {
-      loadTeams();
-      document.getElementById('conference-filter').addEventListener('change', filterTeams);
-    });
+    // ── Initials Avatar (copied from team.js) ──────────────────
+    function initialsAvatar(name) {
+      const words = name.split(' ').filter(Boolean);
+      const initials = words.length >= 2
+        ? words[0][0] + words[words.length - 1][0]
+        : name.substring(0, 2);
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      const hue = Math.abs(hash) % 360;
+      return `<div class="team-logo-initials" style="background:hsl(${hue},55%,35%)">${initials.toUpperCase()}</div>`;
+    }
 
+    // ── Conference badge class helper ──────────────────────────
+    function confBadgeClass(conf) {
+      if (!conf) return '';
+      const c = conf.toUpperCase();
+      if (c === 'P5') return 'p5';
+      if (c === 'G5') return 'g5';
+      if (c === 'FCS') return 'fcs';
+      return '';
+    }
+
+    // ── SOS dot helper ─────────────────────────────────────────
+    function sosDot(sos) {
+      if (sos == null) return '';
+      if (sos >= 0.7)      return '<span class="sos-indicator elite"  title="Elite SOS"></span>';
+      if (sos >= 0.5)      return '<span class="sos-indicator hard"   title="Hard SOS"></span>';
+      if (sos >= 0.3)      return '<span class="sos-indicator average" title="Average SOS"></span>';
+      return                      '<span class="sos-indicator easy"   title="Easy SOS"></span>';
+    }
+
+    // ── Render the card grid ────────────────────────────────────
+    function renderGrid(teams) {
+      const grid = document.getElementById('teams-grid');
+
+      if (teams.length === 0) {
+        grid.innerHTML = '<div class="teams-no-results">No teams found</div>';
+        return;
+      }
+
+      grid.innerHTML = teams.map((team, idx) => {
+        const id        = team.id || team.team_id;
+        const name      = team.name || team.team_name || '';
+        const conf      = team.conference || '';
+        const confName  = team.conference_name || conf;
+        const elo       = typeof team.elo_rating === 'number' ? team.elo_rating : 0;
+        const wins      = team.wins ?? 0;
+        const losses    = team.losses ?? 0;
+        const rank      = team.rank != null ? team.rank : (idx + 1);
+        const badgeClass = confBadgeClass(conf);
+        const undefeated = losses === 0 && wins > 0;
+        const recordClass = undefeated ? 'team-card-record undefeated' : 'team-card-record';
+
+        return `
+          <a href="team.html?id=${id}" class="team-card">
+            <div class="team-card-logo">${initialsAvatar(name)}</div>
+            <div class="team-card-body">
+              <div class="team-card-name">${name}</div>
+              <div class="team-card-meta">
+                <span class="conference-badge ${badgeClass}">${confName}</span>
+                ${sosDot(team.sos)}
+              </div>
+              <div class="team-card-stats">
+                <span class="team-card-elo">${elo.toFixed(0)}</span>
+                <span class="${recordClass}">${wins}-${losses}</span>
+              </div>
+            </div>
+            <div class="team-card-rank">#${rank}</div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    // ── Apply all active filters / sort and re-render ───────────
+    function applyFilters() {
+      let filtered = [...allTeams];
+
+      // Conference filter
+      if (activeConference === 'p4') {
+        filtered = filtered.filter(t => (t.conference || '').toUpperCase() === 'P5');
+      } else if (activeConference === 'g5') {
+        filtered = filtered.filter(t => (t.conference || '').toUpperCase() === 'G5');
+      } else if (activeConference === 'fcs') {
+        filtered = filtered.filter(t => (t.conference || '').toUpperCase() === 'FCS');
+      }
+
+      // Search
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const nameKey = allTeams[0] && allTeams[0].name !== undefined ? 'name' : 'team_name';
+        filtered = filtered.filter(t => (t[nameKey] || '').toLowerCase().includes(q));
+      }
+
+      // Sort
+      if (activeSort === 'alpha') {
+        const key = allTeams[0] && allTeams[0].name !== undefined ? 'name' : 'team_name';
+        filtered.sort((a, b) => (a[key] || '').localeCompare(b[key] || ''));
+      } else if (activeSort === 'record') {
+        filtered.sort((a, b) => ((b.wins - b.losses) - (a.wins - a.losses)));
+      } else {
+        // Default: ELO desc
+        filtered.sort((a, b) => b.elo_rating - a.elo_rating);
+      }
+
+      renderGrid(filtered);
+    }
+
+    // ── Load all teams from API ─────────────────────────────────
     async function loadTeams() {
       try {
-        allTeams = await api.getTeams();
-        displayTeams(allTeams);
+        allTeams = await api.getTeams(null, 0, 500);
+        applyFilters();
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('teams-container').classList.remove('hidden');
       } catch (err) {
         console.error('Error loading teams:', err);
+        document.getElementById('loading').innerHTML =
+          '<div class="error">Failed to load teams. Please refresh the page.</div>';
       }
     }
 
-    function filterTeams() {
-      const conf = document.getElementById('conference-filter').value;
-      const filtered = conf ? allTeams.filter(t => t.conference === conf) : allTeams;
-      displayTeams(filtered);
-    }
+    // ── Event wiring ────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTeams();
 
-    function displayTeams(teams) {
-      const tbody = document.getElementById('teams-tbody');
-      tbody.innerHTML = '';
-
-      teams.sort((a, b) => b.elo_rating - a.elo_rating).forEach(team => {
-        const row = document.createElement('tr');
-        row.onclick = () => window.location.href = `team.html?id=${team.id}`;
-        row.innerHTML = `
-          <td><span class="team-name">${team.name}</span></td>
-          <td><span class="conference-badge ${team.conference.toLowerCase()}">${team.conference}</span></td>
-          <td><span class="record ${team.losses === 0 && team.wins > 0 ? 'undefeated' : ''}">${team.wins}-${team.losses}</span></td>
-          <td style="font-weight: 600;">${team.elo_rating.toFixed(2)}</td>
-          <td>${team.recruiting_rank === 999 ? 'N/A' : '#' + team.recruiting_rank}</td>
-          <td>${team.transfer_rank === 999 ? 'N/A' : '#' + team.transfer_rank}</td>
-        `;
-        tbody.appendChild(row);
+      // Search input
+      document.getElementById('teams-search').addEventListener('input', e => {
+        searchQuery = e.target.value.trim();
+        applyFilters();
       });
-    }
+
+      // Conference filter buttons
+      document.querySelectorAll('.filter-btn[data-conf]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.filter-btn[data-conf]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeConference = btn.dataset.conf;
+          applyFilters();
+        });
+      });
+
+      // Sort select
+      document.getElementById('sort-select').addEventListener('change', e => {
+        activeSort = e.target.value;
+        applyFilters();
+      });
+    });
   </script>
 </body>
 </html>
