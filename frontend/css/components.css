@@ -1521,6 +1521,68 @@
   }
 }
 
+/* ── ELO Calculator (Story 31.6) ────────────────────────── */
+.calc-card { margin-bottom: 1.5rem; }
+.calc-body { padding: 1.25rem 1.5rem 1.5rem; }
+.calc-team-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1.5rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.calc-team { display: flex; flex-direction: column; gap: 0.5rem; }
+.calc-team--right { text-align: right; }
+.calc-label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.calc-slider { width: 100%; accent-color: var(--accent); cursor: pointer; }
+.calc-rating-display { font-size: 1.75rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.calc-vs-col { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+.calc-vs { font-weight: 700; color: var(--text-muted); font-size: 0.85rem; }
+.calc-home-label { font-size: 0.7rem; color: var(--text-muted); }
+.calc-result { display: flex; flex-direction: column; gap: 0.5rem; }
+.calc-prob-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  gap: 2px;
+  background: var(--bg-tertiary);
+}
+.calc-prob-fill--a { background: linear-gradient(90deg, var(--success-color), #68d391); transition: width 0.2s ease; border-radius: 6px 0 0 6px; }
+.calc-prob-fill--b { background: linear-gradient(270deg, var(--error-color), #fc8181); transition: width 0.2s ease; border-radius: 0 6px 6px 0; }
+.calc-prob-labels { display: flex; justify-content: space-between; }
+.calc-prob-value { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.calc-prob-right { text-align: right; }
+.calc-verdict { text-align: center; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; }
+.calc-spread { text-align: center; color: var(--text-muted); font-size: 0.8rem; }
+
+@media (max-width: 600px) {
+  .calc-team-row { grid-template-columns: 1fr; }
+  .calc-vs-col { flex-direction: row; justify-content: center; }
+}
+
+/* ── Accordion (Story 31.6) ─────────────────────────────── */
+.accordion-item { border: 1px solid var(--border-color); border-radius: var(--radius-lg); margin-bottom: 0.75rem; overflow: hidden; }
+.accordion-header {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: none;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background var(--transition-fast);
+}
+.accordion-header:hover { background: var(--bg-tertiary); }
+.accordion-chevron { color: var(--text-muted); font-size: 0.75rem; transition: transform var(--transition-fast); }
+.accordion-body { display: none; padding: 1.25rem; border-top: 1px solid var(--border-color); background: var(--bg-card); }
+.accordion-body.accordion-open { display: block; }
+
 /* ── Team Logo ───────────────────────────────────────────── */
 .team-logo-img {
   width: 72px;

@@ -214,344 +214,417 @@
       </ul>
     </div>
 
-    <!-- System Constants -->
-    <div class="formula-card">
-      <div class="formula-title">
-        ⚙️ System Constants
+    <!-- ELO Win Probability Calculator -->
+    <div class="card calc-card">
+      <div class="card-header">
+        <h2 class="card-title">⚡ ELO Win Probability Calculator</h2>
       </div>
-      <div class="constants-grid">
-        <div class="constant-card">
-          <div class="constant-name">K-FACTOR (Progressive)</div>
-          <div class="constant-value">64 → 48 → 32</div>
-          <div class="constant-desc">Rating change multiplier (decreases over season: weeks 1-4: 64, weeks 5-8: 48, weeks 9+: 32)</div>
+      <div class="calc-body">
+        <div class="calc-team-row">
+          <div class="calc-team">
+            <label class="calc-label">Team A Rating</label>
+            <input type="range" id="calc-rating-a" min="1200" max="2100" value="1600" step="1" class="calc-slider">
+            <div class="calc-rating-display" id="calc-display-a">1600</div>
+          </div>
+          <div class="calc-vs-col">
+            <span class="calc-vs">VS</span>
+            <div class="calc-home-label">@ Home</div>
+          </div>
+          <div class="calc-team calc-team--right">
+            <label class="calc-label">Team B Rating (Home)</label>
+            <input type="range" id="calc-rating-b" min="1200" max="2100" value="1500" step="1" class="calc-slider">
+            <div class="calc-rating-display" id="calc-display-b">1500</div>
+          </div>
         </div>
-        <div class="constant-card">
-          <div class="constant-name">RATING SCALE</div>
-          <div class="constant-value">400</div>
-          <div class="constant-desc">ELO rating scale divisor</div>
-        </div>
-        <div class="constant-card">
-          <div class="constant-name">HOME FIELD</div>
-          <div class="constant-value">65</div>
-          <div class="constant-desc">Home field advantage points</div>
-        </div>
-        <div class="constant-card">
-          <div class="constant-name">MAX MOV</div>
-          <div class="constant-value">2.5x</div>
-          <div class="constant-desc">Maximum margin of victory multiplier</div>
-        </div>
-        <div class="constant-card">
-          <div class="constant-name">GARBAGE TIME</div>
-          <div class="constant-value">21 pts</div>
-          <div class="constant-desc">Threshold for garbage time detection</div>
-        </div>
-        <div class="constant-card">
-          <div class="constant-name">Q4 WEIGHT</div>
-          <div class="constant-value">25%</div>
-          <div class="constant-desc">4th quarter weight in garbage time</div>
+
+        <div class="calc-result">
+          <div class="calc-prob-bar">
+            <div class="calc-prob-fill--a" id="calc-fill-a" style="width:50%"></div>
+            <div class="calc-prob-fill--b" id="calc-fill-b" style="width:50%"></div>
+          </div>
+          <div class="calc-prob-labels">
+            <span id="calc-prob-a" class="calc-prob-value">50.0%</span>
+            <span id="calc-prob-b" class="calc-prob-value calc-prob-right">50.0%</span>
+          </div>
+          <div class="calc-verdict" id="calc-verdict">Even matchup</div>
+          <div class="calc-spread" id="calc-spread">Predicted spread: pick 'em</div>
         </div>
       </div>
     </div>
 
-    <!-- Preseason Rating -->
-    <div class="formula-card">
-      <div class="formula-title">
-        🎯 Step 1: Preseason Rating
+    <!-- Accordion: System Constants -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>⚙️ System Constants</span>
+        <span class="accordion-chevron">▶</span>
+      </button>
+      <div class="accordion-body">
+        <div class="formula-card" style="margin:0; border:none;">
+          <div class="constants-grid">
+            <div class="constant-card">
+              <div class="constant-name">K-FACTOR (Progressive)</div>
+              <div class="constant-value">64 → 48 → 32</div>
+              <div class="constant-desc">Rating change multiplier (decreases over season: weeks 1-4: 64, weeks 5-8: 48, weeks 9+: 32)</div>
+            </div>
+            <div class="constant-card">
+              <div class="constant-name">RATING SCALE</div>
+              <div class="constant-value">400</div>
+              <div class="constant-desc">ELO rating scale divisor</div>
+            </div>
+            <div class="constant-card">
+              <div class="constant-name">HOME FIELD</div>
+              <div class="constant-value">65</div>
+              <div class="constant-desc">Home field advantage points</div>
+            </div>
+            <div class="constant-card">
+              <div class="constant-name">MAX MOV</div>
+              <div class="constant-value">2.5x</div>
+              <div class="constant-desc">Maximum margin of victory multiplier</div>
+            </div>
+            <div class="constant-card">
+              <div class="constant-name">GARBAGE TIME</div>
+              <div class="constant-value">21 pts</div>
+              <div class="constant-desc">Threshold for garbage time detection</div>
+            </div>
+            <div class="constant-card">
+              <div class="constant-name">Q4 WEIGHT</div>
+              <div class="constant-value">25%</div>
+              <div class="constant-desc">4th quarter weight in garbage time</div>
+            </div>
+          </div>
+        </div>
       </div>
-      <p class="formula-explanation">
-        Each team starts with a calculated preseason rating based on recruiting, transfers, and returning production.
-      </p>
+    </div>
 
-      <div class="formula-box">
+    <!-- Accordion: Step 1 Preseason Rating (open by default) -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🎯 Step 1: Preseason Rating</span>
+        <span class="accordion-chevron">▼</span>
+      </button>
+      <div class="accordion-body accordion-open">
+        <div class="formula-card" style="margin:0; border:none;">
+          <p class="formula-explanation">
+            Each team starts with a calculated preseason rating based on recruiting, transfers, and returning production.
+          </p>
+
+          <div class="formula-box">
 Preseason Rating = <span class="constant">1500</span> (base)
                  + Recruiting Bonus
                  + Transfer Bonus
                  + Returning Production Bonus
-      </div>
+          </div>
 
-      <div class="example-box">
-        <div class="example-title">📊 Bonus Calculations:</div>
-        <strong>Recruiting Rank Bonus:</strong><br>
-        • Top 5: +100 points<br>
-        • Top 10: +75 points<br>
-        • Top 25: +50 points<br>
-        • Top 50: +25 points<br><br>
+          <div class="example-box">
+            <div class="example-title">📊 Bonus Calculations:</div>
+            <strong>Recruiting Rank Bonus:</strong><br>
+            • Top 5: +100 points<br>
+            • Top 10: +75 points<br>
+            • Top 25: +50 points<br>
+            • Top 50: +25 points<br><br>
 
-        <strong>Transfer Portal Rank Bonus:</strong><br>
-        • Top 10: +75 points<br>
-        • Top 25: +50 points<br>
-        • Top 50: +25 points<br><br>
+            <strong>Transfer Portal Rank Bonus:</strong><br>
+            • Top 10: +75 points<br>
+            • Top 25: +50 points<br>
+            • Top 50: +25 points<br><br>
 
-        <strong>Returning Production Bonus:</strong><br>
-        • ≥80%: +40 points<br>
-        • ≥60%: +25 points<br>
-        • ≥40%: +10 points
-      </div>
+            <strong>Returning Production Bonus:</strong><br>
+            • ≥80%: +40 points<br>
+            • ≥60%: +25 points<br>
+            • ≥40%: +10 points
+          </div>
 
-      <div class="example-box">
-        <div class="example-title">💡 Example: Elite Team</div>
-        Base: <strong>1500</strong><br>
-        + Recruiting (Top 5): <strong>+100</strong><br>
-        + Transfers (Top 10): <strong>+75</strong><br>
-        + Returning (75%): <strong>+25</strong><br>
-        = <strong style="color: var(--primary-color); font-size: 1.3rem;">1700 Rating</strong>
-      </div>
-    </div>
-
-    <!-- Win Probability -->
-    <div class="formula-card">
-      <div class="formula-title">
-        📈 Step 2: Win Probability
-      </div>
-      <p class="formula-explanation">
-        Before each game, we calculate the expected win probability for each team using the logistic curve.
-      </p>
-
-      <div class="formula-box">
-Expected Win % = 1 / (1 + 10<sup>(OpponentRating - YourRating) / 400</sup>)
-      </div>
-
-      <div class="formula-explanation">
-        <strong>With Home Field Advantage:</strong> Add 65 points to the home team's rating before calculating.
-      </div>
-
-      <div class="example-box">
-        <div class="example-title">💡 Example: Home Game</div>
-        <strong>Team A (Home):</strong> 1600 rating + 65 (home) = <strong>1665 effective</strong><br>
-        <strong>Team B (Away):</strong> 1500 rating<br><br>
-
-        Calculation:<br>
-        Expected = 1 / (1 + 10<sup>(1500 - 1665) / 400</sup>)<br>
-        Expected = 1 / (1 + 10<sup>-0.4125</sup>)<br>
-        Expected = 1 / (1 + 0.387)<br>
-        Expected = <strong style="color: var(--primary-color); font-size: 1.2rem;">72%</strong> chance to win
-      </div>
-    </div>
-
-    <!-- Margin of Victory -->
-    <div class="formula-card">
-      <div class="formula-title">
-        🎯 Step 3: Margin of Victory Multiplier
-      </div>
-      <p class="formula-explanation">
-        Wins by larger margins earn more rating points, but with diminishing returns to prevent blowout inflation.
-      </p>
-
-      <div class="formula-box">
-MOV Multiplier = log(Point Differential + 1)
-Capped at: <span class="constant">2.5</span>
-      </div>
-
-      <div class="chart-container">
-        <div style="font-weight: 700; margin-bottom: 1rem; color: var(--primary-color);">MOV Multiplier by Point Differential</div>
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr style="border-bottom: 2px solid var(--border-color);">
-              <th style="padding: 0.5rem; text-align: left;">Point Diff</th>
-              <th style="padding: 0.5rem; text-align: right;">Multiplier</th>
-              <th style="padding: 0.5rem; text-align: left;">Example</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding: 0.5rem;">1-2 points</td>
-              <td style="padding: 0.5rem; text-align: right; font-weight: 700;">1.0x</td>
-              <td style="padding: 0.5rem; color: var(--text-secondary);">Close game</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.5rem;">7 points</td>
-              <td style="padding: 0.5rem; text-align: right; font-weight: 700;">1.4x</td>
-              <td style="padding: 0.5rem; color: var(--text-secondary);">One-score game</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.5rem;">14 points</td>
-              <td style="padding: 0.5rem; text-align: right; font-weight: 700;">1.7x</td>
-              <td style="padding: 0.5rem; color: var(--text-secondary);">Two-score game</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.5rem;">21 points</td>
-              <td style="padding: 0.5rem; text-align: right; font-weight: 700;">1.9x</td>
-              <td style="padding: 0.5rem; color: var(--text-secondary);">Three-score game</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.5rem;">35+ points</td>
-              <td style="padding: 0.5rem; text-align: right; font-weight: 700;">2.5x</td>
-              <td style="padding: 0.5rem; color: var(--text-secondary);">Blowout (capped)</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div style="background: var(--bg-tertiary); border: 1px solid var(--warning-color); border-radius: 4px; padding: 1rem; margin: 1rem 0;">
-        <strong style="color: var(--warning-color);">⚠️ Garbage Time Adjustment (EPIC-021)</strong><br>
-        <span style="color: var(--text-secondary);">If point differential > 21 after Q3, the 4th quarter is weighted at only 25% to reduce garbage time inflation.</span>
-      </div>
-    </div>
-
-    <!-- Quarter-Weighted MOV -->
-    <div class="formula-card">
-      <div class="formula-title">
-        🏈 Quarter-Weighted MOV (Advanced)
-      </div>
-      <p class="formula-explanation">
-        When quarter-by-quarter scores are available, we process each quarter separately with garbage time detection.
-      </p>
-
-      <div class="flow-diagram">
-        <div class="flow-step">
-          <div class="flow-step-title">Q1 - Q3: Full Weight</div>
-          <div>Process first 3 quarters normally with 100% weight</div>
-        </div>
-        <div class="flow-step">
-          <div class="flow-step-title">Check Garbage Time</div>
-          <div>Is |differential after Q3| > 21 points?</div>
-        </div>
-        <div class="flow-step">
-          <div class="flow-step-title">Q4 Weight</div>
-          <div>
-            <strong>Close game:</strong> 100% weight<br>
-            <strong>Garbage time:</strong> 25% weight
+          <div class="example-box">
+            <div class="example-title">💡 Example: Elite Team</div>
+            Base: <strong>1500</strong><br>
+            + Recruiting (Top 5): <strong>+100</strong><br>
+            + Transfers (Top 10): <strong>+75</strong><br>
+            + Returning (75%): <strong>+25</strong><br>
+            = <strong style="color: var(--primary-color); font-size: 1.3rem;">1700 Rating</strong>
           </div>
         </div>
-        <div class="flow-step">
-          <div class="flow-step-title">Final MOV</div>
-          <div>Combine weighted quarters, cap at 2.5x</div>
+      </div>
+    </div>
+
+    <!-- Accordion: Step 2 Win Probability -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>📈 Step 2: Win Probability</span>
+        <span class="accordion-chevron">▶</span>
+      </button>
+      <div class="accordion-body">
+        <div class="formula-card" style="margin:0; border:none;">
+          <p class="formula-explanation">
+            Before each game, we calculate the expected win probability for each team using the logistic curve.
+          </p>
+
+          <div class="formula-box">
+Expected Win % = 1 / (1 + 10<sup>(OpponentRating - YourRating) / 400</sup>)
+          </div>
+
+          <div class="formula-explanation">
+            <strong>With Home Field Advantage:</strong> Add 65 points to the home team's rating before calculating.
+          </div>
+
+          <div class="example-box">
+            <div class="example-title">💡 Example: Home Game</div>
+            <strong>Team A (Home):</strong> 1600 rating + 65 (home) = <strong>1665 effective</strong><br>
+            <strong>Team B (Away):</strong> 1500 rating<br><br>
+
+            Calculation:<br>
+            Expected = 1 / (1 + 10<sup>(1500 - 1665) / 400</sup>)<br>
+            Expected = 1 / (1 + 10<sup>-0.4125</sup>)<br>
+            Expected = 1 / (1 + 0.387)<br>
+            Expected = <strong style="color: var(--primary-color); font-size: 1.2rem;">72%</strong> chance to win
+          </div>
         </div>
       </div>
+    </div>
 
-      <div class="example-box">
-        <div class="example-title">💡 Example: Garbage Time Game</div>
-        <strong>After Q3:</strong> 42-14 (28-point lead) → Garbage time detected!<br><br>
+    <!-- Accordion: Step 3 Margin of Victory -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🎯 Step 3: Margin of Victory Multiplier</span>
+        <span class="accordion-chevron">▶</span>
+      </button>
+      <div class="accordion-body">
+        <div class="formula-card" style="margin:0; border:none;">
+          <p class="formula-explanation">
+            Wins by larger margins earn more rating points, but with diminishing returns to prevent blowout inflation.
+          </p>
 
-        <strong>Final Score:</strong> 56-21 (35-point win)<br>
-        <strong>Q4 scoring:</strong> 14-7 (weighted at 25%)<br><br>
+          <div class="formula-box">
+MOV Multiplier = log(Point Differential + 1)
+Capped at: <span class="constant">2.5</span>
+          </div>
 
-        Without adjustment: <strong>2.5x multiplier</strong> (capped)<br>
-        With adjustment: <strong>2.2x multiplier</strong> (reduced)<br><br>
+          <div class="chart-container">
+            <div style="font-weight: 700; margin-bottom: 1rem; color: var(--primary-color);">MOV Multiplier by Point Differential</div>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                  <th style="padding: 0.5rem; text-align: left;">Point Diff</th>
+                  <th style="padding: 0.5rem; text-align: right;">Multiplier</th>
+                  <th style="padding: 0.5rem; text-align: left;">Example</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding: 0.5rem;">1-2 points</td>
+                  <td style="padding: 0.5rem; text-align: right; font-weight: 700;">1.0x</td>
+                  <td style="padding: 0.5rem; color: var(--text-secondary);">Close game</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.5rem;">7 points</td>
+                  <td style="padding: 0.5rem; text-align: right; font-weight: 700;">1.4x</td>
+                  <td style="padding: 0.5rem; color: var(--text-secondary);">One-score game</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.5rem;">14 points</td>
+                  <td style="padding: 0.5rem; text-align: right; font-weight: 700;">1.7x</td>
+                  <td style="padding: 0.5rem; color: var(--text-secondary);">Two-score game</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.5rem;">21 points</td>
+                  <td style="padding: 0.5rem; text-align: right; font-weight: 700;">1.9x</td>
+                  <td style="padding: 0.5rem; color: var(--text-secondary);">Three-score game</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.5rem;">35+ points</td>
+                  <td style="padding: 0.5rem; text-align: right; font-weight: 700;">2.5x</td>
+                  <td style="padding: 0.5rem; color: var(--text-secondary);">Blowout (capped)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-        <span style="color: var(--success-color);">✓ Prevents garbage time inflation!</span>
+          <div style="background: var(--bg-tertiary); border: 1px solid var(--warning-color); border-radius: 4px; padding: 1rem; margin: 1rem 0;">
+            <strong style="color: var(--warning-color);">⚠️ Garbage Time Adjustment (EPIC-021)</strong><br>
+            <span style="color: var(--text-secondary);">If point differential > 21 after Q3, the 4th quarter is weighted at only 25% to reduce garbage time inflation.</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Conference Multipliers -->
-    <div class="formula-card">
-      <div class="formula-title">
-        🏆 Step 4: Conference Multipliers
-      </div>
-      <p class="formula-explanation">
-        Rating changes are adjusted based on the strength of competition (conference matchups).
-      </p>
+    <!-- Accordion: Quarter-Weighted MOV (Advanced) -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🏈 Quarter-Weighted MOV (Advanced)</span>
+        <span class="accordion-chevron">▶</span>
+      </button>
+      <div class="accordion-body">
+        <div class="formula-card" style="margin:0; border:none;">
+          <p class="formula-explanation">
+            When quarter-by-quarter scores are available, we process each quarter separately with garbage time detection.
+          </p>
 
-      <div class="chart-container">
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr style="border-bottom: 2px solid var(--border-color);">
-              <th style="padding: 0.5rem; text-align: left;">Matchup</th>
-              <th style="padding: 0.5rem; text-align: center;">Winner Mult</th>
-              <th style="padding: 0.5rem; text-align: center;">Loser Mult</th>
-              <th style="padding: 0.5rem; text-align: left;">Rationale</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding: 0.5rem;">P5 vs P5</td>
-              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.0x</td>
-              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.0x</td>
-              <td style="padding: 0.5rem; color: var(--text-secondary);">Equal competition</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.5rem;">G5 vs G5</td>
-              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.0x</td>
-              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.0x</td>
-              <td style="padding: 0.5rem; color: var(--text-secondary);">Equal competition</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.5rem;">P5 beats G5</td>
-              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">0.8x</td>
-              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.2x</td>
-              <td style="padding: 0.5rem; color: var(--text-secondary);">Expected result</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.5rem;">G5 beats P5</td>
-              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.5x</td>
-              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">0.8x</td>
-              <td style="padding: 0.5rem; color: var(--text-secondary);">Upset! Reward G5</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.5rem;">FBS vs FCS</td>
-              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">0.0x</td>
-              <td style="padding: 0.5rem; text-align: center; font-weight: 700;">0.0x</td>
-              <td style="padding: 0.5rem; color: var(--text-secondary);">Excluded from rankings</td>
-            </tr>
-          </tbody>
-        </table>
+          <div class="flow-diagram">
+            <div class="flow-step">
+              <div class="flow-step-title">Q1 - Q3: Full Weight</div>
+              <div>Process first 3 quarters normally with 100% weight</div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-step-title">Check Garbage Time</div>
+              <div>Is |differential after Q3| > 21 points?</div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-step-title">Q4 Weight</div>
+              <div>
+                <strong>Close game:</strong> 100% weight<br>
+                <strong>Garbage time:</strong> 25% weight
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-step-title">Final MOV</div>
+              <div>Combine weighted quarters, cap at 2.5x</div>
+            </div>
+          </div>
+
+          <div class="example-box">
+            <div class="example-title">💡 Example: Garbage Time Game</div>
+            <strong>After Q3:</strong> 42-14 (28-point lead) → Garbage time detected!<br><br>
+
+            <strong>Final Score:</strong> 56-21 (35-point win)<br>
+            <strong>Q4 scoring:</strong> 14-7 (weighted at 25%)<br><br>
+
+            Without adjustment: <strong>2.5x multiplier</strong> (capped)<br>
+            With adjustment: <strong>2.2x multiplier</strong> (reduced)<br><br>
+
+            <span style="color: var(--success-color);">✓ Prevents garbage time inflation!</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Final Rating Change -->
-    <div class="formula-card">
-      <div class="formula-title">
-        🎯 Step 5: Final Rating Change
-      </div>
-      <p class="formula-explanation">
-        Combining all factors, here's the complete formula for rating changes after a game:
-      </p>
+    <!-- Accordion: Step 4 Conference Multipliers -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🏆 Step 4: Conference Multipliers</span>
+        <span class="accordion-chevron">▶</span>
+      </button>
+      <div class="accordion-body">
+        <div class="formula-card" style="margin:0; border:none;">
+          <p class="formula-explanation">
+            Rating changes are adjusted based on the strength of competition (conference matchups).
+          </p>
 
-      <div class="formula-box">
+          <div class="chart-container">
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                  <th style="padding: 0.5rem; text-align: left;">Matchup</th>
+                  <th style="padding: 0.5rem; text-align: center;">Winner Mult</th>
+                  <th style="padding: 0.5rem; text-align: center;">Loser Mult</th>
+                  <th style="padding: 0.5rem; text-align: left;">Rationale</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding: 0.5rem;">P5 vs P5</td>
+                  <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.0x</td>
+                  <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.0x</td>
+                  <td style="padding: 0.5rem; color: var(--text-secondary);">Equal competition</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.5rem;">G5 vs G5</td>
+                  <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.0x</td>
+                  <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.0x</td>
+                  <td style="padding: 0.5rem; color: var(--text-secondary);">Equal competition</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.5rem;">P5 beats G5</td>
+                  <td style="padding: 0.5rem; text-align: center; font-weight: 700;">0.8x</td>
+                  <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.2x</td>
+                  <td style="padding: 0.5rem; color: var(--text-secondary);">Expected result</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.5rem;">G5 beats P5</td>
+                  <td style="padding: 0.5rem; text-align: center; font-weight: 700;">1.5x</td>
+                  <td style="padding: 0.5rem; text-align: center; font-weight: 700;">0.8x</td>
+                  <td style="padding: 0.5rem; color: var(--text-secondary);">Upset! Reward G5</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.5rem;">FBS vs FCS</td>
+                  <td style="padding: 0.5rem; text-align: center; font-weight: 700;">0.0x</td>
+                  <td style="padding: 0.5rem; text-align: center; font-weight: 700;">0.0x</td>
+                  <td style="padding: 0.5rem; color: var(--text-secondary);">Excluded from rankings</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accordion: Step 5 Final Rating Change -->
+    <div class="accordion-item">
+      <button class="accordion-header" onclick="toggleAccordion(this)">
+        <span>🎯 Step 5: Final Rating Change</span>
+        <span class="accordion-chevron">▶</span>
+      </button>
+      <div class="accordion-body">
+        <div class="formula-card" style="margin:0; border:none;">
+          <p class="formula-explanation">
+            Combining all factors, here's the complete formula for rating changes after a game:
+          </p>
+
+          <div class="formula-box">
 Rating Change = <span class="constant">K-Factor (48/40/32)</span>
               × (Actual Result - Expected Result)
               × MOV Multiplier
               × Conference Multiplier
-      </div>
+          </div>
 
-      <p class="formula-explanation">
-        <strong>Progressive K-Factor:</strong> Our system uses different K-factors based on the week:
-        <br>• <strong>Weeks 1-4:</strong> K = 64 (aggressive adjustment from preseason)
-        <br>• <strong>Weeks 5-8:</strong> K = 48 (continued adjustment)
-        <br>• <strong>Weeks 9+:</strong> K = 32 (stable ratings)
-        <br><br>
-        This allows early-season games to have more impact when correcting preseason predictions,
-        then stabilizes for more predictable late-season rankings. Optimized through backtesting
-        on 2024-2025 seasons, this schedule improves prediction accuracy by 0.5-1.2 percentage
-        points and provides better probability calibration.
-      </p>
+          <p class="formula-explanation">
+            <strong>Progressive K-Factor:</strong> Our system uses different K-factors based on the week:
+            <br>• <strong>Weeks 1-4:</strong> K = 64 (aggressive adjustment from preseason)
+            <br>• <strong>Weeks 5-8:</strong> K = 48 (continued adjustment)
+            <br>• <strong>Weeks 9+:</strong> K = 32 (stable ratings)
+            <br><br>
+            This allows early-season games to have more impact when correcting preseason predictions,
+            then stabilizes for more predictable late-season rankings. Optimized through backtesting
+            on 2024-2025 seasons, this schedule improves prediction accuracy by 0.5-1.2 percentage
+            points and provides better probability calibration.
+          </p>
 
-      <div class="visual-formula">
-        <span class="formula-part"><span class="constant">48</span> (Week 7)</span>
-        <span class="operator">×</span>
-        <span class="formula-part">(1.0 - 0.72)</span>
-        <span class="operator">×</span>
-        <span class="formula-part">1.7</span>
-        <span class="operator">×</span>
-        <span class="formula-part">1.0</span>
-        <span class="operator">=</span>
-        <span class="formula-part" style="background: var(--success-color); color: white;"><strong>+22.8</strong></span>
-      </div>
+          <div class="visual-formula">
+            <span class="formula-part"><span class="constant">48</span> (Week 7)</span>
+            <span class="operator">×</span>
+            <span class="formula-part">(1.0 - 0.72)</span>
+            <span class="operator">×</span>
+            <span class="formula-part">1.7</span>
+            <span class="operator">×</span>
+            <span class="formula-part">1.0</span>
+            <span class="operator">=</span>
+            <span class="formula-part" style="background: var(--success-color); color: white;"><strong>+22.8</strong></span>
+          </div>
 
-      <div class="example-box">
-        <div class="example-title">💡 Complete Example: Upset Win</div>
-        <strong>Setup:</strong><br>
-        • Underdog (1550) beats Favorite (1650) at home<br>
-        • Final score: 31-24 (7-point win)<br>
-        • Both P5 teams<br><br>
+          <div class="example-box">
+            <div class="example-title">💡 Complete Example: Upset Win</div>
+            <strong>Setup:</strong><br>
+            • Underdog (1550) beats Favorite (1650) at home<br>
+            • Final score: 31-24 (7-point win)<br>
+            • Both P5 teams<br><br>
 
-        <strong>Step 1: Expected Win %</strong><br>
-        Underdog + Home (65) = 1615 effective<br>
-        Expected = 1 / (1 + 10<sup>(1650-1615)/400</sup>) = <strong>43%</strong><br><br>
+            <strong>Step 1: Expected Win %</strong><br>
+            Underdog + Home (65) = 1615 effective<br>
+            Expected = 1 / (1 + 10<sup>(1650-1615)/400</sup>) = <strong>43%</strong><br><br>
 
-        <strong>Step 2: MOV Multiplier</strong><br>
-        log(7 + 1) = <strong>1.4x</strong><br><br>
+            <strong>Step 2: MOV Multiplier</strong><br>
+            log(7 + 1) = <strong>1.4x</strong><br><br>
 
-        <strong>Step 3: Conference Multiplier</strong><br>
-        P5 vs P5 = <strong>1.0x</strong> for both<br><br>
+            <strong>Step 3: Conference Multiplier</strong><br>
+            P5 vs P5 = <strong>1.0x</strong> for both<br><br>
 
-        <strong>Step 4: Rating Changes</strong><br>
-        Winner: 32 × (1.0 - 0.43) × 1.4 × 1.0 = <strong style="color: var(--success-color);">+25.5</strong><br>
-        Loser: 32 × (0.0 - 0.57) × 1.4 × 1.0 = <strong style="color: var(--danger-color);">-25.5</strong><br><br>
+            <strong>Step 4: Rating Changes</strong><br>
+            Winner: 32 × (1.0 - 0.43) × 1.4 × 1.0 = <strong style="color: var(--success-color);">+25.5</strong><br>
+            Loser: 32 × (0.0 - 0.57) × 1.4 × 1.0 = <strong style="color: var(--danger-color);">-25.5</strong><br><br>
 
-        <strong>Final Ratings:</strong><br>
-        Winner: 1550 → <strong>1575.5</strong><br>
-        Loser: 1650 → <strong>1624.5</strong>
+            <strong>Final Ratings:</strong><br>
+            Winner: 1550 → <strong>1575.5</strong><br>
+            Loser: 1650 → <strong>1624.5</strong>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -626,5 +699,53 @@ Rating Change = <span class="constant">K-Factor (48/40/32)</span>
       <p><a href="elo-formula.html">How It Works</a> | <a href="https://github.com" target="_blank" rel="noopener">GitHub</a></p>
     </div>
   </footer>
+
+  <script>
+    // ── Accordion ────────────────────────────────────────────
+    function toggleAccordion(btn) {
+      const body = btn.nextElementSibling;
+      const chevron = btn.querySelector('.accordion-chevron');
+      const isOpen = body.classList.contains('accordion-open');
+      body.classList.toggle('accordion-open', !isOpen);
+      chevron.textContent = isOpen ? '▶' : '▼';
+    }
+
+    // ── ELO Win Probability Calculator ───────────────────────
+    function calcWinProb() {
+      const ratingA = parseInt(document.getElementById('calc-rating-a').value);
+      const ratingB = parseInt(document.getElementById('calc-rating-b').value);
+      const HOME_ADVANTAGE = 65;
+      // Team B has home field — add 65 to their effective rating
+      const effectiveB = ratingB + HOME_ADVANTAGE;
+      const probA = 1 / (1 + Math.pow(10, (effectiveB - ratingA) / 400));
+      const probB = 1 - probA;
+
+      document.getElementById('calc-display-a').textContent = ratingA;
+      document.getElementById('calc-display-b').textContent = ratingB;
+      document.getElementById('calc-fill-a').style.width = (probA * 100).toFixed(1) + '%';
+      document.getElementById('calc-fill-b').style.width = (probB * 100).toFixed(1) + '%';
+      document.getElementById('calc-prob-a').textContent = (probA * 100).toFixed(1) + '%';
+      document.getElementById('calc-prob-b').textContent = (probB * 100).toFixed(1) + '%';
+
+      // Spread estimate: roughly 1 point per 28 ELO
+      const ratingDiff = ratingA - effectiveB;
+      const spread = Math.abs(ratingDiff / 28).toFixed(1);
+      const favored = ratingDiff > 0 ? 'Team A' : ratingDiff < 0 ? 'Team B (Home)' : null;
+
+      const verdict = favored
+        ? `${favored} favored — win probability ${(Math.max(probA,probB)*100).toFixed(1)}%`
+        : 'Even matchup';
+      const spreadText = favored
+        ? `Predicted spread: ${favored} by ${spread} pts`
+        : 'Predicted spread: pick \'em';
+
+      document.getElementById('calc-verdict').textContent = verdict;
+      document.getElementById('calc-spread').textContent = spreadText;
+    }
+
+    document.getElementById('calc-rating-a').addEventListener('input', calcWinProb);
+    document.getElementById('calc-rating-b').addEventListener('input', calcWinProb);
+    calcWinProb(); // initial render
+  </script>
 </body>
 </html>
