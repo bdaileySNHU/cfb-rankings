@@ -564,110 +564,184 @@
   cursor: help;
 }
 
-/* ── Prediction Cards (Games page) ───────────────────────── */
+/* ── Prediction Cards (EPIC-031 Story 31.3 redesign) ─────── */
+/* Replaced by 31.3: .prediction-header, .prediction-badge, .game-info (old versions) */
+/* Replaced by 31.3: .matchup, .matchup-separator, .at-symbol */
+/* Replaced by 31.3: .team.away-team, .team.home-team (prediction-specific), .win-probability, .prob-label, .prob-values */
+
 .predictions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 1.5rem;
-  padding: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  padding: 1rem 1.5rem 1.5rem;
 }
 
 .prediction-card {
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 1.25rem;
-  background: var(--bg-secondary);
-  box-shadow: var(--shadow-card);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 
 .prediction-card:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-elevated);
+  border-color: var(--accent);
 }
 
-.prediction-header {
+/* Header row */
+.pred-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
-
-.prediction-badge {
-  background: var(--accent);
-  color: #1a1209;
-  padding: 0.2rem 0.65rem;
-  border-radius: 12px;
-  font-size: 0.72rem;
+.pred-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pred-badge {
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: 0.65rem;
   font-weight: 700;
-  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+}
+.pred-meta {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.pred-lock-badge {
+  background: linear-gradient(135deg, #d69e2e, #ecc94b);
+  color: #000;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.04em;
 }
 
-.game-info {
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-}
-
-.matchup {
+/* Matchup */
+.pred-matchup {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
-
-.team {
+.pred-team {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  flex: 1;
+  gap: 0.2rem;
   padding: 0.75rem;
   border-radius: var(--radius-md);
   background: var(--bg-tertiary);
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast);
 }
-
-.team.predicted-winner {
+.pred-team--home {
+  text-align: right;
+}
+.pred-team--winner {
   background: var(--accent-dim);
-  border: 2px solid var(--accent);
-  font-weight: 700;
+  border: 1px solid var(--accent);
 }
-
-.team .score {
+.pred-team-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.pred-team-score {
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
-
-.team.predicted-winner .score {
-  color: var(--accent);
-}
-
-.matchup-separator {
-  padding: 0 0.75rem;
-  font-size: 1.2rem;
+.pred-team-label {
+  font-size: 0.7rem;
   color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.pred-vs {
+  font-size: 0.75rem;
   font-weight: 700;
+  color: var(--text-muted);
+  padding-top: 0.875rem;
+  flex-shrink: 0;
 }
 
-.prediction-details {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 0.75rem;
-  font-size: 0.82rem;
+/* Probability bar */
+.pred-prob-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
-
-.win-probability {
-  margin-bottom: 0.5rem;
-  color: var(--text-secondary);
+.pred-prob-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-tertiary);
+  gap: 2px;
 }
-
-.prob-label {
+.pred-prob-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pred-prob-fill--away {
+  background: linear-gradient(90deg, var(--success-color), #68d391);
+}
+.pred-prob-fill--home {
+  background: linear-gradient(270deg, var(--error-color), #fc8181);
+  margin-left: auto;
+}
+.pred-prob-labels {
+  display: flex;
+  justify-content: space-between;
+}
+.pred-prob-pct {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.pred-prob-pct--winner {
+  color: var(--accent);
   font-weight: 600;
 }
-
-.prob-values {
-  color: var(--text-primary);
+.pred-prob-pct--right {
+  text-align: right;
 }
 
+/* Footer */
+.pred-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.pred-spread {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.pred-location {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.pred-confidence {
+  font-size: 0.8rem;
+}
+
+/* ── Confidence Indicator (shared) ───────────────────────── */
 .confidence-indicator {
   display: flex;
   align-items: center;
@@ -836,6 +910,8 @@
 
 .hist-badge {
   background: #0694a2 !important;
+  color: #fff !important;
+  border-color: #0694a2 !important;
 }
 
 .hist-result-badge {

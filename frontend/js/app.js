@@ -442,6 +442,9 @@ async function loadPredictions(filters = { nextWeek: true }) {
       container.appendChild(card);
     });
 
+    // EPIC-031 Story 31.3: Animate probability bars after all cards are in DOM
+    animatePredictionBars();
+
   } catch (err) {
     console.error('Error loading predictions:', err);
     loading.classList.add('hidden');
@@ -450,61 +453,80 @@ async function loadPredictions(filters = { nextWeek: true }) {
   }
 }
 
-// Create Prediction Card
+// Create Prediction Card (EPIC-031 Story 31.3 redesign)
 function createPredictionCard(prediction) {
   const card = document.createElement('div');
   card.className = 'prediction-card';
 
-  // Determine winner styling
-  const homeIsWinner = prediction.predicted_winner === prediction.home_team;
-  const awayIsWinner = prediction.predicted_winner === prediction.away_team;
+  const homeWins = prediction.predicted_winner === prediction.home_team;
+  const spread = Math.abs(prediction.predicted_home_score - prediction.predicted_away_score).toFixed(1);
+  const favoredTeam = homeWins ? prediction.home_team : prediction.away_team;
+  const isLock = prediction.home_win_probability >= 80 || prediction.away_win_probability >= 80;
+  const homeProb = parseFloat(prediction.home_win_probability);
+  const awayProb = parseFloat(prediction.away_win_probability);
 
-  // Format game date with relative dates for upcoming games
-  // EPIC-GAME-DATE-SORTING Story 3: Use shared utilities with relative dates
-  const gameDate = formatGameDate(prediction.game_date, true); // Enable relative dates
+  const gameDate = formatGameDate(prediction.game_date, true);
   const fullDateTime = getFullDateTime(prediction.game_date);
 
+  // Location label
+  const locationLabel = prediction.is_neutral_site
+    ? '⚖ Neutral Site'
+    : `🏠 ${prediction.home_team}`;
+
   card.innerHTML = `
-    <div class="prediction-header">
-      <span class="prediction-badge">PREDICTED</span>
-      <span class="game-info" title="${fullDateTime}">Week ${prediction.week}${gameDate ? ' • ' + gameDate : ''}</span>
+    <div class="pred-header">
+      <div class="pred-header-left">
+        <span class="pred-badge">PREDICTED</span>
+        <span class="pred-meta" title="${fullDateTime}">Week ${prediction.week}${gameDate ? ' · ' + gameDate : ''}</span>
+      </div>
+      ${isLock ? '<span class="pred-lock-badge">🔒 Lock</span>' : ''}
     </div>
 
-    <div class="matchup">
-      <div class="team away-team ${awayIsWinner ? 'predicted-winner' : ''}">
-        <span class="team-name">${prediction.away_team}</span>
-        <span class="score">${prediction.predicted_away_score}</span>
+    <div class="pred-matchup">
+      <div class="pred-team ${!homeWins ? 'pred-team--winner' : ''}">
+        <span class="pred-team-name">${prediction.away_team}</span>
+        <span class="pred-team-score">${prediction.predicted_away_score}</span>
+        <span class="pred-team-label">Away</span>
       </div>
-
-      <div class="matchup-separator">
-        <span class="at-symbol">@</span>
-      </div>
-
-      <div class="team home-team ${homeIsWinner ? 'predicted-winner' : ''}">
-        <span class="team-name">${prediction.home_team}</span>
-        <span class="score">${prediction.predicted_home_score}</span>
-      </div>
-    </div>
-
-    <div class="prediction-details">
-      <div class="win-probability">
-        <span class="prob-label">Win Probability:</span>
-        <span class="prob-values">
-          ${prediction.home_team}: ${prediction.home_win_probability}%
-          •
-          ${prediction.away_team}: ${prediction.away_win_probability}%
-        </span>
-      </div>
-      <div class="confidence-indicator confidence-${prediction.confidence.toLowerCase()}">
-        <span class="confidence-label">Confidence:</span>
-        <span class="confidence-value">${prediction.confidence}</span>
+      <div class="pred-vs">VS</div>
+      <div class="pred-team pred-team--home ${homeWins ? 'pred-team--winner' : ''}">
+        <span class="pred-team-name">${prediction.home_team}</span>
+        <span class="pred-team-score">${prediction.predicted_home_score}</span>
+        <span class="pred-team-label">Home</span>
       </div>
     </div>
 
-    ${prediction.is_neutral_site ? '<div class="neutral-site-badge">Neutral Site</div>' : ''}
+    <div class="pred-prob-bar-wrap">
+      <div class="pred-prob-bar">
+        <div class="pred-prob-fill pred-prob-fill--away" style="width: 0%" data-width="${awayProb}"></div>
+        <div class="pred-prob-fill pred-prob-fill--home" style="width: 0%" data-width="${homeProb}"></div>
+      </div>
+      <div class="pred-prob-labels">
+        <span class="pred-prob-pct ${!homeWins ? 'pred-prob-pct--winner' : ''}">${awayProb.toFixed(1)}%</span>
+        <span class="pred-prob-pct pred-prob-pct--right ${homeWins ? 'pred-prob-pct--winner' : ''}">${homeProb.toFixed(1)}%</span>
+      </div>
+    </div>
+
+    <div class="pred-footer">
+      <span class="pred-spread">${favoredTeam} favored by <strong>${spread} pts</strong></span>
+      <span class="pred-location">${locationLabel}</span>
+    </div>
+    <div class="pred-confidence confidence-indicator confidence-${prediction.confidence.toLowerCase()}">
+      <span class="confidence-label">Confidence:</span>
+      <span class="confidence-value">${prediction.confidence}</span>
+    </div>
   `;
 
   return card;
+}
+
+// EPIC-031 Story 31.3: Animate probability bars from 0 to actual width
+function animatePredictionBars() {
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.pred-prob-fill[data-width]').forEach(el => {
+      el.style.width = el.dataset.width + '%';
+    });
+  });
 }
 
 // EPIC-009: Load Prediction Accuracy
@@ -587,6 +609,9 @@ async function loadHistoricalPredictions(season, week) {
 
     container.innerHTML = sorted.map(p => createHistoricalCard(p)).join('');
 
+    // EPIC-031 Story 31.3: Animate probability bars after cards are in DOM
+    animatePredictionBars();
+
   } catch (err) {
     loading.classList.add('hidden');
     console.error('Historical predictions error:', err);
@@ -595,10 +620,13 @@ async function loadHistoricalPredictions(season, week) {
   }
 }
 
+// EPIC-031 Story 31.3: Historical card with new visual design
 function createHistoricalCard(p) {
   const homeWinner = p.predicted_winner_id === p.home_team_id;
-  const homeProb   = p.home_win_probability.toFixed(1);
-  const awayProb   = p.away_win_probability.toFixed(1);
+  const homeProb   = parseFloat(p.home_win_probability);
+  const awayProb   = parseFloat(p.away_win_probability);
+  const spread     = Math.abs(p.predicted_home_score - p.predicted_away_score).toFixed(1);
+  const favoredTeam = homeWinner ? p.home_team : p.away_team;
 
   // Result badge
   let resultBadge = '';
@@ -621,36 +649,55 @@ function createHistoricalCard(p) {
       </div>`;
   }
 
-  const gameDate = p.game_date ? ` • ${new Date(p.game_date).toLocaleDateString('en-US', {month:'short', day:'numeric'})}` : '';
+  const gameDate = p.game_date ? ` · ${new Date(p.game_date).toLocaleDateString('en-US', {month:'short', day:'numeric'})}` : '';
+
+  // Location label
+  const locationLabel = p.is_neutral_site ? '⚖ Neutral Site' : `🏠 ${p.home_team}`;
+
+  const cardClass = `prediction-card hist-card${p.prediction_correct === false ? ' hist-card-wrong' : p.prediction_correct === true ? ' hist-card-correct' : ''}`;
 
   return `
-    <div class="prediction-card hist-card${p.prediction_correct === false ? ' hist-card-wrong' : p.prediction_correct === true ? ' hist-card-correct' : ''}">
-      <div class="prediction-header">
-        <span class="prediction-badge hist-badge">SIMULATED</span>
-        <span class="game-info">Week ${p.week}${gameDate}</span>
+    <div class="${cardClass}">
+      <div class="pred-header">
+        <div class="pred-header-left">
+          <span class="pred-badge hist-badge">SIMULATED</span>
+          <span class="pred-meta">Week ${p.week}${gameDate}</span>
+        </div>
         ${resultBadge}
       </div>
-      <div class="prediction-matchup">
-        <div class="team ${homeWinner ? 'predicted-winner' : ''}">
-          <span class="team-name">${p.home_team}</span>
-          <span class="score">${p.predicted_home_score}</span>
+
+      <div class="pred-matchup">
+        <div class="pred-team ${!homeWinner ? 'pred-team--winner' : ''}">
+          <span class="pred-team-name">${p.away_team}</span>
+          <span class="pred-team-score">${p.predicted_away_score}</span>
+          <span class="pred-team-label">Away</span>
         </div>
-        <div class="vs-divider">vs</div>
-        <div class="team ${!homeWinner ? 'predicted-winner' : ''}">
-          <span class="team-name">${p.away_team}</span>
-          <span class="score">${p.predicted_away_score}</span>
+        <div class="pred-vs">VS</div>
+        <div class="pred-team pred-team--home ${homeWinner ? 'pred-team--winner' : ''}">
+          <span class="pred-team-name">${p.home_team}</span>
+          <span class="pred-team-score">${p.predicted_home_score}</span>
+          <span class="pred-team-label">Home</span>
         </div>
       </div>
-      <div class="prediction-details">
-        <div class="win-probabilities">
-          <span>${p.home_team}: ${homeProb}%</span>
-          <span>${p.away_team}: ${awayProb}%</span>
+
+      <div class="pred-prob-bar-wrap">
+        <div class="pred-prob-bar">
+          <div class="pred-prob-fill pred-prob-fill--away" style="width: 0%" data-width="${awayProb}"></div>
+          <div class="pred-prob-fill pred-prob-fill--home" style="width: 0%" data-width="${homeProb}"></div>
         </div>
-        <div class="confidence-indicator confidence-${p.confidence.toLowerCase()}">
-          <span class="confidence-label">Confidence:</span>
-          <span class="confidence-value">${p.confidence}</span>
+        <div class="pred-prob-labels">
+          <span class="pred-prob-pct ${!homeWinner ? 'pred-prob-pct--winner' : ''}">${awayProb.toFixed(1)}%</span>
+          <span class="pred-prob-pct pred-prob-pct--right ${homeWinner ? 'pred-prob-pct--winner' : ''}">${homeProb.toFixed(1)}%</span>
         </div>
-        ${p.is_neutral_site ? '<div class="neutral-site-badge">Neutral Site</div>' : ''}
+      </div>
+
+      <div class="pred-footer">
+        <span class="pred-spread">${favoredTeam} favored by <strong>${spread} pts</strong></span>
+        <span class="pred-location">${locationLabel}</span>
+      </div>
+      <div class="pred-confidence confidence-indicator confidence-${p.confidence.toLowerCase()}">
+        <span class="confidence-label">Confidence:</span>
+        <span class="confidence-value">${p.confidence}</span>
       </div>
       ${actualLine}
     </div>`;
