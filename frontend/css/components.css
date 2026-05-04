@@ -1395,3 +1395,57 @@
 @media (max-width: 767px) {
   .col-change, .col-sparkline, .col-sos { display: none; }
 }
+
+/* ── ELO Chart ───────────────────────────────────────────── */
+.elo-chart-svg { display: block; }
+#elo-chart-container { min-height: 200px; }
+
+/* ── Game Log Table ──────────────────────────────────────── */
+.game-log-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.game-log-table th {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+}
+.game-log-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+.game-log-table tr:hover td { background: var(--bg-tertiary); }
+.result-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm);
+}
+.result-win  { background: rgba(72,187,120,0.15); color: var(--success-color); }
+.result-loss { background: rgba(252,129,129,0.15); color: var(--danger-color); }
+.elo-delta-up   { color: var(--success-color); font-weight: 600; }
+.elo-delta-down { color: var(--danger-color); font-weight: 600; }
+.team-link { color: var(--text-primary); text-decoration: none; }
+.team-link:hover { color: var(--accent); text-decoration: underline; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* ── Team Logo ───────────────────────────────────────────── */
+.team-logo-img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+.team-logo-initials {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
