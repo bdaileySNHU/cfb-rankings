@@ -601,7 +601,7 @@ class GamePrediction(BaseModel):
     predicted_away_score: int = Field(..., ge=0, le=150)
     home_win_probability: float = Field(..., ge=0, le=100)
     away_win_probability: float = Field(..., ge=0, le=100)
-    confidence: str = Field(..., pattern="^(High|Medium|Low)$")
+    confidence: str = Field(..., pattern="^(Very High|High|Medium|Low)$")
     home_team_rating: float
     away_team_rating: float
 
