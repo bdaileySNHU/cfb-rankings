@@ -823,3 +823,31 @@ class ComparisonStats(BaseModel):
     message: Optional[str] = Field(
         None, description="Optional message for empty state or error conditions"
     )
+
+
+# ============================================================================
+# Import Pipeline Schemas (EPIC-033 Story 33.4)
+# ============================================================================
+
+
+class ImportStatus(BaseModel):
+    """Status of the last data import run."""
+
+    last_run: Optional[str] = None
+    season: Optional[int] = None
+    games_imported: Optional[int] = None
+    games_processed: Optional[int] = None
+    status: str = "never_run"
+    error: Optional[str] = None
+
+
+class ImportResult(BaseModel):
+    """Result of a triggered import operation."""
+
+    season: int
+    week: Optional[int] = None
+    games_imported: int
+    games_processed: int
+    status: str
+    message: str
+    timestamp: str

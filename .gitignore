@@ -49,3 +49,6 @@ htmlcov/
 .coverage
 .coverage.*
 .pytest_cache/
+
+# Import pipeline logs (generated at runtime, not committed)
+data/*.json
