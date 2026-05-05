@@ -52,7 +52,7 @@ from src.core.ranking_service import (
 )
 from src.models import schemas
 from src.models.database import get_db, init_db
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 from src.models.models import (
     APIUsage,
@@ -809,6 +809,151 @@ def get_team_preseason(team_id: int, season: int = None, db: Session = Depends(g
     )
 
     return {"preseason_elo": round(row.elo_rating, 2) if row else None}
+
+
+@app.get("/api/matchup", tags=["Teams"])
+def get_matchup(
+    teamA: int,
+    teamB: int,
+    season: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    """Head-to-head team comparison: stats, ELO history, and win probabilities.
+
+    Returns side-by-side data for two teams in a given season, including their
+    current ELO ratings, records, ELO history, historical matchups between them,
+    and win probability estimates for neutral, home-A, and home-B scenarios.
+
+    Args:
+        teamA: Team A's unique identifier
+        teamB: Team B's unique identifier
+        season: Season year (defaults to active season)
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        dict with team_a, team_b, elo_history_a, elo_history_b,
+        head_to_head (historical results), and win probabilities.
+    """
+    if season is None:
+        active = db.query(Season).filter(Season.is_active == True).first()
+        season = active.year if active else 2025
+
+    team_a = db.query(Team).filter(Team.id == teamA).first()
+    team_b = db.query(Team).filter(Team.id == teamB).first()
+    if not team_a or not team_b:
+        raise HTTPException(status_code=404, detail="One or both teams not found")
+
+    # Get current rankings for season-specific ELO/record/rank
+    ranking_service = RankingService(db)
+    rankings = ranking_service.get_current_rankings(season)
+    ra = next((r for r in rankings if r["team_id"] == teamA), None)
+    rb = next((r for r in rankings if r["team_id"] == teamB), None)
+
+    HOME_FIELD = 65.0
+    SCALE = 400.0
+
+    def team_payload(team, ranking):
+        elo = ranking["elo_rating"] if ranking else team.elo_rating
+        # preseason week-0 snapshot
+        pre_row = (
+            db.query(RankingHistory)
+            .filter(
+                RankingHistory.team_id == team.id,
+                RankingHistory.season == season,
+                RankingHistory.week == 0,
+            )
+            .first()
+        )
+        return {
+            "id": team.id,
+            "name": team.name,
+            "conference": team.conference,
+            "conference_name": team.conference_name,
+            "elo_rating": round(elo, 1) if elo else None,
+            "preseason_elo": round(pre_row.elo_rating, 1) if pre_row else None,
+            "wins": ranking["wins"] if ranking else 0,
+            "losses": ranking["losses"] if ranking else 0,
+            "rank": ranking["rank"] if ranking else None,
+            "sos": round(ranking["sos"], 1) if ranking and ranking.get("sos") else None,
+            "sos_rank": ranking["sos_rank"] if ranking else None,
+        }
+
+    # ELO history for both teams this season
+    def elo_history(team_id):
+        rows = (
+            db.query(RankingHistory)
+            .filter(
+                RankingHistory.team_id == team_id,
+                RankingHistory.season == season,
+                RankingHistory.week != 999,
+            )
+            .order_by(RankingHistory.week.asc())
+            .all()
+        )
+        return [{"week": r.week, "elo_rating": round(r.elo_rating, 2)} for r in rows]
+
+    # Historical head-to-head games (all seasons, processed only)
+    h2h_games = (
+        db.query(Game)
+        .filter(
+            Game.is_processed == True,
+            or_(
+                and_(Game.home_team_id == teamA, Game.away_team_id == teamB),
+                and_(Game.home_team_id == teamB, Game.away_team_id == teamA),
+            ),
+        )
+        .order_by(Game.season.desc(), Game.week.asc())
+        .limit(10)
+        .all()
+    )
+
+    head_to_head = []
+    wins_a = 0
+    wins_b = 0
+    for g in h2h_games:
+        a_is_home = g.home_team_id == teamA
+        a_score = g.home_score if a_is_home else g.away_score
+        b_score = g.away_score if a_is_home else g.home_score
+        winner_id = None
+        if a_score is not None and b_score is not None:
+            winner_id = teamA if a_score > b_score else teamB
+            if winner_id == teamA:
+                wins_a += 1
+            else:
+                wins_b += 1
+        head_to_head.append({
+            "season": g.season,
+            "week": g.week,
+            "score_a": a_score,
+            "score_b": b_score,
+            "winner_id": winner_id,
+            "neutral_site": g.neutral_site,
+        })
+
+    # Win probabilities
+    elo_a = (ra["elo_rating"] if ra else team_a.elo_rating) or 1500.0
+    elo_b = (rb["elo_rating"] if rb else team_b.elo_rating) or 1500.0
+
+    def win_prob(rating_a, rating_b):
+        return round(1.0 / (1.0 + 10 ** ((rating_b - rating_a) / SCALE)), 4)
+
+    win_prob_neutral = win_prob(elo_a, elo_b)
+    win_prob_a_home = win_prob(elo_a + HOME_FIELD, elo_b)
+    win_prob_b_home = win_prob(elo_a, elo_b + HOME_FIELD)
+
+    return {
+        "season": season,
+        "team_a": team_payload(team_a, ra),
+        "team_b": team_payload(team_b, rb),
+        "elo_history_a": elo_history(teamA),
+        "elo_history_b": elo_history(teamB),
+        "head_to_head": head_to_head,
+        "series_wins_a": wins_a,
+        "series_wins_b": wins_b,
+        "win_prob_neutral": win_prob_neutral,
+        "win_prob_a_home": win_prob_a_home,
+        "win_prob_b_home": win_prob_b_home,
+    }
 
 
 # ============================================================================

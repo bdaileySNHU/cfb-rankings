@@ -24,6 +24,7 @@
   --accent-color: #d69e2e; /* alias for legacy code */
   --accent-hover: #ecc94b;
   --accent-dim: rgba(214, 158, 46, 0.15);
+  --accent-secondary: #4a9eff;  /* blue — used for Team B in matchup charts */
 
   /* Semantic */
   --success-color: #48bb78;
