@@ -39,9 +39,11 @@ with specific commands. As Week 1 approaches we need:
 
 ## Stories
 
-### Story 33.1: Import 2026 Game Schedule
+### Story 33.1: Import 2026 Game Schedule ✅
 **Priority:** P0 — blocks everything else
 **Effort:** 1–2 hours
+**Completed:** 2026-05-04 — 94 Week 1 games imported. Remaining weeks will
+populate automatically via the Monday cron job as CFBD publishes them.
 
 Import all 2026 FBS regular-season and known bowl/CFP matchups from CFBD API.
 
@@ -63,6 +65,9 @@ Import all 2026 FBS regular-season and known bowl/CFP matchups from CFBD API.
 ### Story 33.2: Refresh 2026 Preseason Data
 **Priority:** P0
 **Effort:** 2–3 hours
+**⏳ Blocked until late July / early August** — CFBD confirmed (May 4, 2026) that
+recruiting rankings and returning production data for 2026 won't be published
+until summertime. Attempting import now returns "No player data" for all teams.
 
 Ensure recruiting rankings, transfer portal points, and returning production
 percentages reflect the latest available 2026 data before ELO preseason ratings
@@ -83,9 +88,11 @@ are locked in.
 
 ---
 
-### Story 33.3: Automated Weekly Import Cron Job
+### Story 33.3: Automated Weekly Import Cron Job ✅
 **Priority:** P1
 **Effort:** 3–4 hours
+**Completed:** 2026-05-04 — `utilities/weekly_update.sh` created and cron entry
+active (`0 9 * * 1`) on VPS. Logs to `/var/log/cfb-rankings/weekly.log`.
 
 Set up a cron job on the VPS that runs every Monday morning to:
 1. Fetch the previous week's game results from CFBD
