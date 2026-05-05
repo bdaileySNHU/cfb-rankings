@@ -927,7 +927,7 @@ def get_matchup(
             "score_a": a_score,
             "score_b": b_score,
             "winner_id": winner_id,
-            "neutral_site": g.neutral_site,
+            "neutral_site": g.is_neutral_site,
         })
 
     # Win probabilities
