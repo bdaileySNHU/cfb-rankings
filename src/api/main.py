@@ -2429,6 +2429,217 @@ async def update_preseason_weights(
     )
 
 
+# ============================================================================
+# ADMIN ENDPOINTS - Import Pipeline (EPIC-033 Story 33.4)
+# ============================================================================
+
+# Path to import log file (relative to project root)
+_IMPORT_LOG_PATH = Path(__file__).parent.parent.parent / "data" / "import_log.json"
+
+
+def _ensure_data_dir():
+    """Ensure the data/ directory exists."""
+    _IMPORT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+
+@app.get("/api/admin/import/status", response_model=schemas.ImportStatus, tags=["Admin"])
+async def get_import_status(
+    x_admin_key: str = Header(default=None, alias="X-Admin-Key"),
+):
+    """Get status of the last import run.
+
+    Returns metadata about the most recent data import operation,
+    read from data/import_log.json. Returns status "never_run" if no
+    import has been performed yet.
+
+    Requires X-Admin-Key header matching the ADMIN_SECRET environment variable.
+
+    Returns:
+        ImportStatus with last_run timestamp, season, game counts, and status.
+
+    Raises:
+        HTTPException 403: If the admin key is missing or incorrect.
+    """
+    admin_secret = os.environ.get("ADMIN_SECRET", "")
+    if not admin_secret or x_admin_key != admin_secret:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    _ensure_data_dir()
+
+    if not _IMPORT_LOG_PATH.exists():
+        return schemas.ImportStatus(status="never_run", last_run=None)
+
+    try:
+        with open(_IMPORT_LOG_PATH, "r") as f:
+            data = json.load(f)
+        return schemas.ImportStatus(**data)
+    except Exception as e:
+        logger.error(f"Failed to read import log: {e}")
+        return schemas.ImportStatus(status="never_run", last_run=None)
+
+
+@app.post("/api/admin/import/results", response_model=schemas.ImportResult, tags=["Admin"])
+async def trigger_import(
+    season: Optional[int] = Query(None, description="Season year (defaults to active season)"),
+    week: Optional[int] = Query(None, description="Specific week to import (imports all weeks if omitted)"),
+    x_admin_key: str = Header(default=None, alias="X-Admin-Key"),
+    db: Session = Depends(get_db),
+):
+    """Trigger a live data import from the CFBD API.
+
+    Runs the standard weekly_update.sh pipeline to:
+    1. Pull the latest game schedule and results from CFBD.
+    2. Process any unprocessed games with scores through the ELO algorithm.
+    3. Save a ranking_history snapshot for each completed week.
+    4. Write a result summary to data/import_log.json.
+
+    The season and week parameters are passed as environment variables to the
+    underlying import script via IMPORT_SEASON and IMPORT_WEEK.
+
+    Query Parameters:
+        season: Season year (defaults to active season)
+        week: Specific week to target (imports all available data if omitted)
+
+    Requires X-Admin-Key header matching the ADMIN_SECRET environment variable.
+
+    Returns:
+        ImportResult with counts of games imported and processed.
+
+    Raises:
+        HTTPException 403: If the admin key is missing or incorrect.
+        HTTPException 500: If the import fails.
+    """
+    admin_secret = os.environ.get("ADMIN_SECRET", "")
+    if not admin_secret or x_admin_key != admin_secret:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    _ensure_data_dir()
+    timestamp = datetime.utcnow().isoformat()
+
+    # Resolve season
+    if season is None:
+        active = db.query(Season).filter(Season.is_active == True).first()
+        if not active:
+            raise HTTPException(status_code=400, detail="No active season found and no season specified")
+        season = active.year
+
+    games_imported = 0
+    games_processed = 0
+    error_msg = None
+    status = "success"
+
+    try:
+        project_root = Path(__file__).parent.parent.parent
+        script_path = project_root / "utilities" / "weekly_update.sh"
+
+        if not script_path.exists():
+            raise FileNotFoundError(f"weekly_update.sh not found at {script_path}")
+
+        # Snapshot unprocessed count before run so we can report delta
+        from src.models.models import Game as GameModel
+
+        before_processed = db.query(GameModel).filter(
+            GameModel.season == season,
+            GameModel.is_processed == True,
+        ).count()
+
+        if week is not None:
+            before_processed = db.query(GameModel).filter(
+                GameModel.season == season,
+                GameModel.week == week,
+                GameModel.is_processed == True,
+            ).count()
+
+        # Build environment for subprocess
+        import_env = os.environ.copy()
+        import_env["IMPORT_SEASON"] = str(season)
+        if week is not None:
+            import_env["IMPORT_WEEK"] = str(week)
+
+        logger.info(f"Import: running weekly_update.sh for season={season}, week={week}")
+
+        result = subprocess.run(
+            ["bash", str(script_path)],
+            capture_output=True,
+            text=True,
+            timeout=1800,  # 30-minute timeout
+            cwd=str(project_root),
+            env=import_env,
+        )
+
+        if result.returncode != 0:
+            error_msg = result.stderr[-2000:] if result.stderr else "Script exited with non-zero code"
+            status = "error"
+            logger.error(f"Import script failed:\n{error_msg}")
+        else:
+            # Count how many additional games were processed after the run
+            db.expire_all()  # Refresh session state from DB
+
+            after_processed = db.query(GameModel).filter(
+                GameModel.season == season,
+                GameModel.is_processed == True,
+            ).count()
+
+            if week is not None:
+                after_processed = db.query(GameModel).filter(
+                    GameModel.season == season,
+                    GameModel.week == week,
+                    GameModel.is_processed == True,
+                ).count()
+
+            games_processed = max(0, after_processed - before_processed)
+
+            # Parse games_imported from stdout if present
+            stdout = result.stdout or ""
+            for line in stdout.splitlines():
+                if "games imported" in line.lower() or "import complete" in line.lower():
+                    import re
+                    nums = re.findall(r"\d+", line)
+                    if nums:
+                        games_imported = int(nums[0])
+                        break
+
+    except subprocess.TimeoutExpired:
+        error_msg = "Import timed out after 30 minutes"
+        status = "error"
+        logger.error(error_msg)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Import failed: {e}", exc_info=True)
+        error_msg = str(e)
+        status = "error"
+
+    # ── Write import log ─────────────────────────────────────────────────────
+    log_entry = {
+        "last_run": timestamp,
+        "season": season,
+        "week": week,
+        "games_imported": games_imported,
+        "games_processed": games_processed,
+        "status": status,
+        "error": error_msg,
+    }
+    try:
+        with open(_IMPORT_LOG_PATH, "w") as f:
+            json.dump(log_entry, f, indent=2)
+    except Exception as write_err:
+        logger.warning(f"Failed to write import log: {write_err}")
+
+    if status == "error":
+        raise HTTPException(status_code=500, detail=f"Import failed: {error_msg}")
+
+    return schemas.ImportResult(
+        season=season,
+        week=week,
+        games_imported=games_imported,
+        games_processed=games_processed,
+        status=status,
+        message=f"Import complete: {games_processed} games processed through ELO",
+        timestamp=timestamp,
+    )
+
+
 if __name__ == "__main__":
     import uvicorn
 
