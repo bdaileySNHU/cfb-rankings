@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Stat-urday</title>
+  <script src="js/theme.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" width="28" height="28" fill="var(--accent)"><ellipse cx="12" cy="12" rx="10" ry="6.5" transform="rotate(-30 12 12)"/></svg>
+        <span class="brand-name">Stat-urday</span>
+        <span class="brand-sub">Admin Dashboard</span>
+      </div>
+      <div class="header-actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="site-nav" id="site-nav">
+    <div class="nav-inner">
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu" onclick="document.getElementById('site-nav').classList.toggle('nav-open')">☰</button>
+      <div class="nav-links" id="nav-links">
+        <a href="index.html" class="nav-link">Rankings</a>
+        <a href="teams.html" class="nav-link">All Teams</a>
+        <a href="games.html" class="nav-link">Games</a>
+        <a href="comparison.html" class="nav-link">Prediction Comparison</a>
+        <a href="elo-formula.html" class="nav-link">How It Works</a>
+        <a href="simulator.html" class="nav-link">Simulator</a>
+        <a href="matchup.html" class="nav-link">Matchup</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Auth Gate -->
+    <div id="auth-gate" class="card" style="max-width: 420px; margin: 4rem auto;">
+      <div class="card-header">
+        <h2 class="card-title">🔒 Admin Access</h2>
+      </div>
+      <p style="color: var(--text-secondary); margin-bottom: 1.25rem; font-size: 0.9rem;">
+        Enter the admin key to access the dashboard.
+      </p>
+      <div style="display: flex; gap: 0.5rem;">
+        <input type="password" id="admin-key-input" class="matchup-search"
+          placeholder="Admin key…" style="flex:1;"
+          onkeydown="if(event.key==='Enter') authenticate()">
+        <button class="btn btn-primary" onclick="authenticate()">Unlock</button>
+      </div>
+      <p id="auth-error" class="hidden" style="color: var(--error-color); font-size: 0.85rem; margin-top: 0.75rem;"></p>
+    </div>
+
+    <!-- Dashboard (hidden until authenticated) -->
+    <div id="dashboard" class="hidden">
+
+      <!-- Header row -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 1.5rem; flex-wrap:wrap; gap:0.75rem;">
+        <h1 style="font-size:1.6rem; font-weight:700; color:var(--text-primary);">Pipeline Dashboard</h1>
+        <button class="btn btn-primary" id="refresh-btn" onclick="loadDashboard()">↻ Refresh</button>
+      </div>
+
+      <!-- Import Status Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Last Import Run</h2>
+          <span id="status-badge" class="admin-status-badge">—</span>
+        </div>
+
+        <div class="admin-stat-row">
+          <div class="admin-stat">
+            <div class="admin-stat-label">Last Run</div>
+            <div class="admin-stat-value" id="last-run">—</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-label">Season</div>
+            <div class="admin-stat-value" id="import-season">—</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-label">Games Processed</div>
+            <div class="admin-stat-value" id="games-processed">—</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-label">Diff Week</div>
+            <div class="admin-stat-value" id="diff-week">—</div>
+          </div>
+        </div>
+
+        <div id="import-error-row" class="hidden" style="margin-top:1rem; padding:0.75rem 1rem; background: var(--warning-bg); border-radius: var(--radius-sm); color: var(--warning-color); font-size:0.875rem; font-family: var(--font-mono);">
+          <strong>Error:</strong> <span id="import-error-msg"></span>
+        </div>
+
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); display:flex; gap:0.75rem; flex-wrap:wrap;">
+          <button class="btn btn-primary" id="trigger-btn" onclick="triggerImport()">
+            ▶ Run Import Now
+          </button>
+          <span id="trigger-status" style="align-self:center; font-size:0.875rem; color:var(--text-secondary);"></span>
+        </div>
+      </div>
+
+      <!-- Rank Movement Card -->
+      <div class="card" id="diff-card">
+        <div class="card-header">
+          <h2 class="card-title">Rank Movements — Last Update</h2>
+          <span id="diff-subtitle" style="color:var(--text-secondary); font-size:0.85rem;">Teams that moved 5+ spots</span>
+        </div>
+
+        <div id="diff-empty" class="hidden" style="text-align:center; padding:2rem; color:var(--text-secondary);">
+          No rank movements of 5+ spots recorded yet.
+        </div>
+
+        <div id="diff-table-wrap" class="table-container hidden">
+          <table class="rankings-table">
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>Prev Rank</th>
+                <th>New Rank</th>
+                <th>Change</th>
+              </tr>
+            </thead>
+            <tbody id="diff-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cron Health Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Cron Schedule</h2>
+        </div>
+        <div class="admin-stat-row">
+          <div class="admin-stat">
+            <div class="admin-stat-label">Schedule</div>
+            <div class="admin-stat-value" style="font-family: var(--font-mono); font-size:0.9rem;">Every Monday 9:00 AM UTC</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-label">Log File</div>
+            <div class="admin-stat-value" style="font-family: var(--font-mono); font-size:0.85rem;">/var/log/cfb-rankings/weekly.log</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat-label">Next Run</div>
+            <div class="admin-stat-value" id="next-run">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notification Config Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Notification Config</h2>
+        </div>
+        <p style="color:var(--text-secondary); font-size:0.875rem; margin-bottom:1rem;">
+          Notifications are configured via environment variables on the VPS.
+          Set these in <code style="font-family:var(--font-mono); color:var(--accent);">/var/www/cfb-rankings/.env</code>
+        </p>
+        <div class="admin-env-table">
+          <div class="admin-env-row">
+            <code class="admin-env-key">SLACK_WEBHOOK_URL</code>
+            <span class="admin-env-desc">Slack incoming webhook URL — posts update summary to your channel</span>
+          </div>
+          <div class="admin-env-row">
+            <code class="admin-env-key">NOTIFY_EMAIL</code>
+            <span class="admin-env-desc">Email address to receive update summaries (requires <code>mail</code> on server)</span>
+          </div>
+          <div class="admin-env-row">
+            <code class="admin-env-key">CFBD_API_KEY</code>
+            <span class="admin-env-desc">CollegeFootballData.com API key (required for all imports)</span>
+          </div>
+          <div class="admin-env-row">
+            <code class="admin-env-key">ADMIN_SECRET</code>
+            <span class="admin-env-desc">Admin key protecting this dashboard and the import API endpoints</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /dashboard -->
+
+  </div><!-- /container -->
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>&copy; 2026 Stat-urday</p>
+      <p><a href="elo-formula.html">How It Works</a> | <a href="https://github.com" target="_blank" rel="noopener">GitHub</a></p>
+    </div>
+  </footer>
+
+  <script>
+    const BASE_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:8000'
+      : 'https://cfb.bdailey.com';
+
+    let adminKey = localStorage.getItem('admin_key') || '';
+
+    // ── Auth ───────────────────────────────────────────────────────────────
+    async function authenticate() {
+      const input = document.getElementById('admin-key-input').value.trim();
+      if (!input) return;
+
+      // Test the key against the status endpoint
+      try {
+        const resp = await fetch(`${BASE_URL}/api/admin/import/status`, {
+          headers: { 'X-Admin-Key': input }
+        });
+        if (resp.status === 403) {
+          showAuthError('Invalid admin key.');
+          return;
+        }
+        // Key works — store and show dashboard
+        adminKey = input;
+        localStorage.setItem('admin_key', adminKey);
+        showDashboard();
+      } catch (e) {
+        showAuthError(`Connection error: ${e.message}`);
+      }
+    }
+
+    function showAuthError(msg) {
+      const el = document.getElementById('auth-error');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function showDashboard() {
+      document.getElementById('auth-gate').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      loadDashboard();
+      computeNextRun();
+    }
+
+    // ── Load dashboard data ────────────────────────────────────────────────
+    async function loadDashboard() {
+      document.getElementById('refresh-btn').textContent = '↻ Loading…';
+      try {
+        const resp = await fetch(`${BASE_URL}/api/admin/import/status`, {
+          headers: { 'X-Admin-Key': adminKey }
+        });
+        if (resp.status === 403) {
+          localStorage.removeItem('admin_key');
+          location.reload();
+          return;
+        }
+        const data = await resp.json();
+        renderStatus(data);
+        renderDiff(data.diff_report || [], data.diff_week);
+      } catch (e) {
+        document.getElementById('trigger-status').textContent = `Error: ${e.message}`;
+      } finally {
+        document.getElementById('refresh-btn').textContent = '↻ Refresh';
+      }
+    }
+
+    function renderStatus(data) {
+      const badge = document.getElementById('status-badge');
+      badge.textContent = data.status;
+      badge.className = 'admin-status-badge';
+      if (data.status === 'success') badge.classList.add('status-success');
+      else if (data.status === 'never_run') badge.classList.add('status-neutral');
+      else badge.classList.add('status-error');
+
+      document.getElementById('last-run').textContent = data.last_run
+        ? new Date(data.last_run).toLocaleString() : 'Never';
+      document.getElementById('import-season').textContent = data.season ?? '—';
+      document.getElementById('games-processed').textContent = data.games_processed ?? '—';
+      document.getElementById('diff-week').textContent = data.diff_week ? `Week ${data.diff_week}` : '—';
+
+      const errRow = document.getElementById('import-error-row');
+      if (data.error) {
+        document.getElementById('import-error-msg').textContent = data.error;
+        errRow.classList.remove('hidden');
+      } else {
+        errRow.classList.add('hidden');
+      }
+    }
+
+    function renderDiff(movers, week) {
+      const empty = document.getElementById('diff-empty');
+      const wrap = document.getElementById('diff-table-wrap');
+      const tbody = document.getElementById('diff-tbody');
+
+      if (!movers || !movers.length) {
+        empty.classList.remove('hidden');
+        wrap.classList.add('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      wrap.classList.remove('hidden');
+
+      tbody.innerHTML = movers.map(m => {
+        const cls = m.delta > 0 ? 'rank-up' : 'rank-down';
+        const arrow = m.delta > 0 ? `▲${m.delta}` : `▼${Math.abs(m.delta)}`;
+        return `<tr>
+          <td><a href="team.html?id=" style="color:var(--text-primary); text-decoration:none; font-weight:600;">${m.team}</a></td>
+          <td style="color:var(--text-secondary);">#${m.prev}</td>
+          <td style="font-weight:700;">#${m.cur}</td>
+          <td><span class="${cls}">${arrow}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ── Trigger import ─────────────────────────────────────────────────────
+    async function triggerImport() {
+      const btn = document.getElementById('trigger-btn');
+      const status = document.getElementById('trigger-status');
+      btn.disabled = true;
+      btn.textContent = '⏳ Running…';
+      status.textContent = 'Import started — this may take 1–2 minutes…';
+
+      try {
+        const resp = await fetch(`${BASE_URL}/api/admin/import/results`, {
+          method: 'POST',
+          headers: { 'X-Admin-Key': adminKey }
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          status.textContent = `Error: ${data.detail || resp.statusText}`;
+          status.style.color = 'var(--error-color)';
+        } else {
+          status.textContent = `✓ ${data.message}`;
+          status.style.color = 'var(--success-color)';
+          setTimeout(loadDashboard, 1500);
+        }
+      } catch (e) {
+        status.textContent = `Error: ${e.message}`;
+        status.style.color = 'var(--error-color)';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '▶ Run Import Now';
+      }
+    }
+
+    // ── Next run calculation ───────────────────────────────────────────────
+    function computeNextRun() {
+      const now = new Date();
+      const next = new Date(now);
+      // Find next Monday
+      const dayOfWeek = now.getUTCDay(); // 0=Sun, 1=Mon ...
+      const daysUntilMonday = dayOfWeek === 1 ? 7 : (8 - dayOfWeek) % 7 || 7;
+      next.setUTCDate(now.getUTCDate() + daysUntilMonday);
+      next.setUTCHours(9, 0, 0, 0);
+      document.getElementById('next-run').textContent = next.toLocaleString();
+    }
+
+    // ── Auto-auth if key is stored ─────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      if (adminKey) {
+        document.getElementById('admin-key-input').value = adminKey;
+        showDashboard();
+      }
+    });
+  </script>
+</body>
+</html>

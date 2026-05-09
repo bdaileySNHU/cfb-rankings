@@ -836,6 +836,15 @@ class ComparisonStats(BaseModel):
 # ============================================================================
 
 
+class RankMover(BaseModel):
+    """Single team rank movement entry from the weekly diff report."""
+    team: str
+    prev: int
+    cur: int
+    delta: int
+    direction: str
+
+
 class ImportStatus(BaseModel):
     """Status of the last data import run."""
 
@@ -845,6 +854,9 @@ class ImportStatus(BaseModel):
     games_processed: Optional[int] = None
     status: str = "never_run"
     error: Optional[str] = None
+    # EPIC-035: rank diff report
+    diff_report: Optional[List[RankMover]] = None
+    diff_week: Optional[int] = None
 
 
 class ImportResult(BaseModel):
