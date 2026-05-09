@@ -138,9 +138,18 @@
         const undefeated = losses === 0 && wins > 0;
         const recordClass = undefeated ? 'team-card-record undefeated' : 'team-card-record';
 
+        const logoHtml = team.espn_id
+          ? `<img src="https://a.espncdn.com/i/teamlogos/ncaa/500/${team.espn_id}.png"
+               width="52" height="52" alt="" class="team-card-logo-img"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            + `<div class="team-logo-initials" style="display:none;background:hsl(${(() => {
+                let h=0; for(let i=0;i<name.length;i++) h=name.charCodeAt(i)+((h<<5)-h); return Math.abs(h)%360;
+              })()},55%,35%)">${name.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase()}</div>`
+          : initialsAvatar(name);
+
         return `
           <a href="team.html?id=${id}" class="team-card">
-            <div class="team-card-logo">${initialsAvatar(name)}</div>
+            <div class="team-card-logo">${logoHtml}</div>
             <div class="team-card-body">
               <div class="team-card-name">${name}</div>
               <div class="team-card-meta">

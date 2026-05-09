@@ -109,6 +109,9 @@ class Team(TeamBase):
     created_at: datetime
     updated_at: datetime
 
+    # EPIC-037: ESPN team ID for CDN logo
+    espn_id: Optional[int] = Field(None, description="ESPN team ID for logo CDN URL")
+
     class Config:
         """Pydantic config enabling ORM model attribute reading."""
 
@@ -256,6 +259,9 @@ class RankingEntry(BaseModel):
     elo_history: Optional[List[float]] = Field(
         None, description="Last 8 weekly ELO values for sparkline (ascending week order)"
     )
+
+    # EPIC-037: ESPN team ID for CDN logo
+    espn_id: Optional[int] = Field(None, description="ESPN team ID for logo CDN URL")
 
 
 class RankingsResponse(BaseModel):

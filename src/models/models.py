@@ -120,6 +120,9 @@ class Team(Base):
     # EPIC-012: Actual conference name (Big Ten, SEC, etc.)
     conference_name = Column(String(50), nullable=True)
 
+    # EPIC-037: ESPN team ID for CDN logo URLs
+    espn_id = Column(Integer, nullable=True)
+
     # FCS flag
     is_fcs = Column(Boolean, default=False, nullable=False)
 

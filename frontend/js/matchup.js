@@ -99,11 +99,11 @@ function selectTeam(side, team) {
   if (side === 'a') {
     selectedA = team;
     document.getElementById('name-a').textContent = team.name;
-    renderAvatar('avatar-a', team.name);
+    renderAvatar('avatar-a', team);
   } else {
     selectedB = team;
     document.getElementById('name-b').textContent = team.name;
-    renderAvatar('avatar-b', team.name);
+    renderAvatar('avatar-b', team);
   }
   updateCompareBtn();
   updateURL();
@@ -122,18 +122,33 @@ function updateURL() {
 }
 
 // ── Avatars ───────────────────────────────────────────────────────────────────
-function renderAvatar(containerId, name) {
+function renderAvatar(containerId, team) {
+  const name = typeof team === 'string' ? team : team.name;
+  const espnId = typeof team === 'object' ? team.espn_id : null;
   const el = document.getElementById(containerId);
   el.innerHTML = '';
+  if (espnId) {
+    const img = document.createElement('img');
+    img.src = `https://a.espncdn.com/i/teamlogos/ncaa/500/${espnId}.png`;
+    img.width = 56; img.height = 56;
+    img.alt = name;
+    img.style.borderRadius = '50%';
+    img.onerror = () => { el.innerHTML = initialsAvatarSvg(name, 56); };
+    el.appendChild(img);
+  } else {
+    el.innerHTML = initialsAvatarSvg(name, 56);
+  }
+}
+
+function initialsAvatarSvg(name, size) {
   const initials = name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const hue = [...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) & 0xffff, 0) % 360;
-  const size = 56;
-  const svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+  const fs = size > 40 ? 20 : 9;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
     <circle cx="${size/2}" cy="${size/2}" r="${size/2}" fill="hsl(${hue},55%,38%)"/>
     <text x="${size/2}" y="${size/2}" text-anchor="middle" dominant-baseline="central"
-      font-family="system-ui,sans-serif" font-size="20" font-weight="700" fill="white">${initials}</text>
+      font-family="system-ui,sans-serif" font-size="${fs}" font-weight="700" fill="white">${initials}</text>
   </svg>`;
-  el.innerHTML = svg;
 }
 
 // ── Site toggle ───────────────────────────────────────────────────────────────

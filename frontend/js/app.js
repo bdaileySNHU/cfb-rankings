@@ -191,12 +191,30 @@ function createRankingRow(team) {
   }
   row.appendChild(changeCell);
 
-  // Team Name
+  // Team Name (with ESPN logo)
   const teamCell = document.createElement('td');
+  teamCell.className = 'team-name-cell';
+  const teamInner = document.createElement('div');
+  teamInner.className = 'team-name-inner';
+  // Small logo or initials fallback
+  const logoEl = document.createElement('span');
+  logoEl.className = 'team-logo-small';
+  if (team.espn_id) {
+    const img = document.createElement('img');
+    img.src = `https://a.espncdn.com/i/teamlogos/ncaa/500/${team.espn_id}.png`;
+    img.width = 24; img.height = 24;
+    img.alt = '';
+    img.onerror = () => { logoEl.innerHTML = smallInitials(team.team_name); };
+    logoEl.appendChild(img);
+  } else {
+    logoEl.innerHTML = smallInitials(team.team_name);
+  }
   const teamName = document.createElement('span');
   teamName.className = 'team-name';
   teamName.textContent = team.team_name;
-  teamCell.appendChild(teamName);
+  teamInner.appendChild(logoEl);
+  teamInner.appendChild(teamName);
+  teamCell.appendChild(teamInner);
   row.appendChild(teamCell);
 
   // EPIC-012: Conference with actual conference name
@@ -285,6 +303,17 @@ function createRankingRow(team) {
   row.appendChild(sosRankCell);
 
   return row;
+}
+
+// EPIC-037: Tiny initials circle for teams without ESPN logo
+function smallInitials(name) {
+  const initials = name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  const hue = [...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) & 0xffff, 0) % 360;
+  return `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="12" fill="hsl(${hue},55%,35%)"/>
+    <text x="12" y="12" text-anchor="middle" dominant-baseline="central"
+      font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="white">${initials}</text>
+  </svg>`;
 }
 
 // EPIC-031 Story 31.2: Create SVG sparkline for ELO trend

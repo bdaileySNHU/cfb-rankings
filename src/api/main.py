@@ -1667,7 +1667,14 @@ async def get_rankings(
         for tid, elos in history_map.items():
             elo_history_by_team_id[tid] = elos[-8:]
 
-    # Attach rank_change and elo_history to each ranking entry
+    # EPIC-037: Batch-fetch espn_ids for all ranked teams
+    espn_id_by_team: dict = {}
+    if team_ids:
+        team_rows = db.query(Team.id, Team.espn_id).filter(Team.id.in_(team_ids)).all()
+        for row in team_rows:
+            espn_id_by_team[row.id] = row.espn_id
+
+    # Attach rank_change, elo_history, and espn_id to each ranking entry
     for entry in rankings:
         tid = entry["team_id"]
         current_rank = entry["rank"]
@@ -1679,6 +1686,7 @@ async def get_rankings(
             entry["rank_change"] = prior_rank - current_rank  # positive = moved up
 
         entry["elo_history"] = elo_history_by_team_id.get(tid, [])
+        entry["espn_id"] = espn_id_by_team.get(tid)
 
     return {
         "week": current_week,
