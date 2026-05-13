@@ -2703,8 +2703,11 @@ async def trigger_import(
                 GameModel.is_processed == True,
             ).count()
 
-        # Build environment for subprocess
+        # Build environment for subprocess — ensure a full PATH so shell
+        # builtins (dirname, curl, mail, etc.) are found when running under
+        # Gunicorn's stripped environment.
         import_env = os.environ.copy()
+        import_env["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
         import_env["IMPORT_SEASON"] = str(season)
         if week is not None:
             import_env["IMPORT_WEEK"] = str(week)

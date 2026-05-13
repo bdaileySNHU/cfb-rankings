@@ -22,6 +22,9 @@
 
 set -euo pipefail
 
+# Ensure standard PATH — required when invoked via Gunicorn/systemd subprocess
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 PYTHON="$PROJECT_DIR/venv/bin/python3"
