@@ -2709,6 +2709,7 @@ async def trigger_import(
         import_env = os.environ.copy()
         import_env["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
         import_env["IMPORT_SEASON"] = str(season)
+        import_env["SKIP_SERVICE_RESTART"] = "1"  # Don't kill the worker serving this request
         if week is not None:
             import_env["IMPORT_WEEK"] = str(week)
 

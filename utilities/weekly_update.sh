@@ -331,7 +331,9 @@ echo "✓ Rank diff report complete"
 # ── Step 4: Restart the API service ──────────────────────────────────────────
 echo ""
 echo "[4/4] Restarting cfb-rankings service..."
-if sudo systemctl restart cfb-rankings 2>/dev/null; then
+if [ "${SKIP_SERVICE_RESTART:-0}" = "1" ]; then
+    echo "⚠ Skipping service restart (called via API — restart not needed)"
+elif sudo systemctl restart cfb-rankings 2>/dev/null; then
     echo "✓ Service restarted"
 else
     echo "⚠ Could not restart service (may need sudo permissions — restart manually)"
