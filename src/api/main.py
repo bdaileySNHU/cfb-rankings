@@ -2712,7 +2712,7 @@ async def trigger_import(
         logger.info(f"Import: running weekly_update.sh for season={season}, week={week}")
 
         result = subprocess.run(
-            ["bash", str(script_path)],
+            ["/bin/bash", str(script_path)],
             capture_output=True,
             text=True,
             timeout=1800,  # 30-minute timeout
