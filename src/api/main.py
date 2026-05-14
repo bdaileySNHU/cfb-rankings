@@ -2680,43 +2680,81 @@ async def trigger_import(
     log_lines = []
 
     try:
-        import sys as _sys
-        project_root = Path(__file__).parent.parent.parent
-        import_script = project_root / "import_real_data.py"
+        from src.integrations.cfbd_client import CFBDClient
 
-        # ── Step 1: Import games from CFBD via import_real_data.py ───────
-        # Use the current Python interpreter — no bash needed, inherits venv
-        log_lines.append(f"Running import_real_data.py for season {season}...")
-        cmd = [_sys.executable, str(import_script), "--season", str(season)]
-        if week is not None:
-            cmd += ["--max-week", str(week)]
+        cfbd_key = os.environ.get("CFBD_API_KEY", "")
+        if not cfbd_key:
+            raise ValueError("CFBD_API_KEY is not set in the server environment")
 
-        import_env = os.environ.copy()
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=600,
-            cwd=str(project_root),
-            env=import_env,
-        )
+        # ── Step 1: Fetch games from CFBD and upsert into DB ─────────────
+        # All in-process using the existing db session — no subprocess,
+        # no SQLite write conflict.
+        log_lines.append(f"Fetching games from CFBD for season {season}...")
+        client = CFBDClient(api_key=cfbd_key)
 
-        if result.returncode != 0:
-            stderr = (result.stderr or "")[-1000:]
-            stdout = (result.stdout or "")[-500:]
-            raise RuntimeError(f"import_real_data.py failed (exit {result.returncode}): {stderr or stdout}")
+        # Build team lookup once (name → Team) for FBS teams
+        all_teams = db.query(Team).all()
+        team_map = {t.name: t for t in all_teams}
 
-        # Count newly imported games from stdout
-        for line in (result.stdout or "").splitlines():
-            import re as _re
-            m = _re.search(r"(\d+)\s+(?:new\s+)?games?\s+(?:imported|created)", line, _re.IGNORECASE)
-            if m:
-                games_imported = int(m.group(1))
-                break
-        log_lines.append(f"Import complete. Output tail: {(result.stdout or '')[-200:]}")
+        max_week_to_fetch = week if week is not None else 20
+        for wk in range(1, max_week_to_fetch + 1):
+            try:
+                games_data = client.get_games(year=season, week=wk)
+            except Exception as e:
+                log_lines.append(f"  Week {wk}: CFBD error — {e}")
+                continue
+
+            if not games_data:
+                break  # No more weeks published
+
+            for g in games_data:
+                home_name = g.get("homeTeam") or g.get("home_team")
+                away_name = g.get("awayTeam") or g.get("away_team")
+                home_pts  = g.get("homePoints") or g.get("home_points")
+                away_pts  = g.get("awayPoints") or g.get("away_points")
+                g_week    = g.get("week", wk)
+                neutral   = g.get("neutralSite") or g.get("neutral_site") or False
+
+                home_team = team_map.get(home_name)
+                away_team = team_map.get(away_name)
+                if not home_team or not away_team:
+                    continue  # Skip FCS-only or unknown teams
+
+                existing = (
+                    db.query(Game)
+                    .filter(
+                        Game.home_team_id == home_team.id,
+                        Game.away_team_id == away_team.id,
+                        Game.week == g_week,
+                        Game.season == season,
+                    )
+                    .first()
+                )
+
+                if existing:
+                    # Update scores if the game has now been played
+                    if home_pts is not None and existing.home_score != home_pts:
+                        existing.home_score = home_pts
+                        existing.away_score = away_pts
+                        existing.is_processed = False
+                else:
+                    new_g = Game(
+                        season=season,
+                        week=g_week,
+                        home_team_id=home_team.id,
+                        away_team_id=away_team.id,
+                        home_score=home_pts if home_pts is not None else 0,
+                        away_score=away_pts if away_pts is not None else 0,
+                        is_neutral_site=bool(neutral),
+                        is_processed=False,
+                    )
+                    db.add(new_g)
+                    games_imported += 1
+
+        db.commit()
+        log_lines.append(f"Games fetched. New records: {games_imported}")
 
         # ── Step 2: Process unprocessed games through ELO ─────────────────
-        db.expire_all()  # Refresh session after subprocess wrote to DB
         unprocessed = (
             db.query(Game)
             .filter(
