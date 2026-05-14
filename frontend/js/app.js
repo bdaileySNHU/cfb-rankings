@@ -49,6 +49,15 @@ function setupEventListeners() {
       loadPredictions({ nextWeek: true });
     });
   }
+
+  // EPIC-036: Share Top 25 button
+  const shareTop25Btn = document.getElementById('share-top25-btn');
+  if (shareTop25Btn) {
+    shareTop25Btn.addEventListener('click', () => {
+      const rankings = rankingsData ? rankingsData.rankings : null;
+      downloadTop25Card(rankings, currentSeason);
+    });
+  }
 }
 
 // EPIC-024: Load available seasons
@@ -544,7 +553,19 @@ function createPredictionCard(prediction) {
       <span class="confidence-label">Confidence:</span>
       <span class="confidence-value">${prediction.confidence}</span>
     </div>
+    <div class="pred-share-row">
+      <button class="copy-link-btn pred-copy-link"
+        data-home-id="${prediction.home_team_id}"
+        data-away-id="${prediction.away_team_id}"
+        title="Copy matchup link">🔗 Copy Link</button>
+    </div>
   `;
+
+  // Wire up copy-link button
+  card.querySelector('.pred-copy-link').addEventListener('click', (e) => {
+    const btn = e.currentTarget;
+    sharePrediction(btn.dataset.homeId, btn.dataset.awayId);
+  });
 
   return card;
 }

@@ -185,6 +185,14 @@ async function runComparison() {
     renderStatsGrid(matchupData);
     renderEloChart(matchupData);
     renderH2H(matchupData);
+    updateOgForMatchup(matchupData);
+
+    // EPIC-036: Show & wire copy-link button
+    const shareBtn = document.getElementById('share-matchup-btn');
+    if (shareBtn) {
+      shareBtn.classList.remove('hidden');
+      shareBtn.onclick = () => shareMatchup(selectedA.id, selectedB.id);
+    }
 
     showResults();
   } catch (e) {
@@ -430,6 +438,28 @@ function renderH2H(data) {
       <td style="color:var(--text-secondary); font-size:0.85rem;">${site}</td>
     </tr>`;
   }).join('');
+}
+
+// ── OG meta helpers ───────────────────────────────────────────────────────────
+function _setOgMeta(prop, content) {
+  let el = document.querySelector(`meta[property="${prop}"]`) ||
+           document.querySelector(`meta[name="${prop}"]`);
+  if (el) el.setAttribute('content', content);
+}
+
+function updateOgForMatchup(data) {
+  const a = data.team_a.name;
+  const b = data.team_b.name;
+  const pct = Math.round(data.win_prob_neutral * 100);
+  const title = `${a} vs ${b} — Stat-urday`;
+  const desc = `${a} has a ${pct}% win probability vs ${b} · ELO-based CFB matchup analysis`;
+  const url = `https://cfb.bdailey.com/matchup.html?teamA=${data.team_a.id}&teamB=${data.team_b.id}`;
+  document.title = title;
+  _setOgMeta('og:title', title);
+  _setOgMeta('og:description', desc);
+  _setOgMeta('og:url', url);
+  _setOgMeta('twitter:title', title);
+  _setOgMeta('twitter:description', desc);
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────

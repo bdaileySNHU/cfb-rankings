@@ -1,5 +1,12 @@
 // Team Details Page Logic
 
+// Helper: update a single OG/Twitter meta tag by property or name
+function _setOgMeta(prop, content) {
+  let el = document.querySelector(`meta[property="${prop}"]`) ||
+           document.querySelector(`meta[name="${prop}"]`);
+  if (el) el.setAttribute('content', content);
+}
+
 let teamId = null;
 let teamData = null;
 let season = null; // Season from URL parameter
@@ -130,7 +137,25 @@ async function loadPredictionAccuracy() {
 function populateTeamInfo(team) {
   // Team name
   document.getElementById('team-name').textContent = team.name;
-  document.title = `${team.name} - College Football Rankings`;
+  document.title = `${team.name} — Stat-urday`;
+
+  // Update OG tags for rich link previews when this page is shared
+  const record = `${team.wins || 0}–${team.losses || 0}`;
+  const eloStr = team.elo_rating ? ` · ELO ${Math.round(team.elo_rating)}` : '';
+  const rankStr = team.rank ? `#${team.rank} · ` : '';
+  const ogDesc = `${rankStr}${record}${eloStr} · ${team.conference_name || team.conference || 'CFB'} · Stat-urday college football rankings`;
+  const canonUrl = `https://cfb.bdailey.com/team.html?id=${team.id}`;
+  _setOgMeta('og:title', `${team.name} — Stat-urday`);
+  _setOgMeta('og:description', ogDesc);
+  _setOgMeta('og:url', canonUrl);
+  _setOgMeta('twitter:title', `${team.name} — Stat-urday`);
+  _setOgMeta('twitter:description', ogDesc);
+
+  // EPIC-036: Wire up copy-link button
+  const shareTeamBtn = document.getElementById('share-team-btn');
+  if (shareTeamBtn) {
+    shareTeamBtn.onclick = () => shareTeam(team.id);
+  }
 
   // EPIC-012: Conference badge with actual conference name
   const confBadge = document.getElementById('conference-badge');

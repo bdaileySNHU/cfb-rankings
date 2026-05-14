@@ -3,6 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Open Graph / Social sharing -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Stat-urday">
+  <meta property="og:title" content="Head-to-Head Matchup — Stat-urday">
+  <meta property="og:description" content="Compare any two college football teams side-by-side: ELO history, season stats, and win probability.">
+  <meta property="og:url" content="https://cfb.bdailey.com/matchup.html">
+  <meta property="og:image" content="https://cfb.bdailey.com/images/og-default.svg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <!-- Twitter / X card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Head-to-Head Matchup — Stat-urday">
+  <meta name="twitter:description" content="Compare any two college football teams side-by-side: ELO history, season stats, and win probability.">
+  <meta name="twitter:image" content="https://cfb.bdailey.com/images/og-default.svg">
+  <!-- Canonical -->
+  <link rel="canonical" href="https://cfb.bdailey.com/matchup.html">
   <title>Team Matchup - Stat-urday</title>
   <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css">
@@ -79,8 +95,9 @@
       </div>
 
       <!-- Compare Button -->
-      <div style="text-align: center; margin-top: 1.25rem;">
+      <div style="text-align: center; margin-top: 1.25rem; display: flex; gap: 0.75rem; justify-content: center; align-items: center;">
         <button class="btn btn-primary" id="compare-btn" disabled>Compare Teams</button>
+        <button class="copy-link-btn hidden" id="share-matchup-btn" title="Copy link to this matchup">🔗 Copy Link</button>
       </div>
     </div>
 
@@ -230,6 +247,7 @@
   </footer>
 
   <script src="js/api.js"></script>
+  <script src="js/share.js"></script>
   <script src="js/matchup.js"></script>
 </body>
 </html>

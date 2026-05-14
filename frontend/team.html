@@ -3,6 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Open Graph / Social sharing -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Stat-urday">
+  <meta property="og:title" content="Team Profile — Stat-urday">
+  <meta property="og:description" content="Team ELO rating, season record, strength of schedule, and game-by-game ELO history.">
+  <meta property="og:url" content="https://cfb.bdailey.com/team.html">
+  <meta property="og:image" content="https://cfb.bdailey.com/images/og-default.svg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <!-- Twitter / X card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Team Profile — Stat-urday">
+  <meta name="twitter:description" content="Team ELO rating, season record, strength of schedule, and game-by-game ELO history.">
+  <meta name="twitter:image" content="https://cfb.bdailey.com/images/og-default.svg">
+  <!-- Canonical -->
+  <link rel="canonical" href="https://cfb.bdailey.com/team.html">
   <title>Team Details - College Football Rankings</title>
   <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css">
@@ -67,9 +83,12 @@
               </div>
             </div>
           </div>
-          <div style="text-align: right; flex-shrink: 0;">
-            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Current Rank</div>
-            <div id="team-rank" class="rank-badge top-5" style="width: 4rem; height: 4rem; font-size: 2rem;">--</div>
+          <div style="text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem;">
+            <div>
+              <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Current Rank</div>
+              <div id="team-rank" class="rank-badge top-5" style="width: 4rem; height: 4rem; font-size: 2rem;">--</div>
+            </div>
+            <button class="copy-link-btn" id="share-team-btn" title="Copy link to this team page">🔗 Copy Link</button>
           </div>
         </div>
       </div>
@@ -213,6 +232,7 @@
   <!-- Scripts -->
   <script src="js/api.js"></script>
   <script src="js/date-utils.js"></script>
+  <script src="js/share.js"></script>
   <script src="js/team.js"></script>
 </body>
 </html>

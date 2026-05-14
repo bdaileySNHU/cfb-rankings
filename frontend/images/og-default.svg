@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0f1117"/>
+  <!-- Gold accent bar -->
+  <rect x="0" y="0" width="8" height="630" fill="#d69e2e"/>
+  <!-- Subtle grid lines -->
+  <line x1="0" y1="210" x2="1200" y2="210" stroke="#1e2235" stroke-width="1"/>
+  <line x1="0" y1="420" x2="1200" y2="420" stroke="#1e2235" stroke-width="1"/>
+  <line x1="400" y1="0" x2="400" y2="630" stroke="#1e2235" stroke-width="1"/>
+  <line x1="800" y1="0" x2="800" y2="630" stroke="#1e2235" stroke-width="1"/>
+  <!-- Football icon -->
+  <g transform="translate(80, 200)">
+    <ellipse cx="60" cy="60" rx="52" ry="34" transform="rotate(-30 60 60)" fill="none" stroke="#d69e2e" stroke-width="4"/>
+    <line x1="24" y1="36" x2="96" y2="84" stroke="#d69e2e" stroke-width="3"/>
+    <line x1="38" y1="28" x2="44" y2="92" stroke="#d69e2e" stroke-width="2" opacity="0.6"/>
+    <line x1="76" y1="28" x2="82" y2="92" stroke="#d69e2e" stroke-width="2" opacity="0.6"/>
+  </g>
+  <!-- Brand name -->
+  <text x="200" y="290" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="800" fill="#f0f2f8">Stat-urday</text>
+  <!-- Tagline -->
+  <text x="200" y="360" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="400" fill="#9aa0b8">College Football ELO Rankings</text>
+  <!-- URL -->
+  <text x="200" y="450" font-family="system-ui, -apple-system, monospace" font-size="22" fill="#d69e2e" opacity="0.8">cfb.bdailey.com</text>
+  <!-- Decorative dots -->
+  <circle cx="1050" cy="150" r="80" fill="#d69e2e" opacity="0.04"/>
+  <circle cx="1100" cy="480" r="120" fill="#4a9eff" opacity="0.04"/>
+</svg>
