@@ -2631,7 +2631,7 @@ async def get_import_status(
         return schemas.ImportStatus(status="never_run", last_run=None)
 
 
-@app.post("/api/admin/import/results", response_model=schemas.ImportResult, tags=["Admin"])
+@app.post("/api/admin/import/results", tags=["Admin"])
 async def trigger_import(
     season: Optional[int] = Query(None, description="Season year (defaults to active season)"),
     week: Optional[int] = Query(None, description="Specific week to import (imports all weeks if omitted)"),
@@ -2640,14 +2640,11 @@ async def trigger_import(
 ):
     """Trigger a live data import from the CFBD API.
 
-    Runs the standard weekly_update.sh pipeline to:
-    1. Pull the latest game schedule and results from CFBD.
+    Runs the import pipeline directly in-process (no subprocess):
+    1. Pull the latest game schedule and results from CFBD via CFBDClient.
     2. Process any unprocessed games with scores through the ELO algorithm.
     3. Save a ranking_history snapshot for each completed week.
     4. Write a result summary to data/import_log.json.
-
-    The season and week parameters are passed as environment variables to the
-    underlying import script via IMPORT_SEASON and IMPORT_WEEK.
 
     Query Parameters:
         season: Season year (defaults to active season)
@@ -2656,7 +2653,7 @@ async def trigger_import(
     Requires X-Admin-Key header matching the ADMIN_SECRET environment variable.
 
     Returns:
-        ImportResult with counts of games imported and processed.
+        dict with season, games_imported, games_processed, status, message, timestamp.
 
     Raises:
         HTTPException 403: If the admin key is missing or incorrect.
@@ -2667,7 +2664,7 @@ async def trigger_import(
         raise HTTPException(status_code=403, detail="Forbidden")
 
     _ensure_data_dir()
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = datetime.utcnow().isoformat() + "Z"
 
     # Resolve season
     if season is None:
@@ -2678,103 +2675,100 @@ async def trigger_import(
 
     games_imported = 0
     games_processed = 0
+    snapshots_saved = 0
     error_msg = None
-    status = "success"
+    log_lines = []
 
     try:
+        import sys as _sys
         project_root = Path(__file__).parent.parent.parent
-        script_path = project_root / "utilities" / "weekly_update.sh"
+        import_script = project_root / "import_real_data.py"
 
-        if not script_path.exists():
-            raise FileNotFoundError(f"weekly_update.sh not found at {script_path}")
-
-        # Snapshot unprocessed count before run so we can report delta
-        from src.models.models import Game as GameModel
-
-        before_processed = db.query(GameModel).filter(
-            GameModel.season == season,
-            GameModel.is_processed == True,
-        ).count()
-
+        # ── Step 1: Import games from CFBD via import_real_data.py ───────
+        # Use the current Python interpreter — no bash needed, inherits venv
+        log_lines.append(f"Running import_real_data.py for season {season}...")
+        cmd = [_sys.executable, str(import_script), "--season", str(season)]
         if week is not None:
-            before_processed = db.query(GameModel).filter(
-                GameModel.season == season,
-                GameModel.week == week,
-                GameModel.is_processed == True,
-            ).count()
+            cmd += ["--max-week", str(week)]
 
-        # Build environment for subprocess — ensure a full PATH so shell
-        # builtins (dirname, curl, mail, etc.) are found when running under
-        # Gunicorn's stripped environment.
         import_env = os.environ.copy()
-        import_env["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-        import_env["IMPORT_SEASON"] = str(season)
-        import_env["SKIP_SERVICE_RESTART"] = "1"  # Don't kill the worker serving this request
-        if week is not None:
-            import_env["IMPORT_WEEK"] = str(week)
-
-        logger.info(f"Import: running weekly_update.sh for season={season}, week={week}")
-
         result = subprocess.run(
-            ["/bin/bash", str(script_path)],
+            cmd,
             capture_output=True,
             text=True,
-            timeout=1800,  # 30-minute timeout
+            timeout=600,
             cwd=str(project_root),
             env=import_env,
         )
 
         if result.returncode != 0:
-            error_msg = result.stderr[-2000:] if result.stderr else "Script exited with non-zero code"
-            status = "error"
-            logger.error(f"Import script failed:\n{error_msg}")
-        else:
-            # Count how many additional games were processed after the run
-            db.expire_all()  # Refresh session state from DB
+            stderr = (result.stderr or "")[-1000:]
+            stdout = (result.stdout or "")[-500:]
+            raise RuntimeError(f"import_real_data.py failed (exit {result.returncode}): {stderr or stdout}")
 
-            after_processed = db.query(GameModel).filter(
-                GameModel.season == season,
-                GameModel.is_processed == True,
-            ).count()
+        # Count newly imported games from stdout
+        for line in (result.stdout or "").splitlines():
+            import re as _re
+            m = _re.search(r"(\d+)\s+(?:new\s+)?games?\s+(?:imported|created)", line, _re.IGNORECASE)
+            if m:
+                games_imported = int(m.group(1))
+                break
+        log_lines.append(f"Import complete. Output tail: {(result.stdout or '')[-200:]}")
 
-            if week is not None:
-                after_processed = db.query(GameModel).filter(
-                    GameModel.season == season,
-                    GameModel.week == week,
-                    GameModel.is_processed == True,
-                ).count()
+        # ── Step 2: Process unprocessed games through ELO ─────────────────
+        db.expire_all()  # Refresh session after subprocess wrote to DB
+        unprocessed = (
+            db.query(Game)
+            .filter(
+                Game.season == season,
+                Game.is_processed == False,
+                Game.home_score != None,
+                Game.away_score != None,
+            )
+            .order_by(Game.week.asc())
+            .all()
+        )
+        log_lines.append(f"Unprocessed games with scores: {len(unprocessed)}")
 
-            games_processed = max(0, after_processed - before_processed)
+        rs = RankingService(db)
+        for g in unprocessed:
+            try:
+                rs.process_game(g)
+                db.commit()
+                games_processed += 1
+            except Exception as e:
+                logger.warning(f"Error processing game {g.id}: {e}")
+                db.rollback()
 
-            # Parse games_imported from stdout if present
-            stdout = result.stdout or ""
-            for line in stdout.splitlines():
-                if "games imported" in line.lower() or "import complete" in line.lower():
-                    import re
-                    nums = re.findall(r"\d+", line)
-                    if nums:
-                        games_imported = int(nums[0])
-                        break
+        # ── Step 3: Save weekly snapshots ─────────────────────────────────
+        from sqlalchemy import text as sa_text
+        weeks_done = db.execute(sa_text(
+            f"SELECT DISTINCT week FROM games WHERE season={season} AND is_processed=1 ORDER BY week"
+        )).fetchall()
 
-    except subprocess.TimeoutExpired:
-        error_msg = "Import timed out after 30 minutes"
-        status = "error"
-        logger.error(error_msg)
+        for (wk,) in weeks_done:
+            try:
+                rs.save_weekly_rankings(season=season, week=wk)
+                db.commit()
+                snapshots_saved += 1
+            except Exception as e:
+                logger.warning(f"Error saving snapshot for week {wk}: {e}")
+
+        log_lines.append(f"Games processed: {games_processed}, snapshots: {snapshots_saved}")
+
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Import failed: {e}", exc_info=True)
+        logger.error(f"Admin import failed: {e}", exc_info=True)
         error_msg = str(e)
-        status = "error"
 
-    # ── Write import log ─────────────────────────────────────────────────────
+    # ── Write import log ──────────────────────────────────────────────────
     log_entry = {
         "last_run": timestamp,
         "season": season,
-        "week": week,
         "games_imported": games_imported,
         "games_processed": games_processed,
-        "status": status,
+        "status": "error" if error_msg else "success",
         "error": error_msg,
     }
     try:
@@ -2783,18 +2777,20 @@ async def trigger_import(
     except Exception as write_err:
         logger.warning(f"Failed to write import log: {write_err}")
 
-    if status == "error":
+    if error_msg:
         raise HTTPException(status_code=500, detail=f"Import failed: {error_msg}")
 
-    return schemas.ImportResult(
-        season=season,
-        week=week,
-        games_imported=games_imported,
-        games_processed=games_processed,
-        status=status,
-        message=f"Import complete: {games_processed} games processed through ELO",
-        timestamp=timestamp,
-    )
+    return {
+        "season": season,
+        "week": week,
+        "games_imported": games_imported,
+        "games_processed": games_processed,
+        "snapshots_saved": snapshots_saved,
+        "status": "success",
+        "message": f"Import complete — {games_imported} games fetched, {games_processed} processed through ELO",
+        "timestamp": timestamp,
+        "log": log_lines,
+    }
 
 
 if __name__ == "__main__":
