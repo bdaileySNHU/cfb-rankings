@@ -90,6 +90,9 @@ async function loadTeamDetails() {
     renderEloChart(history, games);
     loadPreseasonBreakdown(teamId, season);
 
+    // EPIC-038: Position group strength radar
+    loadPositionRadar(teamId);
+
     // Load schedule
     loadSchedule();
 
@@ -619,6 +622,124 @@ function showError(message) {
   loading.classList.add('hidden');
   error.classList.remove('hidden');
   document.getElementById('error-message').textContent = ` ${message}`;
+}
+
+// ── EPIC-038: Position Group Strength Radar ───────────────────────────────
+
+// Axis order around the radar: offense (top/right) → defense → special teams.
+const POSITION_RADAR_AXES = [
+  { key: 'QB', label: 'QB' },
+  { key: 'RB', label: 'RB' },
+  { key: 'WR', label: 'WR' },
+  { key: 'TE', label: 'TE' },
+  { key: 'OL', label: 'OL' },
+  { key: 'DL', label: 'DL' },
+  { key: 'LB', label: 'LB' },
+  { key: 'DB', label: 'DB' },
+  { key: 'ST', label: 'ST' },
+];
+
+async function loadPositionRadar(teamId) {
+  const body = document.getElementById('position-radar-body');
+  if (!body) return;
+
+  const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+  try {
+    const resp = await fetch(`${baseUrl}/teams/${teamId}/position-strength`);
+    if (!resp.ok) throw new Error('Failed to load position strength');
+    const data = await resp.json();
+    renderPositionRadar(data);
+  } catch (err) {
+    console.error('Error loading position radar:', err);
+    body.innerHTML = '<p style="color:var(--text-secondary);padding:1rem 0;">Position data unavailable.</p>';
+  }
+}
+
+function renderPositionRadar(data) {
+  const body = document.getElementById('position-radar-body');
+  const yearEl = document.getElementById('position-radar-year');
+  if (!body) return;
+
+  const scores = data.position_scores || {};
+  const hasData = data.recruiting_year != null &&
+    POSITION_RADAR_AXES.some(a => (scores[a.key] || 0) > 0);
+
+  if (!hasData) {
+    if (yearEl) yearEl.textContent = '';
+    body.innerHTML = `<p style="color:var(--text-secondary);padding:1rem 0;">${
+      data.message || 'No recruiting roster data available for this team yet.'
+    }</p>`;
+    return;
+  }
+
+  if (yearEl) yearEl.textContent = `${data.recruiting_year} class`;
+
+  // Square SVG geometry
+  const W = Math.min(body.clientWidth || 420, 420);
+  const H = W;
+  const cx = W / 2;
+  const cy = H / 2;
+  const radius = (Math.min(W, H) / 2) - 40; // room for labels
+  const n = POSITION_RADAR_AXES.length;
+  // Start at top (-90°) and go clockwise
+  const angleFor = i => (-Math.PI / 2) + (i * 2 * Math.PI / n);
+  const pointAt = (i, frac) => {
+    const a = angleFor(i);
+    return [cx + Math.cos(a) * radius * frac, cy + Math.sin(a) * radius * frac];
+  };
+
+  // Concentric grid rings at 25/50/75/100
+  const rings = [0.25, 0.5, 0.75, 1].map(frac => {
+    const pts = POSITION_RADAR_AXES.map((_, i) => {
+      const [x, y] = pointAt(i, frac);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    return `<polygon points="${pts}" fill="none" stroke="var(--border-color)" stroke-width="1"/>`;
+  }).join('');
+
+  // Axis spokes + labels
+  const spokes = POSITION_RADAR_AXES.map((axis, i) => {
+    const [ex, ey] = pointAt(i, 1);
+    const [lx, ly] = pointAt(i, 1.16);
+    const score = Math.round(scores[axis.key] || 0);
+    const anchor = Math.abs(lx - cx) < 4 ? 'middle' : (lx > cx ? 'start' : 'end');
+    return `
+      <line x1="${cx}" y1="${cy}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" stroke="var(--border-color)" stroke-width="1"/>
+      <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" font-size="12" font-weight="600" fill="var(--text-primary)">${axis.label}</text>
+      <text x="${lx.toFixed(1)}" y="${(ly + 13).toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" font-size="10" fill="var(--text-secondary)">${score}</text>
+    `;
+  }).join('');
+
+  // Data polygon
+  const dataPts = POSITION_RADAR_AXES.map((axis, i) => {
+    const frac = Math.max(0, Math.min(1, (scores[axis.key] || 0) / 100));
+    const [x, y] = pointAt(i, frac);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+
+  const dataDots = POSITION_RADAR_AXES.map((axis, i) => {
+    const frac = Math.max(0, Math.min(1, (scores[axis.key] || 0) / 100));
+    const [x, y] = pointAt(i, frac);
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="var(--accent)"><title>${axis.label}: ${Math.round(scores[axis.key] || 0)}/100</title></circle>`;
+  }).join('');
+
+  const bonus = data.position_bonus != null ? Math.round(data.position_bonus) : null;
+  const maxBonus = data.max_bonus != null ? data.max_bonus : null;
+  const caption = bonus != null
+    ? `<p style="text-align:center;color:var(--text-secondary);font-size:0.875rem;margin-top:0.5rem;">Roster quality bonus: <strong style="color:var(--text-primary);">+${bonus}</strong>${maxBonus ? ` / ${maxBonus}` : ''} preseason ELO points</p>`
+    : '';
+
+  body.innerHTML = `
+    <div style="display:flex;justify-content:center;">
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="position-radar-svg" style="max-width:100%;overflow:visible">
+        ${rings}
+        ${spokes}
+        <polygon points="${dataPts}" fill="var(--accent)" fill-opacity="0.25" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+        ${dataDots}
+      </svg>
+    </div>
+    ${caption}
+  `;
 }
 
 // ── EPIC-031 Story 31.4: ELO History Chart ────────────────────────────────

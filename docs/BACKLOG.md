@@ -48,11 +48,12 @@ data. Initials avatars remain as fallback.
 
 ---
 
-## EPIC-038: Radar Chart — Position Group Strength
-**Effort:** Medium (2–3 stories)
+## EPIC-038: Radar Chart — Position Group Strength ✅ Complete
+**Effort:** Small (frontend-only — backend endpoint already existed)
+**Completed:** 2026-06-06 — see `docs/EPIC-038-POSITION-RADAR.md`
 
 Per-team radar/spider chart showing relative strength across position groups
-(QB, RB, WR, OL, DL, LB, DB) derived from EPIC-030 position weights data.
-Pure SVG, no chart library. Lives on the team detail page.
+(QB, RB, WR, TE, OL, DL, LB, DB, ST). Pure SVG, no chart library. Lives on the
+team detail page, fed by the existing `/api/teams/{id}/position-strength` endpoint.
 
 ---

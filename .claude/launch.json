@@ -12,6 +12,12 @@
       "runtimeExecutable": "/usr/local/bin/python3.11",
       "runtimeArgs": ["-m", "http.server", "3000", "--directory", "frontend"],
       "port": 3000
+    },
+    {
+      "name": "Frontend (preview)",
+      "runtimeExecutable": "/usr/local/bin/python3.11",
+      "runtimeArgs": ["-m", "http.server", "4321", "--directory", "frontend"],
+      "port": 4321
     }
   ]
 }
