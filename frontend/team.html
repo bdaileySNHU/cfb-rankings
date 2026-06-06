@@ -122,30 +122,14 @@
         </div>
       </div>
 
-      <!-- Preseason Factors -->
-      <div class="card">
-        <h2 class="card-title mb-4">Preseason Factors</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-          <div>
-            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Recruiting Rank</div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);" id="recruiting-rank">--</div>
-            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">247Sports Composite</div>
-          </div>
-          <div>
-            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.25rem;">
-              Transfer Portal Rank
-              <span style="cursor: help; color: var(--text-secondary); font-size: 0.75rem;" title="Volume-based ranking: Rewards teams with more transfers. For quality-weighted rankings, see 247Sports.">ℹ️</span>
-            </div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);" id="transfer-portal-rank">--</div>
-            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
-              <span id="transfer-portal-details">-- transfers, -- pts</span>
-            </div>
-          </div>
-          <div>
-            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Returning Production</div>
-            <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);" id="returning-production">--</div>
-            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">% returning starters</div>
-          </div>
+      <!-- Preseason Rating Breakdown -->
+      <div class="card" id="preseason-breakdown-card">
+        <div class="card-header">
+          <h2 class="card-title">Preseason Rating Breakdown</h2>
+          <span class="preseason-total-label">Total: <strong id="preseason-total">--</strong></span>
+        </div>
+        <div id="preseason-breakdown-body">
+          <div class="loading"><div class="spinner"></div><span>Loading breakdown...</span></div>
         </div>
       </div>
 

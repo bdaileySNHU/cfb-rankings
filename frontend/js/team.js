@@ -82,12 +82,13 @@ async function loadTeamDetails() {
     // EPIC-009: Load prediction accuracy
     loadPredictionAccuracy();
 
-    // EPIC-031 Story 31.4: Load ELO history chart and game log in parallel
+    // EPIC-031 Story 31.4: Load ELO history chart, game log, and preseason breakdown in parallel
     const [history, games] = await Promise.all([
       loadEloHistory(teamId, season),
       loadGameLog(teamId, season),
     ]);
     renderEloChart(history, games);
+    loadPreseasonBreakdown(teamId, season);
 
     // Load schedule
     loadSchedule();
@@ -130,6 +131,71 @@ async function loadPredictionAccuracy() {
   } catch (err) {
     console.error('Error loading prediction accuracy:', err);
     // Don't show error - just hide the card
+  }
+}
+
+// EPIC-031 Story 31.4: Preseason rating breakdown card
+async function loadPreseasonBreakdown(teamId, season) {
+  const body = document.getElementById('preseason-breakdown-body');
+  const totalEl = document.getElementById('preseason-total');
+  if (!body) return;
+
+  try {
+    const components = await api.getPreseasonComponents(season);
+    const entry = components.find(c => c.team_id === teamId);
+
+    if (!entry) {
+      body.innerHTML = '<p style="color:var(--text-muted);padding:0.5rem 0;">No preseason data available.</p>';
+      return;
+    }
+
+    const { base, recruiting_bonus, transfer_bonus, returning_bonus,
+            position_strength_bonus, prev_season_elo, current_rating,
+            recruiting_rank, transfer_portal_rank, returning_production } = entry;
+
+    const baseFormula = base + recruiting_bonus + transfer_bonus + returning_bonus + position_strength_bonus;
+    const regressionDelta = Math.round(current_rating - baseFormula);
+    const hasRegression = prev_season_elo !== null && regressionDelta !== 0;
+
+    if (totalEl) totalEl.textContent = Math.round(current_rating).toLocaleString();
+
+    const fmt = (v) => (v >= 0 ? `+${Math.round(v)}` : `${Math.round(v)}`);
+    const recruitLabel = recruiting_rank < 999 ? `Recruiting (#${recruiting_rank})` : 'Recruiting';
+    const portalLabel = transfer_portal_rank < 999 ? `Transfer Portal (#${transfer_portal_rank})` : 'Transfer Portal';
+    const retPct = `${Math.round((returning_production || 0) * 100)}%`;
+
+    const rows = [
+      { label: 'Base Rating', detail: '', value: Math.round(base), isBase: true },
+      { label: recruitLabel, detail: '247Sports composite', value: recruiting_bonus },
+      { label: portalLabel, detail: 'volume-weighted', value: transfer_bonus },
+      { label: `Returning Production (${retPct})`, detail: 'returning starters', value: returning_bonus },
+      { label: 'Position Strength', detail: 'roster quality bonus', value: position_strength_bonus },
+    ];
+
+    if (hasRegression) {
+      const prevLabel = prev_season_elo ? ` (from ${Math.round(prev_season_elo).toLocaleString()})` : '';
+      rows.push({ label: `Prev Season Regression${prevLabel}`, detail: 'mean regression blend', value: regressionDelta });
+    }
+
+    body.innerHTML = `
+      <div class="preseason-breakdown">
+        ${rows.map((r, i) => {
+          const isLast = i === rows.length - 1;
+          const prefix = r.isBase ? '' : (isLast ? '└─' : '├─');
+          const valClass = r.isBase ? 'breakdown-base' : r.value > 0 ? 'breakdown-pos' : r.value < 0 ? 'breakdown-neg' : 'breakdown-zero';
+          const displayVal = r.isBase ? Math.round(r.value).toLocaleString() : fmt(r.value);
+          return `
+          <div class="breakdown-row">
+            <span class="breakdown-prefix">${prefix}</span>
+            <span class="breakdown-label">${r.label}</span>
+            <span class="breakdown-detail">${r.detail}</span>
+            <span class="breakdown-value ${valClass}">${displayVal}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+  } catch (err) {
+    console.error('Error loading preseason breakdown:', err);
+    body.innerHTML = '<p style="color:var(--text-muted);padding:0.5rem 0;">Could not load preseason breakdown.</p>';
   }
 }
 
@@ -226,21 +292,7 @@ function populateTeamInfo(team) {
   changeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2);
   changeEl.style.color = change >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
 
-  // Preseason Factors
-  document.getElementById('recruiting-rank').textContent = team.recruiting_rank === 999 ? 'N/A' : `#${team.recruiting_rank}`;
-
-  // EPIC-026: Transfer Portal Rank (volume-based)
-  const portalRankEl = document.getElementById('transfer-portal-rank');
-  const portalDetailsEl = document.getElementById('transfer-portal-details');
-  if (team.transfer_portal_rank && team.transfer_portal_rank !== 999) {
-    portalRankEl.textContent = `#${team.transfer_portal_rank}`;
-    portalDetailsEl.textContent = `${team.transfer_count} transfers, ${team.transfer_portal_points} pts`;
-  } else {
-    portalRankEl.textContent = 'N/A';
-    portalDetailsEl.textContent = 'No portal data';
-  }
-
-  document.getElementById('returning-production').textContent = `${(team.returning_production * 100).toFixed(0)}%`;
+  // Preseason factors are now rendered by loadPreseasonBreakdown() via /api/preseason/components
 }
 
 // Load Schedule

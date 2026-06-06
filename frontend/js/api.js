@@ -172,6 +172,11 @@ class ApiService {
     return this.fetch(`/predictions/comparison${params}`);
   }
 
+  // Preseason components (EPIC-031 Story 31.4 / EPIC-032)
+  async getPreseasonComponents(season) {
+    return this.fetch(`/preseason/components?season=${season}`);
+  }
+
   // Stats
   async getStats() {
     return this.fetch('/stats');
