@@ -1,6 +1,6 @@
 # EPIC-033: 2026 Season Data Pipeline
 
-**Status:** 📋 To Do
+**Status:** ⏳ In Progress (Story 33.2 blocked — CFBD data available late July/August 2026)
 **Priority:** High
 **Created:** 2026-05-04
 **Target:** Before Week 1 kickoff (~Aug 29, 2026)

@@ -1,6 +1,6 @@
 # EPIC-032: Interactive Preseason Rating Simulator
 
-**Status:** 📋 To Do
+**Status:** ✅ Complete
 **Priority:** High
 **Created:** 2026-05-02
 **Related:** EPIC-031 (Story 31.6 home for this tool), EPIC-030 (regression params being tuned)
@@ -127,7 +127,7 @@ function simulate(team, weights) {
 
 ## Stories
 
-### Story 32.1: `/api/preseason/components` Endpoint
+### Story 32.1: `/api/preseason/components` Endpoint ✅
 **Priority:** P0
 **Effort:** 2–3 hours
 
@@ -191,7 +191,7 @@ def get_preseason_components(self, season: int) -> list[dict]:
 
 ---
 
-### Story 32.2: Simulator Frontend Page
+### Story 32.2: Simulator Frontend Page ✅
 **Priority:** P0
 **Effort:** 4–5 hours
 
@@ -227,7 +227,7 @@ def get_preseason_components(self, season: int) -> list[dict]:
 
 ---
 
-### Story 32.3: "Save as Official" Admin Flow
+### Story 32.3: "Save as Official" Admin Flow ✅
 **Priority:** P2
 **Effort:** 1–2 hours
 
@@ -254,7 +254,7 @@ replacing the manual JSON edit workflow from EPIC-030.
 
 ---
 
-### Story 32.4: Tests
+### Story 32.4: Tests ✅
 **Priority:** P1
 **Effort:** 1–2 hours
 

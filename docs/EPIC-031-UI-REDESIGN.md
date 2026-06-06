@@ -1,6 +1,6 @@
 # EPIC-031: UI Redesign — Modern Sports Dashboard
 
-**Status:** 📋 To Do
+**Status:** ✅ Complete
 **Priority:** Medium
 **Created:** 2026-05-02
 **Related:** EPIC-005 (original frontend), EPIC-018 (UX improvements)
@@ -50,7 +50,7 @@ for granted:
 
 ## Stories
 
-### Story 31.1: Design System & Dark Theme
+### Story 31.1: Design System & Dark Theme ✅
 **Priority:** P0
 **Effort:** 3–4 hours
 
@@ -79,7 +79,7 @@ with a new design token system.
 
 ---
 
-### Story 31.2: Rankings Page — ELO Movement & Visual Polish
+### Story 31.2: Rankings Page — ELO Movement & Visual Polish ✅
 **Priority:** P0
 **Effort:** 3–4 hours
 
@@ -106,7 +106,7 @@ The rankings table is the core of the product. Make it feel alive.
 
 ---
 
-### Story 31.3: Predictions — Probability Bars & Matchup Cards
+### Story 31.3: Predictions — Probability Bars & Matchup Cards ✅
 **Priority:** P1
 **Effort:** 2–3 hours
 
@@ -134,7 +134,7 @@ Replace the current text-only prediction cards with visual matchup cards.
 
 ---
 
-### Story 31.4: Team Detail — ELO History Chart & Preseason Breakdown
+### Story 31.4: Team Detail — ELO History Chart & Preseason Breakdown ✅
 **Priority:** P1
 **Effort:** 4–5 hours
 
@@ -168,7 +168,7 @@ The team page is the richest data view but currently shows a flat stats card.
 
 ---
 
-### Story 31.5: All Teams Page — Searchable, Filterable Grid
+### Story 31.5: All Teams Page — Searchable, Filterable Grid ✅
 **Priority:** P2
 **Effort:** 2–3 hours
 
@@ -188,7 +188,7 @@ The current All Teams page is a plain table. Make it scannable.
 
 ---
 
-### Story 31.6: How It Works — Visual Formula Page
+### Story 31.6: How It Works — Visual Formula Page ✅
 **Priority:** P2
 **Effort:** 2–3 hours
 
