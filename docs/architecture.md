@@ -170,8 +170,6 @@ The College Football Ranking System is a full-stack web application that calcula
 ├── cfbd_client.py              # College Football Data API client (150 lines)
 ├── import_real_data.py         # Data import script (uses cfbd_client)
 ├── seed_data.py                # Development sample data generator
-├── demo.py                     # Standalone ELO algorithm demo
-├── cfb_elo_ranking.py          # Standalone ELO implementation (demo only)
 ├── compare_rankings.py         # ELO vs AP Poll comparison utility
 │
 ├── frontend/
@@ -730,9 +728,6 @@ python3 seed_data.py
 # Import real data (requires CFBD_API_KEY)
 export CFBD_API_KEY='your-key'
 python3 import_real_data.py
-
-# Run demo ELO algorithm
-python3 demo.py
 ```
 
 **Production**:

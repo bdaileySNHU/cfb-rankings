@@ -346,8 +346,7 @@ All endpoints are documented in the interactive API docs at `http://localhost:80
 │   ├── core/             # Business logic
 │   │   ├── ranking_service.py      # Modified ELO ranking service
 │   │   ├── ap_poll_service.py      # AP Poll comparison logic
-│   │   ├── transfer_portal_service.py  # Transfer rankings
-│   │   └── cfb_elo_ranking.py      # Standalone ELO algorithm
+│   │   └── transfer_portal_service.py  # Transfer rankings
 │   ├── models/           # Data layer
 │   │   ├── models.py     # SQLAlchemy database models
 │   │   ├── schemas.py    # Pydantic API validation schemas
@@ -371,15 +370,9 @@ All endpoints are documented in the interactive API docs at `http://localhost:80
 ├── utilities/            # Reusable development tools
 │   ├── README.md         # Utility documentation
 │   ├── seed_data.py      # Sample data population
-│   ├── demo.py           # Standalone ELO demo
 │   ├── compare_rankings.py  # ELO vs AP Poll comparison
 │   ├── compare_transfer_rankings.py  # Transfer portal analysis
 │   └── evaluate_rating_systems.py  # Rating system evaluation
-├── archive/              # Historical one-off scripts (do not run)
-│   ├── README.md         # Archive documentation and warnings
-│   ├── fix_*.py          # One-time data fixes
-│   ├── recalculate_*.py  # Historical recalculations
-│   └── optimize_*.py     # Parameter optimization experiments
 ├── tests/                # Comprehensive test suite
 │   ├── unit/             # Unit tests
 │   ├── integration/      # Integration tests
@@ -456,14 +449,6 @@ The server will start at `http://localhost:8000`
 FastAPI automatically generates interactive documentation:
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
-
-### Test the Standalone Algorithm
-
-```bash
-python3 demo.py
-```
-
-This runs a simulation showing how the ranking algorithm works without the API.
 
 ## Testing
 

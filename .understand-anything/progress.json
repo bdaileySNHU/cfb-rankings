@@ -1,0 +1,58 @@
+{
+  "pipeline": "understand-anything incremental update",
+  "currentCommit": "2fe324fdb6beac42a844967e5a484ca974391343",
+  "lastAnalyzedCommit": "a70653b1",
+  "analysisTimestamp": "2026-06-07T12:30:00Z",
+  "status": "paused_after_batch_3",
+  "reason": "User opted to save progress after first file-analyzer batch (too slow at ~14min/batch)",
+  
+  "batches": {
+    "completed": [3],
+    "pending": [4, 31, 32, 34, 35],
+    "details": {
+      "3": {
+        "status": "complete",
+        "files": 10,
+        "nodes": 48,
+        "edges": 84,
+        "output": ".understand-anything/intermediate/batch-3.json"
+      },
+      "4": {
+        "status": "pending",
+        "files": 3,
+        "files_list": ["main.py", "__init__.py", "schemas.py"],
+        "description": "FastAPI main entry point, database init, API schemas"
+      },
+      "31": {
+        "status": "pending",
+        "files": 10,
+        "files_list": ["README.md", "admin.html", "comparison.html", "elo-formula.html", "games.html", "index.html", "stats.html", "standings.html", "style-guide.md", "team-stats.html"],
+        "description": "Frontend HTML pages + documentation"
+      },
+      "32": {
+        "status": "pending",
+        "files": 5,
+        "files_list": ["base.css", "components.css", "layout.css", "style.css", "tokens.css"],
+        "description": "Frontend CSS stylesheets"
+      },
+      "34": {
+        "status": "pending",
+        "files": 25,
+        "files_list": ["bmad-doc-template.md", "workflow-management.md", "launch.json", ".coveragerc", ".flake8", ".gitattributes", ".pre-commit-config.yaml", ".prettierignore", ".prettierrc", "conftest.py", "docker-compose.yml", "dockerignore.md", "setup.cfg", "setup.py"],
+        "description": "BMAD docs + dev configs + Docker + test config"
+      },
+      "35": {
+        "status": "pending",
+        "files": 25,
+        "files_list": ["app.js", "comparison.js", "date-utils.js", "matchup.js", "share.js", "standings.js", "statistics.js", "utils.js", "api.ts", "constants.ts"],
+        "description": "Frontend JavaScript + TypeScript modules"
+      }
+    }
+  },
+  "notes": [
+    "Total 6 batches from 14 changed files (mostly understand-internal + 7 source files)",
+    "Batch 3 (Python/shell data scripts): COMPLETED — 48 nodes, 84 edges",
+    "Batches 4/31/32/34/35 remain — run /understand with --full or dispatch file-analyzer subagents",
+    "Single batch ~14 min on local 35B model, 2M+ tokens — 5 remaining = ~70 min + 10M tokens"
+  ]
+}

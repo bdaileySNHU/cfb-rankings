@@ -19,15 +19,6 @@ Unlike the scripts in `archive/` (which are one-off historical fixes), these uti
 python utilities/seed_data.py
 ```
 
-**demo.py** - Standalone ELO ranking demonstration
-- Shows how the Modified ELO algorithm works
-- Runs independently without database
-- Educational tool for understanding the ranking system
-
-```bash
-python utilities/demo.py
-```
-
 ### Analysis and Comparison Tools
 
 **compare_rankings.py** - Compare ELO rankings with AP Poll
@@ -76,7 +67,6 @@ from src.core.ranking_service import RankingService
 ### When to Use
 
 - **Development**: Use seed_data.py to populate test data
-- **Learning**: Use demo.py to understand the algorithm
 - **Analysis**: Use comparison and evaluation tools to validate performance
 - **Research**: Use evaluation tools when testing algorithm changes
 

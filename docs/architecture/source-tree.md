@@ -42,8 +42,7 @@ src/
 ├── core/                   # Business logic and algorithms
 │   ├── ranking_service.py  # Modified ELO ranking algorithm
 │   ├── ap_poll_service.py  # AP Poll comparison logic
-│   ├── transfer_portal_service.py  # Transfer portal calculations
-│   └── cfb_elo_ranking.py  # Standalone ELO implementation
+│   └── transfer_portal_service.py  # Transfer portal calculations
 │
 ├── models/                 # Data layer
 │   ├── models.py          # SQLAlchemy database models (ORM)
@@ -176,7 +175,6 @@ Reusable development tools and analysis scripts:
 utilities/
 ├── README.md                        # Utility documentation
 ├── seed_data.py                     # Populate sample data
-├── demo.py                          # Standalone ELO demonstration
 ├── compare_rankings.py              # ELO vs AP Poll analysis
 ├── compare_transfer_rankings.py     # Transfer portal impact analysis
 └── evaluate_rating_systems.py      # Rating system evaluation
