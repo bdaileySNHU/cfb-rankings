@@ -1994,6 +1994,152 @@ async def replay_postseason_rankings(season: int, db: Session = Depends(get_db))
     return {"status": "ok", "season": season, "weeks_replayed": weeks_processed}
 
 
+@app.post("/api/admin/backfill-season-snapshots", tags=["Admin"])
+async def backfill_season_snapshots(season: int, db: Session = Depends(get_db)):
+    """Reconstruct missing weekly ranking_history entries for a season by working backwards
+    from the most recent snapshot using the stored home_rating_change / away_rating_change
+    values on each processed game. Safe — never modifies team ELO ratings."""
+    from sqlalchemy import func as sa_func
+
+    latest_week = (
+        db.query(sa_func.max(RankingHistory.week))
+        .filter(RankingHistory.season == season)
+        .scalar()
+    )
+    if latest_week is None:
+        raise HTTPException(status_code=400, detail=f"No ranking snapshots found for season {season}.")
+
+    existing_weeks = {
+        row.week
+        for row in db.query(RankingHistory.week)
+        .filter(RankingHistory.season == season)
+        .distinct()
+        .all()
+    }
+
+    # Anchor: ELO state as of the latest snapshot
+    elo_state = {
+        row.team_id: row.elo_rating
+        for row in db.query(RankingHistory.team_id, RankingHistory.elo_rating)
+        .filter(RankingHistory.season == season, RankingHistory.week == latest_week)
+        .all()
+    }
+
+    # All processed games with actual ELO changes (excluded games have 0 change)
+    processed_games = (
+        db.query(Game)
+        .filter(
+            Game.season == season,
+            Game.is_processed == True,
+            Game.excluded_from_rankings == False,
+            or_(Game.home_rating_change != 0, Game.away_rating_change != 0),
+        )
+        .order_by(Game.week.desc(), Game.game_date.desc())
+        .all()
+    )
+
+    games_by_week: dict = {}
+    for g in processed_games:
+        games_by_week.setdefault(g.week, []).append(g)
+
+    # Pre-compute win/loss counts per team per week using a single bulk query
+    from sqlalchemy import case
+    all_results = (
+        db.query(
+            Game.week,
+            Game.home_team_id,
+            Game.away_team_id,
+            Game.home_score,
+            Game.away_score,
+        )
+        .filter(
+            Game.season == season,
+            Game.excluded_from_rankings == False,
+            Game.is_processed == True,
+        )
+        .all()
+    )
+
+    # Build cumulative wins/losses: wins_by_team[tid][week] = count through that week
+    from collections import defaultdict
+    wins_cumul: dict = defaultdict(lambda: defaultdict(int))
+    losses_cumul: dict = defaultdict(lambda: defaultdict(int))
+    max_week = max((g.week for g in processed_games), default=latest_week)
+
+    for row in all_results:
+        if row.home_score > row.away_score:
+            wins_cumul[row.home_team_id][row.week] += 1
+            losses_cumul[row.away_team_id][row.week] += 1
+        elif row.away_score > row.home_score:
+            wins_cumul[row.away_team_id][row.week] += 1
+            losses_cumul[row.home_team_id][row.week] += 1
+
+    def get_record(tid, up_to_week):
+        w = sum(wins_cumul[tid][wk] for wk in wins_cumul[tid] if wk <= up_to_week)
+        l = sum(losses_cumul[tid][wk] for wk in losses_cumul[tid] if wk <= up_to_week)
+        return w, l
+
+    ranking_service = RankingService(db)
+    current_elo = dict(elo_state)
+    weeks_created = []
+
+    # Walk backwards through each week that has games, deriving prior state
+    for w in sorted(games_by_week.keys(), reverse=True):
+        if w > latest_week:
+            continue
+
+        # Reverse this week's ELO changes → gives state AFTER week (w-1)
+        for g in games_by_week[w]:
+            if g.home_team_id in current_elo:
+                current_elo[g.home_team_id] -= g.home_rating_change
+            if g.away_team_id in current_elo:
+                current_elo[g.away_team_id] -= g.away_rating_change
+
+        target_week = w - 1
+        if target_week < 1 or target_week in existing_weeks:
+            continue
+
+        # Save snapshot for target_week
+        db.query(RankingHistory).filter(
+            RankingHistory.season == season,
+            RankingHistory.week == target_week,
+        ).delete()
+
+        sorted_teams = sorted(current_elo.items(), key=lambda x: x[1], reverse=True)
+        for rank, (tid, elo) in enumerate(sorted_teams, start=1):
+            wins, losses = get_record(tid, target_week)
+            sos = ranking_service.calculate_sos(tid, season)
+            db.add(RankingHistory(
+                team_id=tid,
+                week=target_week,
+                season=season,
+                rank=rank,
+                elo_rating=round(elo, 4),
+                wins=wins,
+                losses=losses,
+                sos=sos,
+                sos_rank=None,
+            ))
+
+        db.commit()
+        existing_weeks.add(target_week)
+        weeks_created.append(target_week)
+
+    # Update SOS ranks for each newly created week
+    for tw in weeks_created:
+        week_recs = (
+            db.query(RankingHistory)
+            .filter(RankingHistory.season == season, RankingHistory.week == tw)
+            .order_by(RankingHistory.sos.desc())
+            .all()
+        )
+        for sos_rank, rec in enumerate(week_recs, 1):
+            rec.sos_rank = sos_rank
+        db.commit()
+
+    return {"status": "ok", "season": season, "weeks_created": sorted(weeks_created)}
+
+
 @app.get(
     "/api/preseason/components",
     response_model=List[schemas.PreseasonComponent],
