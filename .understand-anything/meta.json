@@ -1,6 +1,8 @@
 {
-  "lastAnalyzedAt": "2026-06-06T23:02:00.247862+00:00",
-  "gitCommitHash": "83d68a1f65ce3ca4ad54dbe179b32534f6c14b2d",
+  "lastAnalyzedAt": "2026-06-07T21:52:17+00:00",
+  "gitCommitHash": "a70653b1b2eb824cf642f7bd8434949c7f8b36d1",
   "version": "1.0.0",
-  "analyzedFiles": 409
+  "analyzedFiles": 89,
+  "projectName": "College Football Ranking System",
+  "projectDescription": "A comprehensive college football ranking system using a Modified ELO algorithm that factors in recruiting rankings, transfer portal activity, and returning production, with a FastAPI REST backend and SQLite database."
 }
