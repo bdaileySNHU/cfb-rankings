@@ -226,6 +226,60 @@ class Player(Base):
         return f"<Player(name='{self.name}', position={self.position}, stars={self.stars}, team={self.team.name if self.team else 'Unknown'})>"
 
 
+class RosterPlayer(Base):
+    """SQLAlchemy ORM model representing a player on a team's roster for a season.
+
+    Unlike :class:`Player` (recruiting-class signings, historical pedigree), this
+    is a season-scoped snapshot of who is actually on the roster — capturing
+    transfers in, departures out, and all class years. The recruiting ``rating``
+    is resolved at import time by joining the CFBD roster athlete id to a
+    :class:`Player` record (``RosterPlayer.athlete_id == Player.cfbd_athlete_id``).
+
+    Part of EPIC-039: Roster-Based Position Strength
+
+    Attributes:
+        id: Unique row identifier (primary key)
+        season: Season the roster snapshot belongs to (e.g., 2026)
+        team_id: Foreign key to the team this player is rostered on
+        athlete_id: CFBD athlete identifier (from roster ``id``)
+        name: Player full name
+        position: Position abbreviation (QB, OL, RB, WR, TE, DL, LB, DB, etc.)
+        class_year: Eligibility class (1=FR, 2=SO, 3=JR, 4=SR, 5+)
+        rating: Recruiting rating resolved via athlete-id join (None if unrated)
+        source: How rating was resolved ('recruiting-join' or 'unrated')
+        created_at: Record creation timestamp
+
+    Indexes:
+        - Unique constraint on (season, team_id, athlete_id)
+        - Composite index on (season, team_id, position) for position queries
+    """
+
+    __tablename__ = "roster_players"
+    __table_args__ = (
+        UniqueConstraint("season", "team_id", "athlete_id", name="uq_roster_season_team_athlete"),
+        Index("idx_roster_season_team_position", "season", "team_id", "position"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    season = Column(Integer, nullable=False)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    athlete_id = Column(Integer, nullable=False)
+    name = Column(String(100), nullable=False)
+    position = Column(String(10), nullable=False)
+    class_year = Column(Integer, nullable=True)  # 1=FR..5; nullable if absent
+    rating = Column(Float, nullable=True)  # Resolved recruiting rating, None if unrated
+    source = Column(String(20), nullable=False, default="unrated")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    team = relationship("Team")
+
+    def __repr__(self):
+        return (
+            f"<RosterPlayer(season={self.season}, name='{self.name}', "
+            f"position={self.position}, class_year={self.class_year})>"
+        )
+
+
 class Game(Base):
     """SQLAlchemy ORM model representing a college football game.
 

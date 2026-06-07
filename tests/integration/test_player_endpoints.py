@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from src.api.main import app
 from src.models.database import get_db
-from src.models.models import ConferenceType, Player, Team
+from src.models.models import ConferenceType, Player, RosterPlayer, Team
 
 
 @pytest.fixture
@@ -303,6 +303,62 @@ class TestTeamPositionStrengthEndpoint:
         assert data["position_bonus"] == 0.0
         assert data["recruiting_year"] is None
         assert "No player data" in data.get("message", "")
+
+    def test_position_strength_roster_source(self, client, test_db):
+        """EPIC-039: with a roster snapshot, the endpoint reports source=roster"""
+        team = Team(name="Reload State", conference=ConferenceType.POWER_5)
+        test_db.add(team)
+        test_db.commit()
+
+        for i, rating in enumerate([0.97, 0.95]):
+            test_db.add(
+                RosterPlayer(
+                    season=2025,
+                    team_id=team.id,
+                    athlete_id=80000 + i,
+                    name=f"QB {i}",
+                    position="QB",
+                    class_year=3,
+                    rating=rating,
+                    source="recruiting-join",
+                )
+            )
+        test_db.commit()
+
+        response = client.get(f"/api/teams/{team.id}/position-strength?season=2025")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["source"] == "roster"
+        assert data["season"] == 2025
+        assert data["recruiting_year"] is None
+        assert data["position_scores"]["QB"] > 0
+
+    def test_position_strength_falls_back_to_recruiting(self, client, test_db):
+        """EPIC-039: no roster snapshot → endpoint falls back to recruiting source"""
+        team = Team(name="Fallback State", conference=ConferenceType.POWER_5)
+        test_db.add(team)
+        test_db.commit()
+
+        test_db.add(
+            Player(
+                cfbd_athlete_id=81000,
+                name="Recruit QB",
+                team_id=team.id,
+                position="QB",
+                rating=0.95,
+                recruiting_year=2025,
+            )
+        )
+        test_db.commit()
+
+        response = client.get(f"/api/teams/{team.id}/position-strength?season=2025")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["source"] == "recruiting"
+        assert data["season"] is None
+        assert data["recruiting_year"] == 2025
 
     def test_get_position_strength_with_year_filter(self, client, test_db):
         """Test specifying recruiting year parameter"""

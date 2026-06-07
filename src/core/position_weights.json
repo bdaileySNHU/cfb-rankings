@@ -1,6 +1,7 @@
 {
   "version": "1.0",
   "enabled": true,
+  "source": "roster",
   "weights": {
     "QB": 0.3,
     "OL": 0.25,
@@ -29,6 +30,7 @@
   },
   "_comments": {
     "enabled": "Feature flag - set to true to enable position strength calculations in preseason ratings",
+    "source": "EPIC-039: 'roster' scores from each team's actual roster_players snapshot (transfers in, departures out, all class years); 'recruiting' scores from recruiting-class signings. Falls back to recruiting per-team when no roster snapshot exists.",
     "weights": "Position group weights (must sum to 1.0) - reflects relative importance of each position to team success",
     "max_bonus": "Maximum bonus points contribution to preseason rating (base 1500 + other bonuses + this)",
     "previous_season_weight": "EPIC-030: How much previous season ELO blends into preseason (0=disabled, 0.35=recommended). Start at 0.0 until validated.",

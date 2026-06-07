@@ -11,6 +11,7 @@ Tests the position_service module including:
 Part of Preseason Enhancement Epic - Story 1.3
 """
 
+import copy
 import json
 import tempfile
 from pathlib import Path
@@ -25,7 +26,14 @@ from src.core.position_service import (
     get_position_group_scores,
     load_position_weights,
 )
-from src.models.models import ConferenceType, Player, Team
+from src.models.models import ConferenceType, Player, RosterPlayer, Team
+
+
+def _config_with_source(source: str) -> dict:
+    """Default config with the position-strength data source overridden."""
+    cfg = copy.deepcopy(load_position_weights())
+    cfg["source"] = source
+    return cfg
 
 
 @pytest.mark.unit
@@ -257,6 +265,109 @@ class TestGetPositionGroupScores:
         # All positions should be 0.0
         for position_group in POSITION_GROUPS.keys():
             assert scores[position_group] == 0.0
+
+
+@pytest.mark.unit
+class TestRosterBasedScoring:
+    """EPIC-039: get_position_group_scores() with source='roster'"""
+
+    def _team(self, test_db, name):
+        team = Team(name=name, conference=ConferenceType.POWER_5)
+        test_db.add(team)
+        test_db.commit()
+        return team
+
+    def test_scores_from_roster_snapshot(self, test_db: Session):
+        """source='roster' scores from roster_players, normalized 0–1 → 0–100"""
+        team = self._team(test_db, "Roster U")
+        for i, rating in enumerate([0.98, 0.96]):  # avg 0.97 → ~90
+            test_db.add(
+                RosterPlayer(
+                    season=2025,
+                    team_id=team.id,
+                    athlete_id=900 + i,
+                    name=f"QB {i}",
+                    position="QB",
+                    class_year=2,
+                    rating=rating,
+                    source="recruiting-join",
+                )
+            )
+        test_db.commit()
+
+        scores = get_position_group_scores(
+            team.id, test_db, _config_with_source("roster"), season=2025
+        )
+        assert abs(scores["QB"] - 90.0) < 1.0
+
+    def test_unrated_roster_players_excluded(self, test_db: Session):
+        """Roster players without a resolved rating don't count"""
+        team = self._team(test_db, "Mixed U")
+        test_db.add(
+            RosterPlayer(season=2025, team_id=team.id, athlete_id=1, name="Rated",
+                         position="QB", rating=0.90, source="recruiting-join")
+        )
+        test_db.add(
+            RosterPlayer(season=2025, team_id=team.id, athlete_id=2, name="Walk On",
+                         position="QB", rating=None, source="unrated")
+        )
+        test_db.commit()
+
+        scores = get_position_group_scores(
+            team.id, test_db, _config_with_source("roster"), season=2025
+        )
+        # Only the 0.90 player counts: (0.90 - 0.70) / 0.30 * 100 = 66.7
+        assert abs(scores["QB"] - 66.7) < 1.0
+
+    def test_departed_player_excluded(self, test_db: Session):
+        """A signee who left (not on the roster) does not inflate the score"""
+        team = self._team(test_db, "Departure U")
+        # Recruiting record: an elite QB who signed here but transferred away
+        test_db.add(
+            Player(cfbd_athlete_id=555, name="Gone QB", team_id=team.id,
+                   position="QB", rating=0.97, recruiting_year=2023)
+        )
+        # Roster shows only a lower-rated QB actually on the team
+        test_db.add(
+            RosterPlayer(season=2025, team_id=team.id, athlete_id=777, name="Backup QB",
+                         position="QB", rating=0.80, source="recruiting-join")
+        )
+        test_db.commit()
+
+        scores = get_position_group_scores(
+            team.id, test_db, _config_with_source("roster"), season=2025
+        )
+        # Reflects the 0.80 roster QB (~33), NOT the departed 0.97 recruit
+        assert scores["QB"] < 50.0
+
+    def test_transfer_in_counted(self, test_db: Session):
+        """A transfer on the roster counts for the new team"""
+        team = self._team(test_db, "Reload U")
+        test_db.add(
+            RosterPlayer(season=2025, team_id=team.id, athlete_id=555, name="Transfer QB",
+                         position="QB", rating=0.96, source="recruiting-join")
+        )
+        test_db.commit()
+
+        scores = get_position_group_scores(
+            team.id, test_db, _config_with_source("roster"), season=2025
+        )
+        assert scores["QB"] > 80.0
+
+    def test_falls_back_to_recruiting_without_snapshot(self, test_db: Session):
+        """source='roster' but no snapshot → falls back to recruiting-class data"""
+        team = self._team(test_db, "Fallback U")
+        test_db.add(
+            Player(cfbd_athlete_id=42, name="Recruit QB", team_id=team.id,
+                   position="QB", rating=0.95, recruiting_year=2025)
+        )
+        test_db.commit()
+
+        scores = get_position_group_scores(
+            team.id, test_db, _config_with_source("roster"), season=2025
+        )
+        # No roster rows for this team → recruiting Player used → non-zero
+        assert scores["QB"] > 0.0
 
 
 @pytest.mark.unit

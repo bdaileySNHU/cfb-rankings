@@ -661,18 +661,21 @@ function renderPositionRadar(data) {
   if (!body) return;
 
   const scores = data.position_scores || {};
-  const hasData = data.recruiting_year != null &&
+  // EPIC-039: roster source reports `season`; recruiting source reports `recruiting_year`
+  const isRoster = data.source === 'roster';
+  const period = isRoster ? data.season : data.recruiting_year;
+  const hasData = period != null &&
     POSITION_RADAR_AXES.some(a => (scores[a.key] || 0) > 0);
 
   if (!hasData) {
     if (yearEl) yearEl.textContent = '';
     body.innerHTML = `<p style="color:var(--text-secondary);padding:1rem 0;">${
-      data.message || 'No recruiting roster data available for this team yet.'
+      data.message || 'No roster data available for this team yet.'
     }</p>`;
     return;
   }
 
-  if (yearEl) yearEl.textContent = `${data.recruiting_year} class`;
+  if (yearEl) yearEl.textContent = isRoster ? `${period} roster` : `${period} class`;
 
   // Square SVG geometry
   const W = Math.min(body.clientWidth || 420, 420);

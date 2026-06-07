@@ -1,6 +1,6 @@
 # EPIC-039: Roster-Based Position Strength
 
-**Status:** 📋 Scoped (not started)
+**Status:** ✅ Complete (2026-06-06)
 **Priority:** Medium
 **Created:** 2026-06-06
 **Related:** EPIC-038 (position radar — consumer of this data), EPIC-030
@@ -169,3 +169,38 @@ post-portal windows).
 (roster table + import); the scoring/endpoint/radar changes are small once the
 roster snapshot exists. No frontend rebuild needed — EPIC-038's radar consumes
 whatever the endpoint returns.
+
+---
+
+## As-Built (2026-06-06)
+
+All six stories complete.
+
+- **39.1** `CFBDClient.get_roster(team, year)` → `/roster`; 7 unit tests
+  (`tests/unit/test_cfbd_roster_api.py`).
+- **39.2** Backfilled recruiting classes 2021–2025 locally. Coverage for a sample
+  team (Georgia 2025) rose from 46→73 of 132 rostered players resolving a rating
+  (73 of the 76 with any recruiting link; the rest are walk-ons, excluded).
+- **39.3** `RosterPlayer` model + `migrations/migrate_add_roster_table.py` +
+  `utilities/import_roster.py` (idempotent per season/team; resolves rating via
+  athlete-id). Full 2025 import: 15,476 rows across 135 teams, 5,741 rated.
+- **39.4** `get_position_group_scores()` / `calculate_position_strength()` gained a
+  `season` arg and a roster path gated by `position_weights.json: "source"`
+  (default `"roster"`), with per-team fallback to recruiting. `resolve_roster_season()`
+  helper. 5 new unit tests (transfer-in counted, departed excluded, unrated
+  skipped, fallback).
+- **39.5** `/api/teams/{id}/position-strength` now reports `source` and `season`;
+  the radar header shows "{year} roster" vs "{year} class". 2 endpoint tests.
+- **39.6** `docs/SEASON-RUNBOOK.md` updated: 5-class recruiting backfill + new
+  step 1d.2 (roster import after recruiting, before preseason finalize).
+
+**Design choices made during build:**
+- Join is athlete-id (`roster.id` == `players.cfbd_athlete_id`) — no schema change
+  to the join key.
+- `source` defaults to `"roster"`; recruiting remains the automatic per-team
+  fallback when a team has no snapshot, so nothing breaks pre-import.
+- Rating is still recruiting *pedigree*, not on-field production (future work).
+
+**Caveat carried forward:** enabling roster scoring changes preseason position
+scores, which moves preseason ELO. Re-verify the top 25 after the production
+roster import (runbook step 1f) and revisit whether `max_bonus: 150` is right.

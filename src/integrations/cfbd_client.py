@@ -642,6 +642,62 @@ class CFBDClient:
 
         return result
 
+    def get_roster(self, team: Optional[str] = None, year: Optional[int] = None) -> List[Dict]:
+        """
+        Get a team's roster for a given season from the CFBD API.
+
+        Returns the actual players on the roster (not recruiting-class signings),
+        which is what EPIC-039 uses so position strength reflects the real roster
+        — transfers in, departures out, and all class years.
+
+        Part of: EPIC-039 (Roster-Based Position Strength) - Story 39.1
+
+        Args:
+            team: Team name filter (e.g., "Georgia"). Optional, but normally set.
+            year: Season year (e.g., 2025). Optional, but normally set.
+
+        Returns:
+            List of roster player dictionaries, each containing:
+                - id: str - CFBD athlete identifier (joins to recruiting athleteId)
+                - firstName, lastName: str - Player name
+                - team: str - Team name
+                - position: str - Position abbreviation
+                - year: int - Class year (1=FR, 2=SO, 3=JR, 4=SR, ...)
+                - jersey, height, weight: player measurables
+                - recruitIds: list - Linked recruiting record IDs
+                - homeCity, homeState, ...: hometown information
+
+            The roster carries no recruiting rating; ratings are joined separately
+            via the athlete id (roster ``id`` == recruiting ``athleteId``).
+
+            Returns empty list if API call fails or no data available.
+
+        Example:
+            >>> client = CFBDClient()
+            >>> roster = client.get_roster(team="Georgia", year=2025)
+            >>> qbs = [p for p in roster if p.get("position") == "QB"]
+            >>> print(f"Georgia roster has {len(qbs)} QBs")
+
+        Note:
+            - Automatically tracked via @track_api_usage decorator (through _get)
+            - Gracefully handles API errors by returning empty list
+            - API endpoint: GET /roster
+        """
+        params: Dict = {}
+        if team:
+            params["team"] = team
+        if year:
+            params["year"] = year
+
+        result = self._get("/roster", params=params)
+
+        # Handle None response (API error) gracefully
+        if result is None:
+            logger.warning(f"Failed to fetch roster for team={team}, year={year}")
+            return []
+
+        return result
+
     def get_team_talent(self, year: int) -> List[Dict]:
         """
         Get team talent composite scores

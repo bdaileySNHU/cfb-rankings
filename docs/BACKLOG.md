@@ -58,9 +58,9 @@ team detail page, fed by the existing `/api/teams/{id}/position-strength` endpoi
 
 ---
 
-## EPIC-039: Roster-Based Position Strength
+## EPIC-039: Roster-Based Position Strength ✅ Complete
 **Effort:** Medium–Large (6 stories) — see `docs/EPIC-039-ROSTER-BASED-POSITION-STRENGTH.md`
-**Logged:** 2026-06-06
+**Logged:** 2026-06-06 · **Completed:** 2026-06-06
 
 Make position strength (the EPIC-038 radar + preseason ELO bonus) reflect each
 team's **actual current roster** instead of recruiting-class signings. Pulls CFBD

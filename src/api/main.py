@@ -513,6 +513,7 @@ async def get_team_players(
 async def get_team_position_strength(
     team_id: int,
     recruiting_year: Optional[int] = None,
+    season: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
     """Calculate position group strength for a team.
@@ -578,8 +579,9 @@ async def get_team_position_strength(
         calculate_position_strength,
         get_position_group_scores,
         load_position_weights,
+        resolve_roster_season,
     )
-    from src.models.models import Player
+    from src.models.models import Player, Season
 
     # Verify team exists
     team = db.query(Team).filter(Team.id == team_id).first()
@@ -595,34 +597,56 @@ async def get_team_position_strength(
             detail=f"Failed to load position weights configuration: {str(e)}"
         )
 
-    # Determine recruiting year
-    if not recruiting_year:
-        # Use most recent recruiting year for this team
-        most_recent = (
-            db.query(Player.recruiting_year)
-            .filter(Player.team_id == team_id)
-            .order_by(Player.recruiting_year.desc())
-            .first()
-        )
-        recruiting_year = most_recent[0] if most_recent else None
+    # Decide the data source (EPIC-039). "roster" scores from the actual roster
+    # snapshot for the season; falls back to recruiting-class data per-team when
+    # no snapshot exists.
+    configured_source = config.get("source", "recruiting")
+    source_used = "recruiting"
+    roster_season = None
 
-    # If still no recruiting year, team has no player data
-    if not recruiting_year:
-        return {
-            "team_id": team_id,
-            "team_name": team.name,
-            "enabled": config["enabled"],
-            "position_scores": {group: 0.0 for group in config["weights"].keys()},
-            "position_bonus": 0.0,
-            "max_bonus": config["max_bonus"],
-            "weights": config["weights"],
-            "recruiting_year": None,
-            "message": "No player data available for this team"
-        }
+    if configured_source == "roster":
+        target_season = season
+        if target_season is None:
+            active = db.query(Season).filter(Season.is_active == True).first()  # noqa: E712
+            target_season = active.year if active else None
+        roster_season = resolve_roster_season(db, team_id, target_season)
+        if roster_season is not None:
+            source_used = "roster"
+
+    # Recruiting path needs a recruiting year (used for the response + no-data check)
+    if source_used == "recruiting":
+        if not recruiting_year:
+            most_recent = (
+                db.query(Player.recruiting_year)
+                .filter(Player.team_id == team_id)
+                .order_by(Player.recruiting_year.desc())
+                .first()
+            )
+            recruiting_year = most_recent[0] if most_recent else None
+
+        # No recruiting data and no roster snapshot → team has no player data
+        if not recruiting_year:
+            return {
+                "team_id": team_id,
+                "team_name": team.name,
+                "enabled": config["enabled"],
+                "source": "recruiting",
+                "season": None,
+                "position_scores": {group: 0.0 for group in config["weights"].keys()},
+                "position_bonus": 0.0,
+                "max_bonus": config["max_bonus"],
+                "weights": config["weights"],
+                "recruiting_year": None,
+                "message": "No player data available for this team",
+            }
+
+    scoring_season = roster_season if source_used == "roster" else None
 
     # Calculate position scores
     try:
-        position_scores = get_position_group_scores(team_id, db, config)
+        position_scores = get_position_group_scores(
+            team_id, db, config, season=scoring_season
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -635,7 +659,8 @@ async def get_team_position_strength(
             team_id,
             config["weights"],
             db,
-            config["max_bonus"]
+            config["max_bonus"],
+            season=scoring_season,
         )
     except Exception as e:
         raise HTTPException(
@@ -647,11 +672,13 @@ async def get_team_position_strength(
         "team_id": team_id,
         "team_name": team.name,
         "enabled": config["enabled"],
+        "source": source_used,
+        "season": roster_season if source_used == "roster" else None,
         "position_scores": position_scores,
         "position_bonus": position_bonus,
         "max_bonus": config["max_bonus"],
         "weights": config["weights"],
-        "recruiting_year": recruiting_year,
+        "recruiting_year": recruiting_year if source_used == "recruiting" else None,
     }
 
 

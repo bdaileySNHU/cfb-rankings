@@ -40,17 +40,41 @@ EOF
 
 ### 1d. Import player / recruiting data for the new year
 
-Run imports for multiple recruiting classes so position strength has historical depth:
+Run imports for ~5 recruiting classes. Roster-based position strength (EPIC-039)
+resolves each rostered player's rating by joining to these recruiting records, so
+you need enough class depth that seniors (≈4 years back) still resolve a rating:
 
 ```bash
 sudo -E -u www-data venv/bin/python3 utilities/import_player_data.py --year 2026
 sudo -E -u www-data venv/bin/python3 utilities/import_player_data.py --year 2025
 sudo -E -u www-data venv/bin/python3 utilities/import_player_data.py --year 2024
 sudo -E -u www-data venv/bin/python3 utilities/import_player_data.py --year 2023
+sudo -E -u www-data venv/bin/python3 utilities/import_player_data.py --year 2022
 ```
 
 Add `--dry-run` first to estimate API usage. Add `--force` to skip the quota guard if
 you have confirmed quota is available.
+
+### 1d.2. Import current rosters (EPIC-039)
+
+Snapshot each team's actual roster for the new season. Run this **after** the
+recruiting import above so ratings resolve via the athlete-id join. This is what
+makes position strength (and the team-page radar) reflect the real roster —
+transfers in, departures out, all class years — rather than recruiting signings.
+
+```bash
+# One CFBD call per FBS team (~135). Writes the roster_players table.
+sudo -E -u www-data venv/bin/python3 utilities/import_roster.py --year 2026
+```
+
+Notes:
+- Requires the `roster_players` table — run `migrations/migrate_add_roster_table.py`
+  once on first deploy (idempotent).
+- The data source is controlled by `src/core/position_weights.json` →
+  `"source": "roster"`. If a team has no roster snapshot, scoring falls back to
+  recruiting-class data automatically, so this step is safe to skip in a pinch.
+- Re-run after major roster churn (e.g. the spring/summer transfer-portal window)
+  to keep the snapshot current before ratings are locked.
 
 ### 1e. Create the new season and initialize preseason ratings
 

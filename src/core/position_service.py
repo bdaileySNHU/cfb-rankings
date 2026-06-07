@@ -48,7 +48,7 @@ from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
-from src.models.models import Player
+from src.models.models import Player, RosterPlayer
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -205,66 +205,116 @@ def _validate_config(config: Dict) -> None:
             )
 
 
-def get_position_group_scores(team_id: int, db: Session, config: Optional[Dict] = None) -> Dict[str, float]:
+def resolve_roster_season(db: Session, team_id: int, season: Optional[int]) -> Optional[int]:
+    """Return the roster snapshot season to score from, or None if unavailable.
+
+    If ``season`` is given and a snapshot exists for it, use it. Otherwise fall
+    back to the most recent season present in ``roster_players`` for this team.
+    Returns None when the team has no roster snapshot at all (caller then falls
+    back to recruiting-class scoring).
+    """
+    if season is not None:
+        exists = (
+            db.query(RosterPlayer.id)
+            .filter(RosterPlayer.season == season, RosterPlayer.team_id == team_id)
+            .first()
+        )
+        if exists:
+            return season
+
+    latest = (
+        db.query(RosterPlayer.season)
+        .filter(RosterPlayer.team_id == team_id)
+        .order_by(RosterPlayer.season.desc())
+        .first()
+    )
+    return latest[0] if latest else None
+
+
+def get_position_group_scores(
+    team_id: int,
+    db: Session,
+    config: Optional[Dict] = None,
+    season: Optional[int] = None,
+) -> Dict[str, float]:
     """Calculate quality scores for each position group on a team.
 
-    For each major position group (QB, OL, DL, etc.), calculates a quality
-    score based on the recruiting ratings of the top players at that position.
+    For each major position group (QB, OL, DL, etc.), calculates a quality score
+    (0–100) from the top players at that position.
+
+    The data source is controlled by ``config["source"]`` (EPIC-039):
+        - "roster": score from the team's actual roster snapshot
+          (``roster_players``) — reflects transfers in, departures out, and all
+          class years. Falls back to recruiting per-team when no snapshot exists.
+        - "recruiting" (default): score from recruiting-class signings
+          (``players``).
 
     Args:
         team_id: Database ID of the team
         db: SQLAlchemy database session
         config: Optional configuration dict (loads default if not provided)
+        season: Season to use for roster scoring (defaults to the team's most
+            recent roster snapshot; ignored for the recruiting source)
 
     Returns:
-        dict: Position group scores, keyed by position group name
-            {
-                "QB": 85.5,  # Score 0-100 based on top QB recruits
-                "OL": 92.3,
-                "DL": 78.9,
-                ...
-            }
-            Returns 0.0 for positions with no players
-
-    Example:
-        >>> scores = get_position_group_scores(team_id=1, db=session)
-        >>> print(f"QB score: {scores['QB']:.1f}")
-        >>> print(f"OL score: {scores['OL']:.1f}")
+        dict: Position group scores keyed by group name, 0.0 where no rated
+        players exist for the group.
 
     Note:
         - Uses top N players per position (configured in top_players_per_position)
-        - Normalizes average rating to 0-100 scale (assumes max rating ~100)
-        - Returns 0.0 if team has no players in that position group
+        - Average rating normalized to 0–100 via _normalize_rating()
     """
     if config is None:
         config = load_position_weights()
 
+    source = config.get("source", "recruiting")
+    roster_season = None
+    if source == "roster":
+        roster_season = resolve_roster_season(db, team_id, season)
+        if roster_season is None:
+            logger.debug(
+                f"Team {team_id} has no roster snapshot; "
+                f"falling back to recruiting-class scoring"
+            )
+
     scores = {}
 
     for group_name, positions in POSITION_GROUPS.items():
-        # Get top N players for this position group
         top_n = config["top_players_per_position"].get(group_name, 3)
 
-        # Query players in this position group
-        players = (
-            db.query(Player)
-            .filter(
-                Player.team_id == team_id,
-                Player.position.in_(positions),
-                Player.rating.isnot(None),  # Only players with ratings
-            )
-            .order_by(Player.rating.desc())
-            .limit(top_n)
-            .all()
-        )
+        if roster_season is not None:
+            ratings = [
+                r
+                for (r,) in db.query(RosterPlayer.rating)
+                .filter(
+                    RosterPlayer.season == roster_season,
+                    RosterPlayer.team_id == team_id,
+                    RosterPlayer.position.in_(positions),
+                    RosterPlayer.rating.isnot(None),
+                )
+                .order_by(RosterPlayer.rating.desc())
+                .limit(top_n)
+                .all()
+            ]
+        else:
+            ratings = [
+                p.rating
+                for p in db.query(Player)
+                .filter(
+                    Player.team_id == team_id,
+                    Player.position.in_(positions),
+                    Player.rating.isnot(None),
+                )
+                .order_by(Player.rating.desc())
+                .limit(top_n)
+                .all()
+            ]
 
-        # Calculate average rating for top players
-        if players:
-            avg_rating = sum(p.rating for p in players) / len(players)
+        if ratings:
+            avg_rating = sum(ratings) / len(ratings)
             # Normalize CFBD 0–1 composite (or legacy 0–100) to a 0–100 score
             score = _normalize_rating(avg_rating)
         else:
-            # No players in this position group
             score = 0.0
             if config.get("enabled", False):
                 logger.debug(f"Team {team_id} has no players in position group {group_name}")
@@ -315,6 +365,7 @@ def calculate_position_strength(
     weights: Dict[str, float],
     db: Session,
     max_bonus: Optional[int] = None,
+    season: Optional[int] = None,
 ) -> float:
     """Calculate position strength bonus for a team's preseason rating.
 
@@ -370,7 +421,7 @@ def calculate_position_strength(
 
     # Get position group scores
     config = load_position_weights()
-    scores = get_position_group_scores(team_id, db, config)
+    scores = get_position_group_scores(team_id, db, config, season=season)
 
     # Check if team has any player data
     if all(score == 0.0 for score in scores.values()):
