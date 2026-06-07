@@ -71,3 +71,17 @@ scored. Prerequisite: backfill recruiting classes 2021–2025 so all class years
 resolve a rating.
 
 ---
+
+## EPIC-040: Production-Blended Position Strength
+**Effort:** Large (6 stories) — see `docs/EPIC-040-PRODUCTION-BLENDED-RATINGS.md`
+**Logged:** 2026-06-06
+
+Blend on-field production (CFBD PPA / usage / player season stats) into the
+EPIC-039 roster quality score, so position strength reflects what players have
+actually done — not just recruiting pedigree. Production covers QB/RB/WR/TE
+(PPA), DL/LB/DB (defensive box score), and ST; **OL has no per-player data and
+stays on pedigree**. Backward-looking, so freshmen/transfers fall back to
+recruiting. Recommendation: build skill-positions-first (PPA), validate top-25
+impact, then decide on the noisier defensive phase.
+
+---
