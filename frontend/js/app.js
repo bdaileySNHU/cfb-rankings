@@ -5,6 +5,7 @@ let currentLimit = 25;
 let currentSeason = null;  // EPIC-024: Selected season
 let activeSeason = null;   // EPIC-024: Current active season
 let rankingsData = null;
+let currentWeek = null;    // EPIC-042: Selected ranking week (null = season default)
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -19,15 +20,18 @@ document.addEventListener('DOMContentLoaded', () => {
     currentSeason = selected;
     activeSeason = active;
     updateHistoricalBanner();
-    loadRankings();
+    loadWeekSelector().then(() => loadRankings());
     loadPredictions({ nextWeek: currentSeason === activeSeason });
+    loadPostseason();
   });
 
   document.addEventListener('seasonchange', (e) => {
     currentSeason = e.detail.season;
+    currentWeek = null; // reset week on season change
     updateHistoricalBanner();
-    loadRankings();
+    loadWeekSelector().then(() => loadRankings());
     loadPredictions({ nextWeek: e.detail.isActive });
+    loadPostseason();
   });
 });
 
@@ -46,6 +50,15 @@ function setupEventListeners() {
   if (returnBtn) {
     returnBtn.addEventListener('click', () => {
       window.seasonModule.setSelectedSeason(window.seasonModule.getActiveSeason());
+    });
+  }
+
+  // EPIC-042: Week selector
+  const weekSelect = document.getElementById('rankings-week-select');
+  if (weekSelect) {
+    weekSelect.addEventListener('change', (e) => {
+      currentWeek = e.target.value ? parseInt(e.target.value) : null;
+      loadRankings();
     });
   }
 
@@ -91,6 +104,95 @@ async function loadStats() {
   }
 }
 
+// ── EPIC-042: Week Selector ───────────────────────────────────────────────────
+async function loadWeekSelector() {
+  const wrap = document.getElementById('rankings-week-wrap');
+  const select = document.getElementById('rankings-week-select');
+  if (!wrap || !select || !currentSeason) return;
+
+  try {
+    const weeks = await api.getRankingWeeks(currentSeason);
+    if (!weeks || weeks.length === 0) {
+      wrap.style.display = 'none';
+      return;
+    }
+    wrap.style.display = '';
+    select.innerHTML = '';
+    weeks.forEach(({ week, label, has_snapshot }) => {
+      const opt = document.createElement('option');
+      opt.value = week;
+      opt.textContent = has_snapshot ? label : `${label} *`;
+      opt.disabled = !has_snapshot;
+      select.appendChild(opt);
+    });
+    // Default to last available snapshot week
+    const snapshotWeeks = weeks.filter(w => w.has_snapshot);
+    if (snapshotWeeks.length > 0) {
+      const defaultWeek = currentWeek != null ? currentWeek : snapshotWeeks[snapshotWeeks.length - 1].week;
+      select.value = defaultWeek;
+      currentWeek = parseInt(select.value);
+    }
+  } catch (err) {
+    wrap.style.display = 'none';
+  }
+}
+
+// ── EPIC-042: Postseason Results ──────────────────────────────────────────────
+const POSTSEASON_WEEK_LABELS = {
+  15: 'Conference Championships',
+  16: 'CFP Round 1',
+  17: 'CFP Quarterfinals',
+  18: 'CFP Semifinals',
+  19: 'CFP National Championship',
+};
+
+async function loadPostseason() {
+  const card = document.getElementById('postseason-card');
+  if (!card || !currentSeason) return;
+
+  try {
+    const games = await api.getPostseason(currentSeason);
+    if (!games || games.length === 0) {
+      card.style.display = 'none';
+      return;
+    }
+
+    // Group by week
+    const byWeek = {};
+    games.forEach(g => {
+      if (!byWeek[g.week]) byWeek[g.week] = [];
+      byWeek[g.week].push(g);
+    });
+
+    const weeks = Object.keys(byWeek).map(Number).sort((a, b) => a - b);
+    let html = '';
+    weeks.forEach(w => {
+      const label = POSTSEASON_WEEK_LABELS[w] || `Week ${w}`;
+      html += `<div class="postseason-round">
+        <h3 class="postseason-round-title">${label}</h3>
+        <div class="postseason-games">`;
+      byWeek[w].forEach(g => {
+        const gameName = g.postseason_name || (g.game_type === 'conference_championship' ? 'Conference Championship' : '');
+        html += `
+          <div class="postseason-game">
+            <div class="postseason-game-name">${gameName}</div>
+            <div class="postseason-matchup">
+              <span class="postseason-team ${g.winner_team_id === g.home_team_id ? 'winner' : 'loser'}">${g.home_team_name}</span>
+              <span class="postseason-score">${g.home_score} – ${g.away_score}</span>
+              <span class="postseason-team ${g.winner_team_id === g.away_team_id ? 'winner' : 'loser'}">${g.away_team_name}</span>
+            </div>
+          </div>`;
+      });
+      html += `</div></div>`;
+    });
+
+    document.getElementById('postseason-body').innerHTML = html;
+    card.style.display = '';
+  } catch (err) {
+    card.style.display = 'none';
+  }
+}
+
 // Load Rankings
 async function loadRankings() {
   const loading = document.getElementById('loading');
@@ -104,8 +206,8 @@ async function loadRankings() {
   container.classList.add('hidden');
 
   try {
-    // EPIC-024: Pass season parameter
-    const data = await api.getRankings(currentLimit, currentSeason);
+    // EPIC-024/042: Pass season and optional week
+    const data = await api.getRankings(currentLimit, currentSeason, currentWeek);
     rankingsData = data;
 
     // Clear existing rows

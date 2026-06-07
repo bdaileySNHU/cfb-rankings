@@ -34,10 +34,19 @@ class ApiService {
   }
 
   // Rankings
-  async getRankings(limit = 25, season = null) {
+  async getRankings(limit = 25, season = null, week = null) {
     const params = new URLSearchParams({ limit: limit.toString() });
     if (season) params.append('season', season.toString());
+    if (week != null) params.append('week', week.toString());
     return this.fetch(`/rankings?${params}`);
+  }
+
+  async getRankingWeeks(season) {
+    return this.fetch(`/rankings/weeks?season=${season}`);
+  }
+
+  async getPostseason(season) {
+    return this.fetch(`/postseason?season=${season}`);
   }
 
   async getRankingHistory(teamId, season) {

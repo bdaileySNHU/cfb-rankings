@@ -833,7 +833,7 @@ class RankingService:
 
         return total_rating / count if count > 0 else 0.0
 
-    def get_current_rankings(self, season: int, limit: Optional[int] = None) -> List[dict]:
+    def get_current_rankings(self, season: int, limit: Optional[int] = None, week: Optional[int] = None) -> List[dict]:
         """
         Get current rankings sorted by ELO rating
 
@@ -841,9 +841,12 @@ class RankingService:
         cumulative team records. This ensures each season's rankings are independent
         and historical seasons can be browsed accurately.
 
+        EPIC-042: Accepts optional week param to retrieve rankings for a specific week.
+
         Args:
             season: Season year
             limit: Optional limit on number of teams to return
+            week: Optional specific week to retrieve (defaults to current_week for season)
 
         Returns:
             List of ranking dictionaries
@@ -854,12 +857,12 @@ class RankingService:
             # No season found - return empty rankings
             return []
 
-        current_week = season_obj.current_week
+        target_week = week if week is not None else season_obj.current_week
 
         # EPIC-024: Query ranking_history instead of teams table for season-specific data
         query = (
             self.db.query(RankingHistory)
-            .filter(RankingHistory.season == season, RankingHistory.week == current_week)
+            .filter(RankingHistory.season == season, RankingHistory.week == target_week)
             .order_by(RankingHistory.elo_rating.desc())
         )
 

@@ -1617,6 +1617,7 @@ async def get_prediction_comparison(
 async def get_rankings(
     season: Optional[int] = None,
     limit: Optional[int] = Query(25, ge=1, le=200),
+    week: Optional[int] = Query(None, ge=0, le=20, description="Specific week snapshot (defaults to current week)"),
     db: Session = Depends(get_db),
 ):
     """Get current team rankings sorted by ELO rating.
@@ -1646,13 +1647,17 @@ async def get_rankings(
         active_season = db.query(Season).filter(Season.is_active == True).first()
         season = active_season.year if active_season else datetime.now().year
 
-    # Get current week
+    # Get current week for this season
     active_season = db.query(Season).filter(Season.year == season).first()
-    current_week = active_season.current_week if active_season else 0
+    season_current_week = active_season.current_week if active_season else 0
+
+    # EPIC-042: Use requested week or fall back to season's current week
+    target_week = week if week is not None else season_current_week
+    current_week = target_week
 
     # Get rankings
     ranking_service = RankingService(db)
-    rankings = ranking_service.get_current_rankings(season, limit=limit)
+    rankings = ranking_service.get_current_rankings(season, limit=limit, week=target_week)
 
     # EPIC-031 Story 31.2: Compute rank changes and ELO history in batch
     team_ids = [r["team_id"] for r in rankings]
@@ -1752,6 +1757,241 @@ async def get_ranking_history(team_id: int, season: int, db: Session = Depends(g
     )
 
     return history
+
+
+# ── EPIC-042: Week/postseason endpoints ───────────────────────────────────────
+
+WEEK_LABELS = {
+    15: "Week 15 (Conf. Championships)",
+    16: "CFP Round 1",
+    17: "CFP Quarterfinals",
+    18: "CFP Semifinals",
+    19: "CFP National Championship",
+}
+
+
+@app.get("/api/rankings/weeks", tags=["Rankings"])
+async def get_ranking_weeks(season: int, db: Session = Depends(get_db)):
+    """Return weeks that have ranking snapshots for a season, plus postseason weeks from games."""
+    from sqlalchemy import text as sa_text2
+
+    snapshot_weeks = (
+        db.query(RankingHistory.week)
+        .filter(RankingHistory.season == season)
+        .distinct()
+        .order_by(RankingHistory.week)
+        .all()
+    )
+    snapshot_set = {row.week for row in snapshot_weeks}
+
+    # Also expose postseason weeks that have processed games (even if no snapshot yet)
+    postseason_weeks = (
+        db.query(Game.week)
+        .filter(
+            Game.season == season,
+            Game.week >= 16,
+            Game.is_processed == True,
+        )
+        .distinct()
+        .order_by(Game.week)
+        .all()
+    )
+    all_weeks = sorted(snapshot_set | {row.week for row in postseason_weeks})
+
+    result = []
+    for w in all_weeks:
+        label = WEEK_LABELS.get(w, f"Week {w}")
+        result.append({"week": w, "label": label, "has_snapshot": w in snapshot_set})
+    return result
+
+
+@app.get("/api/postseason", tags=["Rankings"])
+async def get_postseason(season: int, db: Session = Depends(get_db)):
+    """Return bowl, playoff, and conference championship games for a season."""
+    games_all = (
+        db.query(Game)
+        .filter(
+            Game.season == season,
+            Game.game_type.in_(["bowl", "playoff", "conference_championship"]),
+            Game.home_score + Game.away_score > 0,  # only games with scores
+        )
+        .order_by(Game.week, Game.game_date)
+        .all()
+    )
+
+    result = []
+    for g in games_all:
+        home = g.home_team
+        away = g.away_team
+        if not home or not away:
+            continue
+        home_won = g.home_score > g.away_score
+        result.append({
+            "game_id": g.id,
+            "week": g.week,
+            "game_type": g.game_type,
+            "postseason_name": g.postseason_name,
+            "home_team_id": g.home_team_id,
+            "home_team_name": home.name,
+            "away_team_id": g.away_team_id,
+            "away_team_name": away.name,
+            "home_score": g.home_score,
+            "away_score": g.away_score,
+            "is_neutral_site": g.is_neutral_site,
+            "game_date": g.game_date.isoformat() if g.game_date else None,
+            "winner_team_id": g.home_team_id if home_won else g.away_team_id,
+            "winner_name": home.name if home_won else away.name,
+            "loser_name": away.name if home_won else home.name,
+            "winner_score": g.home_score if home_won else g.away_score,
+            "loser_score": g.away_score if home_won else g.home_score,
+        })
+    return result
+
+
+@app.post("/api/admin/replay-postseason", tags=["Admin"])
+async def replay_postseason_rankings(season: int, db: Session = Depends(get_db)):
+    """Replay postseason ELO in-memory from the week-15 ranking_history snapshot
+    and save weekly snapshots for weeks 16+ without touching live team ratings."""
+    from sqlalchemy import text as sa_text3
+
+    # Verify week-15 snapshot exists
+    base_week_count = (
+        db.query(RankingHistory)
+        .filter(RankingHistory.season == season, RankingHistory.week == 15)
+        .count()
+    )
+    if base_week_count == 0:
+        raise HTTPException(status_code=400, detail=f"No week-15 snapshot found for {season}. Run regular season first.")
+
+    # Load week-15 ELO state into memory: {team_id: elo}
+    base_records = (
+        db.query(RankingHistory.team_id, RankingHistory.elo_rating)
+        .filter(RankingHistory.season == season, RankingHistory.week == 15)
+        .all()
+    )
+    elo_state: dict = {row.team_id: row.elo_rating for row in base_records}
+
+    # Load team metadata (conference) for multiplier calculation
+    teams_meta = {t.id: t for t in db.query(Team).all()}
+
+    # Get postseason games ordered by week then date
+    postseason_games = (
+        db.query(Game)
+        .filter(
+            Game.season == season,
+            Game.week >= 16,
+            Game.home_score + Game.away_score > 0,  # has scores
+        )
+        .order_by(Game.week, Game.game_date)
+        .all()
+    )
+
+    if not postseason_games:
+        raise HTTPException(status_code=404, detail=f"No postseason games with scores found for {season}.")
+
+    ranking_service = RankingService(db)
+    HOME_ADV = ranking_service.HOME_FIELD_ADVANTAGE
+
+    weeks_processed = []
+    current_week = None
+    games_by_week: dict = {}
+    for g in postseason_games:
+        games_by_week.setdefault(g.week, []).append(g)
+
+    for w in sorted(games_by_week):
+        for g in games_by_week[w]:
+            home_id, away_id = g.home_team_id, g.away_team_id
+            if home_id not in elo_state or away_id not in elo_state:
+                continue
+
+            home_elo = elo_state[home_id]
+            away_elo = elo_state[away_id]
+
+            adj_home = home_elo + (0 if g.is_neutral_site else HOME_ADV)
+
+            home_wins = g.home_score > g.away_score
+            if home_wins:
+                w_id, l_id = home_id, away_id
+                w_elo, l_elo = adj_home, away_elo
+                w_score, l_score = g.home_score, g.away_score
+            else:
+                w_id, l_id = away_id, home_id
+                w_elo, l_elo = away_elo, adj_home
+                w_score, l_score = g.away_score, g.home_score
+
+            winner_expected = ranking_service.calculate_expected_score(w_elo, l_elo)
+            loser_expected = 1.0 - winner_expected
+
+            point_diff = abs(w_score - l_score)
+            mov = ranking_service.calculate_mov_multiplier(point_diff)
+
+            w_team = teams_meta.get(w_id)
+            l_team = teams_meta.get(l_id)
+            w_conf = w_team.conference if w_team else None
+            l_conf = l_team.conference if l_team else None
+            w_mult, l_mult = ranking_service.get_conference_multiplier(w_conf, l_conf)
+
+            k = ranking_service.get_k_factor(g.week)
+
+            elo_state[w_id] = elo_state[w_id] + k * (1.0 - winner_expected) * mov * w_mult
+            elo_state[l_id] = elo_state[l_id] + k * (0.0 - loser_expected) * mov * l_mult
+
+        # Save snapshot for this week
+        db.query(RankingHistory).filter(
+            RankingHistory.season == season,
+            RankingHistory.week == w,
+        ).delete()
+
+        sorted_teams = sorted(elo_state.items(), key=lambda x: x[1], reverse=True)
+        for rank, (tid, elo) in enumerate(sorted_teams, start=1):
+            # Count season wins/losses through this postseason week
+            wins_q = db.query(Game).filter(
+                Game.season == season,
+                Game.week <= w,
+                or_(
+                    and_(Game.home_team_id == tid, Game.home_score > Game.away_score),
+                    and_(Game.away_team_id == tid, Game.away_score > Game.home_score),
+                ),
+                Game.excluded_from_rankings == False,
+            ).count()
+            losses_q = db.query(Game).filter(
+                Game.season == season,
+                Game.week <= w,
+                or_(
+                    and_(Game.home_team_id == tid, Game.home_score < Game.away_score),
+                    and_(Game.away_team_id == tid, Game.away_score < Game.home_score),
+                ),
+                Game.excluded_from_rankings == False,
+            ).count()
+            sos = ranking_service.calculate_sos(tid, season)
+            db.add(RankingHistory(
+                team_id=tid,
+                week=w,
+                season=season,
+                rank=rank,
+                elo_rating=round(elo, 4),
+                wins=wins_q,
+                losses=losses_q,
+                sos=sos,
+                sos_rank=None,
+            ))
+
+        db.commit()
+
+        # Update SOS ranks for this week
+        week_records = (
+            db.query(RankingHistory)
+            .filter(RankingHistory.season == season, RankingHistory.week == w)
+            .order_by(RankingHistory.sos.desc())
+            .all()
+        )
+        for sos_rank, rec in enumerate(week_records, start=1):
+            rec.sos_rank = sos_rank
+        db.commit()
+
+        weeks_processed.append(w)
+
+    return {"status": "ok", "season": season, "weeks_replayed": weeks_processed}
 
 
 @app.get(

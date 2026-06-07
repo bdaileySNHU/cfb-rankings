@@ -96,7 +96,10 @@
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">Current Rankings</h2>
-        <div class="filters" style="display:flex; align-items:center; gap:0.5rem;">
+        <div class="filters" style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+          <div id="rankings-week-wrap" style="display:none;">
+            <select class="filter-select" id="rankings-week-select" aria-label="Week"></select>
+          </div>
           <select class="filter-select" id="limit-select">
             <option value="10">Top 10</option>
             <option value="25" selected>Top 25</option>
@@ -150,6 +153,15 @@
           </table>
         </div>
       </div>
+    </div>
+
+    <!-- EPIC-042: Postseason Results Card -->
+    <div class="card" id="postseason-card" style="display:none;">
+      <div class="card-header">
+        <h2 class="card-title">Postseason Results</h2>
+        <span class="season-badge" id="postseason-season-label"></span>
+      </div>
+      <div id="postseason-body" class="postseason-container"></div>
     </div>
 
     <!-- Predictions Card -->
