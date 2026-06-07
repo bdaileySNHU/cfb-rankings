@@ -1777,7 +1777,7 @@ async def get_ranking_weeks(season: int, db: Session = Depends(get_db)):
 
     snapshot_weeks = (
         db.query(RankingHistory.week)
-        .filter(RankingHistory.season == season)
+        .filter(RankingHistory.season == season, RankingHistory.week <= 19)
         .distinct()
         .order_by(RankingHistory.week)
         .all()
@@ -1790,6 +1790,7 @@ async def get_ranking_weeks(season: int, db: Session = Depends(get_db)):
         .filter(
             Game.season == season,
             Game.week >= 16,
+            Game.week <= 19,
             Game.is_processed == True,
         )
         .distinct()
@@ -1850,23 +1851,25 @@ async def get_postseason(season: int, db: Session = Depends(get_db)):
 
 @app.post("/api/admin/replay-postseason", tags=["Admin"])
 async def replay_postseason_rankings(season: int, db: Session = Depends(get_db)):
-    """Replay postseason ELO in-memory from the week-15 ranking_history snapshot
-    and save weekly snapshots for weeks 16+ without touching live team ratings."""
+    """Replay postseason ELO in-memory from the latest ranking_history snapshot
+    and save weekly snapshots for subsequent weeks without touching live team ratings."""
     from sqlalchemy import text as sa_text3
+    from sqlalchemy import func as sa_func
 
-    # Verify week-15 snapshot exists
-    base_week_count = (
-        db.query(RankingHistory)
-        .filter(RankingHistory.season == season, RankingHistory.week == 15)
-        .count()
+    # Find the latest regular-season snapshot (week <= 15)
+    base_week_row = (
+        db.query(sa_func.max(RankingHistory.week))
+        .filter(RankingHistory.season == season, RankingHistory.week <= 15)
+        .scalar()
     )
-    if base_week_count == 0:
-        raise HTTPException(status_code=400, detail=f"No week-15 snapshot found for {season}. Run regular season first.")
+    if base_week_row is None:
+        raise HTTPException(status_code=400, detail=f"No regular-season snapshot found for {season}. Run backfill first.")
+    base_week = base_week_row
 
-    # Load week-15 ELO state into memory: {team_id: elo}
+    # Load base-week ELO state into memory: {team_id: elo}
     base_records = (
         db.query(RankingHistory.team_id, RankingHistory.elo_rating)
-        .filter(RankingHistory.season == season, RankingHistory.week == 15)
+        .filter(RankingHistory.season == season, RankingHistory.week == base_week)
         .all()
     )
     elo_state: dict = {row.team_id: row.elo_rating for row in base_records}
@@ -1874,12 +1877,13 @@ async def replay_postseason_rankings(season: int, db: Session = Depends(get_db))
     # Load team metadata (conference) for multiplier calculation
     teams_meta = {t.id: t for t in db.query(Team).all()}
 
-    # Get postseason games ordered by week then date
+    # Get postseason games ordered by week then date (after base week, up to week 19)
     postseason_games = (
         db.query(Game)
         .filter(
             Game.season == season,
-            Game.week >= 16,
+            Game.week > base_week,
+            Game.week <= 19,
             Game.home_score + Game.away_score > 0,  # has scores
         )
         .order_by(Game.week, Game.game_date)
@@ -1887,7 +1891,7 @@ async def replay_postseason_rankings(season: int, db: Session = Depends(get_db))
     )
 
     if not postseason_games:
-        raise HTTPException(status_code=404, detail=f"No postseason games with scores found for {season}.")
+        raise HTTPException(status_code=404, detail=f"No postseason games with scores found for {season} after week {base_week}.")
 
     ranking_service = RankingService(db)
     HOME_ADV = ranking_service.HOME_FIELD_ADVANTAGE
