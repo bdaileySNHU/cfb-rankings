@@ -1,6 +1,6 @@
 # EPIC-040: Production-Blended Position Strength
 
-**Status:** 📋 Scoped (not started)
+**Status:** ✅ Phase 1 complete — skill positions (2026-06-06); defensive phase deferred
 **Priority:** Medium
 **Created:** 2026-06-06
 **Related:** EPIC-039 (roster-based position strength — this builds on it),
@@ -137,3 +137,46 @@ phase earns its complexity.
 
 **Effort:** Large — 6 stories, with Story 2 (normalization) and Story 6 (tuning)
 carrying most of the modeling risk.
+
+---
+
+## As-Built (2026-06-06) — Phase 1: skill positions
+
+Built the skill-positions-first phase per the recommendation. PPA-based blending
+for QB/RB/WR/TE; OL and defense stay on recruiting pedigree.
+
+- **40.1** `CFBDClient.get_player_ppa_season(year, team)` → `/ppa/players/season`;
+  5 unit tests. Bulk call (year only) returns all FBS (~4,100 players) in one
+  request, so the import is 1 API call, not 135.
+- **40.2** `src/core/production_service.py`: `compute_percentiles()` (rank-based,
+  scale-agnostic) + `blend_quality()`; 10 unit tests.
+- **40.3** `migrations/migrate_add_roster_production.py` adds
+  `production_score` / `production_source` / `blended_rating` to `roster_players`;
+  `utilities/import_production.py` fetches PPA, percentiles **within each skill
+  group**, computes `blended = w·production + (1-w)·recruiting`, snapshots onto
+  the roster. Local 2025 run: 1,930 rows blended w/ production, 4,890
+  recruiting-only, 8,656 no-signal.
+- **40.4** `get_position_group_scores()` uses `blended_rating` (0–100) when
+  `config["blend"]` and source=roster; config knobs `blend` (default true),
+  `blend_weight` (0.5). Recruiting-only/no-blend paths unchanged. 3 blend tests.
+- **40.5** Endpoint returns `blend`; radar header shows "{year} roster · blended".
+  2 endpoint assertions. Validated bonus ordering stays sensible (Alabama/Georgia/
+  Ohio State top; academies/low-majors bottom — note percentile production
+  compresses the spread toward the middle, which is realistic).
+- **40.6** Runbook step 1d.3 added.
+
+**Design notes:**
+- Percentiles are computed **per skill group** (QB vs QBs, WR vs WRs).
+- `blended_rating` is stored on a 0–100 scale; for non-skill/no-production
+  players it equals the normalized recruiting score, so it is the single unified
+  quality column scoring reads when blend is on.
+- Production uses the **prior** season by default (roster-season − 1).
+
+**Deferred (Phase 2):** defensive box-score blending (DL/LB/DB) and ST. The data
+exists (`/stats/player/season`) but turning raw counts into a fair per-position
+score is the noisier modeling work; revisit if Phase 1 validates well in prod.
+
+**Caveat carried forward:** blending shifts preseason ELO again — re-verify the
+top 25 after the production import in prod (runbook 1f) and tune
+`blend_weight` / `max_bonus` together. Ratings remain pedigree+production, still
+not a full talent model.

@@ -277,22 +277,28 @@ def get_position_group_scores(
                 f"falling back to recruiting-class scoring"
             )
 
+    # EPIC-040: when blending is enabled on the roster source, score from the
+    # pre-computed blended_rating (recruiting pedigree + on-field production,
+    # already on a 0–100 scale) instead of the raw recruiting rating.
+    use_blend = roster_season is not None and config.get("blend", False)
+
     scores = {}
 
     for group_name, positions in POSITION_GROUPS.items():
         top_n = config["top_players_per_position"].get(group_name, 3)
 
         if roster_season is not None:
+            rating_col = RosterPlayer.blended_rating if use_blend else RosterPlayer.rating
             ratings = [
                 r
-                for (r,) in db.query(RosterPlayer.rating)
+                for (r,) in db.query(rating_col)
                 .filter(
                     RosterPlayer.season == roster_season,
                     RosterPlayer.team_id == team_id,
                     RosterPlayer.position.in_(positions),
-                    RosterPlayer.rating.isnot(None),
+                    rating_col.isnot(None),
                 )
-                .order_by(RosterPlayer.rating.desc())
+                .order_by(rating_col.desc())
                 .limit(top_n)
                 .all()
             ]
@@ -312,8 +318,12 @@ def get_position_group_scores(
 
         if ratings:
             avg_rating = sum(ratings) / len(ratings)
-            # Normalize CFBD 0–1 composite (or legacy 0–100) to a 0–100 score
-            score = _normalize_rating(avg_rating)
+            if use_blend:
+                # blended_rating is already a 0–100 quality score
+                score = max(0.0, min(avg_rating, 100.0))
+            else:
+                # Normalize CFBD 0–1 composite (or legacy 0–100) to a 0–100 score
+                score = _normalize_rating(avg_rating)
         else:
             score = 0.0
             if config.get("enabled", False):

@@ -698,6 +698,56 @@ class CFBDClient:
 
         return result
 
+    def get_player_ppa_season(
+        self, year: int, team: Optional[str] = None
+    ) -> List[Dict]:
+        """
+        Get per-player season PPA (Predicted Points Added) from the CFBD API.
+
+        PPA is a play-value metric: how many points a player's plays were worth
+        on average and in total. EPIC-040 uses it as the on-field production
+        signal for offensive skill positions (QB, RB, WR, TE) — linemen and most
+        defenders do not accumulate per-player PPA.
+
+        Part of: EPIC-040 (Production-Blended Position Strength) - Story 40.1
+
+        Args:
+            year: Season year (e.g., 2024)
+            team: Optional team name filter (e.g., "Georgia")
+
+        Returns:
+            List of player PPA dictionaries, each containing:
+                - id: str - CFBD athlete identifier (joins to roster athlete_id)
+                - name, position, team, conference
+                - averagePPA: dict - includes "all" (avg PPA per play)
+                - totalPPA: dict - includes "all" (cumulative PPA)
+
+            Returns empty list if API call fails or no data available.
+
+        Example:
+            >>> client = CFBDClient()
+            >>> ppa = client.get_player_ppa_season(year=2024, team="Georgia")
+            >>> qbs = [p for p in ppa if p.get("position") == "QB"]
+
+        Note:
+            - Automatically tracked via @track_api_usage decorator (through _get)
+            - Gracefully handles API errors by returning empty list
+            - API endpoint: GET /ppa/players/season
+        """
+        params: Dict = {"year": year}
+        if team:
+            params["team"] = team
+
+        result = self._get("/ppa/players/season", params=params)
+
+        if result is None:
+            logger.warning(
+                f"Failed to fetch player PPA for year={year}, team={team}"
+            )
+            return []
+
+        return result
+
     def get_team_talent(self, year: int) -> List[Dict]:
         """
         Get team talent composite scores

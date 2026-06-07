@@ -321,6 +321,9 @@ class TestTeamPositionStrengthEndpoint:
                     class_year=3,
                     rating=rating,
                     source="recruiting-join",
+                    # blended_rating populated so the test is robust to the
+                    # default config's blend flag (EPIC-040)
+                    blended_rating=90.0 - i,
                 )
             )
         test_db.commit()
@@ -332,6 +335,7 @@ class TestTeamPositionStrengthEndpoint:
         assert data["source"] == "roster"
         assert data["season"] == 2025
         assert data["recruiting_year"] is None
+        assert "blend" in data
         assert data["position_scores"]["QB"] > 0
 
     def test_position_strength_falls_back_to_recruiting(self, client, test_db):

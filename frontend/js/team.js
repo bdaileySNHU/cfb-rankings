@@ -675,7 +675,11 @@ function renderPositionRadar(data) {
     return;
   }
 
-  if (yearEl) yearEl.textContent = isRoster ? `${period} roster` : `${period} class`;
+  if (yearEl) {
+    // EPIC-040: note when on-field production is blended in (skill positions)
+    const suffix = isRoster ? (data.blend ? ' roster · blended' : ' roster') : ' class';
+    yearEl.textContent = `${period}${suffix}`;
+  }
 
   // Square SVG geometry
   const W = Math.min(body.clientWidth || 420, 420);

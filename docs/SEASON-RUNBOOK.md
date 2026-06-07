@@ -76,6 +76,31 @@ Notes:
 - Re-run after major roster churn (e.g. the spring/summer transfer-portal window)
   to keep the snapshot current before ratings are locked.
 
+### 1d.3. Blend in on-field production (EPIC-040)
+
+Fold prior-season production into each rostered player's quality score so
+position strength reflects performance, not just recruiting pedigree. Run
+**after** the roster import (1d.2). Skill-positions-first: PPA covers QB/RB/WR/TE;
+OL and defense stay on recruiting pedigree (no per-player data).
+
+```bash
+# ~1 CFBD call (bulk PPA for the production year). Updates blended_rating.
+sudo -E -u www-data venv/bin/python3 utilities/import_production.py --roster-season 2026
+# Defaults: production-year = roster-season - 1 (2025); blend-weight from config.
+```
+
+Notes:
+- Requires the production columns — run `migrations/migrate_add_roster_production.py`
+  once on first deploy (idempotent).
+- Controlled by `src/core/position_weights.json`: `"blend": true` and
+  `"blend_weight"` (production share, default 0.5). Set `"blend": false` to score
+  from recruiting pedigree only.
+- Production is backward-looking: true freshmen / transfers without prior FBS
+  snaps fall back to their recruiting score. OL always uses pedigree.
+- **Deferred:** defensive box-score blending (DL/LB/DB) is scoped but not built —
+  currently only offensive skill positions use production. See
+  `docs/EPIC-040-PRODUCTION-BLENDED-RATINGS.md`.
+
 ### 1e. Create the new season and initialize preseason ratings
 
 ```bash

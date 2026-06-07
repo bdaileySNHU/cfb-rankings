@@ -674,6 +674,8 @@ async def get_team_position_strength(
         "enabled": config["enabled"],
         "source": source_used,
         "season": roster_season if source_used == "roster" else None,
+        # EPIC-040: whether on-field production was blended into the scores
+        "blend": source_used == "roster" and config.get("blend", False),
         "position_scores": position_scores,
         "position_bonus": position_bonus,
         "max_bonus": config["max_bonus"],

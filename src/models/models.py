@@ -269,6 +269,10 @@ class RosterPlayer(Base):
     class_year = Column(Integer, nullable=True)  # 1=FR..5; nullable if absent
     rating = Column(Float, nullable=True)  # Resolved recruiting rating, None if unrated
     source = Column(String(20), nullable=False, default="unrated")
+    # EPIC-040: production blend (None until import_production runs)
+    production_score = Column(Float, nullable=True)  # 0-100 normalized production
+    production_source = Column(String(20), nullable=True)  # 'ppa'|'recruiting'|'none'
+    blended_rating = Column(Float, nullable=True)  # 0-100 quality used when blend on
     created_at = Column(DateTime, default=datetime.utcnow)
 
     team = relationship("Team")

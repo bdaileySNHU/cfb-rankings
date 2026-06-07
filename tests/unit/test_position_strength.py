@@ -29,10 +29,15 @@ from src.core.position_service import (
 from src.models.models import ConferenceType, Player, RosterPlayer, Team
 
 
-def _config_with_source(source: str) -> dict:
-    """Default config with the position-strength data source overridden."""
+def _config_with_source(source: str, blend: bool = False) -> dict:
+    """Default config with the data source overridden (blend off by default).
+
+    Most roster tests exercise recruiting-rating scoring, so blend defaults to
+    False; the EPIC-040 blend tests opt in explicitly.
+    """
     cfg = copy.deepcopy(load_position_weights())
     cfg["source"] = source
+    cfg["blend"] = blend
     return cfg
 
 
@@ -368,6 +373,77 @@ class TestRosterBasedScoring:
         )
         # No roster rows for this team → recruiting Player used → non-zero
         assert scores["QB"] > 0.0
+
+
+@pytest.mark.unit
+class TestBlendedScoring:
+    """EPIC-040: get_position_group_scores() with blend enabled"""
+
+    def _team(self, test_db, name):
+        team = Team(name=name, conference=ConferenceType.POWER_5)
+        test_db.add(team)
+        test_db.commit()
+        return team
+
+    def test_blend_uses_blended_rating(self, test_db: Session):
+        """With blend on, scoring uses blended_rating (0–100), not raw rating"""
+        team = self._team(test_db, "Blend U")
+        # Low recruiting rating but high blended (e.g. a 3-star who produced)
+        test_db.add(
+            RosterPlayer(
+                season=2025, team_id=team.id, athlete_id=1, name="Riser QB",
+                position="QB", rating=0.80, source="ppa",
+                production_score=98.0, production_source="ppa", blended_rating=95.0,
+            )
+        )
+        test_db.commit()
+
+        scores = get_position_group_scores(
+            team.id, test_db, _config_with_source("roster", blend=True), season=2025
+        )
+        # Uses blended_rating 95, not the 0.80 recruiting rating (~33)
+        assert abs(scores["QB"] - 95.0) < 0.5
+
+    def test_blend_off_uses_recruiting_rating(self, test_db: Session):
+        """Same row, blend off → uses raw recruiting rating instead of blended"""
+        team = self._team(test_db, "NoBlend U")
+        test_db.add(
+            RosterPlayer(
+                season=2025, team_id=team.id, athlete_id=1, name="Riser QB",
+                position="QB", rating=0.80, source="ppa",
+                production_score=98.0, production_source="ppa", blended_rating=95.0,
+            )
+        )
+        test_db.commit()
+
+        scores = get_position_group_scores(
+            team.id, test_db, _config_with_source("roster", blend=False), season=2025
+        )
+        # (0.80 - 0.70) / 0.30 * 100 = 33.3
+        assert abs(scores["QB"] - 33.3) < 1.0
+
+    def test_blend_excludes_null_blended_rating(self, test_db: Session):
+        """Players without a blended_rating are excluded when blend is on"""
+        team = self._team(test_db, "Partial U")
+        test_db.add(
+            RosterPlayer(
+                season=2025, team_id=team.id, athlete_id=1, name="Scored QB",
+                position="QB", rating=0.90, source="ppa", blended_rating=88.0,
+            )
+        )
+        test_db.add(
+            RosterPlayer(
+                season=2025, team_id=team.id, athlete_id=2, name="Unscored QB",
+                position="QB", rating=0.95, source="none", blended_rating=None,
+            )
+        )
+        test_db.commit()
+
+        scores = get_position_group_scores(
+            team.id, test_db, _config_with_source("roster", blend=True), season=2025
+        )
+        # Only the player with blended_rating=88 counts
+        assert abs(scores["QB"] - 88.0) < 0.5
 
 
 @pytest.mark.unit
