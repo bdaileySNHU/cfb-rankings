@@ -80,8 +80,9 @@ Notes:
 
 Fold prior-season production into each rostered player's quality score so
 position strength reflects performance, not just recruiting pedigree. Run
-**after** the roster import (1d.2). Skill-positions-first: PPA covers QB/RB/WR/TE;
-OL and defense stay on recruiting pedigree (no per-player data).
+**after** the roster import (1d.2). Covers QB/RB/WR/TE via PPA and DL/LB/DB via a
+defensive box-score composite (tackles, TFL, sacks, passes defended, hurries).
+OL has no per-player data and stays on recruiting pedigree.
 
 ```bash
 # ~1 CFBD call (bulk PPA for the production year). Updates blended_rating.
@@ -97,8 +98,9 @@ Notes:
   from recruiting pedigree only.
 - Production is backward-looking: true freshmen / transfers without prior FBS
   snaps fall back to their recruiting score. OL always uses pedigree.
-- **Deferred:** defensive box-score blending (DL/LB/DB) is scoped but not built —
-  currently only offensive skill positions use production. See
+- One bulk PPA call + one bulk defensive-stats call (≈2 CFBD calls total).
+- Defensive scores use a weighted box-score composite percentiled within each
+  group — raw counts are snap-dependent, so it favors productive starters. See
   `docs/EPIC-040-PRODUCTION-BLENDED-RATINGS.md`.
 
 ### 1e. Create the new season and initialize preseason ratings

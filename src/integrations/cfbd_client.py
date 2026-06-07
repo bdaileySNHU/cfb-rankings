@@ -748,6 +748,63 @@ class CFBDClient:
 
         return result
 
+    def get_player_season_stats(
+        self,
+        year: int,
+        team: Optional[str] = None,
+        category: Optional[str] = None,
+    ) -> List[Dict]:
+        """
+        Get per-player season box-score stats from the CFBD API.
+
+        EPIC-040 Phase 2 uses ``category="defensive"`` to fold defensive
+        production (tackles, TFL, sacks, passes defended, QB hurries) into the
+        roster quality score for DL/LB/DB.
+
+        Part of: EPIC-040 (Production-Blended Position Strength) - Story 40.7
+
+        Args:
+            year: Season year (e.g., 2024)
+            team: Optional team name filter (e.g., "Georgia")
+            category: Optional stat category (e.g., "defensive", "receiving").
+                Omit for all categories.
+
+        Returns:
+            List of stat rows, each containing:
+                - playerId: str - CFBD athlete id (joins to roster athlete_id)
+                - player, position, team, conference
+                - category: str - e.g. "defensive"
+                - statType: str - e.g. "TOT", "TFL", "SACKS", "PD", "QB HUR"
+                - stat: str - the value (parse to float)
+
+            One row per (player, statType). Returns empty list on API error.
+
+        Example:
+            >>> client = CFBDClient()
+            >>> rows = client.get_player_season_stats(year=2024, category="defensive")
+
+        Note:
+            - Automatically tracked via @track_api_usage decorator (through _get)
+            - Gracefully handles API errors by returning empty list
+            - API endpoint: GET /stats/player/season
+        """
+        params: Dict = {"year": year}
+        if team:
+            params["team"] = team
+        if category:
+            params["category"] = category
+
+        result = self._get("/stats/player/season", params=params)
+
+        if result is None:
+            logger.warning(
+                f"Failed to fetch player season stats for year={year}, "
+                f"team={team}, category={category}"
+            )
+            return []
+
+        return result
+
     def get_team_talent(self, year: int) -> List[Dict]:
         """
         Get team talent composite scores

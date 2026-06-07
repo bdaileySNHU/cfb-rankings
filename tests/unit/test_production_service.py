@@ -5,7 +5,12 @@ Covers compute_percentiles() and blend_quality().
 
 import pytest
 
-from src.core.production_service import blend_quality, compute_percentiles
+from src.core.production_service import (
+    DEFENSIVE_STAT_WEIGHTS,
+    blend_quality,
+    compute_percentiles,
+    defensive_impact,
+)
 
 
 @pytest.mark.unit
@@ -54,3 +59,35 @@ class TestBlendQuality:
         assert blend_quality(80.0, 40.0, 5.0) == 40.0
         # weight < 0 clamps to recruiting-only
         assert blend_quality(80.0, 40.0, -1.0) == 80.0
+
+
+@pytest.mark.unit
+class TestDefensiveImpact:
+    def test_weighted_sum(self):
+        stats = {"TOT": "10", "TFL": "2", "SACKS": "1", "PD": "3", "QB HUR": "2", "TD": "1"}
+        expected = (
+            10 * DEFENSIVE_STAT_WEIGHTS["TOT"]
+            + 2 * DEFENSIVE_STAT_WEIGHTS["TFL"]
+            + 1 * DEFENSIVE_STAT_WEIGHTS["SACKS"]
+            + 3 * DEFENSIVE_STAT_WEIGHTS["PD"]
+            + 2 * DEFENSIVE_STAT_WEIGHTS["QB HUR"]
+            + 1 * DEFENSIVE_STAT_WEIGHTS["TD"]
+        )
+        assert defensive_impact(stats) == expected
+
+    def test_parses_float_strings(self):
+        # TFL often comes as "6.0"
+        assert defensive_impact({"TFL": "6.0"}) == 6.0 * DEFENSIVE_STAT_WEIGHTS["TFL"]
+
+    def test_ignores_missing_blank_and_unknown(self):
+        stats = {"TOT": "5", "SACKS": "", "BOGUS": "9", "PD": None}
+        assert defensive_impact(stats) == 5 * DEFENSIVE_STAT_WEIGHTS["TOT"]
+
+    def test_empty_is_zero(self):
+        assert defensive_impact({}) == 0.0
+
+    def test_disruptive_plays_outweigh_volume(self):
+        # A player with sacks/TFL beats a pure-tackle compiler with the same TOT
+        compiler = defensive_impact({"TOT": "20"})
+        playmaker = defensive_impact({"TOT": "20", "SACKS": "5", "TFL": "8"})
+        assert playmaker > compiler

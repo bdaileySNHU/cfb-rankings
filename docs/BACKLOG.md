@@ -72,9 +72,9 @@ resolve a rating.
 
 ---
 
-## EPIC-040: Production-Blended Position Strength ✅ Phase 1 (skill positions)
-**Effort:** Large (6 stories) — see `docs/EPIC-040-PRODUCTION-BLENDED-RATINGS.md`
-**Logged:** 2026-06-06 · **Phase 1 complete:** 2026-06-06 (defensive phase deferred)
+## EPIC-040: Production-Blended Position Strength ✅ Complete
+**Effort:** Large (9 stories) — see `docs/EPIC-040-PRODUCTION-BLENDED-RATINGS.md`
+**Logged:** 2026-06-06 · **Complete:** 2026-06-06 (skill PPA + defensive box score; only OL on pedigree)
 
 Blend on-field production (CFBD PPA / usage / player season stats) into the
 EPIC-039 roster quality score, so position strength reflects what players have

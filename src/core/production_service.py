@@ -17,10 +17,50 @@ Part of: EPIC-040 (Production-Blended Position Strength)
 
 from typing import Dict, List, Optional
 
-# Position groups that have a per-player production signal in the skill-first
-# phase (PPA covers offensive skill positions). OL and most defenders have no
-# per-player PPA and stay on recruiting pedigree.
+# Offensive skill groups whose production comes from PPA (Phase 1).
 PRODUCTION_GROUPS = {"QB", "RB", "WR", "TE"}
+
+# Defensive groups whose production comes from box-score stats (Phase 2).
+DEFENSE_GROUPS = {"DL", "LB", "DB"}
+
+# Weights for the defensive impact composite. Volume (total tackles) counts
+# least; disruptive plays (sacks, TFL, passes defended, defensive TDs) count
+# more. The raw composite is only used to rank players within a group via
+# percentiles, so the weights set relative — not absolute — value.
+DEFENSIVE_STAT_WEIGHTS = {
+    "TOT": 1.0,      # total tackles (volume)
+    "TFL": 3.0,      # tackles for loss
+    "SACKS": 4.0,    # sacks
+    "PD": 3.0,       # passes defended (breakups + INTs)
+    "QB HUR": 1.5,   # QB hurries
+    "TD": 6.0,       # defensive touchdowns
+}
+
+
+def defensive_impact(stats: dict) -> float:
+    """Weighted defensive box-score composite for one player.
+
+    Args:
+        stats: Mapping of statType -> value (str or number), e.g.
+            {"TOT": "40", "TFL": "6.0", "SACKS": "2", "PD": "1", ...}
+
+    Returns:
+        float: Weighted impact total. Unknown/blank stats are ignored.
+
+    Note:
+        Raw counts are snap-dependent — this rewards productive starters and is
+        only meaningful when percentile-ranked within a position group.
+    """
+    total = 0.0
+    for stat_type, weight in DEFENSIVE_STAT_WEIGHTS.items():
+        raw = stats.get(stat_type)
+        if raw in (None, ""):
+            continue
+        try:
+            total += float(raw) * weight
+        except (TypeError, ValueError):
+            continue
+    return total
 
 
 def compute_percentiles(values: List[float]) -> List[float]:

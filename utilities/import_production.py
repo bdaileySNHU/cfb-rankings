@@ -30,7 +30,13 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.core.position_service import POSITION_GROUPS, _normalize_rating, load_position_weights
-from src.core.production_service import PRODUCTION_GROUPS, blend_quality, compute_percentiles
+from src.core.production_service import (
+    DEFENSE_GROUPS,
+    PRODUCTION_GROUPS,
+    blend_quality,
+    compute_percentiles,
+    defensive_impact,
+)
 from src.integrations.cfbd_client import CFBDClient
 from src.models.database import SessionLocal
 from src.models.models import RosterPlayer
@@ -72,7 +78,45 @@ def build_production_percentiles(client: CFBDClient, production_year: int) -> di
     return percentile_map
 
 
-def blend_roster(db, roster_season, percentile_map, weight, dry_run=False) -> dict:
+def build_defensive_percentiles(client: CFBDClient, production_year: int) -> dict:
+    """Return {athlete_id: percentile_0_100} for defenders across FBS.
+
+    Builds a weighted defensive-impact composite per player from box-score stats,
+    then percentiles within each defensive group (DL/LB/DB).
+    """
+    rows = client.get_player_season_stats(year=production_year, category="defensive")
+    print(f"Fetched {len(rows)} defensive stat rows for {production_year}")
+
+    # Collapse rows (one per statType) into {athlete_id: {position, stats{}}}
+    players = defaultdict(lambda: {"position": None, "stats": {}})
+    for row in rows:
+        athlete = row.get("playerId")
+        if athlete is None:
+            continue
+        try:
+            athlete_id = int(athlete)
+        except (TypeError, ValueError):
+            continue
+        players[athlete_id]["position"] = row.get("position")
+        players[athlete_id]["stats"][row.get("statType")] = row.get("stat")
+
+    # Composite impact, grouped by defensive position group
+    by_group = defaultdict(list)
+    for athlete_id, info in players.items():
+        group = _POS_TO_GROUP.get(info["position"])
+        if group not in DEFENSE_GROUPS:
+            continue
+        by_group[group].append((athlete_id, defensive_impact(info["stats"])))
+
+    percentile_map = {}
+    for group, pairs in by_group.items():
+        scores = compute_percentiles([v for _, v in pairs])
+        for (athlete_id, _), score in zip(pairs, scores):
+            percentile_map[athlete_id] = score
+    return percentile_map
+
+
+def blend_roster(db, roster_season, percentile_map, source_map, weight, dry_run=False) -> dict:
     """Compute production_score/source/blended_rating for the season's roster."""
     rows = db.query(RosterPlayer).filter(RosterPlayer.season == roster_season).all()
     stats = {"total": 0, "with_production": 0, "recruiting_only": 0, "no_signal": 0}
@@ -81,14 +125,15 @@ def blend_roster(db, roster_season, percentile_map, weight, dry_run=False) -> di
         stats["total"] += 1
         rec_score = _normalize_rating(rp.rating) if rp.rating is not None else None
         prod_score = percentile_map.get(rp.athlete_id)
+        prod_label = source_map.get(rp.athlete_id, "production")
 
         if prod_score is not None and rec_score is not None:
             blended = blend_quality(rec_score, prod_score, weight)
-            source = "ppa"
+            source = prod_label
             stats["with_production"] += 1
         elif prod_score is not None:
             blended = prod_score  # produced but unrated recruit
-            source = "ppa"
+            source = prod_label
             stats["with_production"] += 1
         elif rec_score is not None:
             blended = rec_score
@@ -130,10 +175,18 @@ def main():
     client = CFBDClient()
     db = SessionLocal()
     try:
-        percentile_map = build_production_percentiles(client, production_year)
-        print(f"Skill players with a production percentile: {len(percentile_map)}\n")
+        skill_map = build_production_percentiles(client, production_year)
+        print(f"Skill players with a production percentile: {len(skill_map)}")
+        defense_map = build_defensive_percentiles(client, production_year)
+        print(f"Defenders with a production percentile: {len(defense_map)}")
+        # Skill and defensive athletes are disjoint by position
+        percentile_map = {**skill_map, **defense_map}
+        source_map = {**{a: "ppa" for a in skill_map}, **{a: "defense" for a in defense_map}}
+        print(f"Total players with a production percentile: {len(percentile_map)}\n")
 
-        stats = blend_roster(db, args.roster_season, percentile_map, weight, args.dry_run)
+        stats = blend_roster(
+            db, args.roster_season, percentile_map, source_map, weight, args.dry_run
+        )
 
         print("=" * 60)
         print("Summary")

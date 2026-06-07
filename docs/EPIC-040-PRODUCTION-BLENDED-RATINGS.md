@@ -1,6 +1,6 @@
 # EPIC-040: Production-Blended Position Strength
 
-**Status:** ✅ Phase 1 complete — skill positions (2026-06-06); defensive phase deferred
+**Status:** ✅ Complete — skill (PPA) + defense (box score) blended (2026-06-06). Only OL stays on pedigree.
 **Priority:** Medium
 **Created:** 2026-06-06
 **Related:** EPIC-039 (roster-based position strength — this builds on it),
@@ -172,9 +172,37 @@ for QB/RB/WR/TE; OL and defense stay on recruiting pedigree.
   quality column scoring reads when blend is on.
 - Production uses the **prior** season by default (roster-season − 1).
 
-**Deferred (Phase 2):** defensive box-score blending (DL/LB/DB) and ST. The data
-exists (`/stats/player/season`) but turning raw counts into a fair per-position
-score is the noisier modeling work; revisit if Phase 1 validates well in prod.
+## As-Built — Phase 2: defense (2026-06-06)
+
+Added defensive box-score blending for DL/LB/DB.
+
+- **40.7** `CFBDClient.get_player_season_stats(year, team, category)` →
+  `/stats/player/season`; 4 unit tests. Bulk `category="defensive"` call returns
+  all FBS (~57k stat rows / ~8k players) in one request.
+- **40.8** `production_service`: `DEFENSE_GROUPS`, `DEFENSIVE_STAT_WEIGHTS`, and
+  `defensive_impact()` — a weighted composite (TOT 1, TFL 3, SACKS 4, PD 3,
+  QB HUR 1.5, def TD 6). `import_production.py` builds a defensive percentile map
+  (per group) and merges it with the skill/PPA map; `production_source` is now
+  `ppa` | `defense` | `recruiting` | `none`. 5 unit tests.
+- **40.9** Runbook + this doc updated.
+
+Local 2025 re-run: 5,366 roster rows blended with production (1,928 ppa + 3,438
+defense), up from 1,930. Defensive groups now move under blend (Georgia DL 94→88,
+DB 97→91), as intended.
+
+**Weighting rationale:** raw counts are snap-dependent, so the composite is only
+used to **rank within a position group** via percentiles. Disruptive plays
+(sacks/TFL/PD/def-TD) outweigh volume tackles. Interceptions ride in via PD
+(passes defended); a dedicated INT merge is a possible refinement.
+
+**Only OL now stays on recruiting pedigree** — there is no per-player OL data.
+
+### Still open / refinements
+
+- ST (K/P) production is unbuilt, but ST weight is 0.0 so it has no effect.
+- Snap-count normalization (per-snap rates) would reduce the starter/volume bias.
+- Tuning `blend_weight` and `max_bonus` against end-of-season ELO (original
+  Story 6) remains the validation step before/after the production prod import.
 
 **Caveat carried forward:** blending shifts preseason ELO again — re-verify the
 top 25 after the production import in prod (runbook 1f) and tune
