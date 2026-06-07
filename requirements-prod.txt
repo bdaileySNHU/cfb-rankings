@@ -1,8 +1,7 @@
 # Production Requirements
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
+# Installs the same pinned, tested base set used by CI/tests, plus the
+# production WSGI server. Keeping a single source of truth (requirements.txt)
+# prevents prod from running different FastAPI/Starlette versions than what
+# the test suite validates.
+-r requirements.txt
 gunicorn==21.2.0
-pydantic==2.5.0
-sqlalchemy==2.0.23
-python-dotenv==1.0.0
-requests==2.31.0

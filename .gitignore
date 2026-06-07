@@ -60,3 +60,6 @@ data/*.json
 
 # DB backups
 *.db.backup*
+
+# pip-redirect artifacts (e.g. `pip install ... >=5.12.0` accidentally writes `=5.12.0`)
+=[0-9]*
