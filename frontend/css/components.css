@@ -1241,7 +1241,7 @@
 @media (max-width: 768px) {
   .rankings-table {
     font-size: 0.875rem;
-    min-width: 650px;
+    min-width: 520px;
     margin-bottom: 0;
   }
 
@@ -1260,7 +1260,7 @@
     padding-right: 0.75rem;
   }
 
-  /* Hide SOS Rank column (9th) — also handled by .col-sos class */
+  /* Hide SOS Rank (9) on tablets */
   .rankings-table th:nth-child(9),
   .rankings-table td:nth-child(9) {
     display: none;
@@ -1278,7 +1278,7 @@
   }
 
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
   .predictions-grid {
@@ -1332,42 +1332,9 @@
 }
 
 @media (max-width: 480px) {
-  /* Hide SOS (8), SOS Rank (9) — also handled by .col-sos class */
-  .rankings-table th:nth-child(8),
-  .rankings-table td:nth-child(8),
-  .rankings-table th:nth-child(9),
-  .rankings-table td:nth-child(9) {
-    display: none;
-  }
-
-  .table-container .rankings-table {
-    min-width: 500px;
-  }
-
-  .rankings-table th:nth-child(1),
-  .rankings-table td:nth-child(1) { width: 60px; }
-
-  /* column 3 = Team name (was 2 before new change column) */
-  .rankings-table th:nth-child(3),
-  .rankings-table td:nth-child(3) { min-width: 150px; }
-
-  /* column 5 = Record (was 4 before) */
-  .rankings-table th:nth-child(5),
-  .rankings-table td:nth-child(5) { width: 70px; }
-
-  .info-box {
-    font-size: 0.875rem;
-    padding: 0.65rem;
-  }
-
-  .filters { width: 100%; }
-  .filter-select { width: 100%; }
-}
-
-@media (max-width: 375px) {
-  /* Hide Conference (4), SOS (8), SOS Rank (9) */
-  .rankings-table th:nth-child(4),
-  .rankings-table td:nth-child(4),
+  /* Hide sparkline (7), SOS (8), SOS Rank (9) */
+  .rankings-table th:nth-child(7),
+  .rankings-table td:nth-child(7),
   .rankings-table th:nth-child(8),
   .rankings-table td:nth-child(8),
   .rankings-table th:nth-child(9),
@@ -1379,7 +1346,65 @@
     min-width: 380px;
   }
 
-  .rankings-table { font-size: 0.875rem; }
+  .rankings-table th:nth-child(1),
+  .rankings-table td:nth-child(1) { width: 52px; }
+
+  .rankings-table th:nth-child(3),
+  .rankings-table td:nth-child(3) { min-width: 130px; }
+
+  .rankings-table th:nth-child(5),
+  .rankings-table td:nth-child(5) { width: 60px; }
+
+  .info-box {
+    font-size: 0.875rem;
+    padding: 0.65rem;
+  }
+
+  .filters { width: 100%; }
+  .filter-select { width: 100%; }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stat-card {
+    padding: 0.875rem 0.75rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .stat-subtext {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 375px) {
+  /* Hide change (2), Conference (4), sparkline (7), SOS (8), SOS Rank (9) */
+  .rankings-table th:nth-child(2),
+  .rankings-table td:nth-child(2),
+  .rankings-table th:nth-child(4),
+  .rankings-table td:nth-child(4),
+  .rankings-table th:nth-child(7),
+  .rankings-table td:nth-child(7),
+  .rankings-table th:nth-child(8),
+  .rankings-table td:nth-child(8),
+  .rankings-table th:nth-child(9),
+  .rankings-table td:nth-child(9) {
+    display: none;
+  }
+
+  .table-container .rankings-table {
+    min-width: 300px;
+  }
+
+  .rankings-table { font-size: 0.8125rem; }
 
   .info-box { font-size: 0.8125rem; }
 }
