@@ -70,6 +70,36 @@ POSITION_GROUPS = {
 # Default configuration path (relative to this file)
 DEFAULT_CONFIG_PATH = Path(__file__).parent / "position_weights.json"
 
+# CFBD recruit composite ratings fall on a ~0.70–1.00 scale (the 5★/elite band
+# is ~0.98+, a low-end FBS roster averages ~0.80). Map that band onto a 0–100
+# quality score so position group scores — and the preseason ELO bonus derived
+# from them — have meaningful spread between elite and average rosters.
+RATING_FLOOR = 0.70
+RATING_CEIL = 1.00
+
+
+def _normalize_rating(avg_rating: float) -> float:
+    """Map an average recruit rating onto a 0–100 position quality score.
+
+    CFBD composite ratings are on a 0–1 scale, so they are stretched from the
+    realistic recruit band ([RATING_FLOOR, RATING_CEIL]) to 0–100. Values above
+    1.0 are assumed to already be on a 0–100 scale (legacy/manual data) and are
+    simply clamped, which keeps the function correct for either representation.
+
+    Args:
+        avg_rating: Average recruit rating for a position group
+
+    Returns:
+        float: Quality score clamped to 0.0–100.0
+    """
+    if avg_rating is None:
+        return 0.0
+    if avg_rating > 1.0:
+        # Already on a 0–100 scale
+        return min(avg_rating, 100.0)
+    scaled = (avg_rating - RATING_FLOOR) / (RATING_CEIL - RATING_FLOOR) * 100.0
+    return max(0.0, min(scaled, 100.0))
+
 
 def load_position_weights(config_path: Optional[str] = None) -> Dict:
     """Load position weights configuration from JSON file.
@@ -231,8 +261,8 @@ def get_position_group_scores(team_id: int, db: Session, config: Optional[Dict] 
         # Calculate average rating for top players
         if players:
             avg_rating = sum(p.rating for p in players) / len(players)
-            # Normalize to 0-100 scale (assuming max rating is ~100)
-            score = min(avg_rating, 100.0)
+            # Normalize CFBD 0–1 composite (or legacy 0–100) to a 0–100 score
+            score = _normalize_rating(avg_rating)
         else:
             # No players in this position group
             score = 0.0
@@ -276,8 +306,8 @@ def aggregate_player_ratings(players: List[Player], position_group: str) -> floa
     # Calculate average
     avg_rating = sum(p.rating for p in valid_players) / len(valid_players)
 
-    # Normalize to 0-100 scale
-    return min(avg_rating, 100.0)
+    # Normalize CFBD 0–1 composite (or legacy 0–100) to a 0–100 score
+    return _normalize_rating(avg_rating)
 
 
 def calculate_position_strength(

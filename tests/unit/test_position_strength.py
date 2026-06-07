@@ -187,6 +187,37 @@ class TestGetPositionGroupScores:
         # DL score should be average of top 2: (93 + 91) / 2 = 92.0
         assert abs(scores["DL"] - 92.0) < 0.01
 
+    def test_normalizes_cfbd_composite_ratings(self, test_db: Session):
+        """CFBD 0–1 composite ratings are stretched to a 0–100 score.
+
+        Regression: real CFBD recruit ratings are on a ~0.70–1.00 scale, not
+        0–100. Without normalization a strong roster scored ~0.9 instead of ~90,
+        making the position strength bonus effectively zero.
+        """
+        team = Team(name="Composite U", conference=ConferenceType.POWER_5)
+        test_db.add(team)
+        test_db.commit()
+
+        # Three elite QBs averaging 0.97 → (0.97 - 0.70) / 0.30 * 100 = 90.0
+        for i, rating in enumerate([0.98, 0.97, 0.96]):
+            test_db.add(
+                Player(
+                    cfbd_athlete_id=20000 + i,
+                    name=f"QB {i}",
+                    team_id=team.id,
+                    position="QB",
+                    rating=rating,
+                    recruiting_year=2025,
+                )
+            )
+        test_db.commit()
+
+        scores = get_position_group_scores(team.id, test_db)
+
+        assert abs(scores["QB"] - 90.0) < 0.5
+        # The raw 0.97 average must NOT pass through unscaled
+        assert scores["QB"] > 1.0
+
     def test_zero_scores_for_missing_positions(self, test_db: Session):
         """Test that positions with no players get score of 0.0"""
         team = Team(name="Test Team", conference=ConferenceType.POWER_5)
