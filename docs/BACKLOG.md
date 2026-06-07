@@ -57,3 +57,17 @@ Per-team radar/spider chart showing relative strength across position groups
 team detail page, fed by the existing `/api/teams/{id}/position-strength` endpoint.
 
 ---
+
+## EPIC-039: Roster-Based Position Strength
+**Effort:** Medium–Large (6 stories) — see `docs/EPIC-039-ROSTER-BASED-POSITION-STRENGTH.md`
+**Logged:** 2026-06-06
+
+Make position strength (the EPIC-038 radar + preseason ELO bonus) reflect each
+team's **actual current roster** instead of recruiting-class signings. Pulls CFBD
+`/roster`, joins recruiting ratings via athlete-id, and snapshots a
+`roster_players` table per season. Fixes three inaccuracies: departed players
+still counting, incoming transfers being invisible, and only recent signees being
+scored. Prerequisite: backfill recruiting classes 2021–2025 so all class years
+resolve a rating.
+
+---
