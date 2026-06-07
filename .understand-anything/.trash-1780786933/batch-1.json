@@ -1,0 +1,910 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/models/models.py",
+      "type": "file",
+      "name": "models.py",
+      "filePath": "src/models/models.py",
+      "summary": "Core ORM models: Team, Player, Game, RankingHistory, Season, APIUsage, UpdateTask, Prediction, APPollRanking plus ConferenceType enum",
+      "tags": [
+        "models",
+        "sqlalchemy",
+        "orm",
+        "database"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/models/database.py",
+      "type": "file",
+      "name": "database.py",
+      "filePath": "src/models/database.py",
+      "summary": "SQLAlchemy engine/session configuration; init_db, get_db (FastAPI dependency), reset_db; supports SQLite and PostgreSQL via DATABASE_URL",
+      "tags": [
+        "database",
+        "session",
+        "sqlalchemy",
+        "configuration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/core/position_service.py",
+      "type": "file",
+      "name": "position_service.py",
+      "filePath": "src/core/position_service.py",
+      "summary": "Position group strength calculation service; loads position weights config, scores each position group (QB, OL, RB, WR, TE, DL, LB, DB, ST) from Player recruiting ratings, produces ELO bonus",
+      "tags": [
+        "service",
+        "position",
+        "recruiting",
+        "preseason"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/models/models.py:Team",
+      "type": "class",
+      "name": "Team",
+      "filePath": "src/models/models.py",
+      "summary": "SQLAlchemy model for a CFB team with ELO rating, conference type, recruiting/transfer portal metrics; relationships: home_games, away_games, ranking_history, players",
+      "tags": [
+        "model",
+        "team",
+        "elo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/models/models.py:Player",
+      "type": "class",
+      "name": "Player",
+      "filePath": "src/models/models.py",
+      "summary": "SQLAlchemy model for a recruit/transfer: position, stars, rating, ranking, recruiting_year; indexed on (team_id, position)",
+      "tags": [
+        "model",
+        "player",
+        "recruiting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/models/models.py:Game",
+      "type": "class",
+      "name": "Game",
+      "filePath": "src/models/models.py",
+      "summary": "SQLAlchemy model for a game: home/away teams, scores, quarter scores, week, season, game_type (regular/bowl/playoff/conference_championship), is_processed, rating_changes",
+      "tags": [
+        "model",
+        "game",
+        "elo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/models/models.py:RankingHistory",
+      "type": "class",
+      "name": "RankingHistory",
+      "filePath": "src/models/models.py",
+      "summary": "Weekly ranking snapshot: team ELO, rank, wins, losses, SOS per week/season; unique index on (team_id, season, week)",
+      "tags": [
+        "model",
+        "ranking",
+        "history"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/models/models.py:Season",
+      "type": "class",
+      "name": "Season",
+      "filePath": "src/models/models.py",
+      "summary": "Season metadata: year (unique), current_week, is_active; only one active at a time",
+      "tags": [
+        "model",
+        "season"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/models/models.py:APIUsage",
+      "type": "class",
+      "name": "APIUsage",
+      "filePath": "src/models/models.py",
+      "summary": "CFBD API call tracking: endpoint, timestamp, status_code, response_time_ms, month for quota monitoring",
+      "tags": [
+        "model",
+        "api",
+        "monitoring"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/models/models.py:UpdateTask",
+      "type": "class",
+      "name": "UpdateTask",
+      "filePath": "src/models/models.py",
+      "summary": "Weekly update task tracking: task_id, status (started/running/completed/failed), trigger_type, duration_seconds, result_json",
+      "tags": [
+        "model",
+        "task",
+        "update"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/models/models.py:Prediction",
+      "type": "class",
+      "name": "Prediction",
+      "filePath": "src/models/models.py",
+      "summary": "Pre-game ELO prediction: game_id (unique FK), predicted_winner, predicted scores, win_probability, team ELOs at prediction time, was_correct evaluated post-game",
+      "tags": [
+        "model",
+        "prediction"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/models/models.py:APPollRanking",
+      "type": "class",
+      "name": "APPollRanking",
+      "filePath": "src/models/models.py",
+      "summary": "AP Poll weekly rankings for comparison: season, week, poll_type, rank, team_id; unique on (season, week, team_id)",
+      "tags": [
+        "model",
+        "ap-poll",
+        "ranking"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/models/models.py:ConferenceType",
+      "type": "class",
+      "name": "ConferenceType",
+      "filePath": "src/models/models.py",
+      "summary": "Enum: POWER_5='P5', GROUP_5='G5', FCS='FCS'; affects base ELO rating and cross-tier matchup multipliers",
+      "tags": [
+        "enum",
+        "conference"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/core/position_service.py:load_position_weights",
+      "type": "function",
+      "name": "load_position_weights",
+      "filePath": "src/core/position_service.py",
+      "summary": "Loads position_weights.json config: enabled flag, per-position weights (must sum to 1.0), max_bonus, top_players_per_position",
+      "tags": [
+        "function",
+        "config",
+        "position"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/core/position_service.py:get_position_group_scores",
+      "type": "function",
+      "name": "get_position_group_scores",
+      "filePath": "src/core/position_service.py",
+      "summary": "For each position group queries top-N players by rating for team_id, returns dict of position to score (0-100 normalized)",
+      "tags": [
+        "function",
+        "position",
+        "score"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/core/position_service.py:calculate_position_strength",
+      "type": "function",
+      "name": "calculate_position_strength",
+      "filePath": "src/core/position_service.py",
+      "summary": "Computes overall position strength bonus (0-max_bonus ELO points) by weighted sum of position group scores; returns 0.0 if no player data",
+      "tags": [
+        "function",
+        "position",
+        "elo"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:diagnostics/check_bowl_games.py",
+      "type": "file",
+      "name": "check_bowl_games.py",
+      "filePath": "diagnostics/check_bowl_games.py",
+      "summary": "Diagnostic: queries Game table for game_type='bowl', prints matchups/scores/bowl names with processed/unprocessed summary",
+      "tags": [
+        "diagnostic",
+        "bowl",
+        "postseason"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:diagnostics/check_conference_championships.py",
+      "type": "file",
+      "name": "check_conference_championships.py",
+      "filePath": "diagnostics/check_conference_championships.py",
+      "summary": "Diagnostic: queries Game table for game_type='conference_championship', prints matchups/scores with summary",
+      "tags": [
+        "diagnostic",
+        "conference",
+        "championship"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:diagnostics/check_game_details.py",
+      "type": "file",
+      "name": "check_game_details.py",
+      "filePath": "diagnostics/check_game_details.py",
+      "summary": "Diagnostic: shows full details for a single game by ID including scores, processing status, game_type, rating changes",
+      "tags": [
+        "diagnostic",
+        "game",
+        "detail"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:diagnostics/check_playoff_games.py",
+      "type": "file",
+      "name": "check_playoff_games.py",
+      "filePath": "diagnostics/check_playoff_games.py",
+      "summary": "Diagnostic: queries Game table for game_type='playoff', prints rounds/matchups/scores with summary by playoff round",
+      "tags": [
+        "diagnostic",
+        "playoff",
+        "postseason"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:diagnostics/check_postseason_column.py",
+      "type": "file",
+      "name": "check_postseason_column.py",
+      "filePath": "diagnostics/check_postseason_column.py",
+      "summary": "Diagnostic: checks via SQLite PRAGMA whether postseason_name column exists on games table",
+      "tags": [
+        "diagnostic",
+        "schema",
+        "migration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:diagnostics/check_prediction_accuracy.py",
+      "type": "file",
+      "name": "check_prediction_accuracy.py",
+      "filePath": "diagnostics/check_prediction_accuracy.py",
+      "summary": "Diagnostic: queries Prediction table for was_correct, prints overall accuracy and per-season breakdown",
+      "tags": [
+        "diagnostic",
+        "prediction",
+        "accuracy"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:diagnostics/check_ranking_history.py",
+      "type": "file",
+      "name": "check_ranking_history.py",
+      "filePath": "diagnostics/check_ranking_history.py",
+      "summary": "Diagnostic: queries RankingHistory for available seasons, max week, entry count; shows top-5 teams",
+      "tags": [
+        "diagnostic",
+        "ranking",
+        "history"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:diagnostics/check_ranking_history_data.py",
+      "type": "file",
+      "name": "check_ranking_history_data.py",
+      "filePath": "diagnostics/check_ranking_history_data.py",
+      "summary": "Diagnostic: shows RankingHistory aggregated by season/week with team count; flags data quality issues",
+      "tags": [
+        "diagnostic",
+        "ranking",
+        "data-quality"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:diagnostics/check_team_games.py",
+      "type": "file",
+      "name": "check_team_games.py",
+      "filePath": "diagnostics/check_team_games.py",
+      "summary": "Diagnostic: shows all games for a given team/season with schedule gap detection; reports processed/unprocessed counts",
+      "tags": [
+        "diagnostic",
+        "game",
+        "team",
+        "schedule"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/backfill_historical_predictions.py",
+      "type": "file",
+      "name": "backfill_historical_predictions.py",
+      "filePath": "scripts/backfill_historical_predictions.py",
+      "summary": "Backfills Prediction records using pre-game ELO ratings from RankingHistory week N-1; supports dry-run and rollback modes",
+      "tags": [
+        "script",
+        "prediction",
+        "historical",
+        "backfill"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/check_games_by_season.py",
+      "type": "file",
+      "name": "check_games_by_season.py",
+      "filePath": "scripts/check_games_by_season.py",
+      "summary": "Diagnostic: counts games by week for each season, shows totals",
+      "tags": [
+        "diagnostic",
+        "games",
+        "season"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/check_predictions.py",
+      "type": "file",
+      "name": "check_predictions.py",
+      "filePath": "scripts/check_predictions.py",
+      "summary": "Diagnostic: counts predictions by season, evaluated vs unevaluated, samples first 5 predictions with correctness status",
+      "tags": [
+        "diagnostic",
+        "prediction"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/check_ranking_duplicates.py",
+      "type": "file",
+      "name": "check_ranking_duplicates.py",
+      "filePath": "scripts/check_ranking_duplicates.py",
+      "summary": "Finds duplicate team/season/week entries in ranking_history via GROUP BY + HAVING count>1",
+      "tags": [
+        "diagnostic",
+        "ranking",
+        "duplicate"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/cleanup_ranking_duplicates.py",
+      "type": "file",
+      "name": "cleanup_ranking_duplicates.py",
+      "filePath": "scripts/cleanup_ranking_duplicates.py",
+      "summary": "Removes duplicate ranking_history entries keeping highest ID; dry-run by default, --execute to commit",
+      "tags": [
+        "script",
+        "ranking",
+        "cleanup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/diagnose_predictions.py",
+      "type": "file",
+      "name": "diagnose_predictions.py",
+      "filePath": "scripts/diagnose_predictions.py",
+      "summary": "Diagnostic: checks current_week in Season, counts games by week for weeks 8-15 to debug prediction generation",
+      "tags": [
+        "diagnostic",
+        "prediction",
+        "debug"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/fix_current_week.py",
+      "type": "file",
+      "name": "fix_current_week.py",
+      "filePath": "scripts/fix_current_week.py",
+      "summary": "Maintenance script: updates Season.current_week via --year and --week CLI args; validates week 0-19 range",
+      "tags": [
+        "script",
+        "season",
+        "week"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:utilities/archive_season.py",
+      "type": "file",
+      "name": "archive_season.py",
+      "filePath": "utilities/archive_season.py",
+      "summary": "Marks season as is_active=False; verifies final snapshot at week 20 exists; copies docs to archive; creates season notes",
+      "tags": [
+        "utility",
+        "season",
+        "archive"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:utilities/evaluate_rating_systems.py",
+      "type": "file",
+      "name": "evaluate_rating_systems.py",
+      "filePath": "utilities/evaluate_rating_systems.py",
+      "summary": "Backtests different ELO configurations against historical results using accuracy, Brier score, and log loss metrics",
+      "tags": [
+        "utility",
+        "elo",
+        "evaluation",
+        "backtesting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:utilities/fix_unprocessed_games.py",
+      "type": "file",
+      "name": "fix_unprocessed_games.py",
+      "filePath": "utilities/fix_unprocessed_games.py",
+      "summary": "Scans for games with scores that are marked unprocessed, reprocesses them through ELO algorithm with safety checks",
+      "tags": [
+        "utility",
+        "game",
+        "repair"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:utilities/investigate_elo_imbalances.py",
+      "type": "file",
+      "name": "investigate_elo_imbalances.py",
+      "filePath": "utilities/investigate_elo_imbalances.py",
+      "summary": "Analyzes ELO rating distribution for anomalies: outlier teams, conference imbalances, expected vs actual rating ranges",
+      "tags": [
+        "utility",
+        "elo",
+        "analysis",
+        "diagnostics"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:utilities/validate_season.py",
+      "type": "file",
+      "name": "validate_season.py",
+      "filePath": "utilities/validate_season.py",
+      "summary": "Comprehensive season data validation: verifies all games imported/processed, ELO consistency; generates markdown validation report",
+      "tags": [
+        "utility",
+        "season",
+        "validation"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/models/database.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/core/position_service.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:src/core/position_service.py:calculate_position_strength",
+      "target": "function:src/core/position_service.py:get_position_group_scores",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/core/position_service.py:calculate_position_strength",
+      "target": "function:src/core/position_service.py:load_position_weights",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/core/position_service.py:get_position_group_scores",
+      "target": "function:src/core/position_service.py:load_position_weights",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:diagnostics/check_bowl_games.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_bowl_games.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_conference_championships.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_conference_championships.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_game_details.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_game_details.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_playoff_games.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_playoff_games.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_postseason_column.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_prediction_accuracy.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_prediction_accuracy.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_ranking_history.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_ranking_history.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_ranking_history_data.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_ranking_history_data.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_team_games.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/check_team_games.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/backfill_historical_predictions.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/backfill_historical_predictions.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/check_games_by_season.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/check_games_by_season.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/check_predictions.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/check_predictions.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/check_ranking_duplicates.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/check_ranking_duplicates.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/cleanup_ranking_duplicates.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/cleanup_ranking_duplicates.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/diagnose_predictions.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/diagnose_predictions.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/fix_current_week.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/fix_current_week.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/archive_season.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/archive_season.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/evaluate_rating_systems.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/evaluate_rating_systems.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/fix_unprocessed_games.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/fix_unprocessed_games.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/investigate_elo_imbalances.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/investigate_elo_imbalances.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/validate_season.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/validate_season.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "class:src/models/models.py:Team",
+      "target": "class:src/models/models.py:ConferenceType",
+      "type": "uses",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/core/position_service.py",
+      "target": "function:src/core/position_service.py:calculate_position_strength",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/core/position_service.py",
+      "target": "function:src/core/position_service.py:get_position_group_scores",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/core/position_service.py",
+      "target": "function:src/core/position_service.py:load_position_weights",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/models.py",
+      "target": "class:src/models/models.py:Team",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/models.py",
+      "target": "class:src/models/models.py:Player",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/models.py",
+      "target": "class:src/models/models.py:Game",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/models.py",
+      "target": "class:src/models/models.py:RankingHistory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/models.py",
+      "target": "class:src/models/models.py:Season",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/models.py",
+      "target": "class:src/models/models.py:APIUsage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/models.py",
+      "target": "class:src/models/models.py:UpdateTask",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/models.py",
+      "target": "class:src/models/models.py:Prediction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/models.py",
+      "target": "class:src/models/models.py:APPollRanking",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/models/models.py",
+      "target": "class:src/models/models.py:ConferenceType",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    }
+  ]
+}

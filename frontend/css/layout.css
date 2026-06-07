@@ -181,6 +181,35 @@
   }
 }
 
+/* ── Nav Season Selector (EPIC-041) ─────────────────────── */
+.nav-season-wrap {
+  margin-left: auto;
+  padding: 0.25rem 0;
+  flex-shrink: 0;
+}
+
+.nav-season-select {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.nav-season-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+@media (max-width: 767px) {
+  .nav-season-wrap {
+    padding: 0.4rem 0;
+  }
+}
+
 /* ── Main Container ──────────────────────────────────────── */
 .container {
   max-width: 1280px;

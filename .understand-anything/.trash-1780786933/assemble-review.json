@@ -1,0 +1,18 @@
+{
+  "fixedSectionOk": true,
+  "nodesRecovered": 3,
+  "edgesRestored": 0,
+  "crossBatchEdgesAdded": 5,
+  "typesRemapped": 0,
+  "complexityRemapped": 0,
+  "notes": [
+    "Fixed section: 554 nodes / 482 edges before review. All complexity values already normalized to simple/moderate/complex with no unknowns. No unknown node types present. No nodes with missing IDs.",
+    "Critical chain verified: file:src/api/main.py -> file:src/core/ranking_service.py -> file:src/models/models.py -> file:src/models/database.py chain is fully connected with correct import edges. file:src/models/database.py -> file:src/models/models.py edge also present. All five import-map-backed edges for main.py are present.",
+    "Three file nodes were entirely absent from the assembled graph despite being listed in batches.json for batch-35: src/core/ap_poll_service.py (353 lines, AP poll comparison logic), src/core/transfer_portal_service.py (187 lines, transfer portal aggregation), and utilities/finalize_season_stats.py (531 lines, season finalization orchestrator). Batch-35 analyzed frontend/js files instead, leaving these three files unanalyzed. Stub nodes were created with summaries derived from reading the actual source files.",
+    "Five import edges backed by the import map were missing due to the unanalyzed files: ap_poll_service.py -> models.py, finalize_season_stats.py -> ap_poll_service.py, finalize_season_stats.py -> ranking_service.py, finalize_season_stats.py -> database.py, finalize_season_stats.py -> models.py. All five were added.",
+    "main.py lazy-imports cfbd_client.py (inside function bodies at lines 1157, 2051, 2213, 2370, 2683) and position_service.py (lines 577, 2504, 2554). These do NOT appear in the static import map so no edges were added per instructions. This is an expected limitation of static import analysis.",
+    "ranking_service.py does not import database.py at all — it receives Session objects via dependency injection. The missing ranking_service -> database edge is correct behavior, not a gap.",
+    "cfb_elo_ranking.py exists in src/core/ and appears in no batch output and is not in the import map. It may be an archived/unused algorithm file. No node was created since it is not backed by import map data.",
+    "Final assembled graph: 557 nodes, 487 edges. No dangling edges remain."
+  ]
+}

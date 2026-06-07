@@ -1,0 +1,75 @@
+{
+  "nodes": [
+    {
+      "id": "document:.github/ISSUE_TEMPLATE/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": ".github/ISSUE_TEMPLATE/README.md",
+      "summary": "Usage guide for GitHub issue templates in the Epic: Fix CFBD Client Test Failures. Describes two story templates (STORY-CFBD-01 investigation, STORY-CFBD-02 implementation), three creation methods (GitHub web UI, gh CLI, manual paste), template structure (overview/user story/context/acceptance criteria/implementation guide/definition of done/risks/links/notes), interactive checkbox workflow, recommended issue sequencing (01 before 02), and labels reference (investigation, bug, tests, priority-high, epic-cfbd-test-failures).",
+      "tags": ["documentation", "github", "issue-templates", "workflow"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.github/ISSUE_TEMPLATE/story-cfbd-01-investigate-api-schema.md",
+      "type": "document",
+      "name": "story-cfbd-01-investigate-api-schema.md",
+      "filePath": ".github/ISSUE_TEMPLATE/story-cfbd-01-investigate-api-schema.md",
+      "summary": "GitHub issue template for STORY-CFBD-01: investigation of CFBD API field naming convention (camelCase homePoints/awayPoints vs snake_case home_points/away_points) causing 6 failing tests in test_cfbd_client.py where get_current_week() returns None. Estimated 2-4 hours effort, high priority. Integration points: CFBDClient in src/integrations/cfbd_client.py and tests/unit/test_cfbd_client.py.",
+      "tags": ["github-template", "investigation", "cfbd-api", "testing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.github/ISSUE_TEMPLATE/story-cfbd-02-fix-test-mocks.md",
+      "type": "document",
+      "name": "story-cfbd-02-fix-test-mocks.md",
+      "filePath": ".github/ISSUE_TEMPLATE/story-cfbd-02-fix-test-mocks.md",
+      "summary": "GitHub issue template for STORY-CFBD-02 (blocked by STORY-CFBD-01): fix 6 failing tests in test_cfbd_client.py where test mocks use incorrect field names. Failing tests include test_get_current_week_with_completed_games, test_get_current_week_week_1_only, test_get_current_week_ignores_missing_week_field, and 3 others. Goal: align test mocks with real CFBD API schema to restore CI/CD to green. Estimated 2-4 hours effort.",
+      "tags": ["github-template", "bug", "testing", "ci-cd"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:.github/ISSUE_TEMPLATE/story-cfbd-02-fix-test-mocks.md",
+      "target": "document:.github/ISSUE_TEMPLATE/story-cfbd-01-investigate-api-schema.md",
+      "type": "blocked-by",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "document:.github/ISSUE_TEMPLATE/README.md",
+      "target": "document:.github/ISSUE_TEMPLATE/story-cfbd-01-investigate-api-schema.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "document:.github/ISSUE_TEMPLATE/README.md",
+      "target": "document:.github/ISSUE_TEMPLATE/story-cfbd-02-fix-test-mocks.md",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "document:.github/ISSUE_TEMPLATE/story-cfbd-01-investigate-api-schema.md",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "references",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "document:.github/ISSUE_TEMPLATE/story-cfbd-02-fix-test-mocks.md",
+      "target": "file:tests/unit/test_cfbd_client.py",
+      "type": "references",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "document:.github/ISSUE_TEMPLATE/story-cfbd-02-fix-test-mocks.md",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "references",
+      "direction": "forward",
+      "weight": 0.7
+    }
+  ]
+}

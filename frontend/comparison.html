@@ -50,6 +50,9 @@
         <a href="simulator.html" class="nav-link">Simulator</a>
         <a href="matchup.html" class="nav-link">Matchup</a>
       </div>
+      <div class="nav-season-wrap">
+        <select id="nav-season-select" class="nav-season-select" aria-label="Season"></select>
+      </div>
     </div>
   </nav>
 
@@ -67,13 +70,6 @@
       <div class="card" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); color: white; margin-bottom: 2rem;">
         <div class="card-header">
           <h2 class="card-title" style="color: white; font-size: 1.5rem;">Prediction Accuracy Comparison</h2>
-          <!-- Season Selector -->
-          <div style="margin-top: 1rem;">
-            <label for="season-select" style="color: rgba(255, 255, 255, 0.9); margin-right: 0.5rem; font-size: 0.95rem;">Season:</label>
-            <select class="filter-select" id="season-select" style="background: rgba(255, 255, 255, 0.95); color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer;">
-              <option value="">Loading seasons...</option>
-            </select>
-          </div>
         </div>
 
         <!-- Overall ELO Accuracy (All Games) -->
@@ -275,6 +271,7 @@
   </footer>
 
   <script src="js/api.js"></script>
+  <script src="js/season.js"></script>
   <script src="js/comparison.js"></script>
 </body>
 </html>

@@ -210,6 +210,9 @@
         <a href="simulator.html" class="nav-link">Simulator</a>
         <a href="matchup.html" class="nav-link">Matchup</a>
       </div>
+      <div class="nav-season-wrap">
+        <select id="nav-season-select" class="nav-season-select" aria-label="Season"></select>
+      </div>
     </div>
   </nav>
 
@@ -765,5 +768,7 @@ Rating Change = <span class="constant">K-Factor (48/40/32)</span>
     document.getElementById('calc-rating-b').addEventListener('input', calcWinProb);
     calcWinProb(); // initial render
   </script>
+  <script src="js/api.js"></script>
+  <script src="js/season.js"></script>
 </body>
 </html>

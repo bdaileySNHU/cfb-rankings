@@ -1,0 +1,78 @@
+{
+  "nodes": [
+    {
+      "id": "document:.bmad-core/data/bmad-kb.md",
+      "type": "document",
+      "name": "bmad-kb.md",
+      "filePath": ".bmad-core/data/bmad-kb.md",
+      "summary": "Primary BMad knowledge base (809 lines) covering the full BMAD methodology, modular agent system, build system, dual web/IDE environment support, and workflow orchestration patterns.",
+      "tags": ["dev-tooling", "bmad", "knowledge-base", "reference"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:.bmad-core/data/brainstorming-techniques.md",
+      "type": "document",
+      "name": "brainstorming-techniques.md",
+      "filePath": ".bmad-core/data/brainstorming-techniques.md",
+      "summary": "Reference data listing 20 structured brainstorming techniques (SCAMPER, Six Hats, Five Whys, etc.) used by the Analyst agent during ideation sessions.",
+      "tags": ["dev-tooling", "bmad", "analyst", "brainstorming"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/data/elicitation-methods.md",
+      "type": "document",
+      "name": "elicitation-methods.md",
+      "filePath": ".bmad-core/data/elicitation-methods.md",
+      "summary": "Reference data describing structured elicitation methods (reflective, structural, generative) agents use to draw out requirements and refine outputs interactively.",
+      "tags": ["dev-tooling", "bmad", "elicitation", "requirements"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/data/technical-preferences.md",
+      "type": "document",
+      "name": "technical-preferences.md",
+      "filePath": ".bmad-core/data/technical-preferences.md",
+      "summary": "Placeholder file for user-defined technical patterns and preferences loaded by architect, dev, PM, and QA agents — currently empty for this project.",
+      "tags": ["dev-tooling", "bmad", "configuration", "preferences"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/data/test-levels-framework.md",
+      "type": "document",
+      "name": "test-levels-framework.md",
+      "filePath": ".bmad-core/data/test-levels-framework.md",
+      "summary": "Decision framework for choosing between unit, integration, and E2E test levels based on scenario characteristics, external dependencies, and coverage goals.",
+      "tags": ["dev-tooling", "bmad", "testing", "quality-assurance"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/data/test-priorities-matrix.md",
+      "type": "document",
+      "name": "test-priorities-matrix.md",
+      "filePath": ".bmad-core/data/test-priorities-matrix.md",
+      "summary": "Risk-based test prioritization matrix (P0-P3) guiding QA agents to focus testing effort on revenue-critical, security-sensitive, and regression-prone functionality first.",
+      "tags": ["dev-tooling", "bmad", "testing", "quality-assurance", "risk"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:.bmad-core/data/test-levels-framework.md",
+      "target": "document:.bmad-core/data/test-priorities-matrix.md",
+      "type": "related",
+      "label": "complements"
+    },
+    {
+      "source": "document:.bmad-core/data/bmad-kb.md",
+      "target": "document:.bmad-core/data/brainstorming-techniques.md",
+      "type": "related",
+      "label": "references"
+    },
+    {
+      "source": "document:.bmad-core/data/bmad-kb.md",
+      "target": "document:.bmad-core/data/elicitation-methods.md",
+      "type": "related",
+      "label": "references"
+    }
+  ]
+}

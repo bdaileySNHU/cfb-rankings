@@ -1,0 +1,3163 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "louvain",
+  "totalFiles": 409,
+  "totalBatches": 21,
+  "exportsByPath": {
+    ".coveragerc": [],
+    ".flake8": [],
+    ".understand-anything/.understandignore": [],
+    "=23.0.0": [],
+    "=5.12.0": [],
+    "=6.0.0": [],
+    "cfb_rankings.db.backup": [],
+    "cfb_rankings.db.backup_pre_29.1": [],
+    "check_bowl_game_weeks.py": [
+      "main"
+    ],
+    "data/.gitkeep": [],
+    "deploy/cfb-rankings.service": [],
+    "deploy/cfb-weekly-update.service": [],
+    "deploy/cfb-weekly-update.timer": [],
+    "deploy/nginx.conf": [],
+    "diagnostics/check_bowl_games.py": [
+      "check_bowl_games"
+    ],
+    "diagnostics/check_conference_championships.py": [
+      "check_conference_championships"
+    ],
+    "diagnostics/check_game_details.py": [
+      "check_game_details"
+    ],
+    "diagnostics/check_playoff_games.py": [
+      "check_playoff_games"
+    ],
+    "diagnostics/check_postseason_column.py": [
+      "check_column"
+    ],
+    "diagnostics/check_prediction_accuracy.py": [],
+    "diagnostics/check_production_schema.py": [
+      "check_schema"
+    ],
+    "diagnostics/check_ranking_history_data.py": [
+      "check_ranking_history"
+    ],
+    "diagnostics/check_ranking_history.py": [
+      "check_ranking_history"
+    ],
+    "diagnostics/check_team_games.py": [
+      "check_team_games"
+    ],
+    "diagnostics/debug_championships.py": [
+      "debug_championships"
+    ],
+    "diagnostics/diagnose_missing_games.py": [
+      "check_team_games"
+    ],
+    "docs/cfb_rankings.db.backup_pre_29.1": [],
+    "frontend/js/api.js": [],
+    "frontend/js/app.js": [],
+    "frontend/js/comparison.js": [],
+    "frontend/js/date-utils.js": [],
+    "frontend/js/matchup.js": [],
+    "frontend/js/share.js": [],
+    "frontend/js/simulator.js": [],
+    "frontend/js/team.js": [],
+    "frontend/js/theme.js": [],
+    "gunicorn_config.py": [],
+    "import_real_data.py": [
+      "parse_game_date",
+      "validate_api_connection",
+      "get_week_statistics",
+      "import_teams",
+      "get_or_create_fcs_team",
+      "check_for_duplicates",
+      "print_duplicate_report",
+      "validate_import_results",
+      "import_ap_poll_rankings",
+      "import_conference_championships",
+      "import_bowl_games",
+      "import_playoff_games",
+      "import_games",
+      "main"
+    ],
+    "scripts/backfill_historical_predictions.py": [
+      "get_historical_rating",
+      "calculate_prediction_timestamp",
+      "prediction_exists",
+      "detect_anomalies",
+      "rollback_predictions",
+      "parse_arguments",
+      "backfill_predictions_for_season",
+      "main"
+    ],
+    "scripts/backfill_predictions.py": [
+      "backfill_predictions",
+      "main"
+    ],
+    "scripts/backfill_quarter_scores.py": [
+      "QuarterScoreBackfiller",
+      "main"
+    ],
+    "scripts/check_database_status.py": [],
+    "scripts/check_games_by_season.py": [
+      "main"
+    ],
+    "scripts/check_predictions.py": [
+      "main"
+    ],
+    "scripts/check_ranking_duplicates.py": [
+      "check_duplicates",
+      "main"
+    ],
+    "scripts/check_week11_api.py": [
+      "main"
+    ],
+    "scripts/cleanup_ranking_duplicates.py": [
+      "find_duplicates",
+      "cleanup_duplicates",
+      "main"
+    ],
+    "scripts/debug_cfbd_response.py": [
+      "main"
+    ],
+    "scripts/diagnose_predictions.py": [
+      "main"
+    ],
+    "scripts/fix_current_week.py": [
+      "update_current_week",
+      "main"
+    ],
+    "scripts/generate_all_predictions.py": [
+      "main"
+    ],
+    "scripts/generate_predictions.py": [
+      "main"
+    ],
+    "scripts/generate_ranking_comparison_report.py": [
+      "RankingComparisonReport",
+      "main"
+    ],
+    "scripts/import_ap_poll_only.py": [
+      "import_ap_poll_for_week",
+      "main"
+    ],
+    "scripts/start_new_season.py": [
+      "validate_new_season",
+      "archive_previous_season",
+      "create_new_season",
+      "reset_team_ratings",
+      "save_preseason_rankings",
+      "validate_season_data",
+      "main"
+    ],
+    "scripts/test_cfbd_data.py": [
+      "main"
+    ],
+    "scripts/update_current_week.py": [
+      "update_current_week",
+      "main"
+    ],
+    "scripts/update_games.py": [
+      "update_games",
+      "main"
+    ],
+    "scripts/weekly_update.py": [
+      "is_active_season",
+      "check_api_usage",
+      "get_current_week_wrapper",
+      "validate_week_number",
+      "update_current_week",
+      "run_import_script",
+      "main"
+    ],
+    "src/__init__.py": [],
+    "src/api/__init__.py": [],
+    "src/api/main.py": [
+      "startup_event",
+      "root",
+      "get_teams",
+      "get_team",
+      "create_team",
+      "update_team",
+      "get_team_schedule",
+      "get_team_players",
+      "get_team_position_strength",
+      "get_team_elo_history",
+      "get_team_games",
+      "get_team_preseason",
+      "get_matchup",
+      "get_games",
+      "get_game",
+      "create_game",
+      "get_predictions",
+      "get_historical_predictions",
+      "get_prediction_accuracy",
+      "get_team_prediction_accuracy_endpoint",
+      "get_stored_predictions",
+      "get_prediction_comparison",
+      "get_rankings",
+      "get_ranking_history",
+      "get_preseason_components",
+      "save_rankings",
+      "get_seasons",
+      "create_season",
+      "reset_season",
+      "get_active_season",
+      "get_season",
+      "get_stats",
+      "recalculate_rankings",
+      "get_api_usage",
+      "run_weekly_update_task",
+      "trigger_manual_update",
+      "get_update_status",
+      "update_current_week_manual",
+      "get_usage_dashboard",
+      "get_system_config",
+      "update_system_config",
+      "get_preseason_weights",
+      "update_preseason_weights",
+      "_ensure_data_dir",
+      "get_import_status",
+      "trigger_import"
+    ],
+    "src/core/__init__.py": [],
+    "src/core/ap_poll_service.py": [
+      "get_team_ap_rank",
+      "get_ap_prediction_for_game",
+      "calculate_comparison_stats"
+    ],
+    "src/core/cfb_elo_ranking.py": [
+      "Conference",
+      "Team",
+      "ELORankingSystem"
+    ],
+    "src/core/position_service.py": [
+      "_normalize_rating",
+      "load_position_weights",
+      "_validate_config",
+      "resolve_roster_season",
+      "get_position_group_scores",
+      "aggregate_player_ratings",
+      "calculate_position_strength"
+    ],
+    "src/core/ranking_service.py": [
+      "RankingService",
+      "generate_predictions",
+      "validate_week",
+      "validate_team_for_prediction",
+      "validate_predicted_score",
+      "validate_game_for_prediction",
+      "_validate_prediction_teams",
+      "_calculate_game_prediction",
+      "create_and_store_prediction",
+      "evaluate_prediction_accuracy",
+      "get_overall_prediction_accuracy",
+      "get_team_prediction_accuracy"
+    ],
+    "src/core/transfer_portal_service.py": [
+      "TransferPortalService"
+    ],
+    "src/integrations/__init__.py": [],
+    "src/integrations/cfbd_client.py": [
+      "track_api_usage",
+      "get_monthly_usage",
+      "check_usage_warnings",
+      "get_season_end_date",
+      "CFBDClient",
+      "test_api"
+    ],
+    "src/models/__init__.py": [],
+    "src/models/database.py": [
+      "init_db",
+      "get_db",
+      "reset_db"
+    ],
+    "src/models/models.py": [
+      "ConferenceType",
+      "Team",
+      "Player",
+      "RosterPlayer",
+      "Game",
+      "RankingHistory",
+      "Season",
+      "APIUsage",
+      "UpdateTask",
+      "Prediction",
+      "APPollRanking"
+    ],
+    "src/models/schemas.py": [
+      "TeamBase",
+      "TeamCreate",
+      "TeamUpdate",
+      "Team",
+      "TeamDetail",
+      "PlayerBase",
+      "PlayerCreate",
+      "PlayerResponse",
+      "TeamPlayersResponse",
+      "GameBase",
+      "GameCreate",
+      "Game",
+      "GameDetail",
+      "RankingEntry",
+      "RankingsResponse",
+      "RankingHistory",
+      "GameResult",
+      "SystemStats",
+      "ScheduleGame",
+      "TeamSchedule",
+      "ErrorResponse",
+      "SuccessResponse",
+      "SeasonResponse",
+      "EndpointUsage",
+      "APIUsageResponse",
+      "UpdateTriggerResponse",
+      "UpdateTaskResult",
+      "UpdateTaskStatus",
+      "DailyUsage",
+      "CurrentMonthStats",
+      "UsageDashboardResponse",
+      "SystemConfig",
+      "ConfigUpdate",
+      "PreseasonWeightsUpdate",
+      "PreseasonWeightsResponse",
+      "PreseasonComponent",
+      "GamePrediction",
+      "HistoricalPrediction",
+      "HistoricalPredictionSummary",
+      "PredictionAccuracyStats",
+      "TeamPredictionAccuracy",
+      "StoredPrediction",
+      "DisagreementDetail",
+      "WeeklyComparisonStats",
+      "ComparisonStats",
+      "RankMover",
+      "ImportStatus",
+      "ImportResult"
+    ],
+    "utilities/archive_season.py": [
+      "verify_final_snapshot_exists",
+      "check_active_seasons",
+      "archive_season",
+      "create_archival_documentation",
+      "create_season_end_checklist",
+      "verify_system_readiness",
+      "main"
+    ],
+    "utilities/compare_rankings.py": [
+      "compare_with_ap_poll",
+      "analyze_prediction_accuracy",
+      "show_elo_insights",
+      "main"
+    ],
+    "utilities/compare_transfer_rankings.py": [
+      "get_our_rankings",
+      "normalize_team_name",
+      "find_overlaps",
+      "calculate_correlation",
+      "main"
+    ],
+    "utilities/demo.py": [
+      "create_sample_teams",
+      "run_sample_season",
+      "main"
+    ],
+    "utilities/evaluate_rating_systems.py": [
+      "RatingSystem",
+      "CurrentSystem",
+      "ProgressiveKSystem",
+      "PreseasonDecaySystem",
+      "evaluate_systems"
+    ],
+    "utilities/finalize_season_stats.py": [
+      "SeasonStatistics",
+      "calculate_final_rankings",
+      "store_final_snapshot",
+      "calculate_prediction_accuracy",
+      "calculate_ap_comparison",
+      "calculate_conference_stats",
+      "identify_top_performers",
+      "main"
+    ],
+    "utilities/fix_unprocessed_games.py": [
+      "investigate_unprocessed",
+      "fix_fcs_games",
+      "main"
+    ],
+    "utilities/import_player_data.py": [
+      "check_api_quota",
+      "import_players_for_team",
+      "import_all_teams",
+      "verify_import",
+      "main"
+    ],
+    "utilities/investigate_elo_imbalances.py": [
+      "analyze_imbalances",
+      "main"
+    ],
+    "utilities/populate_espn_ids.py": [
+      "main"
+    ],
+    "utilities/reprocess_season.py": [
+      "check_season_exists",
+      "analyze_current_state",
+      "reset_season_data",
+      "reprocess_season",
+      "verify_reprocessing",
+      "main"
+    ],
+    "utilities/save_final_season_snapshot.py": [
+      "main"
+    ],
+    "utilities/seed_data.py": [
+      "seed_database"
+    ],
+    "utilities/validate_season.py": [
+      "ValidationReport",
+      "validate_game_completeness",
+      "validate_elo_integrity",
+      "validate_ap_poll_completeness",
+      "validate_missing_data",
+      "main"
+    ]
+  },
+  "batches": [
+    {
+      "batchIndex": 1,
+      "files": [
+        {
+          "path": "diagnostics/check_bowl_games.py",
+          "language": "python",
+          "sizeLines": 97,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnostics/check_conference_championships.py",
+          "language": "python",
+          "sizeLines": 103,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnostics/check_game_details.py",
+          "language": "python",
+          "sizeLines": 81,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnostics/check_playoff_games.py",
+          "language": "python",
+          "sizeLines": 111,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnostics/check_postseason_column.py",
+          "language": "python",
+          "sizeLines": 59,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnostics/check_prediction_accuracy.py",
+          "language": "python",
+          "sizeLines": 65,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnostics/check_ranking_history.py",
+          "language": "python",
+          "sizeLines": 103,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnostics/check_ranking_history_data.py",
+          "language": "python",
+          "sizeLines": 95,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnostics/check_team_games.py",
+          "language": "python",
+          "sizeLines": 125,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/backfill_historical_predictions.py",
+          "language": "python",
+          "sizeLines": 563,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/check_games_by_season.py",
+          "language": "python",
+          "sizeLines": 56,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/check_predictions.py",
+          "language": "python",
+          "sizeLines": 83,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/check_ranking_duplicates.py",
+          "language": "python",
+          "sizeLines": 127,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/cleanup_ranking_duplicates.py",
+          "language": "python",
+          "sizeLines": 141,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/diagnose_predictions.py",
+          "language": "python",
+          "sizeLines": 89,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/fix_current_week.py",
+          "language": "python",
+          "sizeLines": 80,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/core/ap_poll_service.py",
+          "language": "python",
+          "sizeLines": 353,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/core/position_service.py",
+          "language": "python",
+          "sizeLines": 372,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/models/database.py",
+          "language": "python",
+          "sizeLines": 116,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/models/models.py",
+          "language": "python",
+          "sizeLines": 680,
+          "fileCategory": "code"
+        },
+        {
+          "path": "utilities/archive_season.py",
+          "language": "python",
+          "sizeLines": 454,
+          "fileCategory": "code"
+        },
+        {
+          "path": "utilities/evaluate_rating_systems.py",
+          "language": "python",
+          "sizeLines": 380,
+          "fileCategory": "code"
+        },
+        {
+          "path": "utilities/finalize_season_stats.py",
+          "language": "python",
+          "sizeLines": 531,
+          "fileCategory": "code"
+        },
+        {
+          "path": "utilities/fix_unprocessed_games.py",
+          "language": "python",
+          "sizeLines": 191,
+          "fileCategory": "code"
+        },
+        {
+          "path": "utilities/investigate_elo_imbalances.py",
+          "language": "python",
+          "sizeLines": 152,
+          "fileCategory": "code"
+        },
+        {
+          "path": "utilities/validate_season.py",
+          "language": "python",
+          "sizeLines": 515,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "diagnostics/check_bowl_games.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "diagnostics/check_conference_championships.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "diagnostics/check_game_details.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "diagnostics/check_playoff_games.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "diagnostics/check_postseason_column.py": [
+          "src/models/database.py"
+        ],
+        "diagnostics/check_prediction_accuracy.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "diagnostics/check_ranking_history.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "diagnostics/check_ranking_history_data.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "diagnostics/check_team_games.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "scripts/backfill_historical_predictions.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "scripts/check_games_by_season.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "scripts/check_predictions.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "scripts/check_ranking_duplicates.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "scripts/cleanup_ranking_duplicates.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "scripts/diagnose_predictions.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "scripts/fix_current_week.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "src/core/ap_poll_service.py": [
+          "src/models/models.py"
+        ],
+        "src/core/position_service.py": [
+          "src/models/models.py"
+        ],
+        "src/models/database.py": [
+          "src/models/models.py"
+        ],
+        "src/models/models.py": [],
+        "utilities/archive_season.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "utilities/evaluate_rating_systems.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "utilities/finalize_season_stats.py": [
+          "src/core/ap_poll_service.py",
+          "src/core/ranking_service.py",
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "utilities/fix_unprocessed_games.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "utilities/investigate_elo_imbalances.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "utilities/validate_season.py": [
+          "src/models/database.py",
+          "src/models/models.py"
+        ]
+      },
+      "neighborMap": {
+        "src/models/database.py": [
+          {
+            "path": "import_real_data.py",
+            "batchIndex": 3,
+            "symbols": [
+              "parse_game_date",
+              "validate_api_connection",
+              "get_week_statistics",
+              "import_teams",
+              "get_or_create_fcs_team",
+              "check_for_duplicates",
+              "print_duplicate_report",
+              "validate_import_results",
+              "import_ap_poll_rankings",
+              "import_conference_championships",
+              "import_bowl_games",
+              "import_playoff_games",
+              "import_games",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/backfill_predictions.py",
+            "batchIndex": 3,
+            "symbols": [
+              "backfill_predictions",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/backfill_quarter_scores.py",
+            "batchIndex": 2,
+            "symbols": [
+              "QuarterScoreBackfiller",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/generate_all_predictions.py",
+            "batchIndex": 3,
+            "symbols": [
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/generate_predictions.py",
+            "batchIndex": 3,
+            "symbols": [
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/generate_ranking_comparison_report.py",
+            "batchIndex": 3,
+            "symbols": [
+              "RankingComparisonReport",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/import_ap_poll_only.py",
+            "batchIndex": 2,
+            "symbols": [
+              "import_ap_poll_for_week",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/start_new_season.py",
+            "batchIndex": 3,
+            "symbols": [
+              "validate_new_season",
+              "archive_previous_season",
+              "create_new_season",
+              "reset_team_ratings",
+              "save_preseason_rankings",
+              "validate_season_data",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/update_games.py",
+            "batchIndex": 2,
+            "symbols": [
+              "update_games",
+              "main"
+            ]
+          },
+          {
+            "path": "src/api/main.py",
+            "batchIndex": 4,
+            "symbols": [
+              "startup_event",
+              "root",
+              "get_teams",
+              "get_team",
+              "create_team",
+              "update_team",
+              "get_team_schedule",
+              "get_team_players",
+              "get_team_position_strength",
+              "get_team_elo_history",
+              "get_team_games",
+              "get_team_preseason",
+              "get_matchup",
+              "get_games",
+              "get_game",
+              "create_game",
+              "get_predictions",
+              "get_historical_predictions",
+              "get_prediction_accuracy",
+              "get_team_prediction_accuracy_endpoint",
+              "get_stored_predictions",
+              "get_prediction_comparison",
+              "get_rankings",
+              "get_ranking_history",
+              "get_preseason_components",
+              "save_rankings",
+              "get_seasons",
+              "create_season",
+              "reset_season",
+              "get_active_season",
+              "get_season",
+              "get_stats",
+              "recalculate_rankings",
+              "get_api_usage",
+              "run_weekly_update_task",
+              "trigger_manual_update",
+              "get_update_status",
+              "update_current_week_manual",
+              "get_usage_dashboard",
+              "get_system_config",
+              "update_system_config",
+              "get_preseason_weights",
+              "update_preseason_weights",
+              "_ensure_data_dir",
+              "get_import_status",
+              "trigger_import"
+            ]
+          },
+          {
+            "path": "utilities/compare_rankings.py",
+            "batchIndex": 2,
+            "symbols": [
+              "compare_with_ap_poll",
+              "analyze_prediction_accuracy",
+              "show_elo_insights",
+              "main"
+            ]
+          },
+          {
+            "path": "utilities/import_player_data.py",
+            "batchIndex": 2,
+            "symbols": [
+              "check_api_quota",
+              "import_players_for_team",
+              "import_all_teams",
+              "verify_import",
+              "main"
+            ]
+          },
+          {
+            "path": "utilities/reprocess_season.py",
+            "batchIndex": 3,
+            "symbols": [
+              "check_season_exists",
+              "analyze_current_state",
+              "reset_season_data",
+              "reprocess_season",
+              "verify_reprocessing",
+              "main"
+            ]
+          },
+          {
+            "path": "utilities/save_final_season_snapshot.py",
+            "batchIndex": 3,
+            "symbols": [
+              "main"
+            ]
+          },
+          {
+            "path": "utilities/seed_data.py",
+            "batchIndex": 3,
+            "symbols": [
+              "seed_database"
+            ]
+          }
+        ],
+        "src/models/models.py": [
+          {
+            "path": "import_real_data.py",
+            "batchIndex": 3,
+            "symbols": [
+              "parse_game_date",
+              "validate_api_connection",
+              "get_week_statistics",
+              "import_teams",
+              "get_or_create_fcs_team",
+              "check_for_duplicates",
+              "print_duplicate_report",
+              "validate_import_results",
+              "import_ap_poll_rankings",
+              "import_conference_championships",
+              "import_bowl_games",
+              "import_playoff_games",
+              "import_games",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/backfill_predictions.py",
+            "batchIndex": 3,
+            "symbols": [
+              "backfill_predictions",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/backfill_quarter_scores.py",
+            "batchIndex": 2,
+            "symbols": [
+              "QuarterScoreBackfiller",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/generate_all_predictions.py",
+            "batchIndex": 3,
+            "symbols": [
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/generate_predictions.py",
+            "batchIndex": 3,
+            "symbols": [
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/generate_ranking_comparison_report.py",
+            "batchIndex": 3,
+            "symbols": [
+              "RankingComparisonReport",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/import_ap_poll_only.py",
+            "batchIndex": 2,
+            "symbols": [
+              "import_ap_poll_for_week",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/start_new_season.py",
+            "batchIndex": 3,
+            "symbols": [
+              "validate_new_season",
+              "archive_previous_season",
+              "create_new_season",
+              "reset_team_ratings",
+              "save_preseason_rankings",
+              "validate_season_data",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/update_games.py",
+            "batchIndex": 2,
+            "symbols": [
+              "update_games",
+              "main"
+            ]
+          },
+          {
+            "path": "src/api/main.py",
+            "batchIndex": 4,
+            "symbols": [
+              "startup_event",
+              "root",
+              "get_teams",
+              "get_team",
+              "create_team",
+              "update_team",
+              "get_team_schedule",
+              "get_team_players",
+              "get_team_position_strength",
+              "get_team_elo_history",
+              "get_team_games",
+              "get_team_preseason",
+              "get_matchup",
+              "get_games",
+              "get_game",
+              "create_game",
+              "get_predictions",
+              "get_historical_predictions",
+              "get_prediction_accuracy",
+              "get_team_prediction_accuracy_endpoint",
+              "get_stored_predictions",
+              "get_prediction_comparison",
+              "get_rankings",
+              "get_ranking_history",
+              "get_preseason_components",
+              "save_rankings",
+              "get_seasons",
+              "create_season",
+              "reset_season",
+              "get_active_season",
+              "get_season",
+              "get_stats",
+              "recalculate_rankings",
+              "get_api_usage",
+              "run_weekly_update_task",
+              "trigger_manual_update",
+              "get_update_status",
+              "update_current_week_manual",
+              "get_usage_dashboard",
+              "get_system_config",
+              "update_system_config",
+              "get_preseason_weights",
+              "update_preseason_weights",
+              "_ensure_data_dir",
+              "get_import_status",
+              "trigger_import"
+            ]
+          },
+          {
+            "path": "src/core/ranking_service.py",
+            "batchIndex": 3,
+            "symbols": [
+              "RankingService",
+              "generate_predictions",
+              "validate_week",
+              "validate_team_for_prediction",
+              "validate_predicted_score",
+              "validate_game_for_prediction",
+              "_validate_prediction_teams",
+              "_calculate_game_prediction",
+              "create_and_store_prediction",
+              "evaluate_prediction_accuracy",
+              "get_overall_prediction_accuracy",
+              "get_team_prediction_accuracy"
+            ]
+          },
+          {
+            "path": "src/models/schemas.py",
+            "batchIndex": 4,
+            "symbols": [
+              "TeamBase",
+              "TeamCreate",
+              "TeamUpdate",
+              "Team",
+              "TeamDetail",
+              "PlayerBase",
+              "PlayerCreate",
+              "PlayerResponse",
+              "TeamPlayersResponse",
+              "GameBase",
+              "GameCreate",
+              "Game",
+              "GameDetail",
+              "RankingEntry",
+              "RankingsResponse",
+              "RankingHistory",
+              "GameResult",
+              "SystemStats",
+              "ScheduleGame",
+              "TeamSchedule",
+              "ErrorResponse",
+              "SuccessResponse",
+              "SeasonResponse",
+              "EndpointUsage",
+              "APIUsageResponse",
+              "UpdateTriggerResponse",
+              "UpdateTaskResult",
+              "UpdateTaskStatus",
+              "DailyUsage",
+              "CurrentMonthStats",
+              "UsageDashboardResponse",
+              "SystemConfig",
+              "ConfigUpdate",
+              "PreseasonWeightsUpdate",
+              "PreseasonWeightsResponse",
+              "PreseasonComponent",
+              "GamePrediction",
+              "HistoricalPrediction",
+              "HistoricalPredictionSummary",
+              "PredictionAccuracyStats",
+              "TeamPredictionAccuracy",
+              "StoredPrediction",
+              "DisagreementDetail",
+              "WeeklyComparisonStats",
+              "ComparisonStats",
+              "RankMover",
+              "ImportStatus",
+              "ImportResult"
+            ]
+          },
+          {
+            "path": "utilities/import_player_data.py",
+            "batchIndex": 2,
+            "symbols": [
+              "check_api_quota",
+              "import_players_for_team",
+              "import_all_teams",
+              "verify_import",
+              "main"
+            ]
+          },
+          {
+            "path": "utilities/reprocess_season.py",
+            "batchIndex": 3,
+            "symbols": [
+              "check_season_exists",
+              "analyze_current_state",
+              "reset_season_data",
+              "reprocess_season",
+              "verify_reprocessing",
+              "main"
+            ]
+          },
+          {
+            "path": "utilities/save_final_season_snapshot.py",
+            "batchIndex": 3,
+            "symbols": [
+              "main"
+            ]
+          },
+          {
+            "path": "utilities/seed_data.py",
+            "batchIndex": 3,
+            "symbols": [
+              "seed_database"
+            ]
+          }
+        ],
+        "utilities/finalize_season_stats.py": [
+          {
+            "path": "src/core/ranking_service.py",
+            "batchIndex": 3,
+            "symbols": [
+              "RankingService",
+              "generate_predictions",
+              "validate_week",
+              "validate_team_for_prediction",
+              "validate_predicted_score",
+              "validate_game_for_prediction",
+              "_validate_prediction_teams",
+              "_calculate_game_prediction",
+              "create_and_store_prediction",
+              "evaluate_prediction_accuracy",
+              "get_overall_prediction_accuracy",
+              "get_team_prediction_accuracy"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 2,
+      "files": [
+        {
+          "path": "check_bowl_game_weeks.py",
+          "language": "python",
+          "sizeLines": 132,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnostics/debug_championships.py",
+          "language": "python",
+          "sizeLines": 122,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnostics/diagnose_missing_games.py",
+          "language": "python",
+          "sizeLines": 86,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/backfill_quarter_scores.py",
+          "language": "python",
+          "sizeLines": 212,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/check_week11_api.py",
+          "language": "python",
+          "sizeLines": 106,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/debug_cfbd_response.py",
+          "language": "python",
+          "sizeLines": 57,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/import_ap_poll_only.py",
+          "language": "python",
+          "sizeLines": 181,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/test_cfbd_data.py",
+          "language": "python",
+          "sizeLines": 58,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/update_games.py",
+          "language": "python",
+          "sizeLines": 244,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/weekly_update.py",
+          "language": "python",
+          "sizeLines": 464,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/integrations/cfbd_client.py",
+          "language": "python",
+          "sizeLines": 884,
+          "fileCategory": "code"
+        },
+        {
+          "path": "utilities/compare_rankings.py",
+          "language": "python",
+          "sizeLines": 316,
+          "fileCategory": "code"
+        },
+        {
+          "path": "utilities/import_player_data.py",
+          "language": "python",
+          "sizeLines": 396,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "check_bowl_game_weeks.py": [
+          "src/integrations/cfbd_client.py"
+        ],
+        "diagnostics/debug_championships.py": [
+          "src/integrations/cfbd_client.py"
+        ],
+        "diagnostics/diagnose_missing_games.py": [
+          "src/integrations/cfbd_client.py"
+        ],
+        "scripts/backfill_quarter_scores.py": [
+          "src/integrations/cfbd_client.py",
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "scripts/check_week11_api.py": [
+          "src/integrations/cfbd_client.py"
+        ],
+        "scripts/debug_cfbd_response.py": [
+          "src/integrations/cfbd_client.py"
+        ],
+        "scripts/import_ap_poll_only.py": [
+          "src/integrations/cfbd_client.py",
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "scripts/test_cfbd_data.py": [
+          "src/integrations/cfbd_client.py"
+        ],
+        "scripts/update_games.py": [
+          "src/integrations/cfbd_client.py",
+          "src/models/database.py",
+          "src/models/models.py"
+        ],
+        "scripts/weekly_update.py": [
+          "src/integrations/cfbd_client.py"
+        ],
+        "src/integrations/cfbd_client.py": [],
+        "utilities/compare_rankings.py": [
+          "src/core/ranking_service.py",
+          "src/integrations/cfbd_client.py",
+          "src/models/database.py"
+        ],
+        "utilities/import_player_data.py": [
+          "src/integrations/cfbd_client.py",
+          "src/models/database.py",
+          "src/models/models.py"
+        ]
+      },
+      "neighborMap": {
+        "scripts/backfill_quarter_scores.py": [
+          {
+            "path": "src/models/database.py",
+            "batchIndex": 1,
+            "symbols": [
+              "init_db",
+              "get_db",
+              "reset_db"
+            ]
+          },
+          {
+            "path": "src/models/models.py",
+            "batchIndex": 1,
+            "symbols": [
+              "ConferenceType",
+              "Team",
+              "Player",
+              "RosterPlayer",
+              "Game",
+              "RankingHistory",
+              "Season",
+              "APIUsage",
+              "UpdateTask",
+              "Prediction",
+              "APPollRanking"
+            ]
+          }
+        ],
+        "scripts/import_ap_poll_only.py": [
+          {
+            "path": "src/models/database.py",
+            "batchIndex": 1,
+            "symbols": [
+              "init_db",
+              "get_db",
+              "reset_db"
+            ]
+          },
+          {
+            "path": "src/models/models.py",
+            "batchIndex": 1,
+            "symbols": [
+              "ConferenceType",
+              "Team",
+              "Player",
+              "RosterPlayer",
+              "Game",
+              "RankingHistory",
+              "Season",
+              "APIUsage",
+              "UpdateTask",
+              "Prediction",
+              "APPollRanking"
+            ]
+          }
+        ],
+        "scripts/update_games.py": [
+          {
+            "path": "src/models/database.py",
+            "batchIndex": 1,
+            "symbols": [
+              "init_db",
+              "get_db",
+              "reset_db"
+            ]
+          },
+          {
+            "path": "src/models/models.py",
+            "batchIndex": 1,
+            "symbols": [
+              "ConferenceType",
+              "Team",
+              "Player",
+              "RosterPlayer",
+              "Game",
+              "RankingHistory",
+              "Season",
+              "APIUsage",
+              "UpdateTask",
+              "Prediction",
+              "APPollRanking"
+            ]
+          }
+        ],
+        "src/integrations/cfbd_client.py": [
+          {
+            "path": "import_real_data.py",
+            "batchIndex": 3,
+            "symbols": [
+              "parse_game_date",
+              "validate_api_connection",
+              "get_week_statistics",
+              "import_teams",
+              "get_or_create_fcs_team",
+              "check_for_duplicates",
+              "print_duplicate_report",
+              "validate_import_results",
+              "import_ap_poll_rankings",
+              "import_conference_championships",
+              "import_bowl_games",
+              "import_playoff_games",
+              "import_games",
+              "main"
+            ]
+          },
+          {
+            "path": "scripts/generate_all_predictions.py",
+            "batchIndex": 3,
+            "symbols": [
+              "main"
+            ]
+          }
+        ],
+        "utilities/compare_rankings.py": [
+          {
+            "path": "src/core/ranking_service.py",
+            "batchIndex": 3,
+            "symbols": [
+              "RankingService",
+              "generate_predictions",
+              "validate_week",
+              "validate_team_for_prediction",
+              "validate_predicted_score",
+              "validate_game_for_prediction",
+              "_validate_prediction_teams",
+              "_calculate_game_prediction",
+              "create_and_store_prediction",
+              "evaluate_prediction_accuracy",
+              "get_overall_prediction_accuracy",
+              "get_team_prediction_accuracy"
+            ]
+          },
+          {
+            "path": "src/models/database.py",
+            "batchIndex": 1,
+            "symbols": [
+              "init_db",
+              "get_db",
+              "reset_db"
+            ]
+          }
+        ],
+        "utilities/import_player_data.py": [
+          {
+            "path": "src/models/database.py",
+            "batchIndex": 1,
+            "symbols": [
+              "init_db",
+              "get_db",
+              "reset_db"
+            ]
+          },
+          {
+            "path": "src/models/models.py",
+            "batchIndex": 1,
+            "symbols": [
+              "ConferenceType",
+              "Team",
+              "Player",
+              "RosterPlayer",
+              "Game",
+              "RankingHistory",
+              "Season",
+              "APIUsage",
+              "UpdateTask",
+              "Prediction",
+              "APPollRanking"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 4,
+      "files": [
+        {
+          "path": "src/api/main.py",
+          "language": "python",
+          "sizeLines": 2837,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/models/__init__.py",
+          "language": "python",
+          "sizeLines": 1,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/models/schemas.py",
+          "language": "python",
+          "sizeLines": 871,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/api/main.py": [
+          "src/core/ranking_service.py",
+          "src/models/__init__.py",
+          "src/models/database.py",
+          "src/models/models.py",
+          "src/models/schemas.py"
+        ],
+        "src/models/__init__.py": [],
+        "src/models/schemas.py": [
+          "src/models/models.py"
+        ]
+      },
+      "neighborMap": {
+        "src/api/main.py": [
+          {
+            "path": "src/core/ranking_service.py",
+            "batchIndex": 3,
+            "symbols": [
+              "RankingService",
+              "generate_predictions",
+              "validate_week",
+              "validate_team_for_prediction",
+              "validate_predicted_score",
+              "validate_game_for_prediction",
+              "_validate_prediction_teams",
+              "_calculate_game_prediction",
+              "create_and_store_prediction",
+              "evaluate_prediction_accuracy",
+              "get_overall_prediction_accuracy",
+              "get_team_prediction_accuracy"
+            ]
+          },
+          {
+            "path": "src/models/database.py",
+            "batchIndex": 1,
+            "symbols": [
+              "init_db",
+              "get_db",
+              "reset_db"
+            ]
+          },
+          {
+            "path": "src/models/models.py",
+            "batchIndex": 1,
+            "symbols": [
+              "ConferenceType",
+              "Team",
+              "Player",
+              "RosterPlayer",
+              "Game",
+              "RankingHistory",
+              "Season",
+              "APIUsage",
+              "UpdateTask",
+              "Prediction",
+              "APPollRanking"
+            ]
+          }
+        ],
+        "src/models/schemas.py": [
+          {
+            "path": "src/models/models.py",
+            "batchIndex": 1,
+            "symbols": [
+              "ConferenceType",
+              "Team",
+              "Player",
+              "RosterPlayer",
+              "Game",
+              "RankingHistory",
+              "Season",
+              "APIUsage",
+              "UpdateTask",
+              "Prediction",
+              "APPollRanking"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 6,
+      "files": [
+        {
+          "path": ".bmad-core/agent-teams/team-all.yaml",
+          "language": "yaml",
+          "sizeLines": 15,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/agent-teams/team-fullstack.yaml",
+          "language": "yaml",
+          "sizeLines": 19,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/agent-teams/team-ide-minimal.yaml",
+          "language": "yaml",
+          "sizeLines": 11,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/agent-teams/team-no-ui.yaml",
+          "language": "yaml",
+          "sizeLines": 14,
+          "fileCategory": "config"
+        }
+      ],
+      "batchImportData": {
+        ".bmad-core/agent-teams/team-all.yaml": [],
+        ".bmad-core/agent-teams/team-fullstack.yaml": [],
+        ".bmad-core/agent-teams/team-ide-minimal.yaml": [],
+        ".bmad-core/agent-teams/team-no-ui.yaml": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 7,
+      "files": [
+        {
+          "path": ".bmad-core/agents/analyst.md",
+          "language": "markdown",
+          "sizeLines": 84,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/agents/architect.md",
+          "language": "markdown",
+          "sizeLines": 85,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/agents/bmad-master.md",
+          "language": "markdown",
+          "sizeLines": 110,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/agents/bmad-orchestrator.md",
+          "language": "markdown",
+          "sizeLines": 147,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/agents/dev.md",
+          "language": "markdown",
+          "sizeLines": 81,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/agents/pm.md",
+          "language": "markdown",
+          "sizeLines": 84,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/agents/po.md",
+          "language": "markdown",
+          "sizeLines": 79,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/agents/qa.md",
+          "language": "markdown",
+          "sizeLines": 87,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/agents/sm.md",
+          "language": "markdown",
+          "sizeLines": 65,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/agents/ux-expert.md",
+          "language": "markdown",
+          "sizeLines": 69,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        ".bmad-core/agents/analyst.md": [],
+        ".bmad-core/agents/architect.md": [],
+        ".bmad-core/agents/bmad-master.md": [],
+        ".bmad-core/agents/bmad-orchestrator.md": [],
+        ".bmad-core/agents/dev.md": [],
+        ".bmad-core/agents/pm.md": [],
+        ".bmad-core/agents/po.md": [],
+        ".bmad-core/agents/qa.md": [],
+        ".bmad-core/agents/sm.md": [],
+        ".bmad-core/agents/ux-expert.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 8,
+      "files": [
+        {
+          "path": ".bmad-core/checklists/architect-checklist.md",
+          "language": "markdown",
+          "sizeLines": 440,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/checklists/change-checklist.md",
+          "language": "markdown",
+          "sizeLines": 184,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/checklists/pm-checklist.md",
+          "language": "markdown",
+          "sizeLines": 372,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/checklists/po-master-checklist.md",
+          "language": "markdown",
+          "sizeLines": 434,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/checklists/story-dod-checklist.md",
+          "language": "markdown",
+          "sizeLines": 96,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/checklists/story-draft-checklist.md",
+          "language": "markdown",
+          "sizeLines": 155,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        ".bmad-core/checklists/architect-checklist.md": [],
+        ".bmad-core/checklists/change-checklist.md": [],
+        ".bmad-core/checklists/pm-checklist.md": [],
+        ".bmad-core/checklists/po-master-checklist.md": [],
+        ".bmad-core/checklists/story-dod-checklist.md": [],
+        ".bmad-core/checklists/story-draft-checklist.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 9,
+      "files": [
+        {
+          "path": ".bmad-core/core-config.yaml",
+          "language": "yaml",
+          "sizeLines": 22,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/enhanced-ide-development-workflow.md",
+          "language": "markdown",
+          "sizeLines": 248,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/install-manifest.yaml",
+          "language": "yaml",
+          "sizeLines": 230,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/user-guide.md",
+          "language": "markdown",
+          "sizeLines": 577,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/working-in-the-brownfield.md",
+          "language": "markdown",
+          "sizeLines": 606,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        ".bmad-core/core-config.yaml": [],
+        ".bmad-core/enhanced-ide-development-workflow.md": [],
+        ".bmad-core/install-manifest.yaml": [],
+        ".bmad-core/user-guide.md": [],
+        ".bmad-core/working-in-the-brownfield.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 10,
+      "files": [
+        {
+          "path": ".bmad-core/data/bmad-kb.md",
+          "language": "markdown",
+          "sizeLines": 809,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/data/brainstorming-techniques.md",
+          "language": "markdown",
+          "sizeLines": 38,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/data/elicitation-methods.md",
+          "language": "markdown",
+          "sizeLines": 156,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/data/technical-preferences.md",
+          "language": "markdown",
+          "sizeLines": 5,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/data/test-levels-framework.md",
+          "language": "markdown",
+          "sizeLines": 148,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/data/test-priorities-matrix.md",
+          "language": "markdown",
+          "sizeLines": 174,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        ".bmad-core/data/bmad-kb.md": [],
+        ".bmad-core/data/brainstorming-techniques.md": [],
+        ".bmad-core/data/elicitation-methods.md": [],
+        ".bmad-core/data/technical-preferences.md": [],
+        ".bmad-core/data/test-levels-framework.md": [],
+        ".bmad-core/data/test-priorities-matrix.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 11,
+      "files": [
+        {
+          "path": ".bmad-core/tasks/advanced-elicitation.md",
+          "language": "markdown",
+          "sizeLines": 119,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/apply-qa-fixes.md",
+          "language": "markdown",
+          "sizeLines": 150,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/brownfield-create-epic.md",
+          "language": "markdown",
+          "sizeLines": 162,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/brownfield-create-story.md",
+          "language": "markdown",
+          "sizeLines": 149,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/correct-course.md",
+          "language": "markdown",
+          "sizeLines": 72,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/create-brownfield-story.md",
+          "language": "markdown",
+          "sizeLines": 314,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/create-deep-research-prompt.md",
+          "language": "markdown",
+          "sizeLines": 280,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/create-doc.md",
+          "language": "markdown",
+          "sizeLines": 103,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/create-next-story.md",
+          "language": "markdown",
+          "sizeLines": 114,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/document-project.md",
+          "language": "markdown",
+          "sizeLines": 345,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/execute-checklist.md",
+          "language": "markdown",
+          "sizeLines": 88,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/facilitate-brainstorming-session.md",
+          "language": "markdown",
+          "sizeLines": 138,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/generate-ai-frontend-prompt.md",
+          "language": "markdown",
+          "sizeLines": 53,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/index-docs.md",
+          "language": "markdown",
+          "sizeLines": 175,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/kb-mode-interaction.md",
+          "language": "markdown",
+          "sizeLines": 77,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/nfr-assess.md",
+          "language": "markdown",
+          "sizeLines": 345,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/qa-gate.md",
+          "language": "markdown",
+          "sizeLines": 163,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/review-story.md",
+          "language": "markdown",
+          "sizeLines": 316,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/risk-profile.md",
+          "language": "markdown",
+          "sizeLines": 355,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/shard-doc.md",
+          "language": "markdown",
+          "sizeLines": 187,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        ".bmad-core/tasks/advanced-elicitation.md": [],
+        ".bmad-core/tasks/apply-qa-fixes.md": [],
+        ".bmad-core/tasks/brownfield-create-epic.md": [],
+        ".bmad-core/tasks/brownfield-create-story.md": [],
+        ".bmad-core/tasks/correct-course.md": [],
+        ".bmad-core/tasks/create-brownfield-story.md": [],
+        ".bmad-core/tasks/create-deep-research-prompt.md": [],
+        ".bmad-core/tasks/create-doc.md": [],
+        ".bmad-core/tasks/create-next-story.md": [],
+        ".bmad-core/tasks/document-project.md": [],
+        ".bmad-core/tasks/execute-checklist.md": [],
+        ".bmad-core/tasks/facilitate-brainstorming-session.md": [],
+        ".bmad-core/tasks/generate-ai-frontend-prompt.md": [],
+        ".bmad-core/tasks/index-docs.md": [],
+        ".bmad-core/tasks/kb-mode-interaction.md": [],
+        ".bmad-core/tasks/nfr-assess.md": [],
+        ".bmad-core/tasks/qa-gate.md": [],
+        ".bmad-core/tasks/review-story.md": [],
+        ".bmad-core/tasks/risk-profile.md": [],
+        ".bmad-core/tasks/shard-doc.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 12,
+      "files": [
+        {
+          "path": ".bmad-core/tasks/test-design.md",
+          "language": "markdown",
+          "sizeLines": 176,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/trace-requirements.md",
+          "language": "markdown",
+          "sizeLines": 266,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/tasks/validate-next-story.md",
+          "language": "markdown",
+          "sizeLines": 136,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        ".bmad-core/tasks/test-design.md": [],
+        ".bmad-core/tasks/trace-requirements.md": [],
+        ".bmad-core/tasks/validate-next-story.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 13,
+      "files": [
+        {
+          "path": ".bmad-core/templates/architecture-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 651,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/templates/brainstorming-output-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 156,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/templates/brownfield-architecture-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 477,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/templates/brownfield-prd-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 281,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/templates/competitor-analysis-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 307,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/templates/front-end-architecture-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 219,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/templates/front-end-spec-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 350,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/templates/fullstack-architecture-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 824,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/templates/market-research-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 253,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/templates/prd-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 203,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/templates/project-brief-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 222,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/templates/qa-gate-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 103,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/templates/story-tmpl.yaml",
+          "language": "yaml",
+          "sizeLines": 138,
+          "fileCategory": "config"
+        }
+      ],
+      "batchImportData": {
+        ".bmad-core/templates/architecture-tmpl.yaml": [],
+        ".bmad-core/templates/brainstorming-output-tmpl.yaml": [],
+        ".bmad-core/templates/brownfield-architecture-tmpl.yaml": [],
+        ".bmad-core/templates/brownfield-prd-tmpl.yaml": [],
+        ".bmad-core/templates/competitor-analysis-tmpl.yaml": [],
+        ".bmad-core/templates/front-end-architecture-tmpl.yaml": [],
+        ".bmad-core/templates/front-end-spec-tmpl.yaml": [],
+        ".bmad-core/templates/fullstack-architecture-tmpl.yaml": [],
+        ".bmad-core/templates/market-research-tmpl.yaml": [],
+        ".bmad-core/templates/prd-tmpl.yaml": [],
+        ".bmad-core/templates/project-brief-tmpl.yaml": [],
+        ".bmad-core/templates/qa-gate-tmpl.yaml": [],
+        ".bmad-core/templates/story-tmpl.yaml": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 14,
+      "files": [
+        {
+          "path": ".bmad-core/workflows/brownfield-fullstack.yaml",
+          "language": "yaml",
+          "sizeLines": 298,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/workflows/brownfield-service.yaml",
+          "language": "yaml",
+          "sizeLines": 188,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/workflows/brownfield-ui.yaml",
+          "language": "yaml",
+          "sizeLines": 198,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/workflows/greenfield-fullstack.yaml",
+          "language": "yaml",
+          "sizeLines": 241,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/workflows/greenfield-service.yaml",
+          "language": "yaml",
+          "sizeLines": 207,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".bmad-core/workflows/greenfield-ui.yaml",
+          "language": "yaml",
+          "sizeLines": 236,
+          "fileCategory": "config"
+        }
+      ],
+      "batchImportData": {
+        ".bmad-core/workflows/brownfield-fullstack.yaml": [],
+        ".bmad-core/workflows/brownfield-service.yaml": [],
+        ".bmad-core/workflows/brownfield-ui.yaml": [],
+        ".bmad-core/workflows/greenfield-fullstack.yaml": [],
+        ".bmad-core/workflows/greenfield-service.yaml": [],
+        ".bmad-core/workflows/greenfield-ui.yaml": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 15,
+      "files": [
+        {
+          "path": ".claude/commands/BMad/agents/analyst.md",
+          "language": "markdown",
+          "sizeLines": 88,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/agents/architect.md",
+          "language": "markdown",
+          "sizeLines": 89,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/agents/bmad-master.md",
+          "language": "markdown",
+          "sizeLines": 114,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/agents/bmad-orchestrator.md",
+          "language": "markdown",
+          "sizeLines": 151,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/agents/dev.md",
+          "language": "markdown",
+          "sizeLines": 85,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/agents/pm.md",
+          "language": "markdown",
+          "sizeLines": 88,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/agents/po.md",
+          "language": "markdown",
+          "sizeLines": 83,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/agents/qa.md",
+          "language": "markdown",
+          "sizeLines": 91,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/agents/sm.md",
+          "language": "markdown",
+          "sizeLines": 69,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/agents/ux-expert.md",
+          "language": "markdown",
+          "sizeLines": 73,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        ".claude/commands/BMad/agents/analyst.md": [],
+        ".claude/commands/BMad/agents/architect.md": [],
+        ".claude/commands/BMad/agents/bmad-master.md": [],
+        ".claude/commands/BMad/agents/bmad-orchestrator.md": [],
+        ".claude/commands/BMad/agents/dev.md": [],
+        ".claude/commands/BMad/agents/pm.md": [],
+        ".claude/commands/BMad/agents/po.md": [],
+        ".claude/commands/BMad/agents/qa.md": [],
+        ".claude/commands/BMad/agents/sm.md": [],
+        ".claude/commands/BMad/agents/ux-expert.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 16,
+      "files": [
+        {
+          "path": ".claude/commands/BMad/tasks/advanced-elicitation.md",
+          "language": "markdown",
+          "sizeLines": 123,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/apply-qa-fixes.md",
+          "language": "markdown",
+          "sizeLines": 154,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/brownfield-create-epic.md",
+          "language": "markdown",
+          "sizeLines": 166,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/brownfield-create-story.md",
+          "language": "markdown",
+          "sizeLines": 153,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/correct-course.md",
+          "language": "markdown",
+          "sizeLines": 76,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/create-brownfield-story.md",
+          "language": "markdown",
+          "sizeLines": 318,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/create-deep-research-prompt.md",
+          "language": "markdown",
+          "sizeLines": 284,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/create-doc.md",
+          "language": "markdown",
+          "sizeLines": 107,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/create-next-story.md",
+          "language": "markdown",
+          "sizeLines": 118,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/document-project.md",
+          "language": "markdown",
+          "sizeLines": 349,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/execute-checklist.md",
+          "language": "markdown",
+          "sizeLines": 92,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/facilitate-brainstorming-session.md",
+          "language": "markdown",
+          "sizeLines": 142,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/generate-ai-frontend-prompt.md",
+          "language": "markdown",
+          "sizeLines": 57,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/index-docs.md",
+          "language": "markdown",
+          "sizeLines": 179,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/kb-mode-interaction.md",
+          "language": "markdown",
+          "sizeLines": 81,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/nfr-assess.md",
+          "language": "markdown",
+          "sizeLines": 349,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/qa-gate.md",
+          "language": "markdown",
+          "sizeLines": 167,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/review-story.md",
+          "language": "markdown",
+          "sizeLines": 320,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/risk-profile.md",
+          "language": "markdown",
+          "sizeLines": 359,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/shard-doc.md",
+          "language": "markdown",
+          "sizeLines": 191,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        ".claude/commands/BMad/tasks/advanced-elicitation.md": [],
+        ".claude/commands/BMad/tasks/apply-qa-fixes.md": [],
+        ".claude/commands/BMad/tasks/brownfield-create-epic.md": [],
+        ".claude/commands/BMad/tasks/brownfield-create-story.md": [],
+        ".claude/commands/BMad/tasks/correct-course.md": [],
+        ".claude/commands/BMad/tasks/create-brownfield-story.md": [],
+        ".claude/commands/BMad/tasks/create-deep-research-prompt.md": [],
+        ".claude/commands/BMad/tasks/create-doc.md": [],
+        ".claude/commands/BMad/tasks/create-next-story.md": [],
+        ".claude/commands/BMad/tasks/document-project.md": [],
+        ".claude/commands/BMad/tasks/execute-checklist.md": [],
+        ".claude/commands/BMad/tasks/facilitate-brainstorming-session.md": [],
+        ".claude/commands/BMad/tasks/generate-ai-frontend-prompt.md": [],
+        ".claude/commands/BMad/tasks/index-docs.md": [],
+        ".claude/commands/BMad/tasks/kb-mode-interaction.md": [],
+        ".claude/commands/BMad/tasks/nfr-assess.md": [],
+        ".claude/commands/BMad/tasks/qa-gate.md": [],
+        ".claude/commands/BMad/tasks/review-story.md": [],
+        ".claude/commands/BMad/tasks/risk-profile.md": [],
+        ".claude/commands/BMad/tasks/shard-doc.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 17,
+      "files": [
+        {
+          "path": ".claude/commands/BMad/tasks/test-design.md",
+          "language": "markdown",
+          "sizeLines": 180,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/trace-requirements.md",
+          "language": "markdown",
+          "sizeLines": 270,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/commands/BMad/tasks/validate-next-story.md",
+          "language": "markdown",
+          "sizeLines": 140,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        ".claude/commands/BMad/tasks/test-design.md": [],
+        ".claude/commands/BMad/tasks/trace-requirements.md": [],
+        ".claude/commands/BMad/tasks/validate-next-story.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 21,
+      "files": [
+        {
+          "path": "docs/BACKLOG.md",
+          "language": "markdown",
+          "sizeLines": 58,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/CI-CD-PIPELINE.md",
+          "language": "markdown",
+          "sizeLines": 614,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/CODING-STANDARDS.md",
+          "language": "markdown",
+          "sizeLines": 506,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-001-COMPLETION-SUMMARY.md",
+          "language": "markdown",
+          "sizeLines": 428,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-001-PRODUCTION-DEPLOYMENT.md",
+          "language": "markdown",
+          "sizeLines": 582,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-002-SUMMARY.md",
+          "language": "markdown",
+          "sizeLines": 356,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-003-DEPLOYMENT.md",
+          "language": "markdown",
+          "sizeLines": 611,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-004-OVERVIEW.md",
+          "language": "markdown",
+          "sizeLines": 708,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-004-STORY-001-TEST-RESULTS.md",
+          "language": "markdown",
+          "sizeLines": 404,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-004-STORY-001.md",
+          "language": "markdown",
+          "sizeLines": 424,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-004-STORY-002.md",
+          "language": "markdown",
+          "sizeLines": 501,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-004-STORY-003.md",
+          "language": "markdown",
+          "sizeLines": 582,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-005-FRONTEND-UX-IMPROVEMENTS.md",
+          "language": "markdown",
+          "sizeLines": 345,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-005-STORY-001.md",
+          "language": "markdown",
+          "sizeLines": 301,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-005-STORY-002.md",
+          "language": "markdown",
+          "sizeLines": 381,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-005-STORY-003.md",
+          "language": "markdown",
+          "sizeLines": 448,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-005-SUMMARY.md",
+          "language": "markdown",
+          "sizeLines": 331,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-006-CURRENT-WEEK-ACCURACY.md",
+          "language": "markdown",
+          "sizeLines": 297,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-006-STORY-001.md",
+          "language": "markdown",
+          "sizeLines": 374,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-006-STORY-002.md",
+          "language": "markdown",
+          "sizeLines": 374,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        "docs/BACKLOG.md": [],
+        "docs/CI-CD-PIPELINE.md": [],
+        "docs/CODING-STANDARDS.md": [],
+        "docs/EPIC-001-COMPLETION-SUMMARY.md": [],
+        "docs/EPIC-001-PRODUCTION-DEPLOYMENT.md": [],
+        "docs/EPIC-002-SUMMARY.md": [],
+        "docs/EPIC-003-DEPLOYMENT.md": [],
+        "docs/EPIC-004-OVERVIEW.md": [],
+        "docs/EPIC-004-STORY-001-TEST-RESULTS.md": [],
+        "docs/EPIC-004-STORY-001.md": [],
+        "docs/EPIC-004-STORY-002.md": [],
+        "docs/EPIC-004-STORY-003.md": [],
+        "docs/EPIC-005-FRONTEND-UX-IMPROVEMENTS.md": [],
+        "docs/EPIC-005-STORY-001.md": [],
+        "docs/EPIC-005-STORY-002.md": [],
+        "docs/EPIC-005-STORY-003.md": [],
+        "docs/EPIC-005-SUMMARY.md": [],
+        "docs/EPIC-006-CURRENT-WEEK-ACCURACY.md": [],
+        "docs/EPIC-006-STORY-001.md": [],
+        "docs/EPIC-006-STORY-002.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 24,
+      "files": [
+        {
+          "path": "docs/EPIC-028-CODEBASE-CLEANUP.md",
+          "language": "markdown",
+          "sizeLines": 546,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-029-2026-PRESEASON-SETUP.md",
+          "language": "markdown",
+          "sizeLines": 292,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-030-PREVIOUS-SEASON-REGRESSION.md",
+          "language": "markdown",
+          "sizeLines": 472,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-031-UI-REDESIGN.md",
+          "language": "markdown",
+          "sizeLines": 267,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-032-PRESEASON-SIMULATOR.md",
+          "language": "markdown",
+          "sizeLines": 327,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/EPIC-033-2026-SEASON-DATA-PIPELINE.md",
+          "language": "markdown",
+          "sizeLines": 189,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/FIX-GAME-DATE-DISPLAY.md",
+          "language": "markdown",
+          "sizeLines": 86,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/PLAYOFF-GAMES.md",
+          "language": "markdown",
+          "sizeLines": 404,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/PREDICTIONS.md",
+          "language": "markdown",
+          "sizeLines": 238,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/PRODUCTION-DEPLOYMENT-CHECKLIST.md",
+          "language": "markdown",
+          "sizeLines": 233,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/PRODUCTION-TROUBLESHOOTING.md",
+          "language": "markdown",
+          "sizeLines": 520,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/PRODUCTION-VENV-SETUP.md",
+          "language": "markdown",
+          "sizeLines": 424,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/RETURNING-PRODUCTION.md",
+          "language": "markdown",
+          "sizeLines": 400,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/SEASON-MANAGEMENT.md",
+          "language": "markdown",
+          "sizeLines": 420,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/SEASON-RUNBOOK.md",
+          "language": "markdown",
+          "sizeLines": 483,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/STORY-CURRENT-WEEK-OFF-BY-ONE.md",
+          "language": "markdown",
+          "sizeLines": 152,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/TESTING.md",
+          "language": "markdown",
+          "sizeLines": 592,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/UPDATE-GAME-DATA.md",
+          "language": "markdown",
+          "sizeLines": 411,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/WEEKLY-WORKFLOW.md",
+          "language": "markdown",
+          "sizeLines": 644,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/architecture.md",
+          "language": "markdown",
+          "sizeLines": 819,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        "docs/EPIC-028-CODEBASE-CLEANUP.md": [],
+        "docs/EPIC-029-2026-PRESEASON-SETUP.md": [],
+        "docs/EPIC-030-PREVIOUS-SEASON-REGRESSION.md": [],
+        "docs/EPIC-031-UI-REDESIGN.md": [],
+        "docs/EPIC-032-PRESEASON-SIMULATOR.md": [],
+        "docs/EPIC-033-2026-SEASON-DATA-PIPELINE.md": [],
+        "docs/FIX-GAME-DATE-DISPLAY.md": [],
+        "docs/PLAYOFF-GAMES.md": [],
+        "docs/PREDICTIONS.md": [],
+        "docs/PRODUCTION-DEPLOYMENT-CHECKLIST.md": [],
+        "docs/PRODUCTION-TROUBLESHOOTING.md": [],
+        "docs/PRODUCTION-VENV-SETUP.md": [],
+        "docs/RETURNING-PRODUCTION.md": [],
+        "docs/SEASON-MANAGEMENT.md": [],
+        "docs/SEASON-RUNBOOK.md": [],
+        "docs/STORY-CURRENT-WEEK-OFF-BY-ONE.md": [],
+        "docs/TESTING.md": [],
+        "docs/UPDATE-GAME-DATA.md": [],
+        "docs/WEEKLY-WORKFLOW.md": [],
+        "docs/architecture.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 31,
+      "files": [
+        {
+          "path": "frontend/README.md",
+          "language": "markdown",
+          "sizeLines": 164,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "frontend/admin.html",
+          "language": "html",
+          "sizeLines": 358,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "frontend/comparison.html",
+          "language": "html",
+          "sizeLines": 280,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "frontend/elo-formula.html",
+          "language": "html",
+          "sizeLines": 769,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "frontend/games.html",
+          "language": "html",
+          "sizeLines": 235,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "frontend/index.html",
+          "language": "html",
+          "sizeLines": 313,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "frontend/matchup.html",
+          "language": "html",
+          "sizeLines": 253,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "frontend/simulator.html",
+          "language": "html",
+          "sizeLines": 208,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "frontend/team.html",
+          "language": "html",
+          "sizeLines": 238,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "frontend/teams.html",
+          "language": "html",
+          "sizeLines": 262,
+          "fileCategory": "markup"
+        }
+      ],
+      "batchImportData": {
+        "frontend/README.md": [],
+        "frontend/admin.html": [],
+        "frontend/comparison.html": [],
+        "frontend/elo-formula.html": [],
+        "frontend/games.html": [],
+        "frontend/index.html": [],
+        "frontend/matchup.html": [],
+        "frontend/simulator.html": [],
+        "frontend/team.html": [],
+        "frontend/teams.html": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 32,
+      "files": [
+        {
+          "path": "frontend/css/base.css",
+          "language": "css",
+          "sizeLines": 64,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "frontend/css/components.css",
+          "language": "css",
+          "sizeLines": 2074,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "frontend/css/layout.css",
+          "language": "css",
+          "sizeLines": 220,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "frontend/css/style.css",
+          "language": "css",
+          "sizeLines": 9,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "frontend/css/tokens.css",
+          "language": "css",
+          "sizeLines": 113,
+          "fileCategory": "markup"
+        }
+      ],
+      "batchImportData": {
+        "frontend/css/base.css": [],
+        "frontend/css/components.css": [],
+        "frontend/css/layout.css": [],
+        "frontend/css/style.css": [],
+        "frontend/css/tokens.css": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 34,
+      "files": [
+        {
+          "path": ".bmad-core/utils/bmad-doc-template.md",
+          "language": "markdown",
+          "sizeLines": 327,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".bmad-core/utils/workflow-management.md",
+          "language": "markdown",
+          "sizeLines": 71,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".claude/launch.json",
+          "language": "json",
+          "sizeLines": 17,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".coveragerc",
+          "language": "unknown",
+          "sizeLines": 53,
+          "fileCategory": "code"
+        },
+        {
+          "path": ".flake8",
+          "language": "unknown",
+          "sizeLines": 17,
+          "fileCategory": "code"
+        },
+        {
+          "path": ".understand-anything/.understandignore",
+          "language": "unknown",
+          "sizeLines": 52,
+          "fileCategory": "code"
+        },
+        {
+          "path": ".understand-anything/config.json",
+          "language": "json",
+          "sizeLines": 1,
+          "fileCategory": "config"
+        },
+        {
+          "path": "=23.0.0",
+          "language": "0",
+          "sizeLines": 40,
+          "fileCategory": "code"
+        },
+        {
+          "path": "=5.12.0",
+          "language": "0",
+          "sizeLines": 40,
+          "fileCategory": "code"
+        },
+        {
+          "path": "=6.0.0",
+          "language": "0",
+          "sizeLines": 40,
+          "fileCategory": "code"
+        },
+        {
+          "path": "cfb_rankings.db.backup",
+          "language": "backup",
+          "sizeLines": 5302,
+          "fileCategory": "code"
+        },
+        {
+          "path": "cfb_rankings.db.backup_pre_29.1",
+          "language": "1",
+          "sizeLines": 9037,
+          "fileCategory": "code"
+        },
+        {
+          "path": "data/.gitkeep",
+          "language": "unknown",
+          "sizeLines": 0,
+          "fileCategory": "code"
+        },
+        {
+          "path": "deploy/cfb-rankings.service",
+          "language": "service",
+          "sizeLines": 30,
+          "fileCategory": "code"
+        },
+        {
+          "path": "deploy/cfb-weekly-update.service",
+          "language": "service",
+          "sizeLines": 41,
+          "fileCategory": "code"
+        },
+        {
+          "path": "deploy/cfb-weekly-update.timer",
+          "language": "timer",
+          "sizeLines": 25,
+          "fileCategory": "code"
+        },
+        {
+          "path": "deploy/nginx.conf",
+          "language": "conf",
+          "sizeLines": 85,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnostics/check_production_schema.py",
+          "language": "python",
+          "sizeLines": 84,
+          "fileCategory": "code"
+        },
+        {
+          "path": "diagnostics/README.md",
+          "language": "markdown",
+          "sizeLines": 111,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/cfb_rankings.db.backup_pre_29.1",
+          "language": "1",
+          "sizeLines": 0,
+          "fileCategory": "code"
+        },
+        {
+          "path": "docs/diagnostics/playoff-games-investigation-FINAL.md",
+          "language": "markdown",
+          "sizeLines": 284,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/diagnostics/playoff-games-investigation.md",
+          "language": "markdown",
+          "sizeLines": 651,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/stories/story-season-end-date-config.md",
+          "language": "markdown",
+          "sizeLines": 232,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/stories/story-verify-season-detection-consistency.md",
+          "language": "markdown",
+          "sizeLines": 386,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "frontend/js/api.js",
+          "language": "javascript",
+          "sizeLines": 189,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        ".bmad-core/utils/bmad-doc-template.md": [],
+        ".bmad-core/utils/workflow-management.md": [],
+        ".claude/launch.json": [],
+        ".coveragerc": [],
+        ".flake8": [],
+        ".understand-anything/.understandignore": [],
+        ".understand-anything/config.json": [],
+        "=23.0.0": [],
+        "=5.12.0": [],
+        "=6.0.0": [],
+        "cfb_rankings.db.backup": [],
+        "cfb_rankings.db.backup_pre_29.1": [],
+        "data/.gitkeep": [],
+        "deploy/cfb-rankings.service": [],
+        "deploy/cfb-weekly-update.service": [],
+        "deploy/cfb-weekly-update.timer": [],
+        "deploy/nginx.conf": [],
+        "diagnostics/check_production_schema.py": [],
+        "diagnostics/README.md": [],
+        "docs/cfb_rankings.db.backup_pre_29.1": [],
+        "docs/diagnostics/playoff-games-investigation-FINAL.md": [],
+        "docs/diagnostics/playoff-games-investigation.md": [],
+        "docs/stories/story-season-end-date-config.md": [],
+        "docs/stories/story-verify-season-detection-consistency.md": [],
+        "frontend/js/api.js": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 35,
+      "files": [
+        {
+          "path": "frontend/js/app.js",
+          "language": "javascript",
+          "sizeLines": 754,
+          "fileCategory": "code"
+        },
+        {
+          "path": "frontend/js/comparison.js",
+          "language": "javascript",
+          "sizeLines": 484,
+          "fileCategory": "code"
+        },
+        {
+          "path": "frontend/js/date-utils.js",
+          "language": "javascript",
+          "sizeLines": 140,
+          "fileCategory": "code"
+        },
+        {
+          "path": "frontend/js/matchup.js",
+          "language": "javascript",
+          "sizeLines": 482,
+          "fileCategory": "code"
+        },
+        {
+          "path": "frontend/js/share.js",
+          "language": "javascript",
+          "sizeLines": 165,
+          "fileCategory": "code"
+        },
+        {
+          "path": "frontend/js/simulator.js",
+          "language": "javascript",
+          "sizeLines": 471,
+          "fileCategory": "code"
+        },
+        {
+          "path": "frontend/js/team.js",
+          "language": "javascript",
+          "sizeLines": 753,
+          "fileCategory": "code"
+        },
+        {
+          "path": "frontend/js/theme.js",
+          "language": "javascript",
+          "sizeLines": 27,
+          "fileCategory": "code"
+        },
+        {
+          "path": "gunicorn_config.py",
+          "language": "python",
+          "sizeLines": 32,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/check_database_status.py",
+          "language": "python",
+          "sizeLines": 140,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/reset_and_import.sh",
+          "language": "shell",
+          "sizeLines": 97,
+          "fileCategory": "script"
+        },
+        {
+          "path": "scripts/update_current_week.py",
+          "language": "python",
+          "sizeLines": 115,
+          "fileCategory": "code"
+        },
+        {
+          "path": "scripts/update-production-data.sh",
+          "language": "shell",
+          "sizeLines": 73,
+          "fileCategory": "script"
+        },
+        {
+          "path": "src/__init__.py",
+          "language": "python",
+          "sizeLines": 10,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/api/__init__.py",
+          "language": "python",
+          "sizeLines": 1,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/core/__init__.py",
+          "language": "python",
+          "sizeLines": 1,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/core/cfb_elo_ranking.py",
+          "language": "python",
+          "sizeLines": 287,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/core/position_weights.json",
+          "language": "json",
+          "sizeLines": 46,
+          "fileCategory": "config"
+        },
+        {
+          "path": "src/core/transfer_portal_service.py",
+          "language": "python",
+          "sizeLines": 187,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/integrations/__init__.py",
+          "language": "python",
+          "sizeLines": 1,
+          "fileCategory": "code"
+        },
+        {
+          "path": "utilities/compare_transfer_rankings.py",
+          "language": "python",
+          "sizeLines": 266,
+          "fileCategory": "code"
+        },
+        {
+          "path": "utilities/demo.py",
+          "language": "python",
+          "sizeLines": 266,
+          "fileCategory": "code"
+        },
+        {
+          "path": "utilities/populate_espn_ids.py",
+          "language": "python",
+          "sizeLines": 242,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "frontend/js/app.js": [],
+        "frontend/js/comparison.js": [],
+        "frontend/js/date-utils.js": [],
+        "frontend/js/matchup.js": [],
+        "frontend/js/share.js": [],
+        "frontend/js/simulator.js": [],
+        "frontend/js/team.js": [],
+        "frontend/js/theme.js": [],
+        "gunicorn_config.py": [],
+        "scripts/check_database_status.py": [],
+        "scripts/reset_and_import.sh": [],
+        "scripts/update_current_week.py": [],
+        "scripts/update-production-data.sh": [],
+        "src/__init__.py": [],
+        "src/api/__init__.py": [],
+        "src/core/__init__.py": [],
+        "src/core/cfb_elo_ranking.py": [],
+        "src/core/position_weights.json": [],
+        "src/core/transfer_portal_service.py": [],
+        "src/integrations/__init__.py": [],
+        "utilities/compare_transfer_rankings.py": [],
+        "utilities/demo.py": [],
+        "utilities/populate_espn_ids.py": []
+      },
+      "neighborMap": {}
+    }
+  ]
+}

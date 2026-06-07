@@ -1,0 +1,216 @@
+{
+  "nodes": [
+    {
+      "id": "document:.bmad-core/tasks/advanced-elicitation.md",
+      "type": "document",
+      "name": "advanced-elicitation.md",
+      "filePath": ".bmad-core/tasks/advanced-elicitation.md",
+      "summary": "Provides structured elicitation techniques (9 selectable methods) to deepen and refine agent-generated content during document creation or general chat sessions.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/apply-qa-fixes.md",
+      "type": "document",
+      "name": "apply-qa-fixes.md",
+      "filePath": ".bmad-core/tasks/apply-qa-fixes.md",
+      "summary": "Guides the developer agent through systematically applying QA-identified fixes to a story implementation, ensuring all reported issues are resolved before re-validation.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/brownfield-create-epic.md",
+      "type": "document",
+      "name": "brownfield-create-epic.md",
+      "filePath": ".bmad-core/tasks/brownfield-create-epic.md",
+      "summary": "Creates a focused epic for small brownfield enhancements (1-3 stories) that don't require full PRD or architecture documentation, targeting low-risk isolated feature additions.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/tasks/brownfield-create-story.md",
+      "type": "document",
+      "name": "brownfield-create-story.md",
+      "filePath": ".bmad-core/tasks/brownfield-create-story.md",
+      "summary": "Creates a single implementation-ready story for a minimal brownfield change, analyzing the existing codebase to produce a self-contained story with full technical context.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/correct-course.md",
+      "type": "document",
+      "name": "correct-course.md",
+      "filePath": ".bmad-core/tasks/correct-course.md",
+      "summary": "Diagnoses a derailed or stalled implementation, identifies the root cause, and produces a corrective action plan to get development back on track.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/create-brownfield-story.md",
+      "type": "document",
+      "name": "create-brownfield-story.md",
+      "filePath": ".bmad-core/tasks/create-brownfield-story.md",
+      "summary": "Alternative entry point for authoring a brownfield story, emphasizing existing system integration analysis and safe implementation patterns for an existing codebase.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/create-deep-research-prompt.md",
+      "type": "document",
+      "name": "create-deep-research-prompt.md",
+      "filePath": ".bmad-core/tasks/create-deep-research-prompt.md",
+      "summary": "Generates a structured deep-research prompt for an external AI research tool, capturing the project context and specific questions needed to inform planning or architecture decisions.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/create-doc.md",
+      "type": "document",
+      "name": "create-doc.md",
+      "filePath": ".bmad-core/tasks/create-doc.md",
+      "summary": "Drives interactive creation of any BMad-templated document by walking the agent through each template section with user elicitation and structured output.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/create-next-story.md",
+      "type": "document",
+      "name": "create-next-story.md",
+      "filePath": ".bmad-core/tasks/create-next-story.md",
+      "summary": "Identifies the next logical story from the epic backlog and produces a comprehensive, implementation-ready story file enriched with technical context, acceptance criteria, and dev notes.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/tasks/document-project.md",
+      "type": "document",
+      "name": "document-project.md",
+      "filePath": ".bmad-core/tasks/document-project.md",
+      "summary": "Produces or updates project-level documentation by scanning the codebase and existing docs, synthesizing architecture, API, and onboarding information into a cohesive doc set.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/tasks/execute-checklist.md",
+      "type": "document",
+      "name": "execute-checklist.md",
+      "filePath": ".bmad-core/tasks/execute-checklist.md",
+      "summary": "Runs a named BMad checklist item by item, marking each complete and halting on failures, providing a reusable gate-check mechanism across any workflow phase.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/facilitate-brainstorming-session.md",
+      "type": "document",
+      "name": "facilitate-brainstorming-session.md",
+      "filePath": ".bmad-core/tasks/facilitate-brainstorming-session.md",
+      "summary": "Guides the analyst agent through a structured brainstorming session with the user, capturing and organizing ideas into a brainstorming output document for later use in planning.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/generate-ai-frontend-prompt.md",
+      "type": "document",
+      "name": "generate-ai-frontend-prompt.md",
+      "filePath": ".bmad-core/tasks/generate-ai-frontend-prompt.md",
+      "summary": "Converts a completed front-end spec into a ready-to-paste prompt for AI UI generation tools (v0, Lovable, etc.), enabling rapid scaffolding of the UI layer.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/index-docs.md",
+      "type": "document",
+      "name": "index-docs.md",
+      "filePath": ".bmad-core/tasks/index-docs.md",
+      "summary": "Scans the project docs folder and generates or updates an index file listing all BMad documents with titles, purposes, and inter-document relationships.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/kb-mode-interaction.md",
+      "type": "document",
+      "name": "kb-mode-interaction.md",
+      "filePath": ".bmad-core/tasks/kb-mode-interaction.md",
+      "summary": "Defines how agents interact with the BMad knowledge base in KB mode, routing questions to the appropriate doc sections and surfacing relevant guidance without full doc reads.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/nfr-assess.md",
+      "type": "document",
+      "name": "nfr-assess.md",
+      "filePath": ".bmad-core/tasks/nfr-assess.md",
+      "summary": "Assesses non-functional requirements (performance, security, scalability, reliability) for a story or epic and appends NFR acceptance criteria and constraints to the relevant document.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/tasks/qa-gate.md",
+      "type": "document",
+      "name": "qa-gate.md",
+      "filePath": ".bmad-core/tasks/qa-gate.md",
+      "summary": "Performs a structured QA review of a completed story implementation, verifying all acceptance criteria are met, tests pass, and code quality standards are satisfied before marking the story done.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/tasks/review-story.md",
+      "type": "document",
+      "name": "review-story.md",
+      "filePath": ".bmad-core/tasks/review-story.md",
+      "summary": "Conducts a peer review of a story file before implementation begins, checking completeness, clarity, testability of acceptance criteria, and alignment with the parent epic.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/risk-profile.md",
+      "type": "document",
+      "name": "risk-profile.md",
+      "filePath": ".bmad-core/tasks/risk-profile.md",
+      "summary": "Generates a risk profile for a project, epic, or story by identifying technical, schedule, and integration risks along with mitigation strategies.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/tasks/shard-doc.md",
+      "type": "document",
+      "name": "shard-doc.md",
+      "filePath": ".bmad-core/tasks/shard-doc.md",
+      "summary": "Splits a monolithic BMad document (PRD, architecture) into separate sharded files per epic or section, enabling agents to load only relevant context slices.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:.bmad-core/tasks/create-next-story.md",
+      "target": "document:.bmad-core/tasks/validate-next-story.md",
+      "type": "related",
+      "label": "story creation precedes validation"
+    },
+    {
+      "source": "document:.bmad-core/tasks/qa-gate.md",
+      "target": "document:.bmad-core/tasks/apply-qa-fixes.md",
+      "type": "related",
+      "label": "QA gate triggers fix application"
+    },
+    {
+      "source": "document:.bmad-core/tasks/brownfield-create-epic.md",
+      "target": "document:.bmad-core/tasks/brownfield-create-story.md",
+      "type": "related",
+      "label": "epic decomposed into stories"
+    },
+    {
+      "source": "document:.bmad-core/tasks/create-doc.md",
+      "target": "document:.bmad-core/tasks/advanced-elicitation.md",
+      "type": "related",
+      "label": "doc creation uses elicitation"
+    },
+    {
+      "source": "document:.bmad-core/tasks/shard-doc.md",
+      "target": "document:.bmad-core/tasks/index-docs.md",
+      "type": "related",
+      "label": "sharded docs require re-indexing"
+    }
+  ]
+}

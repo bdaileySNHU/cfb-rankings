@@ -1,0 +1,1467 @@
+{
+  "nodes": [
+    {
+      "id": "file:check_bowl_game_weeks.py",
+      "type": "file",
+      "name": "check_bowl_game_weeks.py",
+      "filePath": "check_bowl_game_weeks.py",
+      "summary": "Diagnostic script that fetches postseason games from CFBD API and reports bowl game week numbers to debug import issues.",
+      "tags": ["diagnostic", "bowl-games", "postseason", "cfbd"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:check_bowl_game_weeks.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "check_bowl_game_weeks.py",
+      "summary": "Fetches postseason games, categorizes them into bowl/playoff/conference-championship buckets, and prints week number analysis.",
+      "tags": ["diagnostic", "postseason"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:diagnostics/debug_championships.py",
+      "type": "file",
+      "name": "debug_championships.py",
+      "filePath": "diagnostics/debug_championships.py",
+      "summary": "Debug script that compares CFBD API championship game results with and without the classification=fbs filter to diagnose filtering issues.",
+      "tags": ["diagnostic", "conference-championship", "cfbd"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:diagnostics/debug_championships.py:debug_championships",
+      "type": "function",
+      "name": "debug_championships",
+      "filePath": "diagnostics/debug_championships.py",
+      "summary": "Runs two API queries for championship weeks (with and without FBS classification filter) and reports discrepancies.",
+      "tags": ["diagnostic", "conference-championship"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:diagnostics/diagnose_missing_games.py",
+      "type": "file",
+      "name": "diagnose_missing_games.py",
+      "filePath": "diagnostics/diagnose_missing_games.py",
+      "summary": "Diagnostic script that checks game availability by team for specified weeks, flagging missing games that may be FCS opponents.",
+      "tags": ["diagnostic", "games", "cfbd"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:diagnostics/diagnose_missing_games.py:check_team_games",
+      "type": "function",
+      "name": "check_team_games",
+      "filePath": "diagnostics/diagnose_missing_games.py",
+      "summary": "Queries CFBD week-by-week for a specific team's games and prints completion status and summary.",
+      "tags": ["diagnostic", "games"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:import_real_data.py",
+      "type": "file",
+      "name": "import_real_data.py",
+      "filePath": "import_real_data.py",
+      "summary": "Core data import orchestrator that fetches teams, regular-season games, conference championships, bowl games, playoff games, and AP Poll rankings from CFBD and writes them to the database while processing ELO ratings.",
+      "tags": ["import", "orchestrator", "elo", "games", "teams", "cfbd", "ap-poll"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:import_real_data.py:import_teams",
+      "type": "function",
+      "name": "import_teams",
+      "filePath": "import_real_data.py",
+      "summary": "Imports FBS teams with recruiting, talent, returning production, and transfer portal data; creates or updates team records and initializes ELO ratings.",
+      "tags": ["import", "teams", "elo", "recruiting"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:import_real_data.py:import_conference_championships",
+      "type": "function",
+      "name": "import_conference_championships",
+      "filePath": "import_real_data.py",
+      "summary": "Fetches weeks 14-15 from CFBD, filters for conference championship games, creates or updates game records with quarter scores, and processes ELO.",
+      "tags": ["import", "conference-championship", "elo", "quarter-scores"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:import_real_data.py:import_bowl_games",
+      "type": "function",
+      "name": "import_bowl_games",
+      "filePath": "import_real_data.py",
+      "summary": "Fetches postseason games, filters out conference championships and CFP games, imports bowl games with quarter scores, and processes ELO.",
+      "tags": ["import", "bowl-games", "elo", "quarter-scores"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:import_real_data.py:import_playoff_games",
+      "type": "function",
+      "name": "import_playoff_games",
+      "filePath": "import_real_data.py",
+      "summary": "Fetches postseason games, identifies CFP playoff games by keyword, assigns week numbers by round, and imports with ELO processing.",
+      "tags": ["import", "playoffs", "cfp", "elo"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:import_real_data.py:import_ap_poll_rankings",
+      "type": "function",
+      "name": "import_ap_poll_rankings",
+      "filePath": "import_real_data.py",
+      "summary": "Fetches AP Poll data for a specific week and upserts APPollRanking records in the database.",
+      "tags": ["import", "ap-poll", "rankings"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:import_real_data.py:parse_game_date",
+      "type": "function",
+      "name": "parse_game_date",
+      "filePath": "import_real_data.py",
+      "summary": "Parses ISO 8601 startDate from CFBD API response, returning None for missing dates rather than a fallback timestamp.",
+      "tags": ["utility", "parsing"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:import_real_data.py:validate_api_connection",
+      "type": "function",
+      "name": "validate_api_connection",
+      "filePath": "import_real_data.py",
+      "summary": "Tests CFBD API connectivity by fetching teams and reporting success or failure.",
+      "tags": ["validation", "api"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:import_real_data.py:check_for_duplicates",
+      "type": "function",
+      "name": "check_for_duplicates",
+      "filePath": "import_real_data.py",
+      "summary": "Queries the database for game records sharing the same home/away team, week, and season to detect duplicate imports.",
+      "tags": ["validation", "duplicates"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:import_real_data.py:validate_import_results",
+      "type": "function",
+      "name": "validate_import_results",
+      "filePath": "import_real_data.py",
+      "summary": "Runs duplicate detection, verifies game counts, and prints an import validation summary report.",
+      "tags": ["validation", "import"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:import_real_data.py:get_or_create_fcs_team",
+      "type": "function",
+      "name": "get_or_create_fcs_team",
+      "filePath": "import_real_data.py",
+      "summary": "Returns or creates an FCS team placeholder with is_fcs=True and a zeroed ELO rating.",
+      "tags": ["teams", "fcs"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/backfill_quarter_scores.py",
+      "type": "file",
+      "name": "backfill_quarter_scores.py",
+      "filePath": "scripts/backfill_quarter_scores.py",
+      "summary": "Backfills missing quarter scores (q1–q4) for existing game records by fetching line scores from CFBD, with dry-run and batch commit support.",
+      "tags": ["backfill", "quarter-scores", "elo", "games"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:scripts/backfill_quarter_scores.py:QuarterScoreBackfiller",
+      "type": "class",
+      "name": "QuarterScoreBackfiller",
+      "filePath": "scripts/backfill_quarter_scores.py",
+      "summary": "Encapsulates the backfill workflow: queries games with NULL quarter scores, fetches line scores from CFBD, validates and commits results, and reports statistics.",
+      "tags": ["backfill", "quarter-scores", "class"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/backfill_quarter_scores.py:QuarterScoreBackfiller.get_games_needing_backfill",
+      "type": "function",
+      "name": "get_games_needing_backfill",
+      "filePath": "scripts/backfill_quarter_scores.py",
+      "summary": "Queries Game records where q1_home IS NULL, optionally filtered by season and limited in count.",
+      "tags": ["query", "quarter-scores"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/backfill_quarter_scores.py:QuarterScoreBackfiller.backfill_game",
+      "type": "function",
+      "name": "backfill_game",
+      "filePath": "scripts/backfill_quarter_scores.py",
+      "summary": "Fetches line scores for a single game from CFBD, updates the Game model, validates quarter totals, and commits unless in dry-run mode.",
+      "tags": ["backfill", "quarter-scores"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/backfill_quarter_scores.py:QuarterScoreBackfiller.run",
+      "type": "function",
+      "name": "run",
+      "filePath": "scripts/backfill_quarter_scores.py",
+      "summary": "Orchestrates the full backfill loop with rate-limiting sleep, batch commits, and final summary.",
+      "tags": ["backfill", "orchestrator"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/check_week11_api.py",
+      "type": "file",
+      "name": "check_week11_api.py",
+      "filePath": "scripts/check_week11_api.py",
+      "summary": "Diagnostic script that inspects CFBD Week 11 API data to debug current-week detection, checking both camelCase and snake_case score field names.",
+      "tags": ["diagnostic", "week-detection", "cfbd"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/check_week11_api.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/check_week11_api.py",
+      "summary": "Calls get_current_week and get_games for week 11, categorizes games as completed or upcoming, and prints field-name inspection results.",
+      "tags": ["diagnostic", "week-detection"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/debug_cfbd_response.py",
+      "type": "file",
+      "name": "debug_cfbd_response.py",
+      "filePath": "scripts/debug_cfbd_response.py",
+      "summary": "Minimal debug script that fetches week 10 games and pretty-prints the raw JSON response structure for the first three games.",
+      "tags": ["diagnostic", "cfbd", "response-structure"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/debug_cfbd_response.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/debug_cfbd_response.py",
+      "summary": "Fetches week 10 regular-season games and dumps full JSON for the first three to stdout for API response inspection.",
+      "tags": ["diagnostic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/import_ap_poll_only.py",
+      "type": "file",
+      "name": "import_ap_poll_only.py",
+      "filePath": "scripts/import_ap_poll_only.py",
+      "summary": "Standalone script to import AP Poll rankings for specified weeks without touching game data or resetting the database.",
+      "tags": ["import", "ap-poll", "rankings"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/import_ap_poll_only.py:import_ap_poll_for_week",
+      "type": "function",
+      "name": "import_ap_poll_for_week",
+      "filePath": "scripts/import_ap_poll_only.py",
+      "summary": "Fetches AP Poll data for a single week and upserts APPollRanking records, matching teams by name.",
+      "tags": ["import", "ap-poll"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/import_ap_poll_only.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/import_ap_poll_only.py",
+      "summary": "Interactive entry point that auto-detects season/week, accepts user input for range, and iterates import_ap_poll_for_week.",
+      "tags": ["import", "ap-poll", "interactive"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/test_cfbd_data.py",
+      "type": "file",
+      "name": "test_cfbd_data.py",
+      "filePath": "scripts/test_cfbd_data.py",
+      "summary": "Quick smoke-test script that checks CFBD data availability for weeks 8-15 of the 2025 season.",
+      "tags": ["diagnostic", "cfbd", "smoke-test"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/test_cfbd_data.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/test_cfbd_data.py",
+      "summary": "Loops over weeks 8-15, calls get_games for each, and reports game count or error.",
+      "tags": ["diagnostic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/update_games.py",
+      "type": "file",
+      "name": "update_games.py",
+      "filePath": "scripts/update_games.py",
+      "summary": "Incremental game import script that adds new games for specified weeks without resetting the database, creating FCS team placeholders as needed.",
+      "tags": ["import", "games", "incremental", "fcs"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/update_games.py:update_games",
+      "type": "function",
+      "name": "update_games",
+      "filePath": "scripts/update_games.py",
+      "summary": "Iterates over weeks, fetches games from CFBD, creates FCS placeholders, skips duplicates, fetches quarter scores for completed games, and writes new Game records.",
+      "tags": ["import", "games", "quarter-scores"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/update_games.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/update_games.py",
+      "summary": "Interactive entry point that auto-detects season/week, prompts for start/end weeks, and calls update_games.",
+      "tags": ["import", "interactive"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/weekly_update.py",
+      "type": "file",
+      "name": "weekly_update.py",
+      "filePath": "scripts/weekly_update.py",
+      "summary": "Weekly cron orchestrator that performs pre-flight checks (active season, current week detection, API quota) before running import_real_data.py in incremental mode.",
+      "tags": ["cron", "orchestrator", "weekly-update", "api-quota"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/weekly_update.py:is_active_season",
+      "type": "function",
+      "name": "is_active_season",
+      "filePath": "scripts/weekly_update.py",
+      "summary": "Returns True if today falls within the active CFB season window (August through configured season end date).",
+      "tags": ["season", "date-logic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/weekly_update.py:check_api_usage",
+      "type": "function",
+      "name": "check_api_usage",
+      "filePath": "scripts/weekly_update.py",
+      "summary": "Returns True if monthly CFBD API usage is below 90% threshold, logging a critical message if exceeded.",
+      "tags": ["api-quota", "guard"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/weekly_update.py:get_current_week_wrapper",
+      "type": "function",
+      "name": "get_current_week_wrapper",
+      "filePath": "scripts/weekly_update.py",
+      "summary": "Wraps CFBDClient.get_current_week with logging and exception handling for the weekly update pre-flight check.",
+      "tags": ["week-detection", "wrapper"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/weekly_update.py:validate_week_number",
+      "type": "function",
+      "name": "validate_week_number",
+      "filePath": "scripts/weekly_update.py",
+      "summary": "Validates that a week number falls within 0-19 (covers preseason through CFP), returning False and logging errors for out-of-range values.",
+      "tags": ["validation", "week-detection"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/weekly_update.py:update_current_week",
+      "type": "function",
+      "name": "update_current_week",
+      "filePath": "scripts/weekly_update.py",
+      "summary": "Queries the max week among processed games and updates Season.current_week in the database as a redundancy measure.",
+      "tags": ["season", "database"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/weekly_update.py:run_import_script",
+      "type": "function",
+      "name": "run_import_script",
+      "filePath": "scripts/weekly_update.py",
+      "summary": "Executes import_real_data.py as a subprocess in incremental mode with a 30-minute timeout, returning the exit code.",
+      "tags": ["subprocess", "import"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/weekly_update.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/weekly_update.py",
+      "summary": "Entry point that sequences three pre-flight checks then calls run_import_script and update_current_week on success.",
+      "tags": ["orchestrator", "cron"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/integrations/cfbd_client.py",
+      "type": "file",
+      "name": "cfbd_client.py",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "CFBD API client providing methods to fetch teams, games, recruiting, transfer portal, AP Poll, and quarter-by-quarter line scores, with automatic usage tracking and quota monitoring.",
+      "tags": ["api-client", "cfbd", "integration", "api-quota", "recruiting", "games"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "type": "class",
+      "name": "CFBDClient",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "HTTP client for CollegeFootballData.com API covering teams, games, recruiting rankings, player data, transfer portal, AP Poll, and line scores; uses Bearer token auth and @track_api_usage decorator.",
+      "tags": ["api-client", "cfbd", "class"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:track_api_usage",
+      "type": "function",
+      "name": "track_api_usage",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Decorator that logs every API call to the api_usage table with endpoint, timestamp, status code, and response time, then checks warning thresholds.",
+      "tags": ["decorator", "api-quota", "tracking"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:get_monthly_usage",
+      "type": "function",
+      "name": "get_monthly_usage",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Returns a dict of API call count, monthly limit, percentage used, remaining calls, average per day, and top endpoints for a given month.",
+      "tags": ["api-quota", "monitoring"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:check_usage_warnings",
+      "type": "function",
+      "name": "check_usage_warnings",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Logs critical/warning messages at 80/90/95% thresholds, suppressing duplicate warnings per month.",
+      "tags": ["api-quota", "monitoring"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:get_season_end_date",
+      "type": "function",
+      "name": "get_season_end_date",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Reads CFB_SEASON_END_DATE env var (default Feb 1) and returns (month, day) tuple for season boundary calculations.",
+      "tags": ["season", "configuration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:CFBDClient.get_current_season",
+      "type": "function",
+      "name": "get_current_season",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Determines the current CFB season year based on calendar date and the configured season end date, accounting for the January playoff period.",
+      "tags": ["season", "date-logic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:CFBDClient.get_current_week",
+      "type": "function",
+      "name": "get_current_week",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Fetches all regular-season games and returns the highest week number that has completed (non-null, non-0-0) scores.",
+      "tags": ["week-detection", "games"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:CFBDClient.estimate_current_week",
+      "type": "function",
+      "name": "estimate_current_week",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Fallback calendar-based week estimator using weeks elapsed since the first Saturday after Labor Day.",
+      "tags": ["week-detection", "fallback"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:CFBDClient.get_teams",
+      "type": "function",
+      "name": "get_teams",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Fetches all FBS teams for a given season year from the /teams/fbs endpoint.",
+      "tags": ["teams", "api"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "function",
+      "name": "get_games",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Fetches games from the /games endpoint with optional week, team, season type, and classification filters.",
+      "tags": ["games", "api"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:CFBDClient.get_recruiting_rankings",
+      "type": "function",
+      "name": "get_recruiting_rankings",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Fetches team-level 247Sports composite recruiting rankings for a class year from /recruiting/teams.",
+      "tags": ["recruiting", "api"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:CFBDClient.get_recruiting_players",
+      "type": "function",
+      "name": "get_recruiting_players",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Fetches individual player recruiting data (stars, rating, ranking, position) from /recruiting/players, returning an empty list on API failure.",
+      "tags": ["recruiting", "players", "api"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:CFBDClient.get_team_talent",
+      "type": "function",
+      "name": "get_team_talent",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Fetches team talent composite scores from the /talent endpoint.",
+      "tags": ["talent", "api"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:CFBDClient.get_returning_production",
+      "type": "function",
+      "name": "get_returning_production",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Fetches returning production percentages (percentPPA) from the /player/returning endpoint.",
+      "tags": ["returning-production", "api"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:CFBDClient.get_transfer_portal",
+      "type": "function",
+      "name": "get_transfer_portal",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Fetches transfer portal entries from the /player/portal endpoint.",
+      "tags": ["transfer-portal", "api"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:CFBDClient.get_ap_poll",
+      "type": "function",
+      "name": "get_ap_poll",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Fetches rankings from /rankings, filters to AP Top 25 poll entries, and returns a flat list of team ranking dicts.",
+      "tags": ["ap-poll", "rankings", "api"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/integrations/cfbd_client.py:CFBDClient.get_game_line_scores",
+      "type": "function",
+      "name": "get_game_line_scores",
+      "filePath": "src/integrations/cfbd_client.py",
+      "summary": "Fetches quarter-by-quarter line scores from /games/teams, matches the specific game by team names, and returns {home: [q1,q2,q3,q4], away: [q1,q2,q3,q4]} or None.",
+      "tags": ["quarter-scores", "line-scores", "api"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:utilities/compare_rankings.py",
+      "type": "file",
+      "name": "compare_rankings.py",
+      "filePath": "utilities/compare_rankings.py",
+      "summary": "Utility that compares ELO rankings against the AP Poll, analyzes prediction accuracy, and displays ELO insights such as biggest rating changes and strength of schedule leaders.",
+      "tags": ["analysis", "rankings", "ap-poll", "elo", "prediction"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:utilities/compare_rankings.py:compare_with_ap_poll",
+      "type": "function",
+      "name": "compare_with_ap_poll",
+      "filePath": "utilities/compare_rankings.py",
+      "summary": "Fetches ELO rankings and compares them to a hardcoded AP Poll reference, computing exact matches and average positional difference.",
+      "tags": ["analysis", "ap-poll", "elo"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:utilities/compare_rankings.py:analyze_prediction_accuracy",
+      "type": "function",
+      "name": "analyze_prediction_accuracy",
+      "filePath": "utilities/compare_rankings.py",
+      "summary": "Queries all processed games and measures how often ELO correctly predicted the winner, listing biggest upsets.",
+      "tags": ["analysis", "prediction", "elo"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:utilities/compare_rankings.py:show_elo_insights",
+      "type": "function",
+      "name": "show_elo_insights",
+      "filePath": "utilities/compare_rankings.py",
+      "summary": "Displays biggest ELO rating gainers/decliners and strength-of-schedule leaders from current rankings.",
+      "tags": ["analysis", "elo", "sos"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:utilities/import_player_data.py",
+      "type": "file",
+      "name": "import_player_data.py",
+      "filePath": "utilities/import_player_data.py",
+      "summary": "Script to import individual player recruiting data from CFBD for all FBS teams or a single team, with API quota checks, dry-run mode, and upsert logic.",
+      "tags": ["import", "recruiting", "players", "api-quota"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:utilities/import_player_data.py:check_api_quota",
+      "type": "function",
+      "name": "check_api_quota",
+      "filePath": "utilities/import_player_data.py",
+      "summary": "Estimates API calls needed (~133 for full FBS import) and warns if projected usage would exceed 90% of the monthly quota.",
+      "tags": ["api-quota", "guard"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:utilities/import_player_data.py:import_players_for_team",
+      "type": "function",
+      "name": "import_players_for_team",
+      "filePath": "utilities/import_player_data.py",
+      "summary": "Fetches player recruiting data for one team and upserts Player records in the database, committing in batches of 100.",
+      "tags": ["import", "players", "recruiting"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:utilities/import_player_data.py:import_all_teams",
+      "type": "function",
+      "name": "import_all_teams",
+      "filePath": "utilities/import_player_data.py",
+      "summary": "Iterates over all FBS teams in the database and calls import_players_for_team for each, with rate-limit sleep between teams.",
+      "tags": ["import", "players", "orchestrator"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:utilities/import_player_data.py:verify_import",
+      "type": "function",
+      "name": "verify_import",
+      "filePath": "utilities/import_player_data.py",
+      "summary": "Queries total player count and teams with players for a given recruiting year, then prints the top 5 recruits by ranking.",
+      "tags": ["validation", "players"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:check_bowl_game_weeks.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:check_bowl_game_weeks.py",
+      "target": "function:check_bowl_game_weeks.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:diagnostics/debug_championships.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/debug_championships.py",
+      "target": "function:diagnostics/debug_championships.py:debug_championships",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:diagnostics/diagnose_missing_games.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:diagnostics/diagnose_missing_games.py",
+      "target": "function:diagnostics/diagnose_missing_games.py:check_team_games",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "file:src/core/ranking_service.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "function:import_real_data.py:import_teams",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "function:import_real_data.py:import_conference_championships",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "function:import_real_data.py:import_bowl_games",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "function:import_real_data.py:import_playoff_games",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "function:import_real_data.py:import_ap_poll_rankings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "function:import_real_data.py:parse_game_date",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "function:import_real_data.py:validate_api_connection",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "function:import_real_data.py:check_for_duplicates",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "function:import_real_data.py:validate_import_results",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "function:import_real_data.py:get_or_create_fcs_team",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/backfill_quarter_scores.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/backfill_quarter_scores.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/backfill_quarter_scores.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/backfill_quarter_scores.py",
+      "target": "class:scripts/backfill_quarter_scores.py:QuarterScoreBackfiller",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:scripts/backfill_quarter_scores.py:QuarterScoreBackfiller",
+      "target": "function:scripts/backfill_quarter_scores.py:QuarterScoreBackfiller.get_games_needing_backfill",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:scripts/backfill_quarter_scores.py:QuarterScoreBackfiller",
+      "target": "function:scripts/backfill_quarter_scores.py:QuarterScoreBackfiller.backfill_game",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:scripts/backfill_quarter_scores.py:QuarterScoreBackfiller",
+      "target": "function:scripts/backfill_quarter_scores.py:QuarterScoreBackfiller.run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:scripts/backfill_quarter_scores.py:QuarterScoreBackfiller.backfill_game",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_game_line_scores",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/check_week11_api.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/check_week11_api.py",
+      "target": "function:scripts/check_week11_api.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/debug_cfbd_response.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/debug_cfbd_response.py",
+      "target": "function:scripts/debug_cfbd_response.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/import_ap_poll_only.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/import_ap_poll_only.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/import_ap_poll_only.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/import_ap_poll_only.py",
+      "target": "function:scripts/import_ap_poll_only.py:import_ap_poll_for_week",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/import_ap_poll_only.py",
+      "target": "function:scripts/import_ap_poll_only.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:scripts/import_ap_poll_only.py:import_ap_poll_for_week",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_ap_poll",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/test_cfbd_data.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/test_cfbd_data.py",
+      "target": "function:scripts/test_cfbd_data.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/update_games.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/update_games.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/update_games.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/update_games.py",
+      "target": "function:scripts/update_games.py:update_games",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/update_games.py",
+      "target": "function:scripts/update_games.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:scripts/update_games.py:update_games",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:scripts/update_games.py:update_games",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_game_line_scores",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/weekly_update.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/weekly_update.py",
+      "target": "function:scripts/weekly_update.py:is_active_season",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/weekly_update.py",
+      "target": "function:scripts/weekly_update.py:check_api_usage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/weekly_update.py",
+      "target": "function:scripts/weekly_update.py:get_current_week_wrapper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/weekly_update.py",
+      "target": "function:scripts/weekly_update.py:validate_week_number",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/weekly_update.py",
+      "target": "function:scripts/weekly_update.py:update_current_week",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/weekly_update.py",
+      "target": "function:scripts/weekly_update.py:run_import_script",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/weekly_update.py",
+      "target": "function:scripts/weekly_update.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:scripts/weekly_update.py:run_import_script",
+      "target": "file:import_real_data.py",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:scripts/weekly_update.py:check_api_usage",
+      "target": "function:src/integrations/cfbd_client.py:get_monthly_usage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:scripts/weekly_update.py:get_current_week_wrapper",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_current_week",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:scripts/weekly_update.py:is_active_season",
+      "target": "function:src/integrations/cfbd_client.py:get_season_end_date",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/integrations/cfbd_client.py",
+      "target": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/integrations/cfbd_client.py",
+      "target": "function:src/integrations/cfbd_client.py:track_api_usage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/integrations/cfbd_client.py",
+      "target": "function:src/integrations/cfbd_client.py:get_monthly_usage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/integrations/cfbd_client.py",
+      "target": "function:src/integrations/cfbd_client.py:check_usage_warnings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/integrations/cfbd_client.py",
+      "target": "function:src/integrations/cfbd_client.py:get_season_end_date",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_current_season",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_current_week",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.estimate_current_week",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_teams",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_recruiting_rankings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_recruiting_players",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_team_talent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_returning_production",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_transfer_portal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_ap_poll",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src/integrations/cfbd_client.py:CFBDClient",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_game_line_scores",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:src/integrations/cfbd_client.py:track_api_usage",
+      "target": "function:src/integrations/cfbd_client.py:check_usage_warnings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/integrations/cfbd_client.py:CFBDClient.get_current_season",
+      "target": "function:src/integrations/cfbd_client.py:get_season_end_date",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/integrations/cfbd_client.py:CFBDClient.get_current_week",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:utilities/compare_rankings.py",
+      "target": "file:src/core/ranking_service.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/compare_rankings.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/compare_rankings.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/compare_rankings.py",
+      "target": "function:utilities/compare_rankings.py:compare_with_ap_poll",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:utilities/compare_rankings.py",
+      "target": "function:utilities/compare_rankings.py:analyze_prediction_accuracy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:utilities/compare_rankings.py",
+      "target": "function:utilities/compare_rankings.py:show_elo_insights",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:utilities/import_player_data.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/import_player_data.py",
+      "target": "file:src/models/database.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/import_player_data.py",
+      "target": "file:src/models/models.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:utilities/import_player_data.py",
+      "target": "function:utilities/import_player_data.py:check_api_quota",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:utilities/import_player_data.py",
+      "target": "function:utilities/import_player_data.py:import_players_for_team",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:utilities/import_player_data.py",
+      "target": "function:utilities/import_player_data.py:import_all_teams",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:utilities/import_player_data.py",
+      "target": "function:utilities/import_player_data.py:verify_import",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:utilities/import_player_data.py:check_api_quota",
+      "target": "function:src/integrations/cfbd_client.py:get_monthly_usage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:utilities/import_player_data.py:import_players_for_team",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_recruiting_players",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:utilities/import_player_data.py:import_all_teams",
+      "target": "function:utilities/import_player_data.py:import_players_for_team",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:import_real_data.py:import_teams",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_teams",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:import_real_data.py:import_teams",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_recruiting_rankings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:import_real_data.py:import_teams",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_team_talent",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:import_real_data.py:import_teams",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_returning_production",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:import_real_data.py:import_teams",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_transfer_portal",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:import_real_data.py:import_conference_championships",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:import_real_data.py:import_conference_championships",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_game_line_scores",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:import_real_data.py:import_bowl_games",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:import_real_data.py:import_bowl_games",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_game_line_scores",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:import_real_data.py:import_playoff_games",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:import_real_data.py:import_ap_poll_rankings",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_ap_poll",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:check_bowl_game_weeks.py:main",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:diagnostics/debug_championships.py:debug_championships",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:diagnostics/diagnose_missing_games.py:check_team_games",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:scripts/check_week11_api.py:main",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:scripts/check_week11_api.py:main",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_current_week",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:scripts/debug_cfbd_response.py:main",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:scripts/test_cfbd_data.py:main",
+      "target": "function:src/integrations/cfbd_client.py:CFBDClient.get_games",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/weekly_update.py",
+      "target": "file:import_real_data.py",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:import_real_data.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:scripts/backfill_quarter_scores.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:scripts/update_games.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:utilities/import_player_data.py",
+      "target": "file:src/integrations/cfbd_client.py",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:scripts/import_ap_poll_only.py",
+      "target": "file:import_real_data.py",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:scripts/update_games.py",
+      "target": "file:import_real_data.py",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

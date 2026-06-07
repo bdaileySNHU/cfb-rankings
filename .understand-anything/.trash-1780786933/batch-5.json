@@ -1,0 +1,29 @@
+{
+  "nodes": [
+    {
+      "id": "pipeline:.github/workflows/tests.yml",
+      "type": "pipeline",
+      "name": "tests.yml",
+      "filePath": ".github/workflows/tests.yml",
+      "summary": "GitHub Actions CI pipeline running unit, integration, and E2E tests on push/PR to main; uses Python 3.11, installs from requirements-dev.txt, runs pytest with coverage reporting.",
+      "tags": ["ci-cd", "testing", "automation", "coverage", "github-actions"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "pipeline:.github/workflows/tests.yml",
+      "target": "file:requirements-dev.txt",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "pipeline:.github/workflows/tests.yml",
+      "target": "file:src/api/main.py",
+      "type": "triggers",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

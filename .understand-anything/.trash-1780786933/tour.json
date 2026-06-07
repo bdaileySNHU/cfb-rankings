@@ -1,0 +1,93 @@
+[
+  {
+    "order": 1,
+    "title": "Project Overview",
+    "description": "The README introduces Stat-urday Synthesis: a college football ranking engine that replaces the traditional AP Poll with a data-driven Modified ELO algorithm. It explains the core premise — preseason ratings seeded from recruiting data and returning production, then updated week-by-week as games are played — and maps the system's nine architectural layers from presentation through infrastructure. Reading this first gives you the mental model for everything that follows.",
+    "nodeIds": ["document:README.md"],
+    "languageLesson": "ELO rating systems assign each team a numeric strength score. After every game, points transfer from loser to winner, scaled by how unexpected the result was. A huge upset earns many more points than a predictable win."
+  },
+  {
+    "order": 2,
+    "title": "Data Model Foundation",
+    "description": "The SQLAlchemy ORM models in models.py define every persistent concept in the system: Team (with ELO rating, conference, recruiting rank), Game (with scores, week, game_type for bowl/playoff), RankingHistory (a weekly snapshot per team), Season, Prediction, and APPollRanking. With 40 fan-in references across the codebase, this is the most-depended-upon file in the project — understanding it is a prerequisite for everything else. The ConferenceType enum here directly drives the conference multipliers used in the ranking algorithm.",
+    "nodeIds": ["file:src/models/models.py"],
+    "languageLesson": "SQLAlchemy ORM maps Python classes to database tables. Each Column declaration (e.g., Column(Float, default=1500.0)) defines a schema column. Relationships (relationship('Game', back_populates='home_team')) create Python-accessible foreign-key joins without writing SQL."
+  },
+  {
+    "order": 3,
+    "title": "Database Session Management",
+    "description": "database.py sits one layer beneath the models and handles all SQLAlchemy engine creation, session lifecycle, and the init_db / reset_db utilities. The get_db generator is the FastAPI dependency injected into every API endpoint — it opens a session, yields it to the handler, then commits or rolls back and closes it. Supporting both SQLite (development) and PostgreSQL (production) through a single DATABASE_URL environment variable is the key operational flexibility this file provides.",
+    "nodeIds": ["file:src/models/database.py"],
+    "languageLesson": "FastAPI dependency injection uses Python generator functions. get_db yields a session inside a try/finally block — FastAPI calls next() to get the session, runs the endpoint, then resumes the generator for cleanup. This guarantees sessions are always closed even when exceptions occur."
+  },
+  {
+    "order": 4,
+    "title": "API Contracts via Pydantic Schemas",
+    "description": "schemas.py defines every Pydantic v2 request and response model used by the API: TeamResponse, GameResponse, RankingResponse, PredictionResponse, APPollComparisonResponse, and more. With 19 fan-out references, this file is imported by nearly every layer that touches serialization. The separation from ORM models (models.py) is intentional: the schema layer controls what the API exposes, while the ORM layer controls what the database stores — they can evolve independently.",
+    "nodeIds": ["file:src/models/schemas.py"],
+    "languageLesson": "Pydantic v2 uses model_config = ConfigDict(from_attributes=True) (replacing the v1 orm_mode=True) to enable constructing a schema instance directly from a SQLAlchemy ORM object. FastAPI calls model_validate(orm_obj) automatically when your endpoint return type annotation is a Pydantic model."
+  },
+  {
+    "order": 5,
+    "title": "CFBD Integration: Pulling Game Data",
+    "description": "cfbd_client.py is the gateway to CollegeFootballData.com — the external data source that supplies every game result, recruiting ranking, transfer portal entry, and AP Poll result used by the system. The CFBDClient class wraps each API endpoint in a typed Python method, handles pagination and monthly quota tracking (via the APIUsage model from Step 2), and translates raw CFBD JSON into the domain objects the ranking service expects. With 20 fan-in references it is the third most-depended-upon file in the project.",
+    "nodeIds": ["file:src/integrations/cfbd_client.py", "class:src/integrations/cfbd_client.py:CFBDClient", "function:src/integrations/cfbd_client.py:CFBDClient.get_games"],
+    "languageLesson": "The client uses Python's httpx library with a shared AsyncClient and bearer-token authentication. Methods are async to allow FastAPI background tasks to await network I/O without blocking the event loop. Monthly quota tracking stores usage in the database rather than in memory so it survives restarts."
+  },
+  {
+    "order": 6,
+    "title": "The Heart: Modified ELO Algorithm",
+    "description": "ranking_service.py contains the core business logic that differentiates this project from a standard ELO implementation. RankingService.initialize_season seeds every team's starting rating using three preseason signals: 247Sports recruiting rank, transfer portal net gain, and returning production percentage. Then process_game applies home field advantage (+65 rating points to expected score), a margin-of-victory multiplier (capped at 2.5x to discourage running up scores), conference-strength multipliers, and a progressive K-factor that starts high early in the season (64) and decreases as the season matures (48 → 32). Understanding this file means understanding the entire product.",
+    "nodeIds": ["file:src/core/ranking_service.py", "class:src/core/ranking_service.py:RankingService", "function:src/core/ranking_service.py:RankingService.process_game"],
+    "languageLesson": "The K-factor controls how quickly ratings change after each game. A high K (64) early in the season allows large swings as teams reveal their true strength. Reducing K as the season progresses (toward 32) stabilizes ratings and prevents a single late-season upset from erasing months of accumulated signal."
+  },
+  {
+    "order": 7,
+    "title": "Position-Group Strength Scoring",
+    "description": "position_service.py extends the preseason rating model by computing a composite strength score for each team based on the quality of players returning at each position group (QB, OL, RB, WR, TE, DL, LB, DB). The load_position_weights function reads configurable weights so the formula can be tuned without code changes. This feeds directly into the preseason bonus calculation in RankingService, connecting the player-level data imported from CFBD to the team-level ELO starting values.",
+    "nodeIds": ["file:src/core/position_service.py"],
+    "languageLesson": "Separating position-group scoring into its own service (rather than embedding it in ranking_service.py) follows the Single Responsibility Principle. It also makes the weighting logic independently testable — you can unit-test position scores without running the full ELO pipeline."
+  },
+  {
+    "order": 8,
+    "title": "The API Layer: 40+ FastAPI Endpoints",
+    "description": "main.py is the FastAPI application entry point and, at 2837 lines, the broadest file in the codebase — it imports 24 other modules and wires every service together. Endpoints are organized by domain: /teams, /games, /rankings, /predictions, /ap-poll, /preseason, and /admin. The admin endpoints trigger background tasks (game imports, season reprocessing, weekly updates) so long-running operations do not block HTTP responses. Studying the router structure here reveals how every user-facing action maps to a service call.",
+    "nodeIds": ["file:src/api/main.py"],
+    "languageLesson": "FastAPI's BackgroundTasks allows endpoints to return immediately (HTTP 202 Accepted) while work continues asynchronously on the server. The task function receives the database session from the dependency injector, runs to completion, and results are visible on the next poll. This is how the admin import UI avoids long-hanging HTTP requests."
+  },
+  {
+    "order": 9,
+    "title": "Frontend: Rankings Dashboard",
+    "description": "index.html is the application's landing page, and app.js (754 lines, 10 fan-out) is its controller. Together they render the ELO rankings table, week selector, prediction panel, and historical sparklines by calling the ApiService (api.js) against the FastAPI backend. The season selector dynamically populates from /api/seasons, so no year is hardcoded in the frontend. The pattern used here — a thin HTML shell with all data fetched via JSON API calls — is consistent across every page in the frontend/ directory.",
+    "nodeIds": ["file:frontend/index.html", "file:frontend/js/app.js", "file:frontend/js/api.js"],
+    "languageLesson": "api.js uses the Module pattern — a class with static methods that all route through a single base URL determined at load time (localhost:8000 in dev, the production hostname otherwise). This auto-detection means the same JavaScript file is deployed without modification to both environments."
+  },
+  {
+    "order": 10,
+    "title": "ELO Formula Explainer & Simulator",
+    "description": "elo-formula.html is an interactive documentation page that walks through every component of the Modified ELO formula with worked examples. It exists primarily for transparency — users can see exactly how their team's rating was calculated. simulator.js builds on this by letting users adjust preseason component weights interactively and immediately see how the projected rankings shift. Both pages consume the same /api/preseason/components endpoint as the backend, ensuring the explanation and the live system are always in sync.",
+    "nodeIds": ["file:frontend/elo-formula.html", "file:frontend/js/simulator.js"],
+    "languageLesson": "Hosting a formula explainer inside the product (rather than in external docs) serves two purposes: it reduces support questions by making the algorithm transparent, and it doubles as a regression test — if the rendered formula diverges from the implementation, a developer will notice immediately when checking the page."
+  },
+  {
+    "order": 11,
+    "title": "Weekly Update Workflow",
+    "description": "Every week during the season, two files orchestrate the data pipeline: weekly_update.py performs pre-flight checks (active season detected, current week identified, API quota available) then imports new game results and recomputes rankings; utilities/weekly_update.sh wraps this in shell-level logging, error handling, and a lock file to prevent concurrent runs. A systemd timer (cfb-weekly-update.timer) fires the shell script every Sunday at 22:00 UTC, so the entire update is fully automated. The WEEKLY-WORKFLOW.md runbook documents the manual override procedure when automation fails.",
+    "nodeIds": ["file:scripts/weekly_update.py", "file:utilities/weekly_update.sh", "service:deploy/cfb-weekly-update.timer", "document:docs/WEEKLY-WORKFLOW.md"],
+    "languageLesson": "Systemd timers are preferred over cron in modern Linux deployments because they integrate with journalctl for logging, support OnCalendar expressions (human-readable schedule syntax), and can be monitored with systemctl status. The accompanying .service unit file defines what command runs; the .timer unit defines when."
+  },
+  {
+    "order": 12,
+    "title": "Season Lifecycle Management",
+    "description": "start_new_season.py handles the annual reset: it archives the outgoing season's data, creates a new Season record, and reinitializes every team's ELO rating using that year's preseason factors (recruiting, transfer portal, returning production) — the same pipeline introduced in ranking_service.py. When bad data or a code bug corrupts a season's ratings, reprocess_season.py replays every game in chronological order from scratch, guaranteeing the final standings reflect the algorithm exactly. Together these two scripts define the full season lifecycle.",
+    "nodeIds": ["file:scripts/start_new_season.py", "file:utilities/reprocess_season.py", "document:docs/SEASON-RUNBOOK.md"],
+    "languageLesson": "Idempotent reprocessing (replaying all games from scratch rather than trying to patch individual records) is a common pattern in event-sourced systems. The cost is higher compute per run, but the benefit is correctness guarantees — you always know the output matches the algorithm, regardless of what intermediate state the database was in."
+  },
+  {
+    "order": 13,
+    "title": "Deployment & Infrastructure",
+    "description": "The production deployment uses gunicorn serving the FastAPI app behind nginx, managed by a systemd service unit (cfb-rankings.service). The GitHub Actions pipeline (tests.yml) runs unit, integration, and E2E test suites on every push to main — requiring all three to pass before a merge is allowed. The Makefile provides make test-unit, make test-integration, and make test-e2e targets that mirror the CI commands exactly, so developers can reproduce any CI failure locally with a single command.",
+    "nodeIds": ["service:deploy/cfb-rankings.service", "pipeline:.github/workflows/tests.yml", "config:Makefile"],
+    "languageLesson": "GitHub Actions jobs run in parallel by default; sequential dependencies require explicit needs: declarations. The three test jobs (unit, integration, E2E) can run in parallel here because they use different test fixtures and do not share state, cutting total CI time roughly in thirds compared to running them sequentially."
+  }
+]

@@ -1,0 +1,54 @@
+{
+  "nodes": [
+    {
+      "id": "document:docs/architecture/coding-standards.md",
+      "type": "document",
+      "name": "coding-standards.md",
+      "filePath": "docs/architecture/coding-standards.md",
+      "summary": "Defines coding conventions for the College Football Rankings System covering Python (PEP 8, Black formatter, Flake8, isort, snake_case naming, Google-style docstrings, type hints, SQLAlchemy ORM patterns, FastAPI conventions, AAA test pattern) and JavaScript (ES6+, camelCase naming, async/await, DOM manipulation patterns). Also covers HTML/CSS semantic markup, CSS variables, git commit message format with Feature/Fix/Refactor types, code review checklist, and anti-patterns to avoid.",
+      "tags": ["documentation", "architecture", "coding-standards"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/architecture/source-tree.md",
+      "type": "document",
+      "name": "source-tree.md",
+      "filePath": "docs/architecture/source-tree.md",
+      "summary": "Documents the complete project directory structure: src/ (api/main.py, core/ranking_service.py, models/, integrations/cfbd_client.py), frontend/ (HTML pages + vanilla JS + CSS), scripts/ (weekly_update.py, prediction scripts), migrations/, diagnostics/, utilities/, archive/, tests/ (unit/integration/e2e with 78 tests), docs/, and deploy/. Explains naming conventions, import path conventions using src. prefix, entry points (uvicorn, import_real_data.py), and file organization principles (separation of concerns, single responsibility).",
+      "tags": ["documentation", "architecture", "source-tree"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/architecture/tech-stack.md",
+      "type": "document",
+      "name": "tech-stack.md",
+      "filePath": "docs/architecture/tech-stack.md",
+      "summary": "Documents the full technology stack: Python 3.11 backend with FastAPI 0.125.0, SQLAlchemy 2.0.23 ORM, SQLite database, Pydantic 2.5.0, Gunicorn 21.2.0 + Uvicorn 0.24.0 server; vanilla JavaScript/HTML5/CSS3 frontend with Chart.js via CDN; CollegeFootballData.com (CFBD) as external data source via Requests; pytest for testing; Black/Flake8/isort for code quality; Linux/systemd/Nginx for production deployment. Covers data flow (CFBD API -> import scripts -> SQLite -> FastAPI -> JS frontend), API design (RESTful JSON endpoints), security, scalability notes, and build/deployment commands.",
+      "tags": ["documentation", "architecture", "tech-stack"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:docs/architecture/source-tree.md",
+      "target": "document:docs/architecture/tech-stack.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "document:docs/architecture/coding-standards.md",
+      "target": "document:docs/architecture/tech-stack.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:docs/architecture/source-tree.md",
+      "target": "document:docs/architecture/coding-standards.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

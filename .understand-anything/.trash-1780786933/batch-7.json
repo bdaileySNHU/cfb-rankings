@@ -1,0 +1,126 @@
+{
+  "nodes": [
+    {
+      "id": "document:.bmad-core/agents/analyst.md",
+      "type": "document",
+      "name": "analyst.md",
+      "filePath": ".bmad-core/agents/analyst.md",
+      "summary": "BMad Business Analyst agent (Mary) definition covering market research, brainstorming, competitive analysis, and project brief creation.",
+      "tags": ["dev-tooling", "bmad", "agent", "analyst"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/agents/architect.md",
+      "type": "document",
+      "name": "architect.md",
+      "filePath": ".bmad-core/agents/architect.md",
+      "summary": "BMad Architect agent (Winston) definition for holistic system design, architecture documents, technology selection, and infrastructure planning.",
+      "tags": ["dev-tooling", "bmad", "agent", "architect"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/agents/bmad-master.md",
+      "type": "document",
+      "name": "bmad-master.md",
+      "filePath": ".bmad-core/agents/bmad-master.md",
+      "summary": "BMad Master agent definition serving as an all-in-one single-agent persona that can embody any BMad role on demand.",
+      "tags": ["dev-tooling", "bmad", "agent", "orchestration"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/agents/bmad-orchestrator.md",
+      "type": "document",
+      "name": "bmad-orchestrator.md",
+      "filePath": ".bmad-core/agents/bmad-orchestrator.md",
+      "summary": "BMad Web Orchestrator agent definition that coordinates multi-agent workflows and guides users through planning and execution phases.",
+      "tags": ["dev-tooling", "bmad", "agent", "orchestration"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/agents/dev.md",
+      "type": "document",
+      "name": "dev.md",
+      "filePath": ".bmad-core/agents/dev.md",
+      "summary": "BMad Full Stack Developer agent (James) definition that implements stories task-by-task with strict constraints on which story sections it may modify.",
+      "tags": ["dev-tooling", "bmad", "agent", "developer"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/agents/pm.md",
+      "type": "document",
+      "name": "pm.md",
+      "filePath": ".bmad-core/agents/pm.md",
+      "summary": "BMad Product Manager agent (John) definition for creating PRDs, epics, product strategy, and roadmap documentation.",
+      "tags": ["dev-tooling", "bmad", "agent", "product-management"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/agents/po.md",
+      "type": "document",
+      "name": "po.md",
+      "filePath": ".bmad-core/agents/po.md",
+      "summary": "BMad Product Owner agent (Sarah) definition focused on backlog management, story refinement, artifact validation, and sprint planning.",
+      "tags": ["dev-tooling", "bmad", "agent", "product-owner"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/agents/qa.md",
+      "type": "document",
+      "name": "qa.md",
+      "filePath": ".bmad-core/agents/qa.md",
+      "summary": "BMad Test Architect agent (Quinn) definition providing advisory quality gates, risk assessment, NFR validation, and test design without blocking progress.",
+      "tags": ["dev-tooling", "bmad", "agent", "quality-assurance"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/agents/sm.md",
+      "type": "document",
+      "name": "sm.md",
+      "filePath": ".bmad-core/agents/sm.md",
+      "summary": "BMad Scrum Master agent (Bob) definition specialized in creating detailed, actionable user stories for developer agents using create-next-story task.",
+      "tags": ["dev-tooling", "bmad", "agent", "scrum"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/agents/ux-expert.md",
+      "type": "document",
+      "name": "ux-expert.md",
+      "filePath": ".bmad-core/agents/ux-expert.md",
+      "summary": "BMad UX Expert agent (Sally) definition for UI/UX design, wireframes, front-end specifications, and AI UI generation prompts.",
+      "tags": ["dev-tooling", "bmad", "agent", "ux-design"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:.bmad-core/agents/bmad-orchestrator.md",
+      "target": "document:.bmad-core/agents/bmad-master.md",
+      "type": "related",
+      "label": "orchestrates"
+    },
+    {
+      "source": "document:.bmad-core/agents/pm.md",
+      "target": "document:.bmad-core/agents/po.md",
+      "type": "related",
+      "label": "handoff to"
+    },
+    {
+      "source": "document:.bmad-core/agents/po.md",
+      "target": "document:.bmad-core/agents/sm.md",
+      "type": "related",
+      "label": "handoff to"
+    },
+    {
+      "source": "document:.bmad-core/agents/sm.md",
+      "target": "document:.bmad-core/agents/dev.md",
+      "type": "related",
+      "label": "prepares stories for"
+    },
+    {
+      "source": "document:.bmad-core/agents/qa.md",
+      "target": "document:.bmad-core/agents/dev.md",
+      "type": "related",
+      "label": "reviews work of"
+    }
+  ]
+}

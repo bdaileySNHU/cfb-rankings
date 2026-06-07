@@ -1,0 +1,78 @@
+{
+  "nodes": [
+    {
+      "id": "document:.bmad-core/checklists/architect-checklist.md",
+      "type": "document",
+      "name": "architect-checklist.md",
+      "filePath": ".bmad-core/checklists/architect-checklist.md",
+      "summary": "Comprehensive 440-line validation checklist for the Architect agent to verify technical design, scalability, security, and alignment with PRD before development begins.",
+      "tags": ["dev-tooling", "bmad", "checklist", "architecture"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:.bmad-core/checklists/change-checklist.md",
+      "type": "document",
+      "name": "change-checklist.md",
+      "filePath": ".bmad-core/checklists/change-checklist.md",
+      "summary": "Interactive checklist guiding agents and users through analysis and planning when a significant project change (pivot, tech issue, or failed story) is identified during the BMad workflow.",
+      "tags": ["dev-tooling", "bmad", "checklist", "change-management"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/checklists/pm-checklist.md",
+      "type": "document",
+      "name": "pm-checklist.md",
+      "filePath": ".bmad-core/checklists/pm-checklist.md",
+      "summary": "Comprehensive PM checklist ensuring PRDs and epic definitions are complete, user-centric, MVP-scoped, and technically feasible before handoff.",
+      "tags": ["dev-tooling", "bmad", "checklist", "product-management"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:.bmad-core/checklists/po-master-checklist.md",
+      "type": "document",
+      "name": "po-master-checklist.md",
+      "filePath": ".bmad-core/checklists/po-master-checklist.md",
+      "summary": "Master PO validation checklist that adapts for greenfield vs brownfield projects and UI vs service-only scope to validate artifacts before development execution.",
+      "tags": ["dev-tooling", "bmad", "checklist", "product-owner"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:.bmad-core/checklists/story-dod-checklist.md",
+      "type": "document",
+      "name": "story-dod-checklist.md",
+      "filePath": ".bmad-core/checklists/story-dod-checklist.md",
+      "summary": "Definition of Done checklist for developer agents to self-validate story completion (code quality, tests, standards) before marking a story ready for review.",
+      "tags": ["dev-tooling", "bmad", "checklist", "developer", "quality-assurance"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/checklists/story-draft-checklist.md",
+      "type": "document",
+      "name": "story-draft-checklist.md",
+      "filePath": ".bmad-core/checklists/story-draft-checklist.md",
+      "summary": "Scrum Master checklist validating that a story draft contains sufficient clarity, context, technical guidance, and testability before implementation begins.",
+      "tags": ["dev-tooling", "bmad", "checklist", "scrum", "story"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:.bmad-core/checklists/pm-checklist.md",
+      "target": "document:.bmad-core/checklists/po-master-checklist.md",
+      "type": "related",
+      "label": "feeds into"
+    },
+    {
+      "source": "document:.bmad-core/checklists/story-draft-checklist.md",
+      "target": "document:.bmad-core/checklists/story-dod-checklist.md",
+      "type": "related",
+      "label": "precedes"
+    },
+    {
+      "source": "document:.bmad-core/checklists/change-checklist.md",
+      "target": "document:.bmad-core/checklists/pm-checklist.md",
+      "type": "related",
+      "label": "may trigger re-run of"
+    }
+  ]
+}

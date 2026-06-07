@@ -1,0 +1,100 @@
+{
+  "nodes": [
+    {
+      "id": "file:frontend/css/base.css",
+      "type": "file",
+      "name": "base.css",
+      "filePath": "frontend/css/base.css",
+      "summary": "CSS reset and base typography layer. Imports Inter from Google Fonts, applies universal box-sizing reset, sets body background and font from design tokens, defines heading scale (h1-h3), anchor hover transitions to accent gold, and utility classes (.hidden, .tabular, .text-center, margin helpers).",
+      "tags": ["frontend", "css", "reset", "typography", "utilities"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:frontend/css/components.css",
+      "type": "file",
+      "name": "components.css",
+      "filePath": "frontend/css/components.css",
+      "summary": "Largest stylesheet (2074 lines) containing all UI component styles: rankings table with rank badges (top-5/top-10/top-25), conference badges (P5/G5/FCS), SOS difficulty indicators, prediction cards, ELO sparklines, stat cards, accuracy banner, historical season banner, admin dashboard components (status badges, stat rows, env table), simulator slider groups, matchup comparison panels, team profile stats, share-card button, loading spinner, error states, empty states, and responsive table overrides.",
+      "tags": ["frontend", "css", "components", "rankings", "admin", "simulator"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:frontend/css/layout.css",
+      "type": "file",
+      "name": "layout.css",
+      "filePath": "frontend/css/layout.css",
+      "summary": "Structural layout styles for the site shell: sticky site header (60px, z-index 100), sticky secondary navigation bar (48px, z-index 99) with hamburger menu for mobile breakpoint (≤767px), 1280px max-width main container, and site footer with centered flex layout. Includes theme-toggle button styles and nav-link active/hover states.",
+      "tags": ["frontend", "css", "layout", "navigation", "responsive"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend/css/style.css",
+      "type": "file",
+      "name": "style.css",
+      "filePath": "frontend/css/style.css",
+      "summary": "CSS entry point (9 lines) that stitches together the design system via four ordered @import statements: tokens.css → base.css → layout.css → components.css. All HTML pages link only this file.",
+      "tags": ["frontend", "css", "entry-point", "imports"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:frontend/css/tokens.css",
+      "type": "file",
+      "name": "tokens.css",
+      "filePath": "frontend/css/tokens.css",
+      "summary": "Design token definitions (113 lines) with dark-first theming. Defines CSS custom properties for surfaces (bg-primary through bg-card), border colors, text hierarchy (primary/secondary/muted), accent palette (gold #d69e2e with hover, dim, and blue secondary), semantic colors (success, warning, error, info), navigation height, font stacks (Inter sans-serif and JetBrains Mono), spacing radii (sm through xl), shadows (four levels), and transition speeds. Overrides for light theme via [data-theme='light'] and system prefers-color-scheme media query.",
+      "tags": ["frontend", "css", "design-tokens", "theming", "dark-mode"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:frontend/css/style.css",
+      "target": "file:frontend/css/tokens.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/css/style.css",
+      "target": "file:frontend/css/base.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/css/style.css",
+      "target": "file:frontend/css/layout.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/css/style.css",
+      "target": "file:frontend/css/components.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/css/base.css",
+      "target": "file:frontend/css/tokens.css",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:frontend/css/layout.css",
+      "target": "file:frontend/css/tokens.css",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:frontend/css/components.css",
+      "target": "file:frontend/css/tokens.css",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

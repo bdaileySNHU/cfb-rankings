@@ -1,0 +1,185 @@
+{
+  "nodes": [
+    {
+      "id": "document:docs/EPIC-026-STORY-26.8-VALIDATION-REPORT.md",
+      "type": "document",
+      "name": "EPIC-026-STORY-26.8-VALIDATION-REPORT.md",
+      "filePath": "docs/EPIC-026-STORY-26.8-VALIDATION-REPORT.md",
+      "summary": "Validation report for EPIC-026 Story 26.8 comparing the system's transfer portal team rankings against 247Sports 2024 rankings to verify accuracy.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/EPIC-026-TRANSFER-PORTAL-RANKINGS.md",
+      "type": "document",
+      "name": "EPIC-026-TRANSFER-PORTAL-RANKINGS.md",
+      "filePath": "docs/EPIC-026-TRANSFER-PORTAL-RANKINGS.md",
+      "summary": "EPIC-026 planning epic for Transfer Portal Team Rankings, defining goals and stories to incorporate transfer portal activity into team ELO ratings.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/EPIC-028-CODEBASE-CLEANUP.md",
+      "type": "document",
+      "name": "EPIC-028-CODEBASE-CLEANUP.md",
+      "filePath": "docs/EPIC-028-CODEBASE-CLEANUP.md",
+      "summary": "EPIC-028 completed comprehensive codebase cleanup and professional documentation initiative improving code organization and maintainability.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/EPIC-029-2026-PRESEASON-SETUP.md",
+      "type": "document",
+      "name": "EPIC-029-2026-PRESEASON-SETUP.md",
+      "filePath": "docs/EPIC-029-2026-PRESEASON-SETUP.md",
+      "summary": "EPIC-029 completed setup of the 2026 preseason ratings with position strength metrics, establishing the baseline ELO ratings for the upcoming season.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/EPIC-030-PREVIOUS-SEASON-REGRESSION.md",
+      "type": "document",
+      "name": "EPIC-030-PREVIOUS-SEASON-REGRESSION.md",
+      "filePath": "docs/EPIC-030-PREVIOUS-SEASON-REGRESSION.md",
+      "summary": "EPIC-030 planned high-priority enhancement to incorporate previous season performance as a factor in preseason ELO ratings.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/EPIC-031-UI-REDESIGN.md",
+      "type": "document",
+      "name": "EPIC-031-UI-REDESIGN.md",
+      "filePath": "docs/EPIC-031-UI-REDESIGN.md",
+      "summary": "EPIC-031 planned UI redesign to transform the rankings site into a modern sports dashboard with improved data visualization.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/EPIC-032-PRESEASON-SIMULATOR.md",
+      "type": "document",
+      "name": "EPIC-032-PRESEASON-SIMULATOR.md",
+      "filePath": "docs/EPIC-032-PRESEASON-SIMULATOR.md",
+      "summary": "EPIC-032 planned high-priority interactive preseason rating simulator allowing users to explore how different inputs affect team ELO ratings.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/EPIC-033-2026-SEASON-DATA-PIPELINE.md",
+      "type": "document",
+      "name": "EPIC-033-2026-SEASON-DATA-PIPELINE.md",
+      "filePath": "docs/EPIC-033-2026-SEASON-DATA-PIPELINE.md",
+      "summary": "EPIC-033 planned high-priority data pipeline for the 2026 CFB season covering automated game imports and weekly update processes.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/epic-fix-cfbd-test-failures.md",
+      "type": "document",
+      "name": "epic-fix-cfbd-test-failures.md",
+      "filePath": "docs/epic-fix-cfbd-test-failures.md",
+      "summary": "Draft brownfield enhancement epic for fixing CFBD client test failures, addressing test infrastructure issues in the CFBD API integration layer.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/epic-fix-integration-tests.md",
+      "type": "document",
+      "name": "epic-fix-integration-tests.md",
+      "filePath": "docs/epic-fix-integration-tests.md",
+      "summary": "Epic for fixing the integration test suite to resolve failures and improve test infrastructure reliability across the codebase.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/epic-game-schedule-display.md",
+      "type": "document",
+      "name": "epic-game-schedule-display.md",
+      "filePath": "docs/epic-game-schedule-display.md",
+      "summary": "EPIC-001 brownfield enhancement epic defining the Game Schedule Display feature, the first epic in the project, created 2025-10-17.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/epic-preseason-enhancement-summary.md",
+      "type": "document",
+      "name": "epic-preseason-enhancement-summary.md",
+      "filePath": "docs/epic-preseason-enhancement-summary.md",
+      "summary": "Completion summary for the Preseason Enhancement epic with player position metrics (EPIC-PRESEASON-2026-01), completed 2026-01-21.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/epic-season-end-2025-finalization.md",
+      "type": "document",
+      "name": "epic-season-end-2025-finalization.md",
+      "filePath": "docs/epic-season-end-2025-finalization.md",
+      "summary": "Epic for season-end finalization and archival of the 2024-2025 CFB season, covering data locking and end-of-season reporting.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/epic-season-end-date-fix.md",
+      "type": "document",
+      "name": "epic-season-end-date-fix.md",
+      "filePath": "docs/epic-season-end-date-fix.md",
+      "summary": "Brownfield enhancement epic fixing season year detection logic to correctly identify the active CFB season during January and early February playoffs.",
+      "tags": ["documentation", "epic"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/FIX-GAME-DATE-DISPLAY.md",
+      "type": "document",
+      "name": "FIX-GAME-DATE-DISPLAY.md",
+      "filePath": "docs/FIX-GAME-DATE-DISPLAY.md",
+      "summary": "Fix document for the game date display issue where predictions showed the import timestamp instead of the actual scheduled game date.",
+      "tags": ["documentation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/PLAYOFF-GAMES.md",
+      "type": "document",
+      "name": "PLAYOFF-GAMES.md",
+      "filePath": "docs/PLAYOFF-GAMES.md",
+      "summary": "Reference document describing how the system handles College Football Playoff games including automatic import, week assignment, and ranking calculations.",
+      "tags": ["documentation", "guide"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/prd-preseason-enhancement-2026-01-20.md",
+      "type": "document",
+      "name": "prd-preseason-enhancement-2026-01-20.md",
+      "filePath": "docs/prd-preseason-enhancement-2026-01-20.md",
+      "summary": "Product requirements document for the 2026 preseason ranking enhancement with player position metrics, authored 2026-01-20.",
+      "tags": ["documentation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/prd.md",
+      "type": "document",
+      "name": "prd.md",
+      "filePath": "docs/prd.md",
+      "summary": "Comprehensive codebase cleanup PRD authored by the PM agent in December 2025, defining requirements for technical debt reduction and code quality improvements.",
+      "tags": ["documentation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/PREDICTIONS.md",
+      "type": "document",
+      "name": "PREDICTIONS.md",
+      "filePath": "docs/PREDICTIONS.md",
+      "summary": "Reference documentation for the game predictions feature explaining how ELO-based predictions, confidence levels, and prediction history work.",
+      "tags": ["documentation", "guide"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/PRODUCTION-DEPLOYMENT-CHECKLIST.md",
+      "type": "document",
+      "name": "PRODUCTION-DEPLOYMENT-CHECKLIST.md",
+      "filePath": "docs/PRODUCTION-DEPLOYMENT-CHECKLIST.md",
+      "summary": "Quick-reference production deployment checklist for pushing code to the cfb.bdailey.com server at /var/www/cfb-rankings.",
+      "tags": ["documentation", "guide"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": []
+}

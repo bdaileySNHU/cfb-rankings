@@ -20,8 +20,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   teamId = params.get('id');
   const urlSeason = params.get('season');
 
-  // Get season from URL or use active season as default
-  season = urlSeason ? parseInt(urlSeason) : await api.getActiveSeason();
+  // URL param → localStorage (from nav selector) → active season
+  if (urlSeason) {
+    season = parseInt(urlSeason);
+  } else {
+    const stored = localStorage.getItem('staturdaySelectedSeason');
+    season = stored ? parseInt(stored, 10) : await api.getActiveSeason();
+  }
 
   if (!teamId) {
     showError('No team ID provided');

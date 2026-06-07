@@ -1,0 +1,45 @@
+{
+  "nodes": [
+    {
+      "id": "document:.bmad-core/tasks/test-design.md",
+      "type": "document",
+      "name": "test-design.md",
+      "filePath": ".bmad-core/tasks/test-design.md",
+      "summary": "Designs a complete test strategy for a story by classifying each testable behavior into the appropriate level (unit, integration, or e2e) and priority tier, avoiding redundant coverage.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/tasks/trace-requirements.md",
+      "type": "document",
+      "name": "trace-requirements.md",
+      "filePath": ".bmad-core/tasks/trace-requirements.md",
+      "summary": "Builds a requirements traceability matrix mapping each story acceptance criterion to corresponding test cases using Given-When-Then patterns, surfacing coverage gaps.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.bmad-core/tasks/validate-next-story.md",
+      "type": "document",
+      "name": "validate-next-story.md",
+      "filePath": ".bmad-core/tasks/validate-next-story.md",
+      "summary": "Comprehensively validates a drafted story before implementation by checking template completeness, file structure, acceptance criteria clarity, and alignment with architecture and epic requirements.",
+      "tags": ["dev-tooling", "bmad", "task"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:.bmad-core/tasks/test-design.md",
+      "target": "document:.bmad-core/tasks/trace-requirements.md",
+      "type": "related",
+      "label": "test design informs traceability mapping"
+    },
+    {
+      "source": "document:.bmad-core/tasks/validate-next-story.md",
+      "target": "document:.bmad-core/tasks/create-next-story.md",
+      "type": "related",
+      "label": "validation follows story creation"
+    }
+  ]
+}

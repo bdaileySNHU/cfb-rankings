@@ -1,0 +1,194 @@
+{
+  "nodes": [
+    {
+      "id": "file:deploy/clear-cache.sh",
+      "type": "file",
+      "name": "clear-cache.sh",
+      "filePath": "deploy/clear-cache.sh",
+      "summary": "VPS maintenance script to clear Python bytecode cache (.pyc files and __pycache__ dirs) when code changes aren't being picked up. Stops the cfb-rankings systemd service, removes all .pyc files and __pycache__ directories under /var/www/cfb-rankings, then restarts the service and shows status.",
+      "tags": ["deployment", "maintenance", "cache"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:deploy/deploy-epic-004.sh",
+      "type": "file",
+      "name": "deploy-epic-004.sh",
+      "filePath": "deploy/deploy-epic-004.sh",
+      "summary": "EPIC-004 deployment script for the VPS. Pulls latest code from git, verifies CFBD_MONTHLY_LIMIT is present in .env (prompting to add if missing), installs Python dependencies via pip, runs a Python heredoc to apply database schema updates, then restarts the service. Includes colored terminal output for step visibility.",
+      "tags": ["deployment", "epic-004", "database-migration"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:deploy/deploy-epic-009.sh",
+      "type": "file",
+      "name": "deploy-epic-009.sh",
+      "filePath": "deploy/deploy-epic-009.sh",
+      "summary": "EPIC-009 deployment script for Prediction Accuracy Tracking & Display (v3.0.0, LOW risk, no database migration). Pulls latest code, verifies commits, restarts the cfb-rankings service, then smoke-tests three endpoints: /api/predictions/accuracy, /api/predictions/accuracy/team/82, and /api/predictions/stored.",
+      "tags": ["deployment", "epic-009", "predictions"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:deploy/deploy.sh",
+      "type": "file",
+      "name": "deploy.sh",
+      "filePath": "deploy/deploy.sh",
+      "summary": "Main deployment script (requires root). Pulls latest code from git origin/main, installs requirements-prod.txt into the venv, restarts the cfb-rankings systemd service, and reloads nginx (with config test). App lives at /var/www/cfb-rankings. Database migration step is commented out for regular deployments.",
+      "tags": ["deployment", "production", "systemd"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:deploy/fix-permissions.sh",
+      "type": "file",
+      "name": "fix-permissions.sh",
+      "filePath": "deploy/fix-permissions.sh",
+      "summary": "File ownership and permission fix script for EPIC-004 deployment. Sets www-data:www-data ownership recursively on /var/www/cfb-rankings, database file to 664, backup files, and .env file to 640. Intended to be run after initial deploy or when permission errors occur.",
+      "tags": ["deployment", "permissions", "security"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:deploy/setup.sh",
+      "type": "file",
+      "name": "setup.sh",
+      "filePath": "deploy/setup.sh",
+      "summary": "One-time VPS initial setup script (requires root). Installs system packages (python3, nginx, certbot, git), creates /var/www/cfb-rankings, clones or accepts manually placed app files, creates Python venv, installs requirements-prod.txt, creates log directories, copies .env.example to .env and opens nano for editing, initializes the SQLite database, optionally runs import_real_data.py, sets www-data ownership, installs deploy/cfb-rankings.service to systemd, configures nginx from deploy/nginx.conf (substituting domain), and obtains a Let's Encrypt SSL certificate via certbot.",
+      "tags": ["deployment", "setup", "vps", "ssl"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "service:deploy/cfb-rankings.service",
+      "type": "service",
+      "name": "cfb-rankings.service",
+      "filePath": "deploy/cfb-rankings.service",
+      "summary": "Systemd service unit for the main FastAPI application. Runs as www-data, WorkingDirectory /var/www/cfb-rankings, ExecStart uses gunicorn with gunicorn_config.py and main:app. Type=simple, Restart=on-failure with 10s RestartSec. Sets PATH to venv/bin, DATABASE_URL, and CFBD_API_KEY via inline Environment directives (note: key is hardcoded in this file). WantedBy multi-user.target.",
+      "tags": ["systemd", "service", "gunicorn", "production"],
+      "complexity": "simple"
+    },
+    {
+      "id": "service:deploy/cfb-weekly-update.service",
+      "type": "service",
+      "name": "cfb-weekly-update.service",
+      "filePath": "deploy/cfb-weekly-update.service",
+      "summary": "Systemd oneshot service unit for the weekly data import job. Runs as www-data, loads env from /var/www/cfb-rankings/.env, executes scripts/weekly_update.py via venv Python. Logs append to /var/log/cfb-rankings/weekly-update.log. 30-minute timeout, Restart=no (timer handles scheduling). Security-hardened: NoNewPrivileges, PrivateTmp, ProtectSystem=strict, ProtectHome, ReadWritePaths limited to app and log dirs.",
+      "tags": ["systemd", "service", "weekly-update", "cron"],
+      "complexity": "simple"
+    },
+    {
+      "id": "service:deploy/cfb-weekly-update.timer",
+      "type": "service",
+      "name": "cfb-weekly-update.timer",
+      "filePath": "deploy/cfb-weekly-update.timer",
+      "summary": "Systemd timer that triggers cfb-weekly-update.service every Sunday at 22:00 UTC (5:00 PM Eastern during EST, 6:00 PM Eastern during EDT). Persistent=true ensures missed runs execute on next boot. RandomizedDelaySec=300 adds up to 5 minutes of jitter for network stability. WantedBy timers.target.",
+      "tags": ["systemd", "timer", "weekly-update", "scheduling"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:deploy/nginx.conf",
+      "type": "config",
+      "name": "nginx.conf",
+      "filePath": "deploy/nginx.conf",
+      "summary": "Nginx site configuration for college football rankings. HTTP (port 80) redirects to HTTPS. HTTPS (port 443) with TLS 1.2/1.3 via Let's Encrypt certificates: serves frontend static files from /var/www/cfb-rankings/frontend with 1-year cache headers for assets, and reverse-proxies /api/, /docs, /redoc, /openapi.json to Gunicorn at 127.0.0.1:8000 with 60s timeouts. Security headers: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection.",
+      "tags": ["config", "nginx", "reverse-proxy", "ssl"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:deploy/deploy.sh",
+      "target": "service:deploy/cfb-rankings.service",
+      "type": "manages",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:deploy/deploy.sh",
+      "target": "config:deploy/nginx.conf",
+      "type": "reloads",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:deploy/setup.sh",
+      "target": "service:deploy/cfb-rankings.service",
+      "type": "installs",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:deploy/setup.sh",
+      "target": "config:deploy/nginx.conf",
+      "type": "installs",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:deploy/setup.sh",
+      "target": "config:.env.example",
+      "type": "uses",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:deploy/setup.sh",
+      "target": "config:requirements-prod.txt",
+      "type": "installs",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "service:deploy/cfb-rankings.service",
+      "target": "file:gunicorn_config.py",
+      "type": "uses",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "service:deploy/cfb-weekly-update.timer",
+      "target": "service:deploy/cfb-weekly-update.service",
+      "type": "triggers",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "service:deploy/cfb-weekly-update.service",
+      "target": "file:scripts/weekly_update.py",
+      "type": "invokes",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "config:deploy/nginx.conf",
+      "target": "service:deploy/cfb-rankings.service",
+      "type": "proxies-to",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:deploy/clear-cache.sh",
+      "target": "service:deploy/cfb-rankings.service",
+      "type": "manages",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:deploy/deploy-epic-004.sh",
+      "target": "service:deploy/cfb-rankings.service",
+      "type": "manages",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:deploy/deploy-epic-009.sh",
+      "target": "service:deploy/cfb-rankings.service",
+      "type": "manages",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:deploy/fix-permissions.sh",
+      "target": "file:deploy/deploy-epic-004.sh",
+      "type": "supports",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

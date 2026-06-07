@@ -1,0 +1,90 @@
+{
+  "nodes": [
+    {
+      "id": "config:.bmad-core/workflows/brownfield-fullstack.yaml",
+      "type": "config",
+      "name": "brownfield-fullstack.yaml",
+      "filePath": ".bmad-core/workflows/brownfield-fullstack.yaml",
+      "summary": "Agent workflow for enhancing existing full-stack applications, routing enhancement requests through scope classification (single story, small epic, or major enhancement) to the appropriate planning and implementation path.",
+      "tags": ["dev-tooling", "bmad", "workflow"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.bmad-core/workflows/brownfield-service.yaml",
+      "type": "config",
+      "name": "brownfield-service.yaml",
+      "filePath": ".bmad-core/workflows/brownfield-service.yaml",
+      "summary": "Agent workflow for adding features or making changes to an existing backend service or API, handling existing system analysis, integration risk assessment, and story creation.",
+      "tags": ["dev-tooling", "bmad", "workflow"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.bmad-core/workflows/brownfield-ui.yaml",
+      "type": "config",
+      "name": "brownfield-ui.yaml",
+      "filePath": ".bmad-core/workflows/brownfield-ui.yaml",
+      "summary": "Agent workflow for enhancing an existing UI layer, coordinating front-end spec updates, component analysis, and incremental story delivery without disrupting the current user experience.",
+      "tags": ["dev-tooling", "bmad", "workflow"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.bmad-core/workflows/greenfield-fullstack.yaml",
+      "type": "config",
+      "name": "greenfield-fullstack.yaml",
+      "filePath": ".bmad-core/workflows/greenfield-fullstack.yaml",
+      "summary": "Agent workflow for building a new full-stack application from scratch, sequencing analyst, PM, UX, and architect agents through brief, PRD, front-end spec, architecture, and story creation phases.",
+      "tags": ["dev-tooling", "bmad", "workflow"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.bmad-core/workflows/greenfield-service.yaml",
+      "type": "config",
+      "name": "greenfield-service.yaml",
+      "filePath": ".bmad-core/workflows/greenfield-service.yaml",
+      "summary": "Agent workflow for creating a new backend service or API from scratch, guiding agents through requirements gathering, service architecture design, and epic/story decomposition.",
+      "tags": ["dev-tooling", "bmad", "workflow"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.bmad-core/workflows/greenfield-ui.yaml",
+      "type": "config",
+      "name": "greenfield-ui.yaml",
+      "filePath": ".bmad-core/workflows/greenfield-ui.yaml",
+      "summary": "Agent workflow for building a new UI application from scratch, sequencing UX specification, optional AI UI generation, front-end architecture, and story creation for a standalone front-end project.",
+      "tags": ["dev-tooling", "bmad", "workflow"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:.bmad-core/workflows/greenfield-fullstack.yaml",
+      "target": "config:.bmad-core/workflows/greenfield-service.yaml",
+      "type": "related",
+      "label": "fullstack workflow encompasses service workflow patterns"
+    },
+    {
+      "source": "config:.bmad-core/workflows/greenfield-fullstack.yaml",
+      "target": "config:.bmad-core/workflows/greenfield-ui.yaml",
+      "type": "related",
+      "label": "fullstack workflow encompasses UI workflow patterns"
+    },
+    {
+      "source": "config:.bmad-core/workflows/brownfield-fullstack.yaml",
+      "target": "config:.bmad-core/workflows/brownfield-service.yaml",
+      "type": "related",
+      "label": "brownfield fullstack delegates to service workflow"
+    },
+    {
+      "source": "config:.bmad-core/workflows/brownfield-fullstack.yaml",
+      "target": "config:.bmad-core/workflows/brownfield-ui.yaml",
+      "type": "related",
+      "label": "brownfield fullstack delegates to UI workflow"
+    },
+    {
+      "source": "config:.bmad-core/workflows/greenfield-fullstack.yaml",
+      "target": "config:.bmad-core/workflows/brownfield-fullstack.yaml",
+      "type": "related",
+      "label": "greenfield and brownfield are parallel workflow variants"
+    }
+  ]
+}

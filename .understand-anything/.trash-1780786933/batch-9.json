@@ -1,0 +1,69 @@
+{
+  "nodes": [
+    {
+      "id": "config:.bmad-core/core-config.yaml",
+      "type": "config",
+      "name": "core-config.yaml",
+      "filePath": ".bmad-core/core-config.yaml",
+      "summary": "Project-level BMad configuration specifying PRD/architecture file locations, story directory, QA path, dev agent always-load files, and slash command prefix.",
+      "tags": ["dev-tooling", "bmad", "configuration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/enhanced-ide-development-workflow.md",
+      "type": "document",
+      "name": "enhanced-ide-development-workflow.md",
+      "filePath": ".bmad-core/enhanced-ide-development-workflow.md",
+      "summary": "Step-by-step IDE workflow guide integrating the QA Test Architect throughout story creation, implementation, and review phases of the BMad development cycle.",
+      "tags": ["dev-tooling", "bmad", "workflow", "ide"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.bmad-core/install-manifest.yaml",
+      "type": "config",
+      "name": "install-manifest.yaml",
+      "filePath": ".bmad-core/install-manifest.yaml",
+      "summary": "BMad v4.44.1 installation manifest tracking all installed files with their content hashes to detect modifications for Claude Code IDE setup.",
+      "tags": ["dev-tooling", "bmad", "installation", "manifest"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/user-guide.md",
+      "type": "document",
+      "name": "user-guide.md",
+      "filePath": ".bmad-core/user-guide.md",
+      "summary": "Comprehensive 577-line BMad Method user guide covering greenfield and brownfield planning/execution workflows, agent usage, and Mermaid workflow diagrams.",
+      "tags": ["dev-tooling", "bmad", "documentation", "user-guide"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:.bmad-core/working-in-the-brownfield.md",
+      "type": "document",
+      "name": "working-in-the-brownfield.md",
+      "filePath": ".bmad-core/working-in-the-brownfield.md",
+      "summary": "Detailed 606-line guide for applying BMad to existing codebases, covering when and how to document, analyze, and structure agentic work on brownfield projects.",
+      "tags": ["dev-tooling", "bmad", "brownfield", "documentation"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:.bmad-core/user-guide.md",
+      "target": "document:.bmad-core/working-in-the-brownfield.md",
+      "type": "related",
+      "label": "references"
+    },
+    {
+      "source": "document:.bmad-core/enhanced-ide-development-workflow.md",
+      "target": "document:.bmad-core/user-guide.md",
+      "type": "related",
+      "label": "summarizes subset of"
+    },
+    {
+      "source": "config:.bmad-core/core-config.yaml",
+      "target": "config:.bmad-core/install-manifest.yaml",
+      "type": "related",
+      "label": "tracked by"
+    }
+  ]
+}

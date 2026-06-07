@@ -8,84 +8,32 @@ let activeSeason = null;
 let currentSeason = null;
 
 // Initialize page
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    await loadSeasons();
-    setupEventListeners();
-    await loadComparisonData(currentSeason);
-  } catch (error) {
-    console.error('Error loading comparison page:', error);
-    showError('Failed to load comparison data. Please try again later.');
-  }
+document.addEventListener('DOMContentLoaded', () => {
+  setupEventListeners();
+
+  window.seasonModule.onSeasonReady(async (selected, active) => {
+    currentSeason = selected;
+    activeSeason = active;
+    try {
+      await loadComparisonData(currentSeason);
+    } catch (error) {
+      console.error('Error loading comparison page:', error);
+      showError('Failed to load comparison data. Please try again later.');
+    }
+  });
+
+  document.addEventListener('seasonchange', async (e) => {
+    currentSeason = e.detail.season;
+    try {
+      await loadComparisonData(currentSeason);
+    } catch (error) {
+      showError('Failed to load comparison data. Please try again later.');
+    }
+  });
 });
 
-/**
- * Load available seasons and populate selector
- */
-async function loadSeasons() {
-  try {
-    const seasons = await api.getSeasons();
-    activeSeason = await api.getActiveSeason();
-    currentSeason = activeSeason;  // Default to active season
-
-    populateSeasonSelector(seasons);
-  } catch (error) {
-    console.error('Error loading seasons:', error);
-    // Continue with default season
-  }
-}
-
-/**
- * Populate season selector dropdown
- */
-function populateSeasonSelector(seasons) {
-  const seasonSelect = document.getElementById('season-select');
-  seasonSelect.innerHTML = '';
-
-  // Sort seasons (newest first)
-  seasons.sort((a, b) => b.year - a.year);
-
-  seasons.forEach(season => {
-    const option = document.createElement('option');
-    option.value = season.year;
-    option.textContent = `${season.year} Season${season.is_active ? ' (Current)' : ''}`;
-    if (season.year === activeSeason) {
-      option.selected = true;
-    }
-    seasonSelect.appendChild(option);
-  });
-}
-
-/**
- * Setup event listeners
- */
 function setupEventListeners() {
-  const seasonSelect = document.getElementById('season-select');
-  if (seasonSelect) {
-    seasonSelect.addEventListener('change', async (e) => {
-      const selectedSeason = e.target.value ? parseInt(e.target.value) : activeSeason;
-      currentSeason = selectedSeason;
-
-      // Show loading state
-      const loading = document.getElementById('loading');
-      const content = document.getElementById('comparison-content');
-      content.classList.add('hidden');
-      loading.classList.remove('hidden');
-      loading.innerHTML = `
-        <div class="loading">
-          <div class="spinner"></div>
-          <span>Loading comparison data for ${currentSeason} season...</span>
-        </div>
-      `;
-
-      try {
-        await loadComparisonData(currentSeason);
-      } catch (error) {
-        console.error('Error loading season data:', error);
-        showError(`Failed to load comparison data for ${currentSeason} season. Please try again.`);
-      }
-    });
-  }
+  // Season changes handled globally via seasonchange event in DOMContentLoaded
 }
 
 /**

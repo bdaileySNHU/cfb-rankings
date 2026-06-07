@@ -51,6 +51,9 @@
         <a href="simulator.html" class="nav-link">Simulator</a>
         <a href="matchup.html" class="nav-link">Matchup</a>
       </div>
+      <div class="nav-season-wrap">
+        <select id="nav-season-select" class="nav-season-select" aria-label="Season"></select>
+      </div>
     </div>
   </nav>
 
@@ -99,10 +102,6 @@
       <div class="card-header">
         <h2 class="card-title">Current Rankings</h2>
         <div class="filters" style="display:flex; align-items:center; gap:0.5rem;">
-          <!-- EPIC-024: Season Selector -->
-          <select class="filter-select" id="season-select">
-            <option value="">Loading seasons...</option>
-          </select>
           <select class="filter-select" id="limit-select">
             <option value="10">Top 10</option>
             <option value="25" selected>Top 25</option>
@@ -308,6 +307,7 @@
   <script src="js/api.js"></script>
   <script src="js/date-utils.js"></script>
   <script src="js/share.js"></script>
+  <script src="js/season.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

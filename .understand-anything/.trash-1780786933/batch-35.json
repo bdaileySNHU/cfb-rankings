@@ -1,0 +1,602 @@
+{
+  "nodes": [
+    {
+      "id": "file:frontend/js/api.js",
+      "type": "file",
+      "name": "api.js",
+      "filePath": "frontend/js/api.js",
+      "summary": "ApiService class providing a singleton REST client for all backend endpoints. Auto-detects localhost vs production base URL. Methods cover rankings (getRankings, getRankingHistory, saveRankings), teams (getTeams, getTeam, getTeamSchedule), games, seasons (getSeasons, getActiveSeason), predictions (getPredictions, getPredictionAccuracy, getStoredPredictions, getPredictionComparison), system stats, and ELO recalculation.",
+      "tags": ["frontend", "javascript", "api-client", "http", "rankings"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/js/api.js:ApiService",
+      "type": "function",
+      "name": "ApiService (class)",
+      "filePath": "frontend/js/api.js",
+      "summary": "HTTP client class wrapping all /api/* endpoints. Exported as a singleton `api`. Uses fetch() with JSON headers and throws on non-OK responses. Supports rankings, teams, games, seasons, predictions, and stats endpoints.",
+      "tags": ["frontend", "api-client", "class"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend/js/app.js",
+      "type": "file",
+      "name": "app.js",
+      "filePath": "frontend/js/app.js",
+      "summary": "Main rankings page JavaScript (754 lines). Manages season selector, ELO rankings table, predictions panel, historical simulation panel, and the Share Top-25 card download. On DOMContentLoaded it loads seasons, stats, prediction accuracy, predictions, and wires all event listeners. Calls api.js for data and date-utils.js for formatting.",
+      "tags": ["frontend", "javascript", "rankings", "predictions", "historical-sim"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:frontend/js/app.js:loadSeasons",
+      "type": "function",
+      "name": "loadSeasons",
+      "filePath": "frontend/js/app.js",
+      "summary": "Fetches /api/seasons and /api/seasons/active, populates the season selector dropdown, sets activeSeason/currentSeason globals, and then triggers loadRankings().",
+      "tags": ["frontend", "seasons", "api-client"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:frontend/js/app.js:loadRankings",
+      "type": "function",
+      "name": "loadRankings",
+      "filePath": "frontend/js/app.js",
+      "summary": "Fetches ELO rankings from api.getRankings(currentLimit, currentSeason), clears the rankings table, calls createRankingRow() for each team, and shows/hides loading/error states.",
+      "tags": ["frontend", "rankings", "api-client"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/js/app.js:createRankingRow",
+      "type": "function",
+      "name": "createRankingRow",
+      "filePath": "frontend/js/app.js",
+      "summary": "Builds a full rankings table row DOM element for a team: rank badge (top-5/top-10/top-25 tiers), rank change indicator (up/down/new/same arrows), ESPN logo or initials fallback, conference badge, FBS-only record, ELO rating, ELO sparkline SVG, SOS score with color tier, and SOS rank.",
+      "tags": ["frontend", "rankings", "dom", "ui"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:frontend/js/app.js:createSparklineSVG",
+      "type": "function",
+      "name": "createSparklineSVG",
+      "filePath": "frontend/js/app.js",
+      "summary": "Generates an inline SVG polyline sparkline for a team's ELO history. Colors the line green/red/gray based on trend direction (last vs first ELO value). Adds a terminal dot at the most recent data point.",
+      "tags": ["frontend", "visualization", "svg", "elo"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/js/app.js:loadPredictions",
+      "type": "function",
+      "name": "loadPredictions",
+      "filePath": "frontend/js/app.js",
+      "summary": "Fetches game predictions from api.getPredictions(), sorts by highest team ELO rating, renders createPredictionCard() for each, and animates probability bars. Shows historical placeholder instead of live controls when a past season is selected.",
+      "tags": ["frontend", "predictions", "api-client"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/js/app.js:loadHistoricalPredictions",
+      "type": "function",
+      "name": "loadHistoricalPredictions",
+      "filePath": "frontend/js/app.js",
+      "summary": "Fetches /api/predictions/historical?season=&week=, renders createHistoricalCard() for each result sorted by incorrect-first, and displays an accuracy summary bar (correct/total, color-coded by percentage).",
+      "tags": ["frontend", "predictions", "historical", "api-client"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/js/app.js:loadPredictionAccuracy",
+      "type": "function",
+      "name": "loadPredictionAccuracy",
+      "filePath": "frontend/js/app.js",
+      "summary": "Fetches overall season prediction accuracy from api.getPredictionAccuracy() and displays the accuracy percentage and correct/evaluated count in the accuracy banner. Only shown when evaluated_predictions > 0.",
+      "tags": ["frontend", "predictions", "accuracy"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:frontend/js/comparison.js",
+      "type": "file",
+      "name": "comparison.js",
+      "filePath": "frontend/js/comparison.js",
+      "summary": "AP Poll vs ELO prediction comparison page (484 lines, EPIC-010). Loads season data, renders hero accuracy stats (overall ELO, AP poll, ELO advantage), breakdown stats (both-correct/elo-only/ap-only/both-wrong), regular-season vs postseason split stats, a Chart.js accuracy-over-time line chart with a postseason visual separator, and a disagreement game table.",
+      "tags": ["frontend", "javascript", "comparison", "ap-poll", "chartjs"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:frontend/js/comparison.js:loadComparisonData",
+      "type": "function",
+      "name": "loadComparisonData",
+      "filePath": "frontend/js/comparison.js",
+      "summary": "Fetches api.getPredictionComparison(season) and orchestrates rendering of all comparison sections: hero stats, breakdown stats, postseason stats, accuracy chart, and disagreements table. Handles empty state (no AP poll data imported yet).",
+      "tags": ["frontend", "comparison", "api-client"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/js/comparison.js:displayAccuracyChart",
+      "type": "function",
+      "name": "displayAccuracyChart",
+      "filePath": "frontend/js/comparison.js",
+      "summary": "Renders a Chart.js line chart showing ELO vs AP Poll prediction accuracy per week. Uses getWeekLabel() to map postseason weeks (16+) to descriptive labels. Adds a custom plugin that draws a dashed vertical separator between regular season and postseason on the chart.",
+      "tags": ["frontend", "chartjs", "visualization", "comparison"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:frontend/js/comparison.js:displayPostseasonStats",
+      "type": "function",
+      "name": "displayPostseasonStats",
+      "filePath": "frontend/js/comparison.js",
+      "summary": "Displays separate regular-season and postseason accuracy cards for ELO and AP Poll. Detects postseason games as week >= 16 in by_week data. Shows an empty state when no postseason data is available.",
+      "tags": ["frontend", "comparison", "postseason"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/js/comparison.js:getWeekLabel",
+      "type": "function",
+      "name": "getWeekLabel",
+      "filePath": "frontend/js/comparison.js",
+      "summary": "Maps week numbers to human-readable labels: weeks 1–15 become 'Week N', postseason weeks (16+) use the postseason_name field (abbreviated: 'CFP', 'Conf. Champ.') or fallback labels (Bowl Week 1/2, CFP Semifinals, etc.).",
+      "tags": ["frontend", "utility", "postseason", "formatting"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:frontend/js/matchup.js",
+      "type": "file",
+      "name": "matchup.js",
+      "filePath": "frontend/js/matchup.js",
+      "summary": "Head-to-head matchup predictor page (482 lines, EPIC-034). Loads all teams for autocomplete search, allows selecting two teams and toggling home/neutral site advantage, fetches /api/matchup to render win probability bar, side-by-side stats grid, SVG ELO history dual-line chart, head-to-head game table, and updates OG meta tags for social sharing. Supports URL param pre-fill (teamA/teamB).",
+      "tags": ["frontend", "javascript", "matchup", "h2h", "visualization"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:frontend/js/matchup.js:runComparison",
+      "type": "function",
+      "name": "runComparison",
+      "filePath": "frontend/js/matchup.js",
+      "summary": "Fetches /api/matchup?teamA=&teamB=, then calls updateProbBar(), renderStatsGrid(), renderEloChart(), renderH2H(), updateOgForMatchup(), and shows the share button. Manages loading/error states.",
+      "tags": ["frontend", "matchup", "api-client"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/js/matchup.js:updateProbBar",
+      "type": "function",
+      "name": "updateProbBar",
+      "filePath": "frontend/js/matchup.js",
+      "summary": "Updates the win probability bar based on the active site toggle (neutral / home-a / home-b). Uses win_prob_neutral, win_prob_a_home, or win_prob_b_home from matchup data, displaying percentages and a +65 ELO home field advantage subtext.",
+      "tags": ["frontend", "matchup", "probability", "elo"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:frontend/js/matchup.js:renderEloChart",
+      "type": "function",
+      "name": "renderEloChart",
+      "filePath": "frontend/js/matchup.js",
+      "summary": "Renders an inline SVG dual-line ELO history chart for two teams. Computes unified week axis, draws Y gridlines, X axis week labels, team A and B polylines in accent colors, and hover-tooltip dots per data point.",
+      "tags": ["frontend", "visualization", "svg", "elo", "matchup"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:frontend/js/matchup.js:renderH2H",
+      "type": "function",
+      "name": "renderH2H",
+      "filePath": "frontend/js/matchup.js",
+      "summary": "Renders the all-time head-to-head game table and series badge (e.g. 'Michigan leads 5-3'). Shows season, week, score for each team, winner badge, and neutral/home site indicator.",
+      "tags": ["frontend", "matchup", "h2h", "history"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend/js/date-utils.js",
+      "type": "file",
+      "name": "date-utils.js",
+      "filePath": "frontend/js/date-utils.js",
+      "summary": "Shared date utility library (140 lines) providing formatGameDate() (with optional relative date mode), getRelativeDate() (Today/Tomorrow/In X days for games within 6 days), getFullDateTime() (long-form with timezone for tooltips), isGameInPast(), and formatGameDateMobile() (numeric short format). Used across app.js, matchup.js, and team.js.",
+      "tags": ["frontend", "javascript", "utility", "date-formatting"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:frontend/js/date-utils.js:formatGameDate",
+      "type": "function",
+      "name": "formatGameDate",
+      "filePath": "frontend/js/date-utils.js",
+      "summary": "Formats a game date string for display. With useRelative=true, returns 'Today', 'Tomorrow', or 'In X days' for nearby games; falls back to 'Sat, Dec 21' format. Returns 'TBD' for null dates.",
+      "tags": ["frontend", "utility", "date-formatting"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:frontend/js/share.js",
+      "type": "file",
+      "name": "share.js",
+      "filePath": "frontend/js/share.js",
+      "summary": "Share and social utility module (165 lines, EPIC-036): provides copyToClipboard() with clipboard API + textarea fallback, showToast() notification, shareMatchup()/shareTeam()/sharePrediction() URL-copy helpers, and downloadTop25Card() which renders a 1200x800px Canvas image of the current Top 25 rankings (team names, ELO, record, two-column layout) and triggers a PNG download.",
+      "tags": ["frontend", "javascript", "share", "social", "canvas"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/js/share.js:downloadTop25Card",
+      "type": "function",
+      "name": "downloadTop25Card",
+      "filePath": "frontend/js/share.js",
+      "summary": "Renders a 1200x800 Canvas image of the Top 25 ELO rankings: dark background, gold accent bar, header with site name and season, two-column team grid (rank, name, record, ELO), and footer with generation date. Downloads as PNG via a temporary anchor element.",
+      "tags": ["frontend", "canvas", "share", "rankings", "png"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:frontend/js/simulator.js",
+      "type": "file",
+      "name": "simulator.js",
+      "filePath": "frontend/js/simulator.js",
+      "summary": "Preseason rating simulator (EPIC-032). Loads team preseason component data (/api/preseason/components) and official weights (/api/admin/preseason-weights), provides interactive sliders for recruiting_scale, transfer_scale, returning_scale, position_scale, prev_season_weight, mean_regression, and returning_regression_scale. Re-simulates all team ratings live on slider change and renders a sortable Top 25 / All Teams table with expandable component breakdown bars. Admin mode (?admin in URL) enables saving weights back to the server.",
+      "tags": ["frontend", "javascript", "simulator", "preseason", "elo", "admin"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:frontend/js/simulator.js:simulate",
+      "type": "function",
+      "name": "simulate",
+      "filePath": "frontend/js/simulator.js",
+      "summary": "Core preseason ELO formula: computes base + recruiting/transfer/returning/position bonuses scaled by current weight sliders. If prev_season_weight > 0 and prev-season ELO is available, blends with a dynamically-regressed prior-season rating using returning_production as a regression modifier.",
+      "tags": ["frontend", "elo", "simulation", "algorithm"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:frontend/js/simulator.js:render",
+      "type": "function",
+      "name": "render",
+      "filePath": "frontend/js/simulator.js",
+      "summary": "Recomputes simulated ratings for all teams, sorts descending, renders table rows (rank, team, conference, sim rating, delta vs current rating, details toggle) via innerHTML string building. Called via requestAnimationFrame through scheduleRender() to batch slider changes.",
+      "tags": ["frontend", "simulation", "dom", "rendering"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend/js/team.js",
+      "type": "file",
+      "name": "team.js",
+      "filePath": "frontend/js/team.js",
+      "summary": "Team detail page JavaScript (754 lines). Loads team info, ELO/SOS stats, prediction accuracy, ELO history SVG chart, game log table, and full season schedule. Supports historical season viewing by overriding current stats with ranking history data. Handles game type filtering (regular/bowl/playoff/conference_championship) and decorates schedule rows with FCS badges, bowl/playoff/conf-champ badges, and prediction outcome cells. Updates OG meta tags for social link previews.",
+      "tags": ["frontend", "javascript", "team", "schedule", "elo", "history"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:frontend/js/team.js:loadTeamDetails",
+      "type": "function",
+      "name": "loadTeamDetails",
+      "filePath": "frontend/js/team.js",
+      "summary": "Main orchestrator for the team page: fetches team data, optionally overrides with historical season ranking data, calls populateTeamInfo(), renderTeamLogo(), loadPredictionAccuracy(), and in parallel loadEloHistory() + loadGameLog() before rendering the ELO chart.",
+      "tags": ["frontend", "team", "api-client"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:frontend/js/team.js:renderEloChart",
+      "type": "function",
+      "name": "renderEloChart",
+      "filePath": "frontend/js/team.js",
+      "summary": "Renders an inline SVG ELO history line chart for the team page with Y gridlines, X week labels, gradient fill under the line, and win/loss colored dots at each game week (green for W, red for L) with hover tooltips showing opponent and score.",
+      "tags": ["frontend", "visualization", "svg", "elo", "team"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:frontend/js/team.js:createScheduleRow",
+      "type": "function",
+      "name": "createScheduleRow",
+      "filePath": "frontend/js/team.js",
+      "summary": "Builds a schedule table row for a game: week, formatted date with full-datetime tooltip, opponent link with optional FCS/bowl/playoff/conference-championship badge, location (home/away/neutral), prediction outcome (predicted W/L with probability, color-coded correct/incorrect), and result score.",
+      "tags": ["frontend", "team", "schedule", "dom"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:frontend/js/theme.js",
+      "type": "file",
+      "name": "theme.js",
+      "filePath": "frontend/js/theme.js",
+      "summary": "Dark/light theme toggle (IIFE, 27 lines). Applies saved theme from localStorage immediately before first paint to avoid flash. On DOMContentLoaded, wires the #theme-toggle button to switch between dark and light themes, persisting the choice to localStorage, and updates the button icon (sun/moon SVG).",
+      "tags": ["frontend", "javascript", "theme", "dark-mode", "localStorage"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "file:frontend/js/api.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "file:frontend/js/date-utils.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "file:frontend/js/share.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/js/comparison.js",
+      "target": "file:frontend/js/api.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:frontend/js/matchup.js",
+      "target": "file:frontend/js/date-utils.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/js/matchup.js",
+      "target": "file:frontend/js/share.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:frontend/js/team.js",
+      "target": "file:frontend/js/api.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/team.js",
+      "target": "file:frontend/js/date-utils.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:frontend/js/team.js",
+      "target": "file:frontend/js/share.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:frontend/js/simulator.js",
+      "target": "file:frontend/js/api.js",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "function:frontend/js/app.js:loadRankings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "function:frontend/js/app.js:loadSeasons",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "function:frontend/js/app.js:loadPredictions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "function:frontend/js/app.js:loadHistoricalPredictions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "function:frontend/js/app.js:createRankingRow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "function:frontend/js/app.js:createSparklineSVG",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/app.js",
+      "target": "function:frontend/js/app.js:loadPredictionAccuracy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/comparison.js",
+      "target": "function:frontend/js/comparison.js:loadComparisonData",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/comparison.js",
+      "target": "function:frontend/js/comparison.js:displayAccuracyChart",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/comparison.js",
+      "target": "function:frontend/js/comparison.js:displayPostseasonStats",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/comparison.js",
+      "target": "function:frontend/js/comparison.js:getWeekLabel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/matchup.js",
+      "target": "function:frontend/js/matchup.js:runComparison",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/matchup.js",
+      "target": "function:frontend/js/matchup.js:updateProbBar",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/matchup.js",
+      "target": "function:frontend/js/matchup.js:renderEloChart",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/matchup.js",
+      "target": "function:frontend/js/matchup.js:renderH2H",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/date-utils.js",
+      "target": "function:frontend/js/date-utils.js:formatGameDate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/share.js",
+      "target": "function:frontend/js/share.js:downloadTop25Card",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/simulator.js",
+      "target": "function:frontend/js/simulator.js:simulate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/simulator.js",
+      "target": "function:frontend/js/simulator.js:render",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/team.js",
+      "target": "function:frontend/js/team.js:loadTeamDetails",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/team.js",
+      "target": "function:frontend/js/team.js:renderEloChart",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/team.js",
+      "target": "function:frontend/js/team.js:createScheduleRow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:frontend/js/api.js",
+      "target": "function:frontend/js/api.js:ApiService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:frontend/js/app.js:loadRankings",
+      "target": "function:frontend/js/api.js:ApiService",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "function:frontend/js/app.js:loadPredictions",
+      "target": "function:frontend/js/api.js:ApiService",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "function:frontend/js/app.js:createRankingRow",
+      "target": "function:frontend/js/app.js:createSparklineSVG",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:frontend/js/matchup.js:runComparison",
+      "target": "function:frontend/js/matchup.js:updateProbBar",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "function:frontend/js/matchup.js:runComparison",
+      "target": "function:frontend/js/matchup.js:renderEloChart",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "function:frontend/js/matchup.js:runComparison",
+      "target": "function:frontend/js/matchup.js:renderH2H",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "function:frontend/js/comparison.js:loadComparisonData",
+      "target": "function:frontend/js/comparison.js:displayAccuracyChart",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "function:frontend/js/comparison.js:loadComparisonData",
+      "target": "function:frontend/js/comparison.js:displayPostseasonStats",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "function:frontend/js/comparison.js:displayAccuracyChart",
+      "target": "function:frontend/js/comparison.js:getWeekLabel",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:frontend/js/app.js:loadPredictions",
+      "target": "function:frontend/js/date-utils.js:formatGameDate",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "function:frontend/js/team.js:createScheduleRow",
+      "target": "function:frontend/js/date-utils.js:formatGameDate",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

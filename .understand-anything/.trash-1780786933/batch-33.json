@@ -1,0 +1,70 @@
+{
+  "nodes": [
+    {
+      "id": "document:utilities/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "utilities/README.md",
+      "summary": "Documentation for the utilities directory, describing its purpose as a collection of reusable helper scripts (distinct from one-off archive scripts). Catalogs development tools (seed_data.py, demo.py), analysis tools (compare_rankings.py), and the weekly update and preseason shell scripts, with usage examples for each.",
+      "tags": ["documentation", "utilities", "readme"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:utilities/finalize_2026_preseason.sh",
+      "type": "file",
+      "name": "finalize_2026_preseason.sh",
+      "filePath": "utilities/finalize_2026_preseason.sh",
+      "summary": "EPIC-029 Story 29.4 shell script that finalizes the 2026 preseason setup on the VPS. Verifies player data exists in the database, creates the 2026 Season record via scripts/start_new_season.py, and initializes preseason ELO ratings with full position-strength weighting. Intended to run after setup_2026_preseason.sh and the player data imports are complete.",
+      "tags": ["utilities", "shell", "preseason", "2026", "elo", "setup"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:utilities/setup_2026_preseason.sh",
+      "type": "file",
+      "name": "setup_2026_preseason.sh",
+      "filePath": "utilities/setup_2026_preseason.sh",
+      "summary": "EPIC-029 first-stage preseason setup script. Creates a database backup, reprocesses the 2025 season to fix ELO imbalances via utilities/reprocess_season.py, and archives the 2024 season record (sets is_active=False). Prints next-step instructions for running the multi-year player data imports before finalize_2026_preseason.sh.",
+      "tags": ["utilities", "shell", "preseason", "2026", "database", "setup"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:utilities/weekly_update.sh",
+      "type": "file",
+      "name": "weekly_update.sh",
+      "filePath": "utilities/weekly_update.sh",
+      "summary": "Primary weekly automation script (379 lines, EPIC-033/035) run via cron every Monday at 9am UTC. Orchestrates four steps: (1) imports CFBD schedule and game results with up to 3 retry attempts and exponential backoff; (2) processes all unprocessed games through the ELO RankingService and saves weekly ranking_history snapshots; (3) computes a rank-movement diff report (teams that moved 5+ spots) and writes it to data/import_log.json; (4) restarts the cfb-rankings systemd service (skippable via SKIP_SERVICE_RESTART=1 when called from the API). Sends Slack webhook and/or email notifications on success or failure. Updates import_log.json with run metadata.",
+      "tags": ["utilities", "shell", "automation", "cron", "elo", "notifications"],
+      "complexity": "complex"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:utilities/setup_2026_preseason.sh",
+      "target": "file:utilities/finalize_2026_preseason.sh",
+      "type": "precedes",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "document:utilities/README.md",
+      "target": "file:utilities/weekly_update.sh",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:utilities/README.md",
+      "target": "file:utilities/setup_2026_preseason.sh",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:utilities/README.md",
+      "target": "file:utilities/finalize_2026_preseason.sh",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

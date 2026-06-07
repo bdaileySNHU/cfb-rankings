@@ -1,0 +1,208 @@
+{
+  "nodes": [
+    {
+      "id": "document:frontend/README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "frontend/README.md",
+      "summary": "Frontend documentation covering the seven pages (rankings, team detail, all teams, games, prediction comparison, simulator, matchup), CSS architecture (tokens → base → layout → components), JavaScript module roles, and instructions for running the local dev server against the FastAPI backend on port 8000.",
+      "tags": ["frontend", "documentation", "readme"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:frontend/admin.html",
+      "type": "file",
+      "name": "admin.html",
+      "filePath": "frontend/admin.html",
+      "summary": "Password-gated admin dashboard that authenticates via X-Admin-Key header, then shows the last import run status, a rank-movement table for teams that moved 5+ spots, cron schedule health (Monday 9am UTC), and environment variable configuration reference (CFBD_API_KEY, ADMIN_SECRET, SLACK_WEBHOOK_URL, NOTIFY_EMAIL). Provides a 'Run Import Now' button that POSTs to /api/admin/import/results.",
+      "tags": ["frontend", "html", "admin", "dashboard", "authentication"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend/comparison.html",
+      "type": "file",
+      "name": "comparison.html",
+      "filePath": "frontend/comparison.html",
+      "summary": "Prediction accuracy comparison page that benchmarks ELO predictions against AP Poll picks using Chart.js visualizations and week-by-week accuracy statistics, demonstrating the system's predictive edge over traditional rankings.",
+      "tags": ["frontend", "html", "analytics", "chart.js", "predictions"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend/elo-formula.html",
+      "type": "file",
+      "name": "elo-formula.html",
+      "filePath": "frontend/elo-formula.html",
+      "summary": "Interactive explainer page (769 lines) documenting the modified ELO algorithm with formula cards covering expected score, K-factor scaling, margin-of-victory multiplier, home-field advantage, preseason adjustments (recruiting, transfers, returning production, position strength), and strength-of-schedule calculation with live interactive sliders.",
+      "tags": ["frontend", "html", "documentation", "elo", "formula"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:frontend/games.html",
+      "type": "file",
+      "name": "games.html",
+      "filePath": "frontend/games.html",
+      "summary": "Game schedule and results listing page with week-based filtering, displaying matchup outcomes, scores, ELO rating changes per game, and neutral-site indicators. Includes responsive CSS to hide or abbreviate the date column on small screens.",
+      "tags": ["frontend", "html", "games", "schedule", "results"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:frontend/index.html",
+      "type": "file",
+      "name": "index.html",
+      "filePath": "frontend/index.html",
+      "summary": "Main rankings page and application entry point. Displays a stats grid (current week, total teams, games played, last updated), a top-25 ELO rankings table with rank-change badges, conference indicators (P5/G5/FCS), SOS difficulty color coding, and a game-predictions section. Supports season selector for historical seasons, week-by-week prediction simulation against actual results, a 'Share Top 25' canvas card download, and OG/Twitter social meta tags.",
+      "tags": ["frontend", "html", "rankings", "predictions", "social-sharing"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:frontend/matchup.html",
+      "type": "file",
+      "name": "matchup.html",
+      "filePath": "frontend/matchup.html",
+      "summary": "Head-to-head matchup predictor that lets users search for any two college football teams and compare them side-by-side with ELO history charts, season stats, and win probability calculations derived from the ELO rating difference.",
+      "tags": ["frontend", "html", "matchup", "predictions", "charts"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend/simulator.html",
+      "type": "file",
+      "name": "simulator.html",
+      "filePath": "frontend/simulator.html",
+      "summary": "Preseason rating simulator page with real-time slider controls for formula weight adjustments (recruiting, transfer portal, returning production, position strength) and previous-season regression parameters (prev_season_weight, mean_regression, returning_regression_scale). Renders a live simulated rankings table showing delta from official ratings; admins can persist slider values as the new official preseason configuration.",
+      "tags": ["frontend", "html", "simulator", "preseason", "elo"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend/team.html",
+      "type": "file",
+      "name": "team.html",
+      "filePath": "frontend/team.html",
+      "summary": "Individual team detail page loaded via query parameter (?id=). Displays the team's current ELO rating and national rank, win-loss record, preseason component breakdown (recruiting, transfers, returning production), full game-by-game schedule with results and ELO change per game, and clickable opponent links.",
+      "tags": ["frontend", "html", "team", "profile", "elo"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:frontend/teams.html",
+      "type": "file",
+      "name": "teams.html",
+      "filePath": "frontend/teams.html",
+      "summary": "Browseable listing of all FBS college football teams with their current ELO ratings, win-loss records, conference membership, and strength of schedule. Supports filtering by conference and sorting by ELO rating, with each row linking to the team detail page.",
+      "tags": ["frontend", "html", "teams", "listing", "elo"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:frontend/index.html",
+      "target": "file:frontend/css/style.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:frontend/admin.html",
+      "target": "file:frontend/css/style.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:frontend/comparison.html",
+      "target": "file:frontend/css/style.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:frontend/elo-formula.html",
+      "target": "file:frontend/css/style.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:frontend/games.html",
+      "target": "file:frontend/css/style.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:frontend/matchup.html",
+      "target": "file:frontend/css/style.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:frontend/simulator.html",
+      "target": "file:frontend/css/style.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:frontend/team.html",
+      "target": "file:frontend/css/style.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:frontend/teams.html",
+      "target": "file:frontend/css/style.css",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:frontend/index.html",
+      "target": "file:frontend/teams.html",
+      "type": "links",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/index.html",
+      "target": "file:frontend/games.html",
+      "type": "links",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/index.html",
+      "target": "file:frontend/comparison.html",
+      "type": "links",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/index.html",
+      "target": "file:frontend/elo-formula.html",
+      "type": "links",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/index.html",
+      "target": "file:frontend/simulator.html",
+      "type": "links",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:frontend/index.html",
+      "target": "file:frontend/matchup.html",
+      "type": "links",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:frontend/README.md",
+      "target": "file:frontend/index.html",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

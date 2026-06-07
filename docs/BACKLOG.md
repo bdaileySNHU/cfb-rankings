@@ -4,8 +4,9 @@ Planned epics not yet scheduled. Ordered roughly by priority.
 
 ---
 
-## EPIC-034: Head-to-Head Comparison Page
+## EPIC-034: Head-to-Head Comparison Page ✅ Complete
 **Effort:** Medium (3–4 stories)
+**Completed:** see commit `b3374fe`
 
 Dedicated page to compare any two teams side-by-side:
 - Overlaid ELO history SVG chart for the season
@@ -16,8 +17,9 @@ Dedicated page to compare any two teams side-by-side:
 
 ---
 
-## EPIC-035: Automated Weekly Updates (Cron + Monitoring)
+## EPIC-035: Automated Weekly Updates (Cron + Monitoring) ✅ Complete
 **Effort:** Medium (3 stories)
+**Completed:** see commit `b882c50`
 
 Extend Story 33.3 into a full monitoring system:
 - Slack/email/push notification when weekly import completes or fails
@@ -27,8 +29,9 @@ Extend Story 33.3 into a full monitoring system:
 
 ---
 
-## EPIC-036: Share & Social Features
+## EPIC-036: Share & Social Features ✅ Complete
 **Effort:** Small–Medium (2–3 stories)
+**Completed:** see commit `83d68a1`
 
 - Generate a shareable top-25 image card (Canvas API or server-side)
 - Open Graph meta tags on team pages for rich link previews
@@ -37,9 +40,9 @@ Extend Story 33.3 into a full monitoring system:
 
 ---
 
-## EPIC-037: ESPN Team Logo Integration
+## EPIC-037: ESPN Team Logo Integration ✅ Complete
 **Effort:** Small (1–2 stories)
-**Logged:** 2026-05-04
+**Logged:** 2026-05-04 · **Completed:** see commit `0bdbd65`
 
 Add `espn_id` column to the `Team` model, populate it for all FBS teams,
 and serve the real ESPN CDN logos on team cards and the team detail page.
@@ -83,5 +86,17 @@ actually done — not just recruiting pedigree. Production covers QB/RB/WR/TE
 stays on pedigree**. Backward-looking, so freshmen/transfers fall back to
 recruiting. Recommendation: build skill-positions-first (PPA), validate top-25
 impact, then decide on the noisier defensive phase.
+
+---
+
+## EPIC-041: Global Season Selector
+**Effort:** Small (1–2 stories)
+**Logged:** 2026-06-07
+
+Move the season dropdown from the rankings page into the shared nav so the selected year persists across all pages:
+- Season selector in the nav/header, visible everywhere
+- Selected season stored in `localStorage`; pages read it on load (URL param → localStorage → active season)
+- Links from rankings to team pages carry `?season=` so context is never lost
+- No new backend work — all endpoints already accept `season=`
 
 ---

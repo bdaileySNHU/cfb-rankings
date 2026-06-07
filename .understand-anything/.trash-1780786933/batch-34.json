@@ -1,0 +1,149 @@
+{
+  "nodes": [
+    {
+      "id": "config:.flake8",
+      "type": "config",
+      "name": ".flake8",
+      "filePath": ".flake8",
+      "summary": "Flake8 linting configuration: max line length 100, ignores E203/W503 (black-compatible), excludes venv/migrations/archive/build directories, and suppresses F401 unused-import warnings in __init__.py files.",
+      "tags": ["config", "linting", "python", "flake8"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.coveragerc",
+      "type": "config",
+      "name": ".coveragerc",
+      "filePath": ".coveragerc",
+      "summary": "Pytest coverage configuration: measures branch coverage for the full source tree, omits tests/venv/seed_data/demo/compare_rankings/import_real_data/deploy from reports, outputs HTML to htmlcov/, and excludes defensive/abstract/type-checking lines from coverage counts.",
+      "tags": ["config", "testing", "coverage", "python"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:pyproject.toml",
+      "type": "config",
+      "name": "pyproject.toml",
+      "filePath": "pyproject.toml",
+      "summary": "Python project tooling configuration: Black formatter (line-length 100, target py311) and isort import sorter (black profile, line-length 100, known_first_party=[\"src\"]) with shared exclude lists covering migrations, archive, and venv directories.",
+      "tags": ["config", "python", "black", "isort", "formatting"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:pytest.ini",
+      "type": "config",
+      "name": "pytest.ini",
+      "filePath": "pytest.ini",
+      "summary": "Pytest configuration: discovers tests in the tests/ directory with pythonpath set to . and tests/, enforces strict markers and strict config, runs verbose with short tracebacks, asyncio_mode=auto, and declares unit/integration/e2e/slow markers.",
+      "tags": ["config", "testing", "pytest", "python"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:Makefile",
+      "type": "config",
+      "name": "Makefile",
+      "filePath": "Makefile",
+      "summary": "Test automation Makefile providing targets for unit tests, integration tests, E2E tests (requires running server on port 8765), parallel test runs, coverage reporting (terminal and HTML), artifact cleanup, and test dependency installation via pip + playwright.",
+      "tags": ["config", "makefile", "testing", "automation", "ci"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.claude/launch.json",
+      "type": "config",
+      "name": "launch.json",
+      "filePath": ".claude/launch.json",
+      "summary": "Claude Code launch configuration with two run configurations: FastAPI dev server (uvicorn via arch -x86_64 on port 8000 with --reload) and a static frontend server (Python http.server on port 3000 serving the frontend/ directory).",
+      "tags": ["config", "devtools", "claude", "fastapi", "development"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.bmad-core/utils/bmad-doc-template.md",
+      "type": "document",
+      "name": "bmad-doc-template.md",
+      "filePath": ".bmad-core/utils/bmad-doc-template.md",
+      "summary": "BMad document template specification: defines YAML-based template format for interactive document generation with sections, variable substitution ({{variable}}), conditional blocks, repeatable sections, agent permission fields (owner/editors/readonly), choice selectors, and Mermaid diagram support. Includes processing flow, best practices, and migration guide from legacy markdown+frontmatter templates.",
+      "tags": ["document", "bmad", "template", "specification", "workflow"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:.bmad-core/utils/workflow-management.md",
+      "type": "document",
+      "name": "workflow-management.md",
+      "filePath": ".bmad-core/utils/workflow-management.md",
+      "summary": "BMad workflow management utility: enables the orchestrator to list, start, resume, and track multi-agent workflows. Defines commands (/workflows, /workflow-start, /workflow-status, /workflow-resume, /workflow-next), execution flow (stage transitions, artifact tracking, context passing), and multi-path conditional workflow handling.",
+      "tags": ["document", "bmad", "workflow", "orchestration", "agents"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:=5.12.0",
+      "type": "config",
+      "name": "=5.12.0",
+      "filePath": "=5.12.0",
+      "summary": "Leftover pip install artifact — a file created when `pip install =5.12.0` was run with the equals sign accidentally treated as a path argument instead of a version specifier.",
+      "tags": ["artifact", "pip", "miscellaneous"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:=6.0.0",
+      "type": "config",
+      "name": "=6.0.0",
+      "filePath": "=6.0.0",
+      "summary": "Leftover pip install artifact — a file created when `pip install =6.0.0` was run with the equals sign accidentally treated as a path argument instead of a version specifier.",
+      "tags": ["artifact", "pip", "miscellaneous"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:=23.0.0",
+      "type": "config",
+      "name": "=23.0.0",
+      "filePath": "=23.0.0",
+      "summary": "Leftover pip install artifact — a file created when `pip install =23.0.0` was run with the equals sign accidentally treated as a path argument instead of a version specifier.",
+      "tags": ["artifact", "pip", "miscellaneous"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:data/.gitkeep",
+      "type": "config",
+      "name": ".gitkeep",
+      "filePath": "data/.gitkeep",
+      "summary": "Empty placeholder file that ensures the data/ directory is tracked by git even when it contains no other committed files.",
+      "tags": ["config", "git", "placeholder"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:pytest.ini",
+      "target": "config:.coveragerc",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "config:Makefile",
+      "target": "config:pytest.ini",
+      "type": "uses",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "config:Makefile",
+      "target": "config:.coveragerc",
+      "type": "uses",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "config:pyproject.toml",
+      "target": "config:.flake8",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:.bmad-core/utils/workflow-management.md",
+      "target": "document:.bmad-core/utils/bmad-doc-template.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.7
+    }
+  ]
+}
