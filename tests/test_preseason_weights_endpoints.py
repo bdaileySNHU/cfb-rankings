@@ -11,8 +11,8 @@ Patch notes:
     inside the handler, so we patch `src.core.position_service.load_position_weights`.
   - PUT weights: main.py does `from src.core.position_service import DEFAULT_CONFIG_PATH`
     inside the handler, so we patch `src.core.position_service.DEFAULT_CONFIG_PATH`.
-  - Components: main.py uses `RankingService(db)` via the module-level import, so we
-    patch `src.api.main.RankingService`.
+  - Components: the rankings router uses `RankingService(db)` via its module-level
+    import, so we patch `src.api.routers.rankings.RankingService`.
 """
 
 import json
@@ -335,11 +335,11 @@ class TestGetPreseasonComponents:
         }
 
     def _mock_rs(self, return_value):
-        """Return a context manager patching RankingService in main."""
+        """Return a context manager patching RankingService in the rankings router."""
         mock_instance = MagicMock()
         mock_instance.get_preseason_components.return_value = return_value
         mock_cls = MagicMock(return_value=mock_instance)
-        return patch("src.api.main.RankingService", mock_cls), mock_instance
+        return patch("src.api.routers.rankings.RankingService", mock_cls), mock_instance
 
     def test_returns_200(self, test_db):
         client = make_client(test_db)
