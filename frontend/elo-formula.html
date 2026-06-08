@@ -183,38 +183,8 @@
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header class="site-header">
-    <div class="header-inner">
-      <div class="brand">
-        <svg class="brand-icon" viewBox="0 0 24 24" width="28" height="28" fill="var(--accent)"><ellipse cx="12" cy="12" rx="10" ry="6.5" transform="rotate(-30 12 12)"/></svg>
-        <span class="brand-name">Stat-urday</span>
-        <span class="brand-sub">College Football Analytics</span>
-      </div>
-      <div class="header-actions">
-        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Navigation -->
-  <nav class="site-nav" id="site-nav">
-    <div class="nav-inner">
-      <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu" onclick="document.getElementById('site-nav').classList.toggle('nav-open')">☰</button>
-      <div class="nav-links" id="nav-links">
-        <a href="index.html" class="nav-link">Rankings</a>
-        <a href="teams.html" class="nav-link">All Teams</a>
-        <a href="games.html" class="nav-link">Games</a>
-        <a href="comparison.html" class="nav-link">Prediction Comparison</a>
-        <a href="elo-formula.html" class="nav-link active">How It Works</a>
-        <a href="simulator.html" class="nav-link">Simulator</a>
-        <a href="matchup.html" class="nav-link">Matchup</a>
-      </div>
-      <div class="nav-season-wrap">
-        <select id="nav-season-select" class="nav-season-select" aria-label="Season"></select>
-      </div>
-    </div>
-  </nav>
+  <!-- Site chrome (header + nav) injected by layout.js -->
+  <script src="js/layout.js"></script>
 
   <!-- Main Content -->
   <div class="container">
