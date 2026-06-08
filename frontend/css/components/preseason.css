@@ -1,0 +1,71 @@
+/* ── Preseason Breakdown Card (EPIC-031 Story 31.4) ─────────── */
+.preseason-total-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+.preseason-total-label strong {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.preseason-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.breakdown-row {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr auto auto;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.breakdown-row:last-child { border-bottom: none; }
+
+.breakdown-prefix {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.breakdown-label {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.breakdown-detail {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.breakdown-value {
+  font-weight: 700;
+  min-width: 3.5rem;
+  text-align: right;
+}
+.breakdown-base  { color: var(--text-primary); }
+.breakdown-pos   { color: var(--success-color); }
+.breakdown-neg   { color: var(--error-color); }
+.breakdown-zero  { color: var(--text-muted); }
+
+@media (max-width: 600px) {
+  .breakdown-row {
+    grid-template-columns: 1.5rem 1fr auto;
+  }
+  .breakdown-detail { display: none; }
+}
+
+/* Prediction card share row */
+.pred-share-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 0 0.25rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.5rem;
+}

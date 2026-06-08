@@ -1,0 +1,129 @@
+/* ── Rankings Table ──────────────────────────────────────── */
+.rankings-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+}
+
+.rankings-table thead {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.rankings-table th {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  vertical-align: middle;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.rankings-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+.rankings-table tbody tr:hover {
+  background: var(--bg-tertiary);
+  cursor: pointer;
+}
+
+.rankings-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Schedule / Games Table ──────────────────────────────── */
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.schedule-table th {
+  background: var(--bg-tertiary);
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--border-color);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.schedule-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.schedule-table tbody tr:hover {
+  background: var(--bg-tertiary);
+}
+
+/* ── Table Container (horizontal scroll on mobile) ───────── */
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -1.5rem;
+  padding: 0 1.5rem;
+}
+
+@media (min-width: 769px) {
+  .table-container {
+    overflow-x: visible;
+  }
+}
+
+/* ── Game Result styling ─────────────────────────────────── */
+.game-result {
+  font-weight: 600;
+}
+
+.game-result.win {
+  color: var(--success-color);
+}
+
+.game-result.loss {
+  color: var(--danger-color);
+}
+
+/* Scheduled / future games */
+.game-scheduled {
+  opacity: 0.75;
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.game-scheduled td {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.game-scheduled a {
+  color: var(--text-secondary) !important;
+  transition: color 0.2s ease;
+}
+
+.game-scheduled:hover {
+  background: var(--bg-tertiary);
+  border-left-color: var(--border-color);
+  opacity: 0.9;
+}
+
+.game-scheduled:hover a {
+  color: var(--accent) !important;
+}
+
+/* FCS game rows */
+.game-fcs {
+  opacity: 0.75;
+}
+
+.game-fcs:hover {
+  opacity: 0.9;
+}
+

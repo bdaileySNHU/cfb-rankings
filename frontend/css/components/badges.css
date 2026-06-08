@@ -1,0 +1,93 @@
+/* ── Badge Variants ──────────────────────────────────────── */
+.fcs-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 3px;
+  margin-left: 8px;
+  cursor: help;
+}
+
+.fcs-badge:hover {
+  background: var(--accent);
+  color: #1a1209;
+}
+
+/* Conference Championship Badge */
+.conf-champ-badge {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 3px;
+  background: #FFD700;
+  color: #1a1a1a;
+  border: 1px solid #DAA520;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.conf-champ-badge:hover {
+  background: #FFED4E;
+  cursor: help;
+}
+
+/* Bowl Game Badge */
+.bowl-badge {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 3px;
+  background: #4A90E2;
+  color: #fff;
+  border: 1px solid #357ABD;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.bowl-badge:hover {
+  background: #5BA3F5;
+  cursor: help;
+}
+
+/* Playoff Badge */
+.playoff-badge {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 3px;
+  background: #DC143C;
+  color: #fff;
+  border: 1px solid #B21030;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.playoff-badge:hover {
+  background: #FF1744;
+  cursor: help;
+}
+
+/* Record Note */
+.record-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+  font-weight: normal;
+  cursor: help;
+}
+

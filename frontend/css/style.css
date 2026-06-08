@@ -1,9 +1,24 @@
 /* ============================================================
    Stat-urday — CSS Entry Point
    All styles live in the imported files below.
+   Component styles are split into focused partials under
+   components/ and imported in cascade order (do not reorder).
    ============================================================ */
 
 @import 'tokens.css';
 @import 'base.css';
 @import 'layout.css';
-@import 'components.css';
+
+/* Components (order-sensitive — matches the former components.css top-to-bottom) */
+@import 'components/cards.css';
+@import 'components/tables.css';
+@import 'components/controls.css';
+@import 'components/badges.css';
+@import 'components/predictions.css';
+@import 'components/simulator.css';
+@import 'components/postseason.css';
+@import 'components/team-page.css';
+@import 'components/matchup.css';
+@import 'components/admin.css';
+@import 'components/share.css';
+@import 'components/preseason.css';
