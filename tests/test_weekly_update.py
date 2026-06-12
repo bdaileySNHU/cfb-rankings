@@ -318,8 +318,8 @@ class TestValidateWeekNumber:
     """Tests for validate_week_number() function (EPIC-006 Story 003)"""
 
     def test_validate_week_valid_range(self):
-        """Valid weeks 0-15 should pass validation"""
-        for week in range(0, 16):
+        """Valid weeks 0-19 should pass validation"""
+        for week in range(0, 20):
             assert weekly_update.validate_week_number(week, 2025) is True
 
     def test_validate_week_negative(self):
@@ -328,9 +328,9 @@ class TestValidateWeekNumber:
         assert weekly_update.validate_week_number(-5, 2025) is False
 
     def test_validate_week_too_high(self):
-        """Weeks > 15 should fail validation"""
-        assert weekly_update.validate_week_number(16, 2025) is False
+        """Weeks > 19 should fail validation"""
         assert weekly_update.validate_week_number(20, 2025) is False
+        assert weekly_update.validate_week_number(25, 2025) is False
         assert weekly_update.validate_week_number(100, 2025) is False
 
     def test_validate_week_non_integer(self):
@@ -342,9 +342,9 @@ class TestValidateWeekNumber:
     def test_validate_week_boundary_values(self):
         """Test boundary values explicitly"""
         assert weekly_update.validate_week_number(0, 2025) is True  # Min valid
-        assert weekly_update.validate_week_number(15, 2025) is True  # Max valid
+        assert weekly_update.validate_week_number(19, 2025) is True  # Max valid (playoff week)
         assert weekly_update.validate_week_number(-1, 2025) is False  # Just below min
-        assert weekly_update.validate_week_number(16, 2025) is False  # Just above max
+        assert weekly_update.validate_week_number(20, 2025) is False  # Just above max
 
 
 class TestUpdateCurrentWeekIntegration:

@@ -94,8 +94,9 @@ class TestConfigEndpoints:
         assert "active_season_start" in data
         assert "active_season_end" in data
 
-    def test_get_config_default_values(self, test_client):
+    def test_get_config_default_values(self, test_client, monkeypatch):
         """Config should return expected default values"""
+        monkeypatch.delenv("CFBD_MONTHLY_LIMIT", raising=False)
         response = test_client.get("/api/admin/config")
         data = response.json()
 

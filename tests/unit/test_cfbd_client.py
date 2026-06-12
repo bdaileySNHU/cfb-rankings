@@ -37,9 +37,9 @@ class TestSeasonDetection:
 
     @freeze_time("2026-01-15")
     def test_get_current_season_january(self):
-        """Test season detection in January (next year planning)"""
+        """Test season detection in January (playoffs ongoing, still previous season)"""
         client = CFBDClient()
-        assert client.get_current_season() == 2026
+        assert client.get_current_season() == 2025
 
     @freeze_time("2025-07-31")
     def test_get_current_season_july(self):

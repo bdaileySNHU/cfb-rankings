@@ -167,9 +167,13 @@ class TestPredictionsEndpoint:
 
     def test_get_predictions_week_validation(self, client):
         """Test that invalid week numbers are rejected"""
-        # Week > 15 should be rejected by FastAPI validation
-        response = client.get("/api/predictions?week=20&next_week=false")
+        # Week > 20 should be rejected by FastAPI validation
+        response = client.get("/api/predictions?week=21&next_week=false")
         assert response.status_code == 422  # Validation error
+
+        # Week 20 is the max valid value (playoff weeks included)
+        response = client.get("/api/predictions?week=20&next_week=false")
+        assert response.status_code == 200
 
     def test_get_predictions_handles_errors_gracefully(self, client):
         """Test that endpoint returns 500 on internal errors"""
@@ -181,7 +185,7 @@ class TestPredictionsEndpoint:
             assert response.status_code == 500
             data = response.json()
             assert "detail" in data
-            assert "Error generating predictions" in data["detail"]
+            assert "Error getting predictions" in data["detail"]
 
 
 class TestRankingsEndpoint:
