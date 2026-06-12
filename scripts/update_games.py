@@ -19,8 +19,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
 
-from datetime import datetime
-
+from src.importers.common import (
+    apply_quarter_scores,
+    fetch_line_scores,
+    find_existing_game,
+    get_or_create_fcs_team,
+    parse_game_date,
+)
 from src.integrations.cfbd_client import CFBDClient
 from src.models.database import SessionLocal
 from src.models.models import Game, Team
@@ -41,6 +46,7 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
 
     total_imported = 0
     total_skipped = 0
+    team_cache = {}  # name -> Team, shared with get_or_create_fcs_team
 
     for week in range(start_week, end_week + 1):
         print(f"\nWeek {week}:")
@@ -64,60 +70,24 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
                 week_skipped += 1
                 continue
 
-            # Get teams from database
+            # Get teams from database (creating FCS placeholders if missing)
             home_team = db.query(Team).filter(Team.name == home_name).first()
+            if not home_team:
+                home_team = get_or_create_fcs_team(db, home_name, team_cache)
+
             away_team = db.query(Team).filter(Team.name == away_name).first()
-
-            if not home_team or not away_team:
-                # One or both teams not found (might be FCS)
-                if not home_team:
-                    # Create FCS team
-                    home_team = Team(
-                        name=home_name,
-                        conference="FCS",
-                        is_fcs=True,
-                        elo_rating=1500.0,
-                        initial_rating=1500.0,
-                    )
-                    db.add(home_team)
-                    db.flush()
-
-                if not away_team:
-                    # Create FCS team
-                    away_team = Team(
-                        name=away_name,
-                        conference="FCS",
-                        is_fcs=True,
-                        elo_rating=1500.0,
-                        initial_rating=1500.0,
-                    )
-                    db.add(away_team)
-                    db.flush()
+            if not away_team:
+                away_team = get_or_create_fcs_team(db, away_name, team_cache)
 
             # Check if game already exists
-            existing = (
-                db.query(Game)
-                .filter(
-                    Game.home_team_id == home_team.id,
-                    Game.away_team_id == away_team.id,
-                    Game.week == week,
-                    Game.season == season,
-                )
-                .first()
-            )
+            existing = find_existing_game(db, home_team.id, away_team.id, week, season)
 
             if existing:
                 week_skipped += 1
                 continue
 
             # Parse game date
-            game_date_str = game_data.get("startDate")
-            game_date = None
-            if game_date_str:
-                try:
-                    game_date = datetime.fromisoformat(game_date_str.replace("Z", "+00:00"))
-                except:
-                    pass
+            game_date = parse_game_date(game_data)
 
             # Determine if game is excluded (FCS matchup)
             is_fcs_game = home_team.is_fcs or away_team.is_fcs
@@ -129,13 +99,7 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
 
             line_scores = None
             if is_completed:
-                line_scores = cfbd.get_game_line_scores(
-                    game_id=game_data.get("id", 0),
-                    year=season,
-                    week=week,
-                    home_team=home_name,
-                    away_team=away_name,
-                )
+                line_scores = fetch_line_scores(cfbd, game_data, season, week, home_name, away_name)
 
             # Create game record
             game = Game(
@@ -149,24 +113,10 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
                 game_date=game_date,
                 is_processed=False,  # Future game, not processed yet
                 excluded_from_rankings=is_fcs_game,
-                # EPIC-021: Quarter scores (if available)
-                q1_home=line_scores["home"][0] if line_scores else None,
-                q1_away=line_scores["away"][0] if line_scores else None,
-                q2_home=line_scores["home"][1] if line_scores else None,
-                q2_away=line_scores["away"][1] if line_scores else None,
-                q3_home=line_scores["home"][2] if line_scores else None,
-                q3_away=line_scores["away"][2] if line_scores else None,
-                q4_home=line_scores["home"][3] if line_scores else None,
-                q4_away=line_scores["away"][3] if line_scores else None,
             )
 
-            # Validate quarter scores if present
-            try:
-                game.validate_quarter_scores()
-            except ValueError as e:
-                print(f"  ⚠️  Quarter validation failed: {e}")
-                game.q1_home = game.q1_away = game.q2_home = game.q2_away = None
-                game.q3_home = game.q3_away = game.q4_home = game.q4_away = None
+            # EPIC-021: Apply and validate quarter scores if present
+            apply_quarter_scores(game, line_scores)
 
             db.add(game)
             week_imported += 1
