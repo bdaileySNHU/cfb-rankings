@@ -4,32 +4,17 @@ Auto-extracted from the former monolithic main.py during the EPIC-043
 backend modularization. Route paths and handler logic are unchanged.
 """
 import logging
-import os
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
-from src.core.ranking_service import (
-    RankingService,
-    generate_predictions,
-    get_overall_prediction_accuracy,
-    get_team_prediction_accuracy,
-)
+from src.core.ranking_service import RankingService
 from src.models import schemas
 from src.models.database import get_db
-from src.models.models import (
-    APIUsage,
-    ConferenceType,
-    Game,
-    Prediction,
-    RankingHistory,
-    Season,
-    Team,
-    UpdateTask,
-)
+from src.models.models import ConferenceType, Game, RankingHistory, Season, Team
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -118,7 +103,6 @@ async def get_team(team_id: int, db: Session = Depends(get_db)):
         "conference": team.conference,
         "conference_name": team.conference_name,  # EPIC-012: Include conference name
         "recruiting_rank": team.recruiting_rank,
-        "transfer_rank": team.transfer_rank,
         "returning_production": team.returning_production,
         "transfer_portal_points": team.transfer_portal_points,  # EPIC-026: Transfer portal points
         "transfer_portal_rank": team.transfer_portal_rank,  # EPIC-026: Transfer portal rank
@@ -165,7 +149,6 @@ async def create_team(team: schemas.TeamCreate, db: Session = Depends(get_db)):
             "name": "Georgia",
             "conference": "P5",
             "recruiting_rank": 3,
-            "transfer_rank": 5,
             "returning_production": 85.2
         }
     """
@@ -208,9 +191,9 @@ async def update_team(team_id: int, team_update: schemas.TeamUpdate, db: Session
         HTTPException: 404 if team not found
 
     Note:
-        Updating recruiting_rank, transfer_rank, returning_production,
-        transfer_portal_rank, transfer_portal_points, or transfer_count
-        will trigger automatic ELO rating recalculation.
+        Updating recruiting_rank, returning_production, transfer_portal_rank,
+        transfer_portal_points, or transfer_count will trigger automatic ELO
+        rating recalculation.
 
     Example:
         PUT /api/teams/42
@@ -235,7 +218,6 @@ async def update_team(team_id: int, team_update: schemas.TeamUpdate, db: Session
         field in update_data
         for field in [
             "recruiting_rank",
-            "transfer_rank",
             "returning_production",
             "transfer_portal_rank",
             "transfer_portal_points",

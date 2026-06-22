@@ -85,7 +85,6 @@ class Team(Base):
         conference_name: Actual conference name (e.g., "SEC", "Big Ten")
         is_fcs: Boolean flag indicating FCS division
         recruiting_rank: 247Sports recruiting class rank (1-133)
-        transfer_rank: DEPRECATED - Legacy transfer rank field
         returning_production: Percentage of returning production (0.0-1.0)
         transfer_portal_points: Total star points from incoming transfers
         transfer_portal_rank: National transfer portal rank (1=best)
@@ -128,7 +127,6 @@ class Team(Base):
 
     # Preseason factors
     recruiting_rank = Column(Integer, default=999)
-    transfer_rank = Column(Integer, default=999)  # DEPRECATED: Use transfer_portal_rank instead
     returning_production = Column(Float, default=0.5)
 
     # EPIC-026: Transfer portal metrics (calculated from player transfers)

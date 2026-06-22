@@ -3,7 +3,6 @@
 from src.core.ranking_service import create_and_store_prediction
 from src.importers.common import (
     apply_quarter_scores,
-    fetch_line_scores,
     find_existing_game,
     parse_game_date,
 )
@@ -121,8 +120,12 @@ def import_conference_championships(
                 existing_game.is_processed = False  # Mark for reprocessing
 
                 # Fetch and update quarter scores
-                line_scores = fetch_line_scores(
-                    cfbd, game_data, year, week, home_team_name, away_team_name
+                line_scores = cfbd.get_game_line_scores(
+                    game_id=game_data.get("id", 0),
+                    year=year,
+                    week=week,
+                    home_team=home_team_name,
+                    away_team=away_team_name,
                 )
                 apply_quarter_scores(existing_game, line_scores)
 
@@ -157,8 +160,12 @@ def import_conference_championships(
         # EPIC-021: Fetch quarter scores if game is completed
         line_scores = None
         if not is_future_game:
-            line_scores = fetch_line_scores(
-                cfbd, game_data, year, week, home_team_name, away_team_name
+            line_scores = cfbd.get_game_line_scores(
+                game_id=game_data.get("id", 0),
+                year=year,
+                week=week,
+                home_team=home_team_name,
+                away_team=away_team_name,
             )
 
         # Create game with game_type='conference_championship'
@@ -354,8 +361,12 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
                 existing_game.is_processed = False  # Mark for reprocessing
 
                 # Fetch and update quarter scores
-                line_scores = fetch_line_scores(
-                    cfbd, game_data, year, week, home_team_name, away_team_name
+                line_scores = cfbd.get_game_line_scores(
+                    game_id=game_data.get("id", 0),
+                    year=year,
+                    week=week,
+                    home_team=home_team_name,
+                    away_team=away_team_name,
                 )
                 apply_quarter_scores(existing_game, line_scores)
 
@@ -391,8 +402,12 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
         # EPIC-021: Fetch quarter scores if game is completed
         line_scores = None
         if not is_future_game:
-            line_scores = fetch_line_scores(
-                cfbd, game_data, year, week, home_team_name, away_team_name
+            line_scores = cfbd.get_game_line_scores(
+                game_id=game_data.get("id", 0),
+                year=year,
+                week=week,
+                home_team=home_team_name,
+                away_team=away_team_name,
             )
 
         # Create game with game_type='bowl' and postseason_name
@@ -594,8 +609,12 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
                 existing_game.is_processed = False  # Mark for reprocessing
 
                 # Fetch and update quarter scores
-                line_scores = fetch_line_scores(
-                    cfbd, game_data, year, week, home_team_name, away_team_name
+                line_scores = cfbd.get_game_line_scores(
+                    game_id=game_data.get("id", 0),
+                    year=year,
+                    week=week,
+                    home_team=home_team_name,
+                    away_team=away_team_name,
                 )
                 apply_quarter_scores(existing_game, line_scores)
 
@@ -631,8 +650,12 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
         # EPIC-021: Fetch quarter scores if game is completed
         line_scores = None
         if not is_future_game:
-            line_scores = fetch_line_scores(
-                cfbd, game_data, year, week, home_team_name, away_team_name
+            line_scores = cfbd.get_game_line_scores(
+                game_id=game_data.get("id", 0),
+                year=year,
+                week=week,
+                home_team=home_team_name,
+                away_team=away_team_name,
             )
 
         # Create game with game_type='playoff' and postseason_name

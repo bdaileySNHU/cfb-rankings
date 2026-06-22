@@ -9,7 +9,6 @@ package's public names.
 from src.importers.common import (
     CONFERENCE_MAP,
     apply_quarter_scores,
-    fetch_line_scores,
     find_existing_game,
     get_or_create_fcs_team,
     parse_game_date,
@@ -35,7 +34,6 @@ __all__ = [
     "CONFERENCE_MAP",
     "apply_quarter_scores",
     "check_for_duplicates",
-    "fetch_line_scores",
     "find_existing_game",
     "get_or_create_fcs_team",
     "get_week_statistics",

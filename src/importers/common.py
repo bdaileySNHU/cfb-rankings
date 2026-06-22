@@ -79,7 +79,6 @@ def get_or_create_fcs_team(db, team_name: str, team_objects: dict) -> Team:
             elo_rating=0,  # Not used for FCS
             initial_rating=0,
             recruiting_rank=999,
-            transfer_rank=999,
             returning_production=0.5,
         )
         db.add(team)
@@ -114,24 +113,6 @@ def find_existing_game(db, home_team_id: int, away_team_id: int, week: int, seas
             Game.season == season,
         )
         .first()
-    )
-
-
-def fetch_line_scores(
-    cfbd: CFBDClient,
-    game_data: dict,
-    year: int,
-    week: int,
-    home_team_name: str,
-    away_team_name: str,
-):
-    """Fetch quarter-by-quarter line scores for a game from CFBD (EPIC-021)."""
-    return cfbd.get_game_line_scores(
-        game_id=game_data.get("id", 0),
-        year=year,
-        week=week,
-        home_team=home_team_name,
-        away_team=away_team_name,
     )
 
 

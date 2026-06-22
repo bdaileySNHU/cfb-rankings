@@ -21,7 +21,6 @@ load_dotenv()
 
 from src.importers.common import (
     apply_quarter_scores,
-    fetch_line_scores,
     find_existing_game,
     get_or_create_fcs_team,
     parse_game_date,
@@ -99,7 +98,13 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
 
             line_scores = None
             if is_completed:
-                line_scores = fetch_line_scores(cfbd, game_data, season, week, home_name, away_name)
+                line_scores = cfbd.get_game_line_scores(
+                    game_id=game_data.get("id", 0),
+                    year=season,
+                    week=week,
+                    home_team=home_name,
+                    away_team=away_name,
+                )
 
             # Create game record
             game = Game(

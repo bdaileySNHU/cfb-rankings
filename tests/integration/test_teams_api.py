@@ -159,7 +159,6 @@ class TestGetTeamsList:
             name="Alabama",
             conference=ConferenceType.POWER_5,
             recruiting_rank=5,
-            transfer_rank=10,
             returning_production=0.75,
             elo_rating=1850.0,
             wins=10,
@@ -179,7 +178,6 @@ class TestGetTeamsList:
         assert data["name"] == "Alabama"
         assert data["conference"] == "P5"  # Enum value, not name
         assert data["recruiting_rank"] == 5
-        assert data["transfer_rank"] == 10
         assert data["returning_production"] == 0.75
         assert data["elo_rating"] == 1850.0
         assert data["wins"] == 10
@@ -362,7 +360,6 @@ class TestCreateTeam:
             "name": "Alabama",
             "conference": "P5",  # Use enum value
             "recruiting_rank": 5,
-            "transfer_rank": 10,
             "returning_production": 0.75,
         }
 
@@ -375,7 +372,6 @@ class TestCreateTeam:
         assert data["name"] == "Alabama"
         assert data["conference"] == "P5"  # Enum value
         assert data["recruiting_rank"] == 5
-        assert data["transfer_rank"] == 10
         assert data["returning_production"] == 0.75
 
         # Verify team has initial ELO rating calculated
@@ -423,7 +419,6 @@ class TestCreateTeam:
             "name": "Alabama",  # Duplicate
             "conference": "P5",  # Use enum value
             "recruiting_rank": 5,
-            "transfer_rank": 10,
             "returning_production": 0.75,
         }
 
@@ -473,7 +468,6 @@ class TestCreateTeam:
             "name": "North Dakota State",
             "conference": "FCS",
             "recruiting_rank": 999,
-            "transfer_rank": 999,
             "returning_production": 0.50,
         }
 
@@ -541,7 +535,6 @@ class TestUpdateTeam:
         team = TeamFactory(
             name="Alabama",
             recruiting_rank=50,
-            transfer_rank=50,
             returning_production=0.50,
             elo_rating=1500.0,
             initial_rating=1500.0,
@@ -550,7 +543,7 @@ class TestUpdateTeam:
 
         update_data = {
             "recruiting_rank": 1,  # Change to top recruiting class
-            "transfer_rank": 1,
+            "transfer_portal_rank": 1,
             "returning_production": 0.85,
         }
 
@@ -564,7 +557,7 @@ class TestUpdateTeam:
         # Rating should be recalculated with new preseason factors
         assert data["elo_rating"] > 1500.0  # Should increase significantly
         assert data["recruiting_rank"] == 1
-        assert data["transfer_rank"] == 1
+        assert data["transfer_portal_rank"] == 1
         assert data["returning_production"] == 0.85
 
     def test_update_team_duplicate_name_fails(self, test_client: TestClient, test_db: Session):
@@ -593,7 +586,7 @@ class TestUpdateTeam:
         """Test partial update (only some fields)"""
         # Arrange
         configure_factories(test_db)
-        team = TeamFactory(name="Alabama", recruiting_rank=10, transfer_rank=20, wins=5, losses=2)
+        team = TeamFactory(name="Alabama", recruiting_rank=10, wins=5, losses=2)
         test_db.commit()
 
         update_data = {"recruiting_rank": 5}  # Only update recruiting rank
@@ -608,7 +601,6 @@ class TestUpdateTeam:
 
         # Other fields should remain unchanged
         assert data["name"] == "Alabama"
-        assert data["transfer_rank"] == 20
         assert data["wins"] == 5
         assert data["losses"] == 2
 

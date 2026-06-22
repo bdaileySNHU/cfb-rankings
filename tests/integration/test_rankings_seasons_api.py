@@ -466,7 +466,6 @@ class TestResetSeason:
         team = TeamFactory(
             name="Alabama",
             recruiting_rank=5,
-            transfer_rank=10,
             returning_production=0.75,
             elo_rating=1600.0,  # Some rating from previous season
             initial_rating=1600.0,
@@ -496,7 +495,7 @@ class TestResetSeason:
         season = SeasonFactory(year=2024)
 
         team = TeamFactory(
-            wins=5, losses=2, recruiting_rank=50, transfer_rank=50, returning_production=0.5
+            wins=5, losses=2, recruiting_rank=50, returning_production=0.5
         )
         test_db.commit()
 

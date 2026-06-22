@@ -20,7 +20,6 @@ from src.importers import (  # noqa: F401,E402
     CONFERENCE_MAP,
     apply_quarter_scores,
     check_for_duplicates,
-    fetch_line_scores,
     find_existing_game,
     get_or_create_fcs_team,
     get_week_statistics,
