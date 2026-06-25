@@ -4,32 +4,20 @@ Auto-extracted from the former monolithic main.py during the EPIC-043
 backend modularization. Route paths and handler logic are unchanged.
 """
 import logging
-import os
-from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
-from sqlalchemy import and_, or_
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from src.core.ranking_service import (
-    RankingService,
     generate_predictions,
     get_overall_prediction_accuracy,
     get_team_prediction_accuracy,
 )
 from src.models import schemas
 from src.models.database import get_db
-from src.models.models import (
-    APIUsage,
-    ConferenceType,
-    Game,
-    Prediction,
-    RankingHistory,
-    Season,
-    Team,
-    UpdateTask,
-)
+from src.models.models import Game, Prediction, RankingHistory, Season, Team
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -59,8 +47,6 @@ async def get_predictions(
     - Array of predictions with winner, scores, probabilities, and confidence
     """
     try:
-        from sqlalchemy import or_
-
         # Determine season year
         if not season:
             from src.integrations.cfbd_client import CFBDClient
@@ -357,8 +343,6 @@ async def get_stored_predictions(
     - List of stored predictions with evaluation status
     """
     try:
-        from sqlalchemy import or_
-
         # Build query
         query = db.query(Prediction).join(Game)
 

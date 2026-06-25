@@ -371,13 +371,6 @@ async def get_api_usage(month: Optional[str] = None):
 # ADMIN ENDPOINTS - Manual Update Trigger
 # ============================================================================
 
-import json
-import subprocess
-import sys
-from pathlib import Path
-
-from fastapi import BackgroundTasks
-
 # Global dictionary to track running updates (in-memory, resets on restart)
 _running_updates = {}
 
@@ -415,19 +408,12 @@ def run_weekly_update_task(task_id: str, db_session):
             task.status = "running"
             db_session.commit()
 
-        # Check if we should skip subprocess execution (for testing)
-        import os
         skip_subprocess = os.environ.get("SKIP_WEEKLY_UPDATE_SUBPROCESS", "").lower() == "true"
 
         if skip_subprocess:
-            # In test mode, simulate successful execution without running script
-            result = type('obj', (object,), {
-                'returncode': 0,
-                'stdout': 'Test mode - subprocess skipped',
-                'stderr': ''
-            })()
+            import types
+            result = types.SimpleNamespace(returncode=0, stdout="Test mode - subprocess skipped", stderr="")
         else:
-            # Execute the script
             result = subprocess.run(
                 [sys.executable, str(script_path)],
                 capture_output=True,
@@ -989,6 +975,7 @@ async def trigger_import(
     log_lines = []
 
     try:
+        from src.importers.common import find_existing_game, parse_game_date
         from src.integrations.cfbd_client import CFBDClient
 
         cfbd_key = os.environ.get("CFBD_API_KEY", "")
@@ -1029,16 +1016,7 @@ async def trigger_import(
                 if not home_team or not away_team:
                     continue  # Skip FCS-only or unknown teams
 
-                existing = (
-                    db.query(Game)
-                    .filter(
-                        Game.home_team_id == home_team.id,
-                        Game.away_team_id == away_team.id,
-                        Game.week == g_week,
-                        Game.season == season,
-                    )
-                    .first()
-                )
+                existing = find_existing_game(db, home_team.id, away_team.id, g_week, season)
 
                 if existing:
                     # Update scores if the game has now been played
@@ -1056,6 +1034,7 @@ async def trigger_import(
                         away_score=away_pts if away_pts is not None else 0,
                         is_neutral_site=bool(neutral),
                         is_processed=False,
+                        game_date=parse_game_date(g),
                     )
                     db.add(new_g)
                     games_imported += 1

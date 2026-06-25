@@ -97,7 +97,6 @@ def import_teams(cfbd: CFBDClient, db, year: int):
 
             # Get preseason data
             recruiting_rank = recruiting_map.get(team_name, 999)
-            transfer_rank = 999  # DEPRECATED: Use transfer_portal_rank instead
             returning_prod = returning_map.get(team_name, 0.5)
 
             # EPIC-026: Get transfer portal data
@@ -111,7 +110,6 @@ def import_teams(cfbd: CFBDClient, db, year: int):
                 conference=conference_tier,  # P5/G5/FCS (for logic)
                 conference_name=conference_name,  # "Big Ten", "SEC", etc. (for display)
                 recruiting_rank=recruiting_rank,
-                transfer_rank=transfer_rank,
                 returning_production=returning_prod,
                 transfer_portal_rank=transfer_portal_rank,
                 transfer_portal_points=transfer_portal_points,

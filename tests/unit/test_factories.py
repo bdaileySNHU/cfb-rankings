@@ -87,7 +87,6 @@ class TestTeamFactory:
 
         # Assert
         assert team.recruiting_rank == 5
-        assert team.transfer_rank == 5
         assert team.returning_production == 0.85
         assert team.elo_rating == 1850.0
         assert team.wins == 10

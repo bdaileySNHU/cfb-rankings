@@ -59,9 +59,6 @@ class TeamBase(BaseModel):
         None, description="Actual conference name (Big Ten, SEC, etc.)", max_length=50
     )
     recruiting_rank: Optional[int] = Field(999, description="247Sports recruiting rank", ge=1)
-    transfer_rank: Optional[int] = Field(
-        999, description="DEPRECATED: Use transfer_portal_rank instead", ge=1
-    )
     returning_production: Optional[float] = Field(
         0.5, description="Returning production percentage", ge=0.0, le=1.0
     )
@@ -89,7 +86,6 @@ class TeamUpdate(BaseModel):
     conference: Optional[ConferenceType] = None
     conference_name: Optional[str] = Field(None, max_length=50)
     recruiting_rank: Optional[int] = Field(None, ge=1)
-    transfer_rank: Optional[int] = Field(None, ge=1)
     returning_production: Optional[float] = Field(None, ge=0.0, le=1.0)
 
     # EPIC-026: Transfer portal metrics
@@ -257,11 +253,17 @@ class RankingEntry(BaseModel):
         None, description="Change in rank from prior week (positive=moved up, negative=moved down, None=new entry)"
     )
     elo_history: Optional[List[float]] = Field(
-        None, description="Last 8 weekly ELO values for sparkline (ascending week order)"
+        None, description="Last 10 weekly ELO values for sparkline (ascending week order)"
     )
 
     # EPIC-037: ESPN team ID for CDN logo
     espn_id: Optional[int] = Field(None, description="ESPN team ID for logo CDN URL")
+
+    # Ticker spec §10: per-game scoring for OFF/DEF heat cells
+    off: Optional[float] = Field(None, description="Avg points scored per game (OFF heat cell)")
+    def_: Optional[float] = Field(
+        None, alias="def", description="Avg points allowed per game (DEF heat cell)"
+    )
 
 
 class RankingsResponse(BaseModel):

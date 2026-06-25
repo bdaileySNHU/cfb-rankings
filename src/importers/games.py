@@ -5,7 +5,6 @@ import sys
 from src.core.ranking_service import RankingService, create_and_store_prediction
 from src.importers.common import (
     apply_quarter_scores,
-    fetch_line_scores,
     find_existing_game,
     get_or_create_fcs_team,
     parse_game_date,
@@ -156,8 +155,12 @@ def import_games(
                     existing_game.game_date = parse_game_date(game_data)
 
                     # EPIC-021: Fetch and update quarter scores
-                    line_scores = fetch_line_scores(
-                        cfbd, game_data, year, week, home_team_name, away_team_name
+                    line_scores = cfbd.get_game_line_scores(
+                        game_id=game_data.get("id", 0),
+                        year=year,
+                        week=week,
+                        home_team=home_team_name,
+                        away_team=away_team_name,
                     )
                     apply_quarter_scores(existing_game, line_scores)
 
@@ -223,8 +226,12 @@ def import_games(
             # EPIC-021: Fetch quarter scores if game is completed
             line_scores = None
             if not is_future_game:
-                line_scores = fetch_line_scores(
-                    cfbd, game_data, year, week, home_team_name, away_team_name
+                line_scores = cfbd.get_game_line_scores(
+                    game_id=game_data.get("id", 0),
+                    year=year,
+                    week=week,
+                    home_team=home_team_name,
+                    away_team=away_team_name,
                 )
 
             game = Game(

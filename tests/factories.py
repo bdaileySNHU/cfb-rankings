@@ -54,7 +54,6 @@ class TeamFactory(BaseFactory):
 
     # Default preseason factors (mid-tier team)
     recruiting_rank = 50
-    transfer_rank = 50
     returning_production = 0.60
 
     # Default ratings and record
@@ -69,7 +68,6 @@ class TeamFactory(BaseFactory):
         # Trait for elite team
         elite = factory.Trait(
             recruiting_rank=5,
-            transfer_rank=5,
             returning_production=0.85,
             elo_rating=1850.0,
             initial_rating=1800.0,
@@ -80,7 +78,6 @@ class TeamFactory(BaseFactory):
         # Trait for struggling team
         struggling = factory.Trait(
             recruiting_rank=100,
-            transfer_rank=100,
             returning_production=0.35,
             elo_rating=1350.0,
             initial_rating=1400.0,
@@ -207,7 +204,6 @@ class EliteTeamFactory(TeamFactory):
 
     conference = ConferenceType.POWER_5
     recruiting_rank = 5
-    transfer_rank = 8
     returning_production = 0.80
     elo_rating = 1850.0
     initial_rating = 1800.0
@@ -220,7 +216,6 @@ class G5ChampionFactory(TeamFactory):
 
     conference = ConferenceType.GROUP_5
     recruiting_rank = 60
-    transfer_rank = 40
     returning_production = 0.70
     elo_rating = 1600.0
     initial_rating = 1550.0
@@ -233,7 +228,6 @@ class FCSTeamFactory(TeamFactory):
 
     conference = ConferenceType.FCS
     recruiting_rank = 999
-    transfer_rank = 999
     returning_production = 0.55
     elo_rating = 1300.0
     initial_rating = 1300.0

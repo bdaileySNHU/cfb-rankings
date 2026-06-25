@@ -4,32 +4,15 @@ Auto-extracted from the former monolithic main.py during the EPIC-043
 backend modularization. Route paths and handler logic are unchanged.
 """
 import logging
-import os
-from datetime import datetime
-from typing import List, Optional
+from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
-from sqlalchemy import and_, or_
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from src.core.ranking_service import (
-    RankingService,
-    generate_predictions,
-    get_overall_prediction_accuracy,
-    get_team_prediction_accuracy,
-)
+from src.core.ranking_service import RankingService
 from src.models import schemas
 from src.models.database import get_db
-from src.models.models import (
-    APIUsage,
-    ConferenceType,
-    Game,
-    Prediction,
-    RankingHistory,
-    Season,
-    Team,
-    UpdateTask,
-)
+from src.models.models import Season
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

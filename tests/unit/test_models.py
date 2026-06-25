@@ -45,7 +45,6 @@ class TestTeamModel:
 
         # Assert - Check all defaults
         assert team.recruiting_rank == 999, "Default recruiting rank should be 999"
-        assert team.transfer_rank == 999, "Default transfer rank should be 999"
         assert team.returning_production == 0.5, "Default returning production should be 0.5"
         assert team.elo_rating == 1500.0, "Default ELO rating should be 1500.0"
         assert team.initial_rating == 1500.0, "Default initial rating should be 1500.0"
@@ -73,7 +72,6 @@ class TestTeamModel:
             name="Clemson",
             conference=ConferenceType.POWER_5,
             recruiting_rank=5,
-            transfer_rank=10,
             returning_production=0.75,
             elo_rating=1750.0,
             initial_rating=1700.0,
@@ -86,7 +84,6 @@ class TestTeamModel:
 
         # Assert
         assert team.recruiting_rank == 5
-        assert team.transfer_rank == 10
         assert team.returning_production == 0.75
         assert team.elo_rating == 1750.0
         assert team.initial_rating == 1700.0
