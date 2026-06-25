@@ -12,6 +12,8 @@
 
   var META = {};       // teams-meta.json
   var ENTRIES = [];    // current rankings entries (meta merged)
+  var COLLAPSE_AT = 25;
+  var boardExpanded = false;
 
   var clamp = function (v, lo, hi) { return Math.max(lo, Math.min(hi, v)); };
   var isLight = function () { return document.documentElement.getAttribute('data-theme') === 'light'; };
@@ -101,7 +103,15 @@
       '<div>RK</div><div>TEAM</div><div>CONF</div><div class="ta-r">W-L</div>' +
       '<div class="ta-r" style="color:var(--accent)">ELO</div><div class="ta-r">Δ1W</div>' +
       '<div class="ta-r">OFF</div><div class="ta-r">DEF</div><div class="ta-r">SOS</div><div class="ta-c">10WK</div></div>';
-    document.getElementById('tkr-table').innerHTML = head + ENTRIES.map(rowHTML).join('');
+    var shown = boardExpanded ? ENTRIES : ENTRIES.slice(0, COLLAPSE_AT);
+    var footer = '';
+    if (ENTRIES.length > COLLAPSE_AT) {
+      footer = '<button class="tkr-expand" id="tkr-expand">' +
+        (boardExpanded ? '▴ Show top ' + COLLAPSE_AT : '▾ Show all ' + ENTRIES.length + ' teams') + '</button>';
+    }
+    document.getElementById('tkr-table').innerHTML = head + shown.map(rowHTML).join('') + footer;
+    var btn = document.getElementById('tkr-expand');
+    if (btn) btn.addEventListener('click', function () { boardExpanded = !boardExpanded; renderGrid(); });
     paintHeat();
   }
 
@@ -285,6 +295,7 @@
 
   function renderAll(data) {
     ENTRIES = data.rankings || [];
+    boardExpanded = false;
     window.__tkrSeason = data.season;
     renderHeader(data);
     renderTape();
