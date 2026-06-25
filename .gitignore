@@ -53,10 +53,8 @@ htmlcov/
 # Import pipeline logs (generated at runtime, not committed)
 data/*.json
 
-# Understand-Anything — keep graph + config, ignore build artifacts
-.understand-anything/.trash-*/
-.understand-anything/intermediate/
-.understand-anything/tmp/
+# Understand-Anything — local knowledge-graph artifacts, not versioned
+.understand-anything/
 
 # DB backups
 *.db.backup*
