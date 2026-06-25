@@ -135,9 +135,10 @@
 
 /* Collapse/expand control (board shows top 25 by default) */
 .tkr-expand { display: block; width: 100%; border: none; border-top: 1px solid var(--line);
-  background: var(--panel); color: var(--accent); font-family: var(--font-mono); font-size: 11px;
-  font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px; cursor: pointer; }
-.tkr-expand:hover { background: var(--panel2); }
+  background: var(--panel); color: var(--fg2); font-family: var(--font-mono); font-size: 10.5px;
+  font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; padding: 10px; cursor: pointer;
+  text-align: center; transition: color 0.12s ease, background 0.12s ease; }
+.tkr-expand:hover { background: var(--panel2); color: var(--accent); }
 
 /* ── Team detail view ── */
 .tkr-back {
