@@ -10,7 +10,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from src.core.ranking_service import RankingService
+from src.core.ranking_service import RankingService, project_playoff_bracket
 from src.models import schemas
 from src.models.database import get_db
 from src.models.models import Game, RankingHistory, Season, Team
@@ -285,6 +285,19 @@ async def get_postseason(season: int, db: Session = Depends(get_db)):
             "loser_score": g.away_score if home_won else g.home_score,
         })
     return result
+
+
+@router.get("/api/playoff-projection", tags=["Rankings"])
+async def get_playoff_projection(season: Optional[int] = None, db: Session = Depends(get_db)):
+    """Project the 12-team CFP bracket from current Elo (EPIC-044 Story 44.11).
+
+    CFP-style field selection (conference-champion auto-bids + at-large), straight
+    seeding by Elo, each round simulated with the standard prediction formula.
+    """
+    if not season:
+        active = db.query(Season).filter(Season.is_active == True).first()
+        season = active.year if active else datetime.now().year
+    return project_playoff_bracket(db, season)
 
 
 @router.get(

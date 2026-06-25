@@ -273,6 +273,66 @@
     api.getPredictions({ nextWeek: true }).then(renderPredictions).catch(function () {});
   }
 
+  // ── Projected playoff bracket ──
+  var ROUNDS = [
+    { key: 'first_round', t: 'FIRST ROUND', d: 'DEC 19–20 · CAMPUS' },
+    { key: 'quarterfinals', t: 'QUARTERFINALS', d: 'DEC 31 – JAN 1 · BYES ENTER' },
+    { key: 'semifinals', t: 'SEMIFINALS', d: 'JAN 8–9' },
+    { key: 'final', t: 'FINAL', d: 'JAN 19 · LAS VEGAS' },
+  ];
+
+  function bkTeamRow(t, win, color) {
+    return '<div class="bk-team' + (win ? ' win' : ' out') + '">' +
+      '<span class="bk-mk">' + (win ? '▸' : '') + '</span>' +
+      '<span class="bk-seed">' + t.seed + '</span>' +
+      '<span class="bk-stripe" style="background:' + color + '"></span>' +
+      '<span class="bk-ab">' + esc(abbrName(t.name)) + '</span>' +
+      '<span class="bk-sc">' + t.score + '</span></div>';
+  }
+
+  function matchCard(m) {
+    var hi = m.high, lo = m.low, hiWin = m.winner_id === hi.team_id;
+    var hC = stripeName(hi.name), lC = stripeName(lo.name);
+    if (clash(hC, lC)) lC = 'var(--fg3)';
+    var label = m.neutral ? esc(m.label.toUpperCase()) : '△ ' + esc(abbrName(hi.name));
+    return '<div class="bk-card"><div class="bk-label">' + label + '</div>' +
+      '<div class="bk-box">' + bkTeamRow(hi, hiWin, hC) + bkTeamRow(lo, !hiWin, lC) +
+        '<div class="bk-bar"><span style="width:' + Math.round(hi.win_prob) + '%;background:' + hC + '"></span>' +
+          '<span style="width:' + Math.round(lo.win_prob) + '%;background:' + lC + '"></span></div>' +
+        '<div class="bk-pct"><span>' + Math.round(hi.win_prob) + '%</span><span>' + Math.round(lo.win_prob) + '%</span></div>' +
+      '</div></div>';
+  }
+
+  function championCard(ch) {
+    if (!ch) return '';
+    var c = stripeName(ch.name);
+    return '<div class="bk-champ"><div class="bk-champ-lbl">◆ TITLE FAVORITE</div>' +
+      '<div class="bk-champ-name"><span class="bk-stripe" style="background:' + c + '"></span>' + esc(abbrName(ch.name)) + '</div>' +
+      '<div class="bk-champ-full">' + esc(ch.name) + '</div>' +
+      '<div class="bk-champ-sub">No. ' + ch.seed + ' SEED · ' + esc(ch.conference_name || '') + '</div>' +
+      '<div class="bk-champ-win"><span>TITLE-GAME WIN</span><span class="v">' + Math.round(ch.title_game_win_prob) + '%</span></div></div>';
+  }
+
+  function renderBracket(data) {
+    var card = document.getElementById('tkr-bracket');
+    if (!card) return;
+    if (!data || !data.field || !data.field.length) { card.classList.add('hidden'); return; }
+    var cols = ROUNDS.map(function (r) {
+      var items = r.key === 'final' ? (data.final ? [data.final] : []) : (data[r.key] || []);
+      return '<div class="bk-col"><div class="bk-round"><div class="bk-round-t">' + r.t + '</div>' +
+        '<div class="bk-round-d">' + r.d + '</div></div>' +
+        '<div class="bk-col-body">' + items.map(matchCard).join('') + '</div></div>';
+    }).join('');
+    cols += '<div class="bk-col champion"><div class="bk-round"><div class="bk-round-t">CHAMPION</div>' +
+      '<div class="bk-round-d">PROJECTED</div></div><div class="bk-col-body">' + championCard(data.champion) + '</div></div>';
+    document.getElementById('tkr-bracket-cols').innerHTML = cols;
+    card.classList.remove('hidden');
+  }
+
+  function loadBracket() {
+    api.fetch('/playoff-projection').then(renderBracket).catch(function () {});
+  }
+
   // ── Boot ──
   function wireClicks() {
     document.getElementById('tkr-table').addEventListener('click', function (ev) {
@@ -303,6 +363,7 @@
       META = out[0] || {};
       renderAll(out[1]);
       loadPredictions();
+      loadBracket();
     }).catch(function (err) {
       console.error('Board load failed:', err);
       var t = document.getElementById('tkr-table');
@@ -314,6 +375,7 @@
   // (the static preview can't reach the backend — see local-dev memory).
   window.__tkrRender = function (data, meta) { META = meta || META; renderAll(data); };
   window.__tkrRenderPreds = renderPredictions;
+  window.__tkrRenderBracket = renderBracket;
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
