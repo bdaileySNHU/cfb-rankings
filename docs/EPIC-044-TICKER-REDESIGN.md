@@ -87,13 +87,19 @@ hooks in `board.js`; backend changes are verified via FastAPI `TestClient`.
 - [x] Win-prob bar split in team brand colors with clash-recolor
 - [x] Mapped to the real `/api/predictions` contract
 
-### Story 44.7: Re-home remaining board features ⬜
-**Not started — needs designs (like the predictions one)**
-- [ ] Postseason results
-- [ ] Prediction-accuracy banner
-- [ ] Legend
-- [ ] Share Top 25 card
+### Story 44.7: Re-home remaining board features 🚧
+**Postseason delivered as the projected bracket (Story 44.11). Rest pending.**
+- [x] ~~Postseason results~~ → superseded by Story 44.11 (Projected Playoff bracket)
+- [ ] Prediction-accuracy banner (planned: ribbon-style tile, no new design)
+- [ ] Legend (shrinks to a small key: OFF/DEF heat, sparkline trend, SOS warn)
+- [ ] Share Top 25 card (reuse `share.js` canvas; Ticker-styled trigger)
 - [ ] Once ported, delete the now-orphaned `js/app.js`
+
+### Story 44.11: Projected playoff bracket ✅
+**Verified** (backend via TestClient, UI via injected projection)
+- [x] `GET /api/playoff-projection` — CFP-style field (conference-champion auto-bids: 4 power + 1 G5 + at-large), straight Elo seeding, seeds 1–4 bye (`project_playoff_bracket` in `ranking_service.py`)
+- [x] Each round simulated with the standard prediction formula (HFA +65 campus / neutral later rounds, scores 30 ± diff/100·3.5)
+- [x] 5-column bracket UI in Ticker style: ▸ advances favored side, win-prob bars, `△ HOST` (campus) / bowl-name (neutral) labels, champion "title favorite" card (`board.js`, `board.css`, `index.html`)
 
 ### Story 44.8: Resolve detail duplication & reskin other pages ⬜
 - [ ] Decide fate of `team.html` (keep vs. redirect to the in-place board detail) and remove duplication

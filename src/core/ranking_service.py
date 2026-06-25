@@ -1202,6 +1202,139 @@ def _calculate_game_prediction(game: Game, home_team: Team, away_team: Team) -> 
     }
 
 
+# ── EPIC-044 Story 44.11: Projected 12-team playoff bracket ──────────────────
+# Bowl labels are fixed to the prototype; in reality the NY6 bowls rotate which
+# rounds they host year to year. ponytail: fixed labels, revisit if rotation matters.
+_QF_BOWLS = ["Rose Bowl", "Sugar Bowl", "Fiesta Bowl", "Peach Bowl"]
+_SF_BOWLS = ["Cotton Bowl", "Orange Bowl"]
+_INDEPENDENT_CONFS = {None, "", "Independent", "Independents", "FBS Independents"}
+
+
+def _project_matchup(high: dict, low: dict, neutral: bool, label: str) -> dict:
+    """Simulate one playoff game. `high` is the higher seed (hosts unless neutral).
+
+    Mirrors _calculate_game_prediction exactly: +65 home-field unless neutral,
+    400-scale logistic win prob, scores = 30 ± (rating_diff / 100) * 3.5.
+    """
+    home_elo = high["elo"] + (0 if neutral else 65)
+    away_elo = low["elo"]
+    home_wp = 1 / (1 + 10 ** ((away_elo - home_elo) / 400))
+    adj = ((home_elo - away_elo) / 100) * 3.5
+    hs = max(0, min(round(30 + adj), 150))
+    ls = max(0, min(round(30 - adj), 150))
+    high_side = {"seed": high["seed"], "team_id": high["team_id"], "name": high["name"],
+                 "elo": high["elo"], "score": hs, "win_prob": round(home_wp * 100, 1)}
+    low_side = {"seed": low["seed"], "team_id": low["team_id"], "name": low["name"],
+                "elo": low["elo"], "score": ls, "win_prob": round((1 - home_wp) * 100, 1)}
+    winner = high_side if home_wp >= 0.5 else low_side
+    return {"label": label, "neutral": neutral, "high": high_side, "low": low_side,
+            "winner_id": winner["team_id"], "winner_seed": winner["seed"]}
+
+
+def _winner_of(m: dict) -> dict:
+    return m["high"] if m["winner_id"] == m["high"]["team_id"] else m["low"]
+
+
+def _sim(a: dict, b: dict, neutral: bool, label: str) -> dict:
+    high, low = (a, b) if a["seed"] < b["seed"] else (b, a)
+    return _project_matchup(high, low, neutral, label)
+
+
+def project_playoff_bracket(db: Session, season: int) -> dict:
+    """Project the 12-team CFP bracket from current Elo (EPIC-044 Story 44.11).
+
+    Field selection (CFP-style): each conference's highest-Elo team is its
+    projected champion; the 4 highest-Elo power (P5) champions plus the single
+    highest-Elo Group-of-5 champion get auto-bids; the field is filled to 12 with
+    the highest-Elo remaining teams as at-large. All 12 are then seeded strictly
+    by Elo (straight seeding); seeds 1–4 get first-round byes.
+    """
+    svc = RankingService(db)
+    rankings = svc.get_current_rankings(season, limit=60)
+    if len(rankings) < 12:
+        return {"season": season, "field": [], "first_round": [], "quarterfinals": [],
+                "semifinals": [], "final": None, "champion": None}
+
+    by_id = {r["team_id"]: r for r in rankings}
+
+    # Projected conference champions = top-Elo team per conference (excl. independents/FCS).
+    champ_by_conf: dict = {}
+    for r in rankings:
+        conf = r.get("conference_name")
+        if conf in _INDEPENDENT_CONFS or r.get("conference") == "FCS":
+            continue
+        cur = champ_by_conf.get(conf)
+        if cur is None or r["elo_rating"] > cur["elo_rating"]:
+            champ_by_conf[conf] = r
+    champs = list(champ_by_conf.values())
+    power_champs = sorted([c for c in champs if c.get("conference") in ("P5", "P4")],
+                          key=lambda c: c["elo_rating"], reverse=True)
+    g5_champs = sorted([c for c in champs if c.get("conference") == "G5"],
+                       key=lambda c: c["elo_rating"], reverse=True)
+
+    auto = power_champs[:4] + g5_champs[:1]
+    if len(auto) < 5:  # backfill if a tier is short
+        for c in sorted(champs, key=lambda c: c["elo_rating"], reverse=True):
+            if c not in auto:
+                auto.append(c)
+            if len(auto) >= 5:
+                break
+    auto_ids = {c["team_id"] for c in auto}
+
+    field = list(auto)
+    for r in rankings:  # at-large by Elo
+        if len(field) >= 12:
+            break
+        if r["team_id"] not in auto_ids:
+            field.append(r)
+
+    field.sort(key=lambda r: r["elo_rating"], reverse=True)
+    champ_ids = {c["team_id"] for c in champs}
+    seeded = []
+    for i, r in enumerate(field[:12]):
+        seeded.append({
+            "seed": i + 1, "team_id": r["team_id"], "name": r["team_name"],
+            "elo": r["elo_rating"], "conference_name": r.get("conference_name"),
+            "is_champ": r["team_id"] in champ_ids, "auto_bid": r["team_id"] in auto_ids,
+        })
+    s = {t["seed"]: t for t in seeded}  # seed → team
+
+    # First round (seeds 5–12 host higher seed, on campus → not neutral).
+    fr = [
+        _sim(s[8], s[9], False, s[8]["name"]),
+        _sim(s[5], s[12], False, s[5]["name"]),
+        _sim(s[7], s[10], False, s[7]["name"]),
+        _sim(s[6], s[11], False, s[6]["name"]),
+    ]
+    # Quarterfinals (neutral): byes enter vs first-round winners.
+    qf = [
+        _sim(s[1], _winner_of(fr[0]), True, _QF_BOWLS[0]),
+        _sim(s[4], _winner_of(fr[1]), True, _QF_BOWLS[1]),
+        _sim(s[2], _winner_of(fr[2]), True, _QF_BOWLS[2]),
+        _sim(s[3], _winner_of(fr[3]), True, _QF_BOWLS[3]),
+    ]
+    sf = [
+        _sim(_winner_of(qf[0]), _winner_of(qf[1]), True, _SF_BOWLS[0]),
+        _sim(_winner_of(qf[2]), _winner_of(qf[3]), True, _SF_BOWLS[1]),
+    ]
+    final = _sim(_winner_of(sf[0]), _winner_of(sf[1]), True, "CFP Championship")
+    champ = _winner_of(final)
+
+    return {
+        "season": season,
+        "field": seeded,
+        "first_round": fr,
+        "quarterfinals": qf,
+        "semifinals": sf,
+        "final": final,
+        "champion": {
+            "seed": champ["seed"], "team_id": champ["team_id"], "name": champ["name"],
+            "conference_name": s[champ["seed"]]["conference_name"],
+            "title_game_win_prob": champ["win_prob"],
+        },
+    }
+
+
 def create_and_store_prediction(db: Session, game: Game) -> Optional[Prediction]:
     """
     Create and store a prediction for a future game.
