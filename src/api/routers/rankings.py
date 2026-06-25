@@ -104,7 +104,7 @@ async def get_rankings(
         for row in history_records:
             history_map[row.team_id].append(row.elo_rating)
         for tid, elos in history_map.items():
-            elo_history_by_team_id[tid] = elos[-8:]
+            elo_history_by_team_id[tid] = elos[-10:]  # spec: history is int[10]
 
     # EPIC-037: Batch-fetch espn_ids for all ranked teams
     espn_id_by_team: dict = {}
@@ -113,7 +113,36 @@ async def get_rankings(
         for row in team_rows:
             espn_id_by_team[row.id] = row.espn_id
 
-    # Attach rank_change, elo_history, and espn_id to each ranking entry
+    # Ticker spec §10: per-team season points-for/-against per game (OFF/DEF heat cells).
+    # One pass over the season's scored games for the ranked teams.
+    off_by_team: dict = {}  # team_id -> (points_for_sum, games)
+    def_by_team: dict = {}  # team_id -> points_against_sum
+    if team_ids:
+        games = (
+            db.query(
+                Game.home_team_id, Game.away_team_id, Game.home_score, Game.away_score
+            )
+            .filter(
+                Game.season == season,
+                Game.is_processed == True,
+                Game.excluded_from_rankings == False,
+                (Game.home_team_id.in_(team_ids)) | (Game.away_team_id.in_(team_ids)),
+            )
+            .all()
+        )
+        counts: dict = {}
+        for g in games:
+            for tid, pf, pa in (
+                (g.home_team_id, g.home_score, g.away_score),
+                (g.away_team_id, g.away_score, g.home_score),
+            ):
+                if tid not in team_ids:
+                    continue
+                off_by_team[tid] = off_by_team.get(tid, 0) + (pf or 0)
+                def_by_team[tid] = def_by_team.get(tid, 0) + (pa or 0)
+                counts[tid] = counts.get(tid, 0) + 1
+
+    # Attach rank_change, elo_history, espn_id, off, def to each ranking entry
     for entry in rankings:
         tid = entry["team_id"]
         current_rank = entry["rank"]
@@ -126,6 +155,10 @@ async def get_rankings(
 
         entry["elo_history"] = elo_history_by_team_id.get(tid, [])
         entry["espn_id"] = espn_id_by_team.get(tid)
+
+        n = counts.get(tid, 0) if team_ids else 0
+        entry["off"] = round(off_by_team.get(tid, 0) / n, 1) if n else None
+        entry["def"] = round(def_by_team.get(tid, 0) / n, 1) if n else None
 
     return {
         "week": current_week,

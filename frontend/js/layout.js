@@ -1,69 +1,63 @@
-// Shared site chrome (header + primary nav) injected on every page so the
-// markup lives in exactly one place. Runs synchronously during parsing via
-// document.currentScript, so #theme-toggle and #nav-season-select exist before
-// theme.js / season.js attach their DOMContentLoaded handlers.
+// Shared Ticker chrome (header bar + ticker tape) injected on every page so the
+// markup lives in one place. Runs synchronously via document.currentScript so
+// #theme-toggle exists before theme.js attaches.
 //
-// Per-page configuration via data-attributes on the <script> tag:
-//   data-active="teams.html"        override which nav link is highlighted
-//   data-brand-sub="Admin Dashboard" override the brand subtitle
-//   data-season="false"              omit the season selector
+// Per-page config via data-attributes on the <script> tag:
+//   data-active="teams.html"   override highlighted nav link
+//   data-season="false"        omit the season selector
 (function () {
   var script = document.currentScript;
   var cfg = (script && script.dataset) || {};
 
   var currentPage = location.pathname.split('/').pop() || 'index.html';
   var active = cfg.active || currentPage;
-  var brandSub = cfg.brandSub || 'College Football Analytics';
   var showSeason = cfg.season !== 'false';
+  var isBoard = currentPage === 'index.html' || currentPage === '';
 
   var links = [
     ['index.html', 'Rankings'],
-    ['teams.html', 'All Teams'],
+    ['teams.html', 'Teams'],
     ['games.html', 'Games'],
-    ['comparison.html', 'Prediction Comparison'],
+    ['comparison.html', 'Compare'],
     ['elo-formula.html', 'How It Works'],
     ['simulator.html', 'Simulator'],
     ['matchup.html', 'Matchup'],
   ];
-
   var navLinks = links.map(function (l) {
-    var cls = 'nav-link' + (l[0] === active ? ' active' : '');
-    return '<a href="' + l[0] + '" class="' + cls + '">' + l[1] + '</a>';
-  }).join('\n        ');
+    return '<a href="' + l[0] + '"' + (l[0] === active ? ' class="active"' : '') + '>' + l[1] + '</a>';
+  }).join('');
 
   var seasonWrap = showSeason
-    ? '<div class="nav-season-wrap">\n' +
-      '        <select id="nav-season-select" class="nav-season-select" aria-label="Season"></select>\n' +
-      '      </div>'
+    ? '<select id="nav-season-select" class="tkr-season" aria-label="Season"></select>' : '';
+
+  var tape = isBoard
+    ? '<div class="tkr-tape"><div class="tkr-tape-inner">' +
+      '<div class="tkr-live">LIVE</div>' +
+      '<div class="tkr-tape-viewport"><div class="tkr-tape-track" id="tkr-tape-track"></div></div>' +
+      '</div></div>'
     : '';
 
   var html =
-    '<header class="site-header">\n' +
-    '  <div class="header-inner">\n' +
-    '    <div class="brand">\n' +
-    '      <svg class="brand-icon" viewBox="0 0 24 24" width="28" height="28" fill="var(--accent)"><ellipse cx="12" cy="12" rx="10" ry="6.5" transform="rotate(-30 12 12)"/></svg>\n' +
-    '      <span class="brand-name">Stat-urday</span>\n' +
-    '      <span class="brand-sub">' + brandSub + '</span>\n' +
-    '    </div>\n' +
-    '    <div class="header-actions">\n' +
-    '      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>\n' +
-    '    </div>\n' +
-    '  </div>\n' +
-    '</header>\n' +
-    '<nav class="site-nav" id="site-nav">\n' +
-    '  <div class="nav-inner">\n' +
-    '    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu" onclick="document.getElementById(\'site-nav\').classList.toggle(\'nav-open\')">☰</button>\n' +
-    '    <div class="nav-links" id="nav-links">\n' +
-    '        ' + navLinks + '\n' +
-    '    </div>\n' +
-    '    ' + seasonWrap + '\n' +
-    '  </div>\n' +
-    '</nav>';
+    '<header class="tkr-header">' +
+      '<div class="tkr-header-inner">' +
+        '<div class="tkr-brand">' +
+          '<span class="tkr-badge">S</span>' +
+          '<span class="tkr-wordmark">STATURDAY<span class="dot">.TKR</span></span>' +
+          '<span class="tkr-week" id="tkr-week"></span>' +
+        '</div>' +
+        '<div class="tkr-header-right">' +
+          '<nav class="tkr-nav">' + navLinks + '</nav>' +
+          seasonWrap +
+          '<div class="theme-pill" id="theme-toggle" role="button" tabindex="0" aria-label="Toggle theme">' +
+            '<span class="seg seg-sun">☀</span><span class="seg seg-moon">☾</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</header>' + tape;
 
   if (script) {
     script.insertAdjacentHTML('afterend', html);
   } else {
-    // Fallback if currentScript is unavailable: prepend to body on load.
     document.addEventListener('DOMContentLoaded', function () {
       document.body.insertAdjacentHTML('afterbegin', html);
     });

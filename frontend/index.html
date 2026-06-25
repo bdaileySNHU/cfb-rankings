@@ -7,285 +7,59 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Stat-urday">
   <meta property="og:title" content="Stat-urday — College Football ELO Rankings">
-  <meta property="og:description" content="ELO-based college football rankings updated weekly. See who's really the best team in the country.">
+  <meta property="og:description" content="ELO-based college football power ratings updated weekly.">
   <meta property="og:url" content="https://cfb.bdailey.com/">
   <meta property="og:image" content="https://cfb.bdailey.com/images/og-default.svg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <!-- Twitter / X card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Stat-urday — College Football ELO Rankings">
-  <meta name="twitter:description" content="ELO-based college football rankings updated weekly. See who's really the best team in the country.">
+  <meta name="twitter:description" content="ELO-based college football power ratings updated weekly.">
   <meta name="twitter:image" content="https://cfb.bdailey.com/images/og-default.svg">
-  <!-- Canonical -->
   <link rel="canonical" href="https://cfb.bdailey.com/">
-  <title>College Football Rankings - Modified ELO</title>
+  <title>Stat·urday — Power Ratings</title>
   <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components/board.css">
 </head>
-<body>
-  <!-- Site chrome (header + nav) injected by layout.js -->
-  <script src="js/layout.js"></script>
+<body class="tkr">
+  <!-- Ticker header + tape injected by layout.js -->
+  <script src="js/layout.js" data-season="false"></script>
 
-  <!-- Main Content -->
-  <div class="container">
-    <!-- System Stats -->
-    <div class="stats-grid" id="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Current Week</div>
-        <div class="stat-value" id="current-week">--</div>
-        <div class="stat-subtext">Season <span id="current-season">--</span></div>
+  <div class="tkr-wrap">
+    <div class="tkr-pagehead">
+      <div>
+        <h1 class="tkr-title">Power Ratings</h1>
+        <p class="tkr-subtitle" id="tkr-subtitle">Elo model · updated after every final</p>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Total Teams</div>
-        <div class="stat-value" id="total-teams">--</div>
-        <div class="stat-subtext">FBS & FCS</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Games Played</div>
-        <div class="stat-value" id="games-played">--</div>
-        <div class="stat-subtext">This season</div>
+      <div class="tkr-ribbon">
+        <div class="tkr-tile top-elo"><div class="val" id="rib-topelo">—</div><div class="lbl">Top Elo</div></div>
+        <div class="tkr-tile field-avg"><div class="val" id="rib-fieldavg">—</div><div class="lbl">Field Avg</div></div>
+        <div class="tkr-tile top-mover"><div class="val" id="rib-mover">—</div><div class="lbl">Top Mover</div></div>
       </div>
     </div>
 
-    <!-- EPIC-009: Prediction Accuracy Banner -->
-    <div id="accuracy-banner" class="accuracy-banner" style="display: none;">
-      <h3>Our Prediction Accuracy</h3>
-      <div class="accuracy-value" id="overall-accuracy">--</div>
-      <div class="accuracy-subtext" id="accuracy-details">--</div>
-    </div>
+    <div id="tkr-board">
+      <div class="tkr-table" id="tkr-table">
+        <div style="padding:24px;color:var(--fg2);font-family:var(--font-mono);font-size:12px;">Loading rankings…</div>
+      </div>
 
-    <!-- EPIC-024: Historical Season Indicator -->
-    <div id="historical-banner" class="historical-banner" style="display: none;">
-      <span class="historical-icon">📅</span>
-      <span class="historical-text">Viewing Historical Season: <strong id="historical-season-year"></strong></span>
-      <button id="return-to-current" class="historical-return-btn">Return to Current Season</button>
-    </div>
-
-    <!-- Rankings Card -->
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">Current Rankings</h2>
-        <div class="filters" style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-          <div id="rankings-week-wrap" style="display:none;">
-            <select class="filter-select" id="rankings-week-select" aria-label="Week"></select>
-          </div>
-          <select class="filter-select" id="limit-select">
-            <option value="10">Top 10</option>
-            <option value="25" selected>Top 25</option>
-            <option value="50">Top 50</option>
-            <option value="200">All Teams</option>
-          </select>
-          <button class="share-rankings-btn" id="share-top25-btn" title="Download Top 25 share card">📥 Share Top 25</button>
+      <!-- Game predictions (rendered by board.js; hidden until loaded) -->
+      <div class="tkr-preds-card hidden" id="tkr-preds">
+        <div class="tkr-preds-head">
+          <h2 class="tkr-preds-title">Game Predictions</h2>
+          <span class="tkr-preds-meta" id="tkr-preds-meta"></span>
         </div>
-      </div>
-
-      <!-- Info Box for FCS Games -->
-      <div class="info-box" style="margin: 0 1.5rem 1rem 1.5rem;">
-        <span class="info-icon">ℹ️</span>
-        <span class="info-text">
-          Team records and rankings reflect FBS opponents only. FCS games are excluded from ELO calculations.
-        </span>
-      </div>
-
-      <!-- Loading State -->
-      <div id="loading" class="loading">
-        <div class="spinner"></div>
-        <span>Loading rankings...</span>
-      </div>
-
-      <!-- Error State -->
-      <div id="error" class="error hidden">
-        <strong>Error loading rankings.</strong>
-        <span id="error-message"></span>
-      </div>
-
-      <!-- Rankings Table -->
-      <div id="rankings-container" class="hidden">
-        <div class="table-container">
-          <table class="rankings-table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th class="col-change" title="Change from last week">±</th>
-                <th>Team</th>
-                <th>Conference</th>
-                <th>Record</th>
-                <th>ELO Rating</th>
-                <th class="col-sparkline">Trend</th>
-                <th class="col-sos">SOS</th>
-                <th class="col-sos">SOS Rank</th>
-              </tr>
-            </thead>
-            <tbody id="rankings-tbody">
-              <!-- Rankings will be inserted here -->
-            </tbody>
-          </table>
-        </div>
+        <div id="tkr-preds-body"></div>
       </div>
     </div>
 
-    <!-- EPIC-042: Postseason Results Card -->
-    <div class="card" id="postseason-card" style="display:none;">
-      <div class="card-header">
-        <h2 class="card-title">Postseason Results</h2>
-        <span class="season-badge" id="postseason-season-label"></span>
-      </div>
-      <div id="postseason-body" class="postseason-container"></div>
-    </div>
-
-    <!-- Predictions Card -->
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">Game Predictions</h2>
-        <div id="predictions-live-controls" class="filters">
-          <button id="next-week-btn" class="filter-btn active">Next Week</button>
-          <select class="filter-select" id="week-selector">
-            <option value="">Select Week</option>
-            <option value="1">Week 1</option>
-            <option value="2">Week 2</option>
-            <option value="3">Week 3</option>
-            <option value="4">Week 4</option>
-            <option value="5">Week 5</option>
-            <option value="6">Week 6</option>
-            <option value="7">Week 7</option>
-            <option value="8">Week 8</option>
-            <option value="9">Week 9</option>
-            <option value="10">Week 10</option>
-            <option value="11">Week 11</option>
-            <option value="12">Week 12</option>
-            <option value="13">Week 13</option>
-            <option value="14">Week 14</option>
-            <option value="15">Week 15</option>
-            <option value="16">Week 16 (CFP Round 1)</option>
-            <option value="17">Week 17 (CFP Quarterfinals)</option>
-            <option value="18">Week 18 (CFP Semifinals)</option>
-          </select>
-          <button id="refresh-predictions-btn" class="refresh-btn">🔄 Refresh</button>
-        </div>
-      </div>
-
-      <!-- Loading State -->
-      <div id="predictions-loading" class="loading hidden">
-        <div class="spinner"></div>
-        <span>Loading predictions...</span>
-      </div>
-
-      <!-- Historical Season Simulator -->
-      <div id="predictions-historical" class="hidden">
-        <div class="historical-sim-header">
-          <span>Select a week to simulate predictions against actual results:</span>
-          <select class="filter-select" id="historical-week-selector">
-            <option value="">-- Pick a week --</option>
-            <option value="1">Week 1</option>
-            <option value="2">Week 2</option>
-            <option value="3">Week 3</option>
-            <option value="4">Week 4</option>
-            <option value="5">Week 5</option>
-            <option value="6">Week 6</option>
-            <option value="7">Week 7</option>
-            <option value="8">Week 8</option>
-            <option value="9">Week 9</option>
-            <option value="10">Week 10</option>
-            <option value="11">Week 11</option>
-            <option value="12">Week 12</option>
-            <option value="13">Week 13</option>
-            <option value="14">Week 14</option>
-            <option value="15">Week 15</option>
-            <option value="16">Week 16 (CFP Round 1)</option>
-            <option value="17">Week 17 (CFP Quarterfinals)</option>
-            <option value="18">Week 18 (CFP Semifinals)</option>
-          </select>
-        </div>
-        <div id="historical-sim-summary" class="historical-sim-summary hidden"></div>
-        <div id="historical-sim-loading" class="loading hidden">
-          <div class="spinner"></div>
-          <span>Simulating predictions...</span>
-        </div>
-        <div id="historical-sim-empty" class="empty-state hidden">
-          <p>No games found for this week.</p>
-        </div>
-        <div id="historical-sim-container" class="predictions-grid"></div>
-      </div>
-
-      <!-- Empty State -->
-      <div id="predictions-empty" class="empty-state hidden">
-        <p>No upcoming games to predict.</p>
-      </div>
-
-      <!-- Error State -->
-      <div id="predictions-error" class="error hidden">
-        <strong>Error loading predictions.</strong>
-        <span id="predictions-error-message"></span>
-      </div>
-
-      <!-- Predictions Grid -->
-      <div id="predictions-container" class="predictions-grid">
-        <!-- Predictions will be inserted here -->
-      </div>
-    </div>
-
-    <!-- Legend -->
-    <div class="card">
-      <h3 class="card-title mb-4">Legend</h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-        <div>
-          <strong>Rank Badges:</strong>
-          <div style="margin-top: 0.5rem;">
-            <span class="rank-badge top-5" style="margin-right: 0.5rem;">1</span> Top 5
-          </div>
-          <div style="margin-top: 0.5rem;">
-            <span class="rank-badge top-10" style="margin-right: 0.5rem;">8</span> Top 10
-          </div>
-          <div style="margin-top: 0.5rem;">
-            <span class="rank-badge top-25" style="margin-right: 0.5rem;">15</span> Top 25
-          </div>
-        </div>
-        <div>
-          <strong>Conference:</strong>
-          <div style="margin-top: 0.5rem;">
-            <span class="conference-badge p5">P5</span> Power 5
-          </div>
-          <div style="margin-top: 0.5rem;">
-            <span class="conference-badge g5">G5</span> Group of 5
-          </div>
-          <div style="margin-top: 0.5rem;">
-            <span class="conference-badge fcs">FCS</span> FCS
-          </div>
-        </div>
-        <div>
-          <strong>SOS Difficulty:</strong>
-          <div style="margin-top: 0.5rem;">
-            <span class="sos-indicator elite"></span> Elite (1700+)
-          </div>
-          <div style="margin-top: 0.5rem;">
-            <span class="sos-indicator hard"></span> Hard (1600-1699)
-          </div>
-          <div style="margin-top: 0.5rem;">
-            <span class="sos-indicator average"></span> Average (1500-1599)
-          </div>
-          <div style="margin-top: 0.5rem;">
-            <span class="sos-indicator easy"></span> Easy (<1500)
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Team detail view renders here in place (no route change) -->
+    <div id="tkr-detail" class="hidden"></div>
   </div>
-
-  <!-- Footer -->
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <p>&copy; 2026 Stat-urday</p>
-      <p><a href="elo-formula.html">How It Works</a> | <a href="https://github.com" target="_blank" rel="noopener">GitHub</a></p>
-      <p class="footer-last-updated">Last updated: <span id="last-updated">--</span></p>
-    </div>
-  </footer>
 
   <!-- Scripts -->
   <script src="js/api.js"></script>
-  <script src="js/date-utils.js"></script>
-  <script src="js/share.js"></script>
-  <script src="js/season.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/board.js"></script>
 </body>
 </html>

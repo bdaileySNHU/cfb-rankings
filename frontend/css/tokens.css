@@ -1,57 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
 /* ============================================================
-   DESIGN TOKENS — Stat-urday College Football Analytics
-   Dark-first; light theme via [data-theme="light"] or system pref
+   DESIGN TOKENS — Stat·urday "Ticker" (spec v1.0)
+   Twelve tokens, two themes. Dark is default & fixed; light is
+   "Cool white". The whole UI reads var(--token); switching theme
+   rewrites only these twelve values. Old token names are aliased
+   below so legacy pages reskin by inheritance.
    ============================================================ */
 
 :root {
-  /* Surfaces */
-  --bg-primary: #0f1117;
-  --bg-secondary: #1a1d27;
-  --bg-tertiary: #232736;
-  --bg-card: #1a1d27;
+  /* ── The twelve (dark — default) ── */
+  --bg: #0a0b0d;       /* page background */
+  --panel: #121419;    /* cards, table, tiles */
+  --panel2: #181b21;   /* row hover */
+  --line: #232730;     /* borders, dividers, gridlines */
+  --fg: #e8ebf0;       /* primary text & numerals */
+  --fg2: #9aa1ab;      /* secondary text, conference */
+  --fg3: #5c636e;      /* labels, rank, muted captions */
+  --accent: #f5a623;   /* ELO, brand mark, LIVE tab, links */
+  --pos: #3fb37f;      /* positive delta, wins */
+  --neg: #e8635a;      /* negative delta, losses */
+  --warn: #f5a623;     /* elevated SOS (mirrors accent) */
+  --grid: rgba(255, 255, 255, 0.05); /* chart gridlines */
 
-  /* Borders */
-  --border-color: #2d3148;
-  --border-subtle: #1e2235;
-
-  /* Text */
-  --text-primary: #f0f2f8;
-  --text-secondary: #9aa0b8;
-  --text-muted: #5c6380;
-
-  /* Accent — gold trophy */
-  --accent: #d69e2e;
-  --accent-color: #d69e2e; /* alias for legacy code */
-  --accent-hover: #ecc94b;
-  --accent-dim: rgba(214, 158, 46, 0.15);
-  --accent-secondary: #4a9eff;  /* blue — used for Team B in matchup charts */
-
-  /* Semantic */
-  --success-color: #48bb78;
-  --success-bg: rgba(72, 187, 120, 0.1);
-  --warning-color: #ed8936;
-  --warning-bg: rgba(237, 137, 54, 0.1);
-  --error-color: #fc8181;
-  --danger-color: #fc8181;
-  --info-color: #63b3ed;
-
-  /* Legacy aliases */
-  --primary-color: #4a7cc7;
-  --secondary-color: #3a6ab5;
-
-  /* Nav */
-  --nav-bg: #13161f;
-  --nav-height: 56px;
+  /* Per-theme heat-cell alpha ceiling (§07) */
+  --heat-max: 0.28;
+  /* Detail chart area fill alpha (§08) */
+  --chart-fill: 0.14;
 
   /* Typography */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
 
   /* Spacing / Radii */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-sm: 7px;
+  --radius-md: 9px;
+  --radius-lg: 11px;
+  --radius-xl: 12px;
 
   /* Shadows */
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
@@ -62,52 +47,60 @@
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;
+
+  /* ── Legacy aliases → spec tokens (reskin old pages for free) ── */
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--panel);
+  --bg-tertiary: var(--panel2);
+  --bg-card: var(--panel);
+  --border-color: var(--line);
+  --border-subtle: var(--line);
+  --text-primary: var(--fg);
+  --text-secondary: var(--fg2);
+  --text-muted: var(--fg3);
+  --accent-color: var(--accent);
+  --accent-hover: var(--accent);
+  --accent-dim: rgba(245, 166, 35, 0.15);
+  --accent-secondary: #4a9eff;
+  --success-color: var(--pos);
+  --success-bg: rgba(63, 179, 127, 0.1);
+  --warning-color: var(--warn);
+  --warning-bg: rgba(245, 166, 35, 0.1);
+  --error-color: var(--neg);
+  --danger-color: var(--neg);
+  --info-color: #63b3ed;
+  --primary-color: var(--accent);
+  --secondary-color: var(--accent);
+  --nav-bg: var(--bg);
+  --nav-height: 56px;
 }
 
-/* ── Light theme override ────────────────────────────────── */
+/* ── Light theme — "Cool white" ── */
 [data-theme="light"] {
-  --bg-primary: #f7f8fc;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #eef0f7;
-  --bg-card: #ffffff;
-  --border-color: #dde1ef;
-  --border-subtle: #eef0f7;
-  --text-primary: #1a1d27;
-  --text-secondary: #4a5068;
-  --text-muted: #8b92ab;
-  --nav-bg: #1a2344;
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --accent-dim: rgba(214, 158, 46, 0.12);
+  --bg: #f7f8fa;
+  --panel: #ffffff;
+  --panel2: #eef1f5;
+  --line: #e2e6ec;
+  --fg: #1a1c20;
+  --fg2: #6a6f78;
+  --fg3: #9aa0a8;
+  --accent: #b56f0e;
+  --pos: #1f8a5b;
+  --neg: #c4453a;
+  --warn: #b56f0e;
+  --grid: rgba(0, 0, 0, 0.07);
+
+  --heat-max: 0.18;
+  --chart-fill: 0.10;
+
+  --accent-dim: rgba(181, 111, 14, 0.12);
+  --success-bg: rgba(31, 138, 91, 0.1);
+  --warning-bg: rgba(181, 111, 14, 0.1);
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --primary-color: #1a365d;
-  --secondary-color: #2c5282;
-  --success-bg: #f0fdf4;
-  --warning-bg: #fffbeb;
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-/* ── System prefers light — only when no [data-theme] set ── */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme]) {
-    --bg-primary: #f7f8fc;
-    --bg-secondary: #ffffff;
-    --bg-tertiary: #eef0f7;
-    --bg-card: #ffffff;
-    --border-color: #dde1ef;
-    --border-subtle: #eef0f7;
-    --text-primary: #1a1d27;
-    --text-secondary: #4a5068;
-    --text-muted: #8b92ab;
-    --nav-bg: #1a2344;
-    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
-    --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12);
-    --accent-dim: rgba(214, 158, 46, 0.12);
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    --primary-color: #1a365d;
-    --secondary-color: #2c5282;
-    --success-bg: #f0fdf4;
-    --warning-bg: #fffbeb;
-  }
-}
+/* Dark is the canonical default — do NOT follow system light pref
+   (spec §09: "Dark theme is fixed", default "dark"). */

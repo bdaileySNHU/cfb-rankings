@@ -253,11 +253,17 @@ class RankingEntry(BaseModel):
         None, description="Change in rank from prior week (positive=moved up, negative=moved down, None=new entry)"
     )
     elo_history: Optional[List[float]] = Field(
-        None, description="Last 8 weekly ELO values for sparkline (ascending week order)"
+        None, description="Last 10 weekly ELO values for sparkline (ascending week order)"
     )
 
     # EPIC-037: ESPN team ID for CDN logo
     espn_id: Optional[int] = Field(None, description="ESPN team ID for logo CDN URL")
+
+    # Ticker spec §10: per-game scoring for OFF/DEF heat cells
+    off: Optional[float] = Field(None, description="Avg points scored per game (OFF heat cell)")
+    def_: Optional[float] = Field(
+        None, alias="def", description="Avg points allowed per game (DEF heat cell)"
+    )
 
 
 class RankingsResponse(BaseModel):

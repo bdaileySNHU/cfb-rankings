@@ -100,3 +100,23 @@ Move the season dropdown from the rankings page into the shared nav so the selec
 - No new backend work — all endpoints already accept `season=`
 
 ---
+
+## EPIC-044: Ticker Redesign — Power Ratings Board 🚧 In Progress
+**Effort:** Large (10 stories) — see `docs/EPIC-044-TICKER-REDESIGN.md`
+**Logged:** 2026-06-25
+
+Re-skin the product to the approved **Ticker** design: a dark-default /
+cool-white board driven by 12 CSS tokens, a scrolling ticker tape, a 10-column
+CSS-grid ratings table with inline heat cells + sparklines, an in-place team
+detail view, and a redesigned game-predictions card. Vanilla JS, existing REST
+API (only OFF/DEF per-game scoring added).
+
+- **Done & verified:** token foundation, header + tape, ratings board, in-place
+  detail (tiles + chart), backend OFF/DEF + 10-wk history, predictions card.
+- **Remaining:** re-home postseason / accuracy / legend / share (Story 44.7,
+  then delete orphaned `app.js`); resolve `team.html` detail duplication +
+  other-page reskin (44.8); complete team brand metadata (44.9); polish — self-
+  host fonts, season selector (ties **EPIC-041**), live results-log + §12
+  acceptance walk (44.4 / 44.10).
+
+---
