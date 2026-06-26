@@ -29,7 +29,7 @@ class TestPredictionsPageLoad:
         page.goto(f"{base_url}/frontend/games.html")
 
         # Assert - Page loads with correct title
-        expect(page).to_have_title("College Football Rankings - Games & Predictions")
+        expect(page).to_have_title("Games - College Football Rankings")
 
     def test_page_has_header(self, browser_page):
         """Test that page displays correct header"""
@@ -197,7 +197,7 @@ class TestPredictionsDisplay:
         page.wait_for_timeout(1500)
 
         # Assert - Page loaded successfully
-        expect(page).to_have_title("College Football Rankings - Games & Predictions")
+        expect(page).to_have_title("Games - College Football Rankings")
 
 
 @pytest.mark.e2e
@@ -302,7 +302,7 @@ class TestPredictionsAPIIntegration:
         page.wait_for_timeout(2000)
 
         # Assert - Page loads successfully even with no games
-        expect(page).to_have_title("College Football Rankings - Games & Predictions")
+        expect(page).to_have_title("Games - College Football Rankings")
 
 
 @pytest.mark.e2e

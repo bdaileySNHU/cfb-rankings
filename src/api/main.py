@@ -64,6 +64,8 @@ app = FastAPI(
     version="1.0.0",
 )
 
+from fastapi.staticfiles import StaticFiles
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -72,6 +74,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount frontend static files
+app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
+
 
 
 # Startup event

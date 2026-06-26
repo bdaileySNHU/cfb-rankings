@@ -38,7 +38,7 @@ class TestRankingsPageLoad:
         page.goto(f"{base_url}/frontend/index.html")
 
         # Assert - Page loads with correct title
-        expect(page).to_have_title("College Football Rankings - Modified ELO System")
+        expect(page).to_have_title("Stat·urday — Power Ratings")
 
     def test_page_has_header(self, browser_page):
         """Test that page displays correct header"""
@@ -51,7 +51,7 @@ class TestRankingsPageLoad:
         # Assert - Header is visible
         header = page.locator("h1")
         expect(header).to_be_visible()
-        expect(header).to_contain_text("College Football Rankings")
+        expect(header).to_contain_text("Power Ratings")
 
     def test_page_has_navigation(self, browser_page):
         """Test that page has navigation menu"""
@@ -63,7 +63,7 @@ class TestRankingsPageLoad:
 
         # Assert - Navigation links are present
         nav_links = page.locator("nav a")
-        expect(nav_links).to_have_count(4)  # Rankings, Teams, Games, Comparison
+        expect(nav_links).to_have_count(7)  # Rankings, Teams, Games, Compare, etc.
 
 
 @pytest.mark.e2e
@@ -93,10 +93,10 @@ class TestRankingsTableDisplay:
 
         # Act - Load page and wait for data to load
         page.goto(f"{base_url}/frontend/index.html")
-        page.wait_for_selector("#rankings-table tbody tr", timeout=5000)
+        page.wait_for_selector(".tkr-row", timeout=5000)
 
         # Assert - Table has rows
-        table_rows = page.locator("#rankings-table tbody tr")
+        table_rows = page.locator(".tkr-row")
         expect(table_rows).to_have_count(2, timeout=5000)
 
     def test_rankings_table_shows_correct_data(self, browser_page, test_db):
@@ -116,10 +116,10 @@ class TestRankingsTableDisplay:
 
         # Act
         page.goto(f"{base_url}/frontend/index.html")
-        page.wait_for_selector("#rankings-table tbody tr", timeout=5000)
+        page.wait_for_selector(".tkr-row", timeout=5000)
 
         # Assert - First row contains Alabama data
-        first_row = page.locator("#rankings-table tbody tr").first
+        first_row = page.locator(".tkr-row").first
         expect(first_row).to_contain_text("Alabama")
         expect(first_row).to_contain_text("1850")
         expect(first_row).to_contain_text("1-0")
@@ -153,10 +153,10 @@ class TestRankingsTableDisplay:
 
         # Act
         page.goto(f"{base_url}/frontend/index.html")
-        page.wait_for_selector("#rankings-table tbody tr", timeout=5000)
+        page.wait_for_selector(".tkr-row", timeout=5000)
 
         # Assert - Teams appear in correct order
-        rows = page.locator("#rankings-table tbody tr")
+        rows = page.locator(".tkr-row")
         expect(rows.nth(0)).to_contain_text("Alabama")  # Highest ELO first
         expect(rows.nth(1)).to_contain_text("Georgia")
         expect(rows.nth(2)).to_contain_text("Ohio State")
@@ -182,10 +182,10 @@ class TestRankingsTableDisplay:
 
         # Act
         page.goto(f"{base_url}/frontend/index.html")
-        page.wait_for_selector("#rankings-table tbody tr", timeout=5000)
+        page.wait_for_selector(".tkr-row", timeout=5000)
 
         # Assert - Conference badge is shown
-        first_row = page.locator("#rankings-table tbody tr").first
+        first_row = page.locator(".tkr-row").first
         expect(first_row).to_contain_text("G5")
 
 
@@ -211,14 +211,15 @@ class TestRankingsPageInteractions:
 
         # Act - Navigate to rankings and click team
         page.goto(f"{base_url}/frontend/index.html")
-        page.wait_for_selector("#rankings-table tbody tr", timeout=5000)
+        page.wait_for_selector(".tkr-row", timeout=5000)
 
-        # Click on Alabama link
-        alabama_link = page.locator("#rankings-table tbody tr a").first
-        alabama_link.click()
+        # Click on Alabama row
+        alabama_row = page.locator(".tkr-row").first
+        alabama_row.click()
 
-        # Assert - Navigated to team detail page
-        expect(page).to_have_url(f"{base_url}/frontend/team.html?id={alabama.id}")
+        # Assert - Detail panel is shown and contains the team name
+        expect(page.locator("#tkr-detail")).to_be_visible()
+        expect(page.locator("#tkr-detail")).to_contain_text("Alabama")
 
     def test_empty_state_displayed(self, browser_page, test_db):
         """Test that appropriate message shown when no teams exist"""
@@ -236,7 +237,7 @@ class TestRankingsPageInteractions:
         page.wait_for_timeout(2000)  # Wait for API call
 
         # Assert - No rows in table or empty message shown
-        table_rows = page.locator("#rankings-table tbody tr")
+        table_rows = page.locator(".tkr-row")
         count = table_rows.count()
 
         # Either no rows or a "no data" row
@@ -285,5 +286,5 @@ class TestRankingsAPIIntegration:
 
         # Assert - Loading indicator or table exists
         # (This test verifies page structure, loading may be too fast to catch)
-        table = page.locator("#rankings-table")
+        table = page.locator("#tkr-table")
         expect(table).to_be_visible()

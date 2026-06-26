@@ -34,7 +34,7 @@ class TestTeamDetailPageLoad:
         page.wait_for_timeout(1000)
 
         # Assert - Page loads
-        expect(page).to_have_title("College Football Rankings - Team Detail")
+        expect(page).to_have_title("Stat·urday — Power Ratings")
 
     def test_team_name_displayed(self, browser_page, test_db):
         """Test that team name is displayed on page"""
@@ -246,7 +246,7 @@ class TestTeamDetailNavigation:
 
         # Assert - Page doesn't crash (shows error or empty state)
         # Page should still load, even if team not found
-        expect(page).to_have_title("College Football Rankings - Team Detail")
+        expect(page).to_have_title("Stat·urday — Power Ratings")
 
 
 @pytest.mark.e2e
@@ -301,15 +301,14 @@ class TestTeamDetailAPIIntegration:
 
         # Act - Start at rankings
         page.goto(f"{base_url}/frontend/index.html")
-        page.wait_for_selector("#rankings-table tbody tr", timeout=5000)
+        page.wait_for_selector(".tkr-row", timeout=5000)
 
         # Click on Alabama
-        alabama_link = page.locator("#rankings-table tbody tr a").first
-        alabama_link.click()
+        alabama_row = page.locator(".tkr-row").first
+        alabama_row.click()
 
-        # Wait for team detail page
-        expect(page).to_have_url(f"{base_url}/frontend/team.html?id={alabama.id}")
-        page.wait_for_timeout(1000)
+        # Wait for team detail panel
+        expect(page.locator("#tkr-detail")).to_be_visible()
 
         # Verify team name is shown
         assert "Alabama" in page.content()
@@ -320,4 +319,4 @@ class TestTeamDetailAPIIntegration:
 
         # Assert - Back at rankings page
         expect(page).to_have_url(f"{base_url}/frontend/index.html")
-        page.wait_for_selector("#rankings-table tbody tr", timeout=5000)
+        page.wait_for_selector(".tkr-row", timeout=5000)

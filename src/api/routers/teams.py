@@ -277,6 +277,15 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
         .all()
     )
 
+    # Fetch all ranking histories for this season to map team + week to their rank
+    ranks = (
+        db.query(RankingHistory.team_id, RankingHistory.week, RankingHistory.rank)
+        .filter(RankingHistory.season == season)
+        .all()
+    )
+    # Build a lookup map: (team_id, week) -> rank
+    rank_lookup = {(r.team_id, r.week): r.rank for r in ranks}
+
     schedule_games = []
     for game in games:
         is_home = game.home_team_id == team_id
@@ -290,6 +299,8 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
             else:
                 result = "W" if game.away_score > game.home_score else "L"
                 score_str = f"{result} {game.away_score}-{game.home_score}"
+
+        opponent_rank = rank_lookup.get((opponent.id, game.week))
 
         schedule_games.append(
             {
@@ -307,10 +318,15 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
                 "is_fcs": opponent.is_fcs,
                 "game_type": game.game_type,  # EPIC-022: Include game type for frontend badge display
                 "postseason_name": game.postseason_name,  # EPIC-023: Include bowl/playoff name
+                "home_score": game.home_score,
+                "away_score": game.away_score,
+                "home_team_id": game.home_team_id,
+                "opponent_rank": opponent_rank,
             }
         )
 
     return {"team_id": team_id, "team_name": team.name, "season": season, "games": schedule_games}
+
 
 
 @router.get("/api/teams/{team_id}/players", response_model=schemas.TeamPlayersResponse, tags=["Teams"])
@@ -763,6 +779,33 @@ def get_matchup(
     HOME_FIELD = 65.0
     SCALE = 400.0
 
+    def get_off_def_ppg(team_id):
+        games = (
+            db.query(Game)
+            .filter(
+                Game.season == season,
+                Game.is_processed == True,
+                Game.excluded_from_rankings == False,
+                (Game.home_team_id == team_id) | (Game.away_team_id == team_id),
+            )
+            .all()
+        )
+        if not games:
+            return None, None
+        
+        pf_sum = 0
+        pa_sum = 0
+        n = len(games)
+        for g in games:
+            if g.home_team_id == team_id:
+                pf_sum += g.home_score if g.home_score is not None else 0
+                pa_sum += g.away_score if g.away_score is not None else 0
+            else:
+                pf_sum += g.away_score if g.away_score is not None else 0
+                pa_sum += g.home_score if g.home_score is not None else 0
+        
+        return round(pf_sum / n, 1), round(pa_sum / n, 1)
+
     def team_payload(team, ranking):
         elo = ranking["elo_rating"] if ranking else team.elo_rating
         # preseason week-0 snapshot
@@ -775,6 +818,11 @@ def get_matchup(
             )
             .first()
         )
+        off_ppg, def_ppg = get_off_def_ppg(team.id)
+        wins = ranking["wins"] if ranking else 0
+        losses = ranking["losses"] if ranking else 0
+        win_pct = round((wins / (wins + losses) * 100), 1) if (wins + losses) > 0 else 0.0
+
         return {
             "id": team.id,
             "name": team.name,
@@ -782,11 +830,14 @@ def get_matchup(
             "conference_name": team.conference_name,
             "elo_rating": round(elo, 1) if elo else None,
             "preseason_elo": round(pre_row.elo_rating, 1) if pre_row else None,
-            "wins": ranking["wins"] if ranking else 0,
-            "losses": ranking["losses"] if ranking else 0,
+            "wins": wins,
+            "losses": losses,
+            "win_pct": win_pct,
             "rank": ranking["rank"] if ranking else None,
             "sos": round(ranking["sos"], 1) if ranking and ranking.get("sos") else None,
             "sos_rank": ranking["sos_rank"] if ranking else None,
+            "off": off_ppg,
+            "def": def_ppg,
         }
 
     # ELO history for both teams this season

@@ -16,7 +16,6 @@
 
   var links = [
     ['index.html', 'Rankings'],
-    ['teams.html', 'Teams'],
     ['games.html', 'Games'],
     ['comparison.html', 'Compare'],
     ['elo-formula.html', 'How It Works'],

@@ -22,13 +22,20 @@
   <title>Prediction Accuracy Comparison - College Football Rankings</title>
   <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="css/components/board.css">
 </head>
-<body>
+<body class="tkr">
   <!-- Site chrome (header + nav) injected by layout.js -->
   <script src="js/layout.js"></script>
 
-  <div class="container">
+  <div class="tkr-wrap">
+    <div class="tkr-pagehead">
+      <div>
+        <h1 class="tkr-title">Prediction Accuracy</h1>
+        <p class="tkr-subtitle">How does ELO compare to the AP Poll at predicting outcomes?</p>
+      </div>
+    </div>
+
     <!-- Loading State -->
     <div id="loading" class="loading">
       <div class="spinner"></div>
@@ -39,164 +46,162 @@
     <div id="comparison-content" class="hidden">
 
       <!-- Hero Stats: Overall Accuracy -->
-      <div class="card" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); color: white; margin-bottom: 2rem;">
-        <div class="card-header">
-          <h2 class="card-title" style="color: white; font-size: 1.5rem;">Prediction Accuracy Comparison</h2>
+      <div class="card comparison-hero-card" style="margin-bottom: 2rem; position: relative; overflow: hidden;">
+        <div class="comparison-hero-bg"></div>
+        <div class="comparison-hero-header">
+          <div class="hero-overall-pct" id="overall-elo-accuracy-pct">--</div>
+          <div class="hero-title">Overall ELO Accuracy</div>
+          <div class="hero-sub" id="overall-elo-correct-count">--</div>
         </div>
 
-        <!-- Overall ELO Accuracy (All Games) -->
-        <div style="background: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
-          <div style="text-align: center;">
-            <div style="font-size: 2.5rem; font-weight: bold;" id="overall-elo-accuracy-pct">--</div>
-            <div style="opacity: 0.9; margin-top: 0.5rem; font-size: 1.1rem;">Overall ELO Accuracy</div>
-            <div style="opacity: 0.7; font-size: 0.9rem; margin-top: 0.25rem;" id="overall-elo-correct-count">--</div>
-            <div style="opacity: 0.6; font-size: 0.85rem; margin-top: 0.5rem; font-style: italic;">
-              ↑ Accuracy across all predicted games
+        <div class="comparison-separator-line"></div>
+
+        <div class="comparison-grid-3">
+          <div class="comp-col col-elo">
+            <div class="comp-value" id="elo-accuracy-pct">--</div>
+            <div class="comp-sub">ELO System</div>
+            <div class="comp-detail" id="elo-correct-count">--</div>
+          </div>
+          <div class="comp-col col-delta">
+            <div class="comp-value" id="elo-advantage">--</div>
+            <div class="comp-sub" id="elo-advantage-sub">ELO vs AP</div>
+            <div class="comp-detail" id="games-compared">--</div>
+            <div class="comp-mini-bar-wrap">
+              <div class="comp-mini-bar-track">
+                <div class="comp-mini-bar-fill" id="mini-bar-fill" style="width: 0%"></div>
+                <div class="comp-mini-bar-marker" id="mini-bar-marker" style="left: 0%"></div>
+              </div>
             </div>
           </div>
-        </div>
-
-        <!-- Comparison (ELO vs AP Poll) -->
-        <div style="opacity: 0.9; font-size: 0.95rem; text-align: center; margin-bottom: 1rem;">
-          When compared on games with AP Poll rankings:
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; padding: 1rem 0;">
-          <div style="text-align: center;">
-            <div style="font-size: 2.5rem; font-weight: bold;" id="elo-accuracy-pct">--</div>
-            <div style="opacity: 0.9; margin-top: 0.5rem;">ELO System</div>
-            <div style="opacity: 0.7; font-size: 0.9rem; margin-top: 0.25rem;" id="elo-correct-count">--</div>
-          </div>
-          <div style="text-align: center;">
-            <div style="font-size: 2.5rem; font-weight: bold;" id="ap-accuracy-pct">--</div>
-            <div style="opacity: 0.9; margin-top: 0.5rem;">AP Poll</div>
-            <div style="opacity: 0.7; font-size: 0.9rem; margin-top: 0.25rem;" id="ap-correct-count">--</div>
-          </div>
-          <div style="text-align: center;">
-            <div style="font-size: 2.5rem; font-weight: bold;" id="elo-advantage">--</div>
-            <div style="opacity: 0.9; margin-top: 0.5rem;">ELO Advantage</div>
-            <div style="opacity: 0.7; font-size: 0.9rem; margin-top: 0.25rem;" id="games-compared">--</div>
+          <div class="comp-col col-ap">
+            <div class="comp-value" id="ap-accuracy-pct">--</div>
+            <div class="comp-sub">AP Poll</div>
+            <div class="comp-detail" id="ap-correct-count">--</div>
           </div>
         </div>
       </div>
 
       <!-- Breakdown Stats -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Both Systems Correct</div>
-          <div class="stat-value" id="both-correct">--</div>
-          <div class="stat-subtext">Games both predicted right</div>
+      <div class="comparison-breakdown-grid" style="margin-bottom: 2rem;">
+        <div class="stat-card card-both-correct">
+          <div class="stat-val" id="both-correct">--</div>
+          <div class="stat-lbl">Both Correct</div>
+          <div class="stat-sub">Games both predicted right</div>
         </div>
-        <div class="stat-card" style="background-color: var(--success-bg);">
-          <div class="stat-label">ELO Only Correct</div>
-          <div class="stat-value" id="elo-only-correct" style="color: var(--success-color);">--</div>
-          <div class="stat-subtext">ELO right, AP wrong</div>
+        <div class="stat-card card-elo-only">
+          <div class="stat-val" id="elo-only-correct">--</div>
+          <div class="stat-lbl">ELO Only</div>
+          <div class="stat-sub">ELO right, AP wrong</div>
         </div>
-        <div class="stat-card" style="background-color: var(--warning-bg);">
-          <div class="stat-label">AP Only Correct</div>
-          <div class="stat-value" id="ap-only-correct" style="color: var(--warning-color);">--</div>
-          <div class="stat-subtext">AP right, ELO wrong</div>
+        <div class="stat-card card-ap-only">
+          <div class="stat-val" id="ap-only-correct">--</div>
+          <div class="stat-lbl">AP Only</div>
+          <div class="stat-sub">AP right, ELO wrong</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Both Systems Wrong</div>
-          <div class="stat-value" id="both-wrong">--</div>
-          <div class="stat-subtext">Neither predicted correctly</div>
+        <div class="stat-card card-both-wrong">
+          <div class="stat-val" id="both-wrong">--</div>
+          <div class="stat-lbl">Both Wrong</div>
+          <div class="stat-sub">Neither predicted correctly</div>
         </div>
       </div>
 
       <!-- EPIC-COMPARISON-BOWL-PLAYOFF: Postseason vs Regular Season Stats -->
-      <div class="card" id="postseason-stats-card" style="display: none;">
+      <div class="card" id="postseason-stats-card" style="display: none; margin-bottom: 2rem;">
         <div class="card-header">
           <h2 class="card-title">Regular Season vs Postseason Accuracy</h2>
-          <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+          <p style="color: var(--fg2); margin-top: 0.5rem; font-size: 0.9rem;">
             How well do the systems predict during bowl games and playoffs?
           </p>
         </div>
 
-        <!-- Regular Season Stats -->
-        <div style="margin-bottom: 2rem;">
-          <h3 style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
-            📅 Regular Season (Weeks 1-15)
-          </h3>
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-label">ELO Accuracy</div>
-              <div class="stat-value" id="regular-season-elo-accuracy">--</div>
-              <div class="stat-subtext" id="regular-season-elo-subtext">--</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">AP Poll Accuracy</div>
-              <div class="stat-value" id="regular-season-ap-accuracy">--</div>
-              <div class="stat-subtext" id="regular-season-ap-subtext">--</div>
+        <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 2rem;">
+          <!-- Regular Season Stats -->
+          <div>
+            <h3 style="color: var(--fg); font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid var(--line); padding-bottom: 0.5rem; font-family: var(--font-sans);">
+              📅 Regular Season (Weeks 1-15)
+            </h3>
+            <div class="comparison-breakdown-grid" style="grid-template-columns: repeat(2, 1fr);">
+              <div class="stat-card card-elo-only" style="padding: 1rem 1.25rem;">
+                <div class="stat-val" id="regular-season-elo-accuracy" style="font-size: 1.75rem;">--</div>
+                <div class="stat-lbl">ELO Accuracy</div>
+                <div class="stat-sub" id="regular-season-elo-subtext">--</div>
+              </div>
+              <div class="stat-card card-ap-only" style="padding: 1rem 1.25rem;">
+                <div class="stat-val" id="regular-season-ap-accuracy" style="font-size: 1.75rem;">--</div>
+                <div class="stat-lbl">AP Poll Accuracy</div>
+                <div class="stat-sub" id="regular-season-ap-subtext">--</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Postseason Stats -->
-        <div>
-          <h3 style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
-            🏆 Postseason (Weeks 16-20)
-          </h3>
-          <div class="stats-grid">
-            <div class="stat-card" style="background-color: var(--primary-bg);">
-              <div class="stat-label">ELO Accuracy</div>
-              <div class="stat-value" id="postseason-elo-accuracy" style="color: var(--primary-color);">--</div>
-              <div class="stat-subtext" id="postseason-elo-subtext">--</div>
-            </div>
-            <div class="stat-card" style="background-color: var(--warning-bg);">
-              <div class="stat-label">AP Poll Accuracy</div>
-              <div class="stat-value" id="postseason-ap-accuracy" style="color: var(--warning-color);">--</div>
-              <div class="stat-subtext" id="postseason-ap-subtext">--</div>
+          <!-- Postseason Stats -->
+          <div>
+            <h3 style="color: var(--fg); font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid var(--line); padding-bottom: 0.5rem; font-family: var(--font-sans);">
+              🏆 Postseason (Weeks 16-20)
+            </h3>
+            <div class="comparison-breakdown-grid" style="grid-template-columns: repeat(2, 1fr);">
+              <div class="stat-card card-elo-only" style="padding: 1rem 1.25rem;">
+                <div class="stat-val" id="postseason-elo-accuracy" style="font-size: 1.75rem;">--</div>
+                <div class="stat-lbl">ELO Accuracy</div>
+                <div class="stat-sub" id="postseason-elo-subtext">--</div>
+              </div>
+              <div class="stat-card card-ap-only" style="padding: 1rem 1.25rem;">
+                <div class="stat-val" id="postseason-ap-accuracy" style="font-size: 1.75rem;">--</div>
+                <div class="stat-lbl">AP Poll Accuracy</div>
+                <div class="stat-sub" id="postseason-ap-subtext">--</div>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Postseason Empty State -->
-        <div id="postseason-empty-state" style="display: none; text-align: center; padding: 2rem; background-color: var(--background-secondary); border-radius: 8px; margin-top: 1rem;">
-          <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 0.5rem;">
+        <div id="postseason-empty-state" style="display: none; text-align: center; padding: 2rem; background: var(--panel2); border-radius: var(--radius-md); margin: 0 1.5rem 1.5rem;">
+          <p style="color: var(--fg2); font-size: 0.95rem; margin-bottom: 0.5rem;">
             ⏳ Postseason data not yet available
           </p>
-          <p style="color: var(--text-secondary); font-size: 0.9rem;">
+          <p style="color: var(--fg3); font-size: 0.85rem;">
             Bowl games and playoff data will appear here once postseason games are played.
           </p>
         </div>
       </div>
 
       <!-- Accuracy Over Time Chart -->
-      <div class="card">
+      <div class="card" style="margin-bottom: 2rem;">
         <div class="card-header">
           <h2 class="card-title">Accuracy Over Time</h2>
         </div>
-        <div style="position: relative; height: 400px;">
-          <canvas id="accuracy-chart"></canvas>
+        <div class="accuracy-chart-card-body" style="padding: 1rem 1.5rem 1.5rem; overflow-x: auto;">
+          <div id="accuracy-chart-container" style="min-width: 800px; height: 250px; position: relative;">
+            <!-- SVG injected dynamically -->
+          </div>
         </div>
       </div>
 
       <!-- Disagreement Games Table -->
-      <div class="card">
+      <div class="card" style="margin-bottom: 2rem;">
         <div class="card-header">
           <h2 class="card-title">Games Where Systems Disagreed</h2>
-          <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+          <p style="color: var(--fg2); margin-top: 0.5rem; font-size: 0.9rem;">
             Games where ELO and AP Poll predicted different winners
           </p>
         </div>
-        <div id="no-disagreements" class="hidden" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-          <p>No disagreements found - both systems predicted the same winners!</p>
+        <div id="no-disagreements" class="hidden" style="text-align: center; padding: 3rem 2rem; color: var(--fg2);">
+          <p>No disagreements found — both systems predicted the same winners!</p>
         </div>
-        <div id="disagreements-container" class="table-container">
-          <table class="rankings-table">
-            <thead>
-              <tr>
-                <th>Week</th>
-                <th>Matchup</th>
-                <th>ELO Predicted</th>
-                <th>AP Predicted</th>
-                <th>Actual Winner</th>
-                <th>Result</th>
-              </tr>
-            </thead>
-            <tbody id="disagreements-tbody">
-            </tbody>
-          </table>
+        <div id="disagreements-container" class="disagreed-table-wrap" style="padding: 0 1.5rem 1.5rem;">
+          <div class="disagreed-table">
+            <div class="disagreed-header">
+              <div>WK</div>
+              <div>MATCHUP</div>
+              <div>ELO PRED</div>
+              <div>AP PRED</div>
+              <div>ACTUAL</div>
+              <div style="text-align: center;">RESULT</div>
+            </div>
+            <div id="disagreements-tbody" class="disagreed-body">
+              <!-- Rows injected by comparison.js -->
+            </div>
+          </div>
         </div>
       </div>
 

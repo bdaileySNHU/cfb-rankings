@@ -20,6 +20,20 @@
   <!-- Canonical -->
   <link rel="canonical" href="https://cfb.bdailey.com/team.html">
   <title>Team Details - College Football Rankings</title>
+  <script>
+    // Redirect standalone team.html to index.html, forwarding team parameters
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const teamId = params.get('id');
+      const season = params.get('season');
+      let dest = 'index.html';
+      if (teamId) {
+        dest += '?team=' + encodeURIComponent(teamId);
+        if (season) dest += '&season=' + encodeURIComponent(season);
+      }
+      window.location.replace(dest);
+    })();
+  </script>
   <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>

@@ -115,14 +115,27 @@ function displayHeroStats(comparison) {
   // ELO Advantage
   const advantage = (comparison.elo_advantage * 100).toFixed(1);
   const advantageSign = advantage >= 0 ? '+' : '';
-  const advantageColor = advantage >= 0 ? '#10b981' : '#ef4444';
+  const advantageColor = advantage >= 0 ? 'var(--pos)' : 'var(--neg)';
 
   const advantageEl = document.getElementById('elo-advantage');
   advantageEl.textContent = `${advantageSign}${advantage}%`;
-  advantageEl.style.color = advantageColor;
+  advantageEl.className = 'comp-value ' + (advantage >= 0 ? 'delta-pos' : 'delta-neg');
+
+  const advSub = document.getElementById('elo-advantage-sub');
+  if (advSub) {
+    advSub.textContent = advantage >= 0 ? 'ELO leads AP' : 'ELO trails AP';
+  }
 
   document.getElementById('games-compared').textContent =
     `${comparison.total_games_compared} games compared`;
+
+  // Set mini progress bar widths & markers
+  const fillEl = document.getElementById('mini-bar-fill');
+  const markerEl = document.getElementById('mini-bar-marker');
+  if (fillEl && markerEl) {
+    fillEl.style.width = `${eloAccuracy}%`;
+    markerEl.style.left = `${apAccuracy}%`;
+  }
 }
 
 /**
@@ -227,151 +240,108 @@ function getWeekLabel(week, gameType, postseasonName) {
  * Display accuracy over time chart
  */
 function displayAccuracyChart(comparison) {
-  const ctx = document.getElementById('accuracy-chart');
+  const container = document.getElementById('accuracy-chart-container');
+  if (!container) return;
 
-  // Destroy existing chart if present
-  if (comparisonChart) {
-    comparisonChart.destroy();
+  const data = comparison.by_week || [];
+  if (!data.length) {
+    container.innerHTML = '<div style="color:var(--fg3);text-align:center;padding:2rem;">No chart data available.</div>';
+    return;
   }
 
-  // Prepare data
-  // EPIC-COMPARISON-BOWL-PLAYOFF: Use descriptive labels for postseason weeks
-  const weeks = comparison.by_week.map(w => getWeekLabel(w.week, w.game_type, w.postseason_name));
-  const eloData = comparison.by_week.map(w => (w.elo_accuracy * 100).toFixed(1));
-  const apData = comparison.by_week.map(w => (w.ap_accuracy * 100).toFixed(1));
+  // Dimensions
+  const W = 1000;
+  const H = 250;
+  const padL = 48;
+  const padR = 14;
+  const padT = 14;
+  const padB = 14;
+  const innerW = W - padL - padR; // 938
+  const innerH = H - padT - padB; // 222
 
-  // EPIC-COMPARISON-BOWL-PLAYOFF: Find index where postseason starts (week 16+)
-  const postseasonStartIndex = comparison.by_week.findIndex(w => w.week >= 16);
-  const hasPostseason = postseasonStartIndex !== -1;
+  const baseY = padT + innerH; // 236
 
-  // Create chart
-  comparisonChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: weeks,
-      datasets: [
-        {
-          label: 'ELO System',
-          data: eloData,
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          borderWidth: 3,
-          tension: 0.4,
-          fill: true,
-          pointRadius: 5,
-          pointHoverRadius: 7
-        },
-        {
-          label: 'AP Poll',
-          data: apData,
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          borderWidth: 3,
-          tension: 0.4,
-          fill: true,
-          pointRadius: 5,
-          pointHoverRadius: 7
-        }
-      ]
-    },
-    // EPIC-COMPARISON-BOWL-PLAYOFF: Add custom plugin for postseason visual separator
-    plugins: hasPostseason ? [{
-      id: 'postseasonSeparator',
-      afterDraw: (chart) => {
-        const ctx = chart.ctx;
-        const xAxis = chart.scales.x;
-        const yAxis = chart.scales.y;
+  // Scales
+  const getX = (index) => padL + (index / (data.length - 1)) * innerW;
+  const getY = (val) => baseY - (val / 100) * innerH;
 
-        // Draw vertical line after week 15 (before postseason)
-        if (postseasonStartIndex > 0) {
-          const x = xAxis.getPixelForValue(postseasonStartIndex - 0.5);
-
-          ctx.save();
-          ctx.beginPath();
-          ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-          ctx.lineWidth = 2;
-          ctx.setLineDash([5, 5]);
-          ctx.moveTo(x, yAxis.top);
-          ctx.lineTo(x, yAxis.bottom);
-          ctx.stroke();
-          ctx.restore();
-
-          // Add "Postseason" label
-          ctx.save();
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-          ctx.font = '12px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('← Regular Season | Postseason →', x, yAxis.top - 5);
-          ctx.restore();
-        }
-      }
-    }] : [],
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          labels: {
-            font: {
-              size: 14
-            },
-            padding: 20
-          }
-        },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-          callbacks: {
-            label: function(context) {
-              return `${context.dataset.label}: ${context.parsed.y}%`;
-            },
-            // EPIC-COMPARISON-BOWL-PLAYOFF: Show game count in tooltip
-            afterLabel: function(context) {
-              const weekData = comparison.by_week[context.dataIndex];
-              if (weekData && weekData.games) {
-                return `(${weekData.games} game${weekData.games !== 1 ? 's' : ''})`;
-              }
-              return '';
-            }
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 100,
-          ticks: {
-            callback: function(value) {
-              return value + '%';
-            }
-          },
-          title: {
-            display: true,
-            text: 'Prediction Accuracy (%)',
-            font: {
-              size: 14
-            }
-          }
-        },
-        x: {
-          title: {
-            display: true,
-            text: 'Week',
-            font: {
-              size: 14
-            }
-          }
-        }
-      },
-      interaction: {
-        mode: 'nearest',
-        axis: 'x',
-        intersect: false
-      }
-    }
+  // Gridlines: 5 horizontals at 0, 25, 50, 75, 100%
+  let gridSvg = '';
+  const gridTicks = [0, 25, 50, 75, 100];
+  gridTicks.forEach(tick => {
+    const y = getY(tick);
+    gridSvg += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="var(--grid)" stroke-width="1" />`;
+    gridSvg += `<text x="${padL - 6}" y="${y}" text-anchor="end" dominant-baseline="central" fill="var(--fg3)" font-family="var(--font-mono)" font-size="10">${tick}%</text>`;
   });
+
+  // Plot lines and points
+  let eloPoints = [];
+  let apPoints = [];
+  data.forEach((w, idx) => {
+    const x = getX(idx);
+    const yElo = getY(w.elo_accuracy * 100);
+    const yAp = getY(w.ap_accuracy * 100);
+    eloPoints.push({ x, y: yElo, val: (w.elo_accuracy * 100).toFixed(1) });
+    apPoints.push({ x, y: yAp, val: (w.ap_accuracy * 100).toFixed(1) });
+  });
+
+  const eloPath = eloPoints.map(p => `${p.x},${p.y}`).join(' ');
+  const apPath = apPoints.map(p => `${p.x},${p.y}`).join(' ');
+
+  const eloAreaPath = `${padL},${baseY} ${eloPath} ${eloPoints[eloPoints.length - 1].x},${baseY}`;
+  const apAreaPath = `${padL},${baseY} ${apPath} ${apPoints[apPoints.length - 1].x},${baseY}`;
+
+  // Dots
+  let eloDots = '';
+  let apDots = '';
+  eloPoints.forEach(p => {
+    eloDots += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="var(--bg)" stroke="var(--accent)" stroke-width="2"><title>ELO: ${p.val}%</title></circle>`;
+  });
+  apPoints.forEach(p => {
+    apDots += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="var(--bg)" stroke="#7c9fe6" stroke-width="2"><title>AP: ${p.val}%</title></circle>`;
+  });
+
+  // X labels
+  let xLabelsSvg = '';
+  data.forEach((w, idx) => {
+    const x = getX(idx);
+    const y = baseY + 12;
+    const label = getWeekLabel(w.week, w.game_type, w.postseason_name);
+    xLabelsSvg += `<text x="${x}" y="${y}" text-anchor="middle" fill="var(--fg3)" font-family="var(--font-mono)" font-size="10">${label}</text>`;
+  });
+
+  // Draw vertical line if postseason starts (week 16)
+  let verticalLine = '';
+  const postseasonIndex = data.findIndex(w => w.week >= 16);
+  if (postseasonIndex !== -1) {
+    const x = getX(postseasonIndex - 0.5);
+    verticalLine = `<line x1="${x}" y1="${padT}" x2="${x}" y2="${baseY}" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="4,4" />
+      <text x="${x}" y="${padT + 12}" text-anchor="middle" fill="var(--fg3)" font-family="var(--font-sans)" font-size="11">Postseason →</text>`;
+  }
+
+  container.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="250" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="elo-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.22" />
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
+        </linearGradient>
+        <linearGradient id="ap-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#7c9fe6" stop-opacity="0.16" />
+          <stop offset="100%" stop-color="#7c9fe6" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      ${gridSvg}
+      ${verticalLine}
+      <polygon points="${eloAreaPath}" fill="url(#elo-grad)" />
+      <polygon points="${apAreaPath}" fill="url(#ap-grad)" />
+      <polyline points="${eloPath}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
+      <polyline points="${apPath}" fill="none" stroke="#7c9fe6" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
+      ${eloDots}
+      ${apDots}
+      ${xLabelsSvg}
+    </svg>
+  `;
 }
 
 /**
@@ -392,28 +362,26 @@ function displayDisagreements(comparison) {
   container.classList.remove('hidden');
 
   tbody.innerHTML = comparison.disagreements.map(game => {
-    // Determine result styling
     let resultBadge;
     if (game.elo_correct && !game.ap_correct) {
-      resultBadge = '<span class="prediction-correct">ELO ✓</span>';
+      resultBadge = '<span class="res-badge elo-win">ELO ✓</span>';
     } else if (!game.elo_correct && game.ap_correct) {
-      resultBadge = '<span class="prediction-incorrect">AP ✓</span>';
+      resultBadge = '<span class="res-badge ap-win">AP ✓</span>';
     } else {
-      resultBadge = '<span style="color: var(--text-secondary);">Both Wrong</span>';
+      resultBadge = '<span class="res-badge" style="color: var(--fg3); background: var(--panel2);">Both Wrong</span>';
     }
 
-    // EPIC-COMPARISON-BOWL-PLAYOFF: Use descriptive week labels for postseason
     const weekLabel = getWeekLabel(game.week, game.game_type, game.postseason_name);
 
     return `
-      <tr>
-        <td>${weekLabel}</td>
-        <td><strong>${game.matchup}</strong></td>
-        <td>${game.elo_predicted}</td>
-        <td>${game.ap_predicted}</td>
-        <td><strong>${game.actual_winner}</strong></td>
-        <td>${resultBadge}</td>
-      </tr>
+      <div class="disagreed-row">
+        <div>${weekLabel}</div>
+        <div class="matchup-cell">${game.matchup}</div>
+        <div>${game.elo_predicted}</div>
+        <div>${game.ap_predicted}</div>
+        <div class="winner-cell">${game.actual_winner}</div>
+        <div style="display: flex; justify-content: center; align-items: center;">${resultBadge}</div>
+      </div>
     `;
   }).join('');
 }

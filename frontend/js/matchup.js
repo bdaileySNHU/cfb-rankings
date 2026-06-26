@@ -8,8 +8,8 @@
  */
 
 const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8000'
-  : 'https://cfb.bdailey.com';
+  ? `${window.location.protocol}//${window.location.host}`
+  : '';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let allTeams = [];
@@ -17,9 +17,26 @@ let selectedA = null;   // { id, name, conference }
 let selectedB = null;
 let matchupData = null;
 let activeSite = 'neutral';  // 'neutral' | 'home-a' | 'home-b'
+let teamsMeta = {};
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+async function loadTeamsMeta() {
+  try {
+    const resp = await fetch('data/teams-meta.json');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    teamsMeta = await resp.json();
+  } catch (err) {
+    console.warn('Could not load teams metadata:', err.message);
+  }
+}
+
+function stripeName(name) {
+  var meta = teamsMeta[name] || {};
+  return meta.primary || 'var(--accent)';
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+  await loadTeamsMeta();
   await loadAllTeams();
   wireSearches();
   wireSiteToggle();
@@ -44,6 +61,14 @@ async function loadAllTeams() {
     const resp = await fetch(`${BASE_URL}/api/teams?limit=500`);
     if (!resp.ok) throw new Error('Failed to load teams');
     allTeams = await resp.json();
+    
+    // Sort descending by ELO rating to assign ranks dynamically
+    allTeams.sort((a, b) => b.elo_rating - a.elo_rating);
+    allTeams.forEach((t, index) => {
+      t.rank = index + 1;
+    });
+
+    // Sort alphabetically for dropdown listing/searching
     allTeams.sort((a, b) => a.name.localeCompare(b.name));
   } catch (e) {
     console.error('Error loading teams:', e);
@@ -78,11 +103,28 @@ function wireSearches() {
 }
 
 function renderDropdown(side, teams, container) {
-  if (!teams.length) { container.innerHTML = '<div class="matchup-dd-empty">No teams found</div>'; container.classList.add('open'); return; }
-  container.innerHTML = teams.map(t =>
-    `<div class="matchup-dd-item" data-id="${t.id}">${t.name}<span class="matchup-dd-conf">${t.conference_name || t.conference || ''}</span></div>`
-  ).join('');
+  // Exclude currently selected opponent
+  const opponent = side === 'a' ? selectedB : selectedA;
+  const filtered = opponent ? teams.filter(t => t.id !== opponent.id) : teams;
+
+  if (!filtered.length) { container.innerHTML = '<div class="matchup-dd-empty">No teams found</div>'; container.classList.add('open'); return; }
+  
+  container.innerHTML = filtered.map(t => {
+    const rankStr = t.rank ? `#${t.rank}` : 'NR';
+    const primaryColor = stripeName(t.name);
+    return `
+      <div class="matchup-dd-item" data-id="${t.id}">
+        <div class="matchup-dd-left">
+          <span class="matchup-dd-rank">${rankStr}</span>
+          <span class="c-stripe" style="background: ${primaryColor}"></span>
+          <span class="matchup-dd-name">${escapeHtml(t.name)}</span>
+        </div>
+        <span class="matchup-dd-record">${t.wins}-${t.losses}</span>
+      </div>
+    `;
+  }).join('');
   container.classList.add('open');
+  
   container.querySelectorAll('.matchup-dd-item').forEach(el => {
     el.addEventListener('click', () => {
       const team = allTeams.find(t => t.id === parseInt(el.dataset.id));
@@ -98,16 +140,43 @@ function renderDropdown(side, teams, container) {
 function selectTeam(side, team) {
   if (side === 'a') {
     selectedA = team;
-    document.getElementById('name-a').textContent = team.name;
-    renderAvatar('avatar-a', team);
+    document.getElementById('card-name-a').textContent = team.name;
+    document.getElementById('card-rank-a').textContent = team.rank ? `#${team.rank}` : 'NR';
+    document.getElementById('card-record-a').textContent = `${team.wins}-${team.losses}`;
+    const cardEl = document.getElementById('selected-card-a');
+    cardEl.style.borderLeft = `4px solid ${stripeName(team.name)}`;
+    cardEl.classList.remove('hidden');
+    document.getElementById('search-wrap-a').classList.add('hidden');
   } else {
     selectedB = team;
-    document.getElementById('name-b').textContent = team.name;
-    renderAvatar('avatar-b', team);
+    document.getElementById('card-name-b').textContent = team.name;
+    document.getElementById('card-rank-b').textContent = team.rank ? `#${team.rank}` : 'NR';
+    document.getElementById('card-record-b').textContent = `${team.wins}-${team.losses}`;
+    const cardEl = document.getElementById('selected-card-b');
+    cardEl.style.borderLeft = `4px solid ${stripeName(team.name)}`;
+    cardEl.classList.remove('hidden');
+    document.getElementById('search-wrap-b').classList.add('hidden');
   }
   updateCompareBtn();
   updateURL();
 }
+
+function clearSelected(side) {
+  if (side === 'a') {
+    selectedA = null;
+    document.getElementById('search-wrap-a').classList.remove('hidden');
+    document.getElementById('selected-card-a').classList.add('hidden');
+  } else {
+    selectedB = null;
+    document.getElementById('search-wrap-b').classList.remove('hidden');
+    document.getElementById('selected-card-b').classList.add('hidden');
+  }
+  hideResults();
+  updateCompareBtn();
+  updateURL();
+}
+
+window.clearSelected = clearSelected;
 
 function updateCompareBtn() {
   document.getElementById('compare-btn').disabled = !(selectedA && selectedB);
@@ -175,9 +244,29 @@ async function runComparison() {
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     matchupData = await resp.json();
 
+    // Update Hero Grid elements
+    renderAvatar('hero-avatar-a', matchupData.team_a);
+    renderAvatar('hero-avatar-b', matchupData.team_b);
+    document.getElementById('hero-name-a').textContent = matchupData.team_a.name;
+    document.getElementById('hero-name-b').textContent = matchupData.team_b.name;
+    document.getElementById('hero-record-a').textContent = `${matchupData.team_a.wins}-${matchupData.team_a.losses}`;
+    document.getElementById('hero-record-b').textContent = `${matchupData.team_b.wins}-${matchupData.team_b.losses}`;
+    document.getElementById('hero-score-a').textContent = Math.round(matchupData.team_a.elo_rating);
+    document.getElementById('hero-score-b').textContent = Math.round(matchupData.team_b.elo_rating);
+    if (matchupData.team_a.elo_rating > matchupData.team_b.elo_rating) {
+      document.getElementById('hero-score-a').style.color = 'var(--accent)';
+      document.getElementById('hero-score-b').style.color = 'var(--fg)';
+    } else if (matchupData.team_b.elo_rating > matchupData.team_a.elo_rating) {
+      document.getElementById('hero-score-b').style.color = 'var(--accent)';
+      document.getElementById('hero-score-a').style.color = 'var(--fg)';
+    } else {
+      document.getElementById('hero-score-a').style.color = 'var(--fg)';
+      document.getElementById('hero-score-b').style.color = 'var(--fg)';
+    }
+
     // Update home-button labels
-    document.getElementById('home-a-btn').textContent = `${matchupData.team_a.name} at Home`;
-    document.getElementById('home-b-btn').textContent = `${matchupData.team_b.name} at Home`;
+    document.getElementById('home-a-btn').textContent = `${matchupData.team_a.name.toUpperCase()} HOME`;
+    document.getElementById('home-b-btn').textContent = `${matchupData.team_b.name.toUpperCase()} HOME`;
 
     document.getElementById('season-display').textContent = `${matchupData.season} Season`;
 
@@ -186,6 +275,10 @@ async function runComparison() {
     renderEloChart(matchupData);
     renderH2H(matchupData);
     updateOgForMatchup(matchupData);
+
+    // Update recent form & ELO context side panels
+    await updateRecentForm(matchupData);
+    updateEloContext(matchupData);
 
     // EPIC-036: Show & wire copy-link button
     const shareBtn = document.getElementById('share-matchup-btn');
@@ -223,17 +316,36 @@ function updateProbBar(data) {
   const pctA = Math.round(pA * 100);
   const pctB = 100 - pctA;
 
-  document.getElementById('prob-label-a').textContent = data.team_a.name;
-  document.getElementById('prob-label-b').textContent = data.team_b.name;
   document.getElementById('pct-a').textContent = `${pctA}%`;
   document.getElementById('pct-b').textContent = `${pctB}%`;
   document.getElementById('prob-subtext').textContent = subtext;
 
-  // Animate the bar
+  // Set win probability split bar colors & widths with 3px gap
+  const colorA = stripeName(data.team_a.name);
+  const colorB = stripeName(data.team_b.name);
+  const fillA = document.getElementById('prob-fill-a');
+  const fillB = document.getElementById('prob-fill-b');
+  fillA.style.backgroundColor = colorA;
+  fillB.style.backgroundColor = colorB;
+
   requestAnimationFrame(() => {
-    document.getElementById('prob-fill-a').style.width = `${pctA}%`;
-    document.getElementById('prob-fill-b').style.width = `${pctB}%`;
+    fillA.style.width = `calc(${pctA}% - 1.5px)`;
+    fillB.style.width = `calc(${pctB}% - 1.5px)`;
   });
+
+  // Highlight favored percentage in --accent
+  const pctAEl = document.getElementById('pct-a');
+  const pctBEl = document.getElementById('pct-b');
+  if (pctA > pctB) {
+    pctAEl.style.color = 'var(--accent)';
+    pctBEl.style.color = 'var(--fg3)';
+  } else if (pctB > pctA) {
+    pctBEl.style.color = 'var(--accent)';
+    pctAEl.style.color = 'var(--fg3)';
+  } else {
+    pctAEl.style.color = 'var(--fg)';
+    pctBEl.style.color = 'var(--fg)';
+  }
 }
 
 // ── Stats grid ────────────────────────────────────────────────────────────────
@@ -241,49 +353,168 @@ function renderStatsGrid(data) {
   const a = data.team_a;
   const b = data.team_b;
 
-  document.getElementById('stats-head-a').textContent = a.name;
-  document.getElementById('stats-head-b').textContent = b.name;
-
   function statVal(v, fallback = '—') {
     return (v !== null && v !== undefined) ? v : fallback;
   }
 
-  document.getElementById('stat-rank-a').textContent = a.rank ? `#${a.rank}` : 'NR';
-  document.getElementById('stat-rank-b').textContent = b.rank ? `#${b.rank}` : 'NR';
-
   document.getElementById('stat-elo-a').textContent = statVal(a.elo_rating);
   document.getElementById('stat-elo-b').textContent = statVal(b.elo_rating);
+
+  document.getElementById('stat-rank-a').textContent = a.rank ? `#${a.rank}` : 'NR';
+  document.getElementById('stat-rank-b').textContent = b.rank ? `#${b.rank}` : 'NR';
 
   document.getElementById('stat-rec-a').textContent = `${a.wins}–${a.losses}`;
   document.getElementById('stat-rec-b').textContent = `${b.wins}–${b.losses}`;
 
+  document.getElementById('stat-conf-a').textContent = statVal(a.conference_name || a.conference);
+  document.getElementById('stat-conf-b').textContent = statVal(b.conference_name || b.conference);
+  document.getElementById('stat-conf-a').style.color = 'var(--fg2)';
+  document.getElementById('stat-conf-b').style.color = 'var(--fg2)';
+  document.getElementById('stat-conf-a').style.fontWeight = '500';
+  document.getElementById('stat-conf-b').style.fontWeight = '500';
+
+  document.getElementById('stat-off-a').textContent = a.off != null ? `${a.off.toFixed(1)}` : '—';
+  document.getElementById('stat-off-b').textContent = b.off != null ? `${b.off.toFixed(1)}` : '—';
+
+  document.getElementById('stat-def-a').textContent = a.def != null ? `${a.def.toFixed(1)}` : '—';
+  document.getElementById('stat-def-b').textContent = b.def != null ? `${b.def.toFixed(1)}` : '—';
+
   document.getElementById('stat-sos-a').textContent = statVal(a.sos);
   document.getElementById('stat-sos-b').textContent = statVal(b.sos);
 
-  document.getElementById('stat-sos-rank-a').textContent = a.sos_rank ? `#${a.sos_rank}` : '—';
-  document.getElementById('stat-sos-rank-b').textContent = b.sos_rank ? `#${b.sos_rank}` : '—';
+  document.getElementById('stat-pct-a').textContent = a.win_pct != null ? `${a.win_pct.toFixed(1)}%` : '—';
+  document.getElementById('stat-pct-b').textContent = b.win_pct != null ? `${b.win_pct.toFixed(1)}%` : '—';
 
-  document.getElementById('stat-pre-a').textContent = statVal(a.preseason_elo);
-  document.getElementById('stat-pre-b').textContent = statVal(b.preseason_elo);
-
-  document.getElementById('stat-conf-a').textContent = statVal(a.conference_name || a.conference);
-  document.getElementById('stat-conf-b').textContent = statVal(b.conference_name || b.conference);
-
-  // Highlight better value
-  highlightBetter('stat-rank-a', 'stat-rank-b', a.rank, b.rank, true);  // lower is better
+  // Highlight better values: ELO Rating, Rank, Off PPG, Def PPG, SOS, Win %
   highlightBetter('stat-elo-a', 'stat-elo-b', a.elo_rating, b.elo_rating, false);
-  highlightBetter('stat-sos-rank-a', 'stat-sos-rank-b', a.sos_rank, b.sos_rank, true);
+  highlightBetter('stat-rank-a', 'stat-rank-b', a.rank, b.rank, true); // lower is better
+  highlightBetter('stat-off-a', 'stat-off-b', a.off, b.off, false);
+  highlightBetter('stat-def-a', 'stat-def-b', a.def, b.def, true); // lower points allowed is better!
+  highlightBetter('stat-sos-a', 'stat-sos-b', a.sos, b.sos, false);
+  highlightBetter('stat-pct-a', 'stat-pct-b', a.win_pct, b.win_pct, false);
 }
 
 function highlightBetter(idA, idB, valA, valB, lowerIsBetter) {
   const elA = document.getElementById(idA);
   const elB = document.getElementById(idB);
-  elA.classList.remove('stat-better');
-  elB.classList.remove('stat-better');
+  elA.style.fontWeight = '400';
+  elA.style.color = 'var(--fg3)';
+  elB.style.fontWeight = '400';
+  elB.style.color = 'var(--fg3)';
+  
   if (valA === null || valB === null || valA === undefined || valB === undefined) return;
+  if (valA === valB) {
+    elA.style.fontWeight = '500';
+    elA.style.color = 'var(--fg)';
+    elB.style.fontWeight = '500';
+    elB.style.color = 'var(--fg)';
+    return;
+  }
   const aBetter = lowerIsBetter ? valA < valB : valA > valB;
-  if (aBetter) elA.classList.add('stat-better');
-  else if (valB !== valA) elB.classList.add('stat-better');
+  if (aBetter) {
+    elA.style.fontWeight = '700';
+    elA.style.color = 'var(--accent)';
+  } else {
+    elB.style.fontWeight = '700';
+    elB.style.color = 'var(--accent)';
+  }
+}
+
+// ── Recent Form & ELO Context Side Panels ──────────────────────────────────
+async function updateRecentForm(data) {
+  document.getElementById('form-name-a').textContent = data.team_a.name;
+  document.getElementById('form-name-b').textContent = data.team_b.name;
+  
+  const chipsA = document.getElementById('form-chips-a');
+  const chipsB = document.getElementById('form-chips-b');
+  chipsA.innerHTML = '<span class="loading-form" style="font-size:11px;color:var(--fg3);">Loading…</span>';
+  chipsB.innerHTML = '<span class="loading-form" style="font-size:11px;color:var(--fg3);">Loading…</span>';
+  
+  try {
+    const [schedA, schedB] = await Promise.all([
+      api.getTeamSchedule(data.team_a.id, data.season),
+      api.getTeamSchedule(data.team_b.id, data.season)
+    ]);
+    
+    function buildChipsHTML(sched) {
+      const played = (sched.games || []).filter(g => g.is_played && g.score);
+      played.sort((x, y) => x.week - y.week);
+      const recent = played.slice(-5); // last 5
+      if (!recent.length) return '<span style="color:var(--fg3); font-size: 11px;">NO GAMES</span>';
+      return recent.map(g => {
+        const isWin = g.score.trim().toUpperCase().startsWith('W');
+        const chipClass = isWin ? 'chip-win' : 'chip-loss';
+        const text = isWin ? 'W' : 'L';
+        return `<span class="form-chip ${chipClass}" title="${escapeHtml(g.opponent_name)}: ${escapeHtml(g.score)}">${text}</span>`;
+      }).join('');
+    }
+    
+    chipsA.innerHTML = buildChipsHTML(schedA);
+    chipsB.innerHTML = buildChipsHTML(schedB);
+  } catch (e) {
+    console.error('Error loading recent form:', e);
+    chipsA.innerHTML = '<span style="color:var(--neg); font-size:11px;">Error</span>';
+    chipsB.innerHTML = '<span style="color:var(--neg); font-size:11px;">Error</span>';
+  }
+}
+
+function updateEloContext(data) {
+  const container = document.getElementById('elo-context-content');
+  if (!container) return;
+  
+  const minScale = 1200;
+  const maxScale = 2200;
+  const ratingA = data.team_a.elo_rating || 1500;
+  const ratingB = data.team_b.elo_rating || 1500;
+  
+  const pctA = Math.max(0, Math.min(100, ((ratingA - minScale) / (maxScale - minScale)) * 100));
+  const pctB = Math.max(0, Math.min(100, ((ratingB - minScale) / (maxScale - minScale)) * 100));
+  
+  const colorA = stripeName(data.team_a.name);
+  const colorB = stripeName(data.team_b.name);
+  
+  const eloDiff = Math.abs(ratingA - ratingB);
+  const teamNameA = data.team_a.name;
+  const teamNameB = data.team_b.name;
+  const higherTeam = ratingA > ratingB ? teamNameA : teamNameB;
+  
+  let gapNote = '';
+  if (eloDiff < 30) {
+    gapNote = `Virtually even matchup. Home field advantage or turnovers will likely decide this game.`;
+  } else if (eloDiff < 100) {
+    gapNote = `Slight advantage to ${higherTeam}. Expect a closely contested matchup.`;
+  } else if (eloDiff < 250) {
+    gapNote = `Strong advantage to ${higherTeam}. They enter the game as solid favorites.`;
+  } else {
+    gapNote = `Overwhelming advantage to ${higherTeam}. This is expected to be a one-sided game.`;
+  }
+  
+  container.innerHTML = `
+    <div class="elo-context-bar-row">
+      <span class="elo-context-team-name">${escapeHtml(data.team_a.name)}</span>
+      <div class="elo-context-bar-track">
+        <div class="elo-context-bar-fill fill-a" style="width: ${pctA}%; background: ${colorA}"></div>
+      </div>
+      <span class="elo-context-rating">${ratingA}</span>
+    </div>
+    <div class="elo-context-bar-row">
+      <span class="elo-context-team-name">${escapeHtml(data.team_b.name)}</span>
+      <div class="elo-context-bar-track">
+        <div class="elo-context-bar-fill fill-b" style="width: ${pctB}%; background: ${colorB}"></div>
+      </div>
+      <span class="elo-context-rating">${ratingB}</span>
+    </div>
+    <div class="elo-context-note">${gapNote}</div>
+  `;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // ── ELO history SVG chart ─────────────────────────────────────────────────────
