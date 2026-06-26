@@ -29,7 +29,7 @@ class TestComparisonPageLoad:
         page.goto(f"{base_url}/frontend/comparison.html")
 
         # Assert - Page loads with correct title
-        expect(page).to_have_title("College Football Rankings - ELO vs AP Poll")
+        expect(page).to_have_title("Prediction Accuracy Comparison - College Football Rankings")
 
     def test_page_has_header(self, browser_page):
         """Test that page displays correct header"""
@@ -78,7 +78,7 @@ class TestComparisonDataDisplay:
         page.wait_for_timeout(2000)  # Wait for API call
 
         # Assert - Page loaded successfully
-        expect(page).to_have_title("College Football Rankings - ELO vs AP Poll")
+        expect(page).to_have_title("Prediction Accuracy Comparison - College Football Rankings")
 
     def test_accuracy_metrics_shown(self, browser_page, test_db):
         """Test that accuracy percentages are displayed"""
@@ -185,7 +185,7 @@ class TestComparisonAPIIntegration:
         page.wait_for_timeout(2000)
 
         # Assert - Page loads without crashing
-        expect(page).to_have_title("College Football Rankings - ELO vs AP Poll")
+        expect(page).to_have_title("Prediction Accuracy Comparison - College Football Rankings")
 
 
 @pytest.mark.e2e

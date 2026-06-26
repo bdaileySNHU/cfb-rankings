@@ -2,7 +2,7 @@
 
 // Automatically detect API URL based on environment
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8000/api'  // Local development
+  ? `${window.location.protocol}//${window.location.host}/api`  // Local development
   : '/api';  // Production (uses same domain via Nginx proxy)
 
 class ApiService {

@@ -29,19 +29,40 @@ Object.keys(OFFICIAL_WEIGHTS).forEach(function(k) {
 var teamsData = [];      // raw from /api/preseason/components
 var showAll = false;
 var renderScheduled = false;
+var teamsMeta = {};
 
 // ---- Admin mode: Save as Official only visible with ?admin in the URL ----
 var isAdminMode = (window.location.search.indexOf('admin') !== -1);
 
+function loadTeamsMeta() {
+  return fetch('data/teams-meta.json')
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.json();
+    })
+    .then(function(data) {
+      teamsMeta = data || {};
+    })
+    .catch(function(err) {
+      console.warn('Could not load teams metadata:', err.message);
+    });
+}
+
+function stripeName(name) {
+  var meta = teamsMeta[name] || {};
+  return meta.primary || 'var(--accent)';
+}
+
 // ---- Boot ----
 document.addEventListener('DOMContentLoaded', function() {
   var baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:8000/api'
+    ? window.location.protocol + '//' + window.location.host + '/api'
     : '/api';
 
   Promise.all([
     loadComponents(baseUrl),
     loadOfficialWeights(baseUrl),
+    loadTeamsMeta(),
   ]).then(function() {
     initSliders();
     checkForChanges();
@@ -204,6 +225,15 @@ function render() {
 
   if (teamsData.length === 0) return;
 
+  // Compute official ranks (by sorting teamsData by current_rating descending)
+  var officialSorted = teamsData.slice().sort(function(a, b) {
+    return b.current_rating - a.current_rating;
+  });
+  var officialRanks = {};
+  officialSorted.forEach(function(t, idx) {
+    officialRanks[t.team_id] = idx + 1;
+  });
+
   // Compute simulated ratings
   var simulated = teamsData.map(function(team) {
     return {
@@ -229,15 +259,31 @@ function render() {
     var delta = simRating - team.current_rating;
     var deltaStr;
     var deltaClass;
-    if (Math.abs(delta) < 0.05) {
-      deltaStr = '&mdash;';
+    if (Math.abs(delta) < 0.005) {
+      deltaStr = '—';
       deltaClass = 'delta-neutral';
     } else if (delta > 0) {
-      deltaStr = '+' + delta.toFixed(1);
+      deltaStr = '+' + delta.toFixed(2);
       deltaClass = 'delta-positive';
     } else {
-      deltaStr = delta.toFixed(1);
+      deltaStr = delta.toFixed(2);
       deltaClass = 'delta-negative';
+    }
+
+    // Compute change (CHG) in rank compared to official
+    var offRank = officialRanks[team.team_id];
+    var chg = offRank - rank;
+    var chgStr = '';
+    var chgClass = '';
+    if (chg > 0) {
+      chgStr = '▲' + chg;
+      chgClass = 'chg-up';
+    } else if (chg < 0) {
+      chgStr = '▼' + Math.abs(chg);
+      chgClass = 'chg-down';
+    } else {
+      chgStr = '—';
+      chgClass = 'chg-none';
     }
 
     var confBadge = '';
@@ -249,17 +295,27 @@ function render() {
     var rowId = 'row-' + team.team_id;
     var breakdownId = 'breakdown-' + team.team_id;
 
-    rows += '<tr id="' + rowId + '">' +
-      '<td><span class="' + rankClass(rank) + '">' + rank + '</span></td>' +
-      '<td><span class="team-name">' + escapeHtml(team.team_name) + '</span></td>' +
-      '<td>' + confBadge + '</td>' +
-      '<td><strong>' + simRating.toFixed(1) + '</strong></td>' +
-      '<td class="' + deltaClass + '">' + deltaStr + '</td>' +
-      '<td><button class="details-btn" onclick="toggleBreakdown(' + team.team_id + ', this)">&#9654; Details</button></td>' +
-      '</tr>' +
-      '<tr id="' + breakdownId + '" class="breakdown-row hidden">' +
-      '<td colspan="6" id="breakdown-content-' + team.team_id + '"></td>' +
-      '</tr>';
+    // Bold simulated ranks for top 4 using inline accent style
+    var rankStyle = rank <= 4 ? 'font-weight: 700; color: var(--accent);' : '';
+
+    rows += '<div class="sim-grid-row" id="' + rowId + '" onclick="toggleBreakdown(' + team.team_id + ')">' +
+      '<div class="c-rk"><span class="' + rankClass(rank) + '" style="' + rankStyle + '">' + rank + '</span></div>' +
+      '<div class="c-chg ' + chgClass + '">' + chgStr + '</div>' +
+      '<div class="c-team">' +
+        '<span class="c-stripe" style="background:' + stripeName(team.team_name) + '"></span>' +
+        '<div class="team-info-block">' +
+          '<span class="team-name">' + escapeHtml(team.team_name) + '</span>' +
+          '<span class="team-record">' + team.wins + '-' + team.losses + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="c-conf">' + confBadge + '</div>' +
+      '<div class="c-simrtg" style="color: var(--accent); font-weight: 700;">' + simRating.toFixed(2) + '</div>' +
+      '<div class="c-offrtg">' + team.current_rating.toFixed(2) + '</div>' +
+      '<div class="c-delta ' + deltaClass + '">' + deltaStr + '</div>' +
+      '</div>' +
+      '<div id="' + breakdownId + '" class="sim-grid-details hidden">' +
+        '<div id="breakdown-content-' + team.team_id + '"></div>' +
+      '</div>';
   });
 
   tbody.innerHTML = rows;
@@ -281,7 +337,7 @@ function scheduleRender() {
 }
 
 // ---- Breakdown toggle ----
-function toggleBreakdown(teamId, btn) {
+function toggleBreakdown(teamId) {
   var row = document.getElementById('breakdown-' + teamId);
   if (!row) return;
 
@@ -298,25 +354,23 @@ function toggleBreakdown(teamId, btn) {
       var comps = getComponents(team, currentWeights);
       var content = document.getElementById('breakdown-content-' + teamId);
       if (content) {
-        content.innerHTML = '<div style="margin-bottom:0.4rem;font-size:0.8rem;color:var(--text-secondary);">' +
+        content.innerHTML = '<div style="margin-bottom:0.4rem;font-size:0.8rem;color:var(--fg2);">' +
           'Component breakdown (bonuses above base ' + team.base.toFixed(0) + '):</div>' +
           buildBreakdownBar(comps) +
           '<div class="breakdown-details-grid">' +
-          '<span>Recruiting: <strong>+' + comps.recruiting.toFixed(1) + '</strong></span>' +
-          '<span>Transfer: <strong>+' + comps.transfer.toFixed(1) + '</strong></span>' +
-          '<span>Returning: <strong>+' + comps.returning.toFixed(1) + '</strong></span>' +
-          '<span>Position: <strong>+' + comps.position.toFixed(1) + '</strong></span>' +
+          '<span>Recruiting: <strong>+' + comps.recruiting.toFixed(2) + '</strong></span>' +
+          '<span>Transfer: <strong>+' + comps.transfer.toFixed(2) + '</strong></span>' +
+          '<span>Returning: <strong>+' + comps.returning.toFixed(2) + '</strong></span>' +
+          '<span>Position: <strong>+' + comps.position.toFixed(2) + '</strong></span>' +
           (currentWeights.prev_season_weight > 0 && team.prev_season_elo != null
-            ? '<span>Prev Season blend: <strong>' + (comps.prev_season >= 0 ? '+' : '') + comps.prev_season.toFixed(1) + '</strong></span>'
-            : '<span style="color:var(--text-secondary);">No prev season data</span>') +
+            ? '<span>Prev Season blend: <strong>' + (comps.prev_season >= 0 ? '+' : '') + comps.prev_season.toFixed(2) + '</strong></span>'
+            : '<span style="color:var(--fg3);">No prev season data</span>') +
           '</div>';
       }
     }
     row.classList.remove('hidden');
-    btn.innerHTML = '&#9660; Details';
   } else {
     row.classList.add('hidden');
-    btn.innerHTML = '&#9654; Details';
   }
 }
 
@@ -349,7 +403,7 @@ function getAdminKey() {
 
 function saveAsOfficial() {
   var baseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:8000/api'
+    ? window.location.protocol + '//' + window.location.host + '/api'
     : '/api';
 
   var adminKey = getAdminKey();
@@ -409,17 +463,28 @@ function showSaveNotice(success, errMsg) {
   }
 }
 
+function updateSliderTrack(key) {
+  var input = document.getElementById(key);
+  if (!input) return;
+  var min = parseFloat(input.min) || 0;
+  var max = parseFloat(input.max) || 1;
+  var val = parseFloat(input.value) || 0;
+  var pct = ((val - min) / (max - min)) * 100;
+  input.style.background = 'linear-gradient(to right, var(--accent) ' + pct + '%, var(--line) ' + pct + '%)';
+}
+
 // ---- Sliders ----
 function initSliders() {
   // Seed slider positions to match whatever OFFICIAL_WEIGHTS now holds
   // (may have been updated by loadOfficialWeights before initSliders runs)
-  EPIC030_KEYS.forEach(function(key) {
+  Object.keys(OFFICIAL_WEIGHTS).forEach(function(key) {
     var input = document.getElementById(key);
     if (input) input.value = currentWeights[key];
     var valEl = document.getElementById('val-' + key);
     if (valEl) {
       valEl.textContent = currentWeights[key].toFixed(2);
     }
+    updateSliderTrack(key);
   });
 }
 
@@ -427,11 +492,9 @@ function onSliderChange(key, value) {
   currentWeights[key] = parseFloat(value);
   var valEl = document.getElementById('val-' + key);
   if (valEl) {
-    valEl.textContent = parseFloat(value).toFixed(
-      key === 'prev_season_weight' || key === 'mean_regression' || key === 'returning_regression_scale'
-        ? 2 : 1
-    );
+    valEl.textContent = parseFloat(value).toFixed(2);
   }
+  updateSliderTrack(key);
   checkForChanges();
   scheduleRender();
 }
@@ -445,11 +508,9 @@ function resetSlider(key) {
 
   var valEl = document.getElementById('val-' + key);
   if (valEl) {
-    valEl.textContent = defaultVal.toFixed(
-      key === 'prev_season_weight' || key === 'mean_regression' || key === 'returning_regression_scale'
-        ? 2 : 1
-    );
+    valEl.textContent = defaultVal.toFixed(2);
   }
+  updateSliderTrack(key);
   checkForChanges();
   scheduleRender();
 }

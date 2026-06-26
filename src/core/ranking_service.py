@@ -447,6 +447,8 @@ class RankingService:
                 "recruiting_rank": team.recruiting_rank or 999,
                 "transfer_portal_rank": team.transfer_portal_rank or 999,
                 "returning_production": team.returning_production or 0.5,
+                "wins": team.wins or 0,
+                "losses": team.losses or 0,
                 "base": bonuses["base"],
                 "recruiting_bonus": bonuses["recruiting_bonus"],
                 "transfer_bonus": bonuses["transfer_bonus"],

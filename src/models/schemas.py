@@ -357,6 +357,13 @@ class ScheduleGame(BaseModel):
         None, description="Bowl name or playoff round (e.g., 'Rose Bowl Game', 'CFP Semifinal')"
     )
 
+    # Redesign features
+    home_score: Optional[int] = Field(None, description="Home team score")
+    away_score: Optional[int] = Field(None, description="Away team score")
+    home_team_id: Optional[int] = Field(None, description="Home team ID")
+    opponent_rank: Optional[int] = Field(None, description="Opponent ranking at game week")
+
+
 
 class TeamSchedule(BaseModel):
     """Team's full schedule"""
@@ -569,6 +576,8 @@ class PreseasonComponent(BaseModel):
     recruiting_rank: int = Field(999, description="247Sports recruiting rank")
     transfer_portal_rank: int = Field(999, description="Transfer portal national rank")
     returning_production: float = Field(0.5, description="Returning production percentage")
+    wins: int = Field(0, description="Preseason/current wins")
+    losses: int = Field(0, description="Preseason/current losses")
 
     # Bonus components (additive contributions to base_formula_rating)
     base: float = Field(..., description="Base ELO (1500 FBS / 1300 FCS)")

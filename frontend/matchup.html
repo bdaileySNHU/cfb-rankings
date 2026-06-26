@@ -22,31 +22,45 @@
   <title>Team Matchup - Stat-urday</title>
   <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components/board.css">
 </head>
-<body>
+<body class="tkr">
   <!-- Site chrome (header + nav) injected by layout.js -->
   <script src="js/layout.js"></script>
 
-  <div class="container">
+  <!-- Main Content -->
+  <div class="tkr-wrap">
+    <div class="tkr-pagehead">
+      <div>
+        <h1 class="tkr-title">Head-to-Head Matchup</h1>
+        <p class="tkr-subtitle">Compare any two college football teams side-by-side</p>
+      </div>
+    </div>
 
     <!-- Team Selector Card -->
     <div class="card">
       <div class="card-header">
-        <h1 class="card-title">⚔️ Head-to-Head Matchup</h1>
-        <div id="season-display" style="color: var(--text-secondary); font-size: 0.9rem;"></div>
+        <h2 class="card-title">⚔️ Select Matchup</h2>
+        <div id="season-display" style="color: var(--fg2); font-size: 0.9rem;"></div>
       </div>
 
       <div class="matchup-selector">
         <!-- Team A -->
         <div class="matchup-team-picker" id="picker-a">
           <label class="matchup-picker-label">Team A</label>
-          <div class="matchup-search-wrap">
+          <div class="matchup-search-wrap" id="search-wrap-a">
             <input type="text" id="search-a" class="matchup-search" placeholder="Search team…" autocomplete="off">
             <div class="matchup-dropdown" id="dropdown-a"></div>
           </div>
-          <div class="matchup-selected" id="selected-a">
-            <div class="matchup-avatar" id="avatar-a"></div>
-            <div class="matchup-selected-name" id="name-a">—</div>
+          <div class="matchup-selected-card hidden" id="selected-card-a">
+            <div class="matchup-selected-card-inner">
+              <span class="matchup-card-rank" id="card-rank-a">—</span>
+              <div class="matchup-card-info">
+                <span class="matchup-card-name" id="card-name-a">—</span>
+                <span class="matchup-card-record" id="card-record-a">—</span>
+              </div>
+            </div>
+            <button class="matchup-card-clear" onclick="clearSelected('a')">✕</button>
           </div>
         </div>
 
@@ -58,13 +72,19 @@
         <!-- Team B -->
         <div class="matchup-team-picker" id="picker-b">
           <label class="matchup-picker-label">Team B</label>
-          <div class="matchup-search-wrap">
+          <div class="matchup-search-wrap" id="search-wrap-b">
             <input type="text" id="search-b" class="matchup-search" placeholder="Search team…" autocomplete="off">
             <div class="matchup-dropdown" id="dropdown-b"></div>
           </div>
-          <div class="matchup-selected" id="selected-b">
-            <div class="matchup-avatar" id="avatar-b"></div>
-            <div class="matchup-selected-name" id="name-b">—</div>
+          <div class="matchup-selected-card hidden" id="selected-card-b">
+            <div class="matchup-selected-card-inner">
+              <span class="matchup-card-rank" id="card-rank-b">—</span>
+              <div class="matchup-card-info">
+                <span class="matchup-card-name" id="card-name-b">—</span>
+                <span class="matchup-card-record" id="card-record-b">—</span>
+              </div>
+            </div>
+            <button class="matchup-card-clear" onclick="clearSelected('b')">✕</button>
           </div>
         </div>
       </div>
@@ -88,34 +108,49 @@
     <!-- Results (hidden until compare clicked) -->
     <div id="matchup-results" class="hidden">
 
-      <!-- Win Probability Card -->
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">Win Probability</h2>
-          <!-- Site toggle -->
-          <div class="matchup-site-toggle">
-            <button class="site-btn active" data-site="neutral">Neutral Site</button>
-            <button class="site-btn" data-site="home-a" id="home-a-btn">A at Home</button>
-            <button class="site-btn" data-site="home-b" id="home-b-btn">B at Home</button>
+      <!-- Hero Comparison Grid -->
+      <div class="card matchup-hero-card">
+        <div class="matchup-hero-grid">
+          <!-- Team A info -->
+          <div class="matchup-hero-team team-a">
+            <div class="matchup-hero-avatar" id="hero-avatar-a"></div>
+            <div class="matchup-hero-name" id="hero-name-a">—</div>
+            <div class="matchup-hero-record" id="hero-record-a">—</div>
+          </div>
+          <!-- Center stats/win prob -->
+          <div class="matchup-hero-center">
+            <div class="matchup-hero-scores">
+              <span id="hero-score-a" class="hero-score">—</span>
+              <span class="hero-score-vs">VS</span>
+              <span id="hero-score-b" class="hero-score">—</span>
+            </div>
+            <div class="matchup-hero-site-toggle">
+              <div class="matchup-site-toggle">
+                <button class="site-btn" data-site="home-a" id="home-a-btn">A HOME</button>
+                <button class="site-btn active" data-site="neutral" id="neutral-btn">NEUTRAL</button>
+                <button class="site-btn" data-site="home-b" id="home-b-btn">B HOME</button>
+              </div>
+            </div>
+          </div>
+          <!-- Team B info -->
+          <div class="matchup-hero-team team-b">
+            <div class="matchup-hero-avatar" id="hero-avatar-b"></div>
+            <div class="matchup-hero-name" id="hero-name-b">—</div>
+            <div class="matchup-hero-record" id="hero-record-b">—</div>
           </div>
         </div>
 
-        <div class="matchup-prob-bar-wrap">
-          <div class="matchup-prob-label-a" id="prob-label-a">—</div>
+        <div class="matchup-prob-bar-container">
           <div class="matchup-prob-bar">
             <div class="matchup-prob-fill-a" id="prob-fill-a" style="width:50%"></div>
             <div class="matchup-prob-fill-b" id="prob-fill-b" style="width:50%"></div>
           </div>
-          <div class="matchup-prob-label-b" id="prob-label-b">—</div>
+          <div class="matchup-prob-labels">
+            <span class="prob-label-val" id="pct-a">50%</span>
+            <span class="prob-label-val" id="pct-b">50%</span>
+          </div>
         </div>
-
-        <div class="matchup-prob-pcts">
-          <span class="matchup-pct-a" id="pct-a">50%</span>
-          <span class="matchup-pct-sep">·</span>
-          <span class="matchup-pct-b" id="pct-b">50%</span>
-        </div>
-
-        <p id="prob-subtext" style="text-align:center; color: var(--text-secondary); font-size:0.85rem; margin-top:0.5rem;"></p>
+        <p id="prob-subtext" style="text-align:center; color: var(--fg3); font-family: var(--font-sans); font-size:11px; margin-top:0.75rem; margin-bottom: 0; text-transform: uppercase; letter-spacing: 0.05em;"></p>
       </div>
 
       <!-- Side-by-Side Stats Card -->
@@ -124,45 +159,71 @@
           <h2 class="card-title">Season Stats</h2>
         </div>
         <div class="matchup-stats-grid">
-          <!-- Header row -->
-          <div class="matchup-stat-label-col"></div>
-          <div class="matchup-stat-team-col team-a-col" id="stats-head-a" style="font-weight:700; color: var(--accent);">—</div>
-          <div class="matchup-stat-team-col team-b-col" id="stats-head-b" style="font-weight:700; color: var(--accent-secondary, #4a9eff);">—</div>
+          <!-- ELO Rating -->
+          <div class="matchup-stat-val val-a" id="stat-elo-a">—</div>
+          <div class="matchup-stat-label">ELO Rating</div>
+          <div class="matchup-stat-val val-b" id="stat-elo-b">—</div>
 
           <!-- Rank -->
-          <div class="matchup-stat-label-col">Rank</div>
-          <div class="matchup-stat-team-col team-a-col" id="stat-rank-a">—</div>
-          <div class="matchup-stat-team-col team-b-col" id="stat-rank-b">—</div>
-
-          <!-- ELO Rating -->
-          <div class="matchup-stat-label-col">ELO Rating</div>
-          <div class="matchup-stat-team-col team-a-col" id="stat-elo-a">—</div>
-          <div class="matchup-stat-team-col team-b-col" id="stat-elo-b">—</div>
+          <div class="matchup-stat-val val-a" id="stat-rank-a">—</div>
+          <div class="matchup-stat-label">Rank</div>
+          <div class="matchup-stat-val val-b" id="stat-rank-b">—</div>
 
           <!-- Record -->
-          <div class="matchup-stat-label-col">Record</div>
-          <div class="matchup-stat-team-col team-a-col" id="stat-rec-a">—</div>
-          <div class="matchup-stat-team-col team-b-col" id="stat-rec-b">—</div>
-
-          <!-- SOS -->
-          <div class="matchup-stat-label-col">Strength of Schedule</div>
-          <div class="matchup-stat-team-col team-a-col" id="stat-sos-a">—</div>
-          <div class="matchup-stat-team-col team-b-col" id="stat-sos-b">—</div>
-
-          <!-- SOS Rank -->
-          <div class="matchup-stat-label-col">SOS Rank</div>
-          <div class="matchup-stat-team-col team-a-col" id="stat-sos-rank-a">—</div>
-          <div class="matchup-stat-team-col team-b-col" id="stat-sos-rank-b">—</div>
-
-          <!-- Preseason ELO -->
-          <div class="matchup-stat-label-col">Preseason ELO</div>
-          <div class="matchup-stat-team-col team-a-col" id="stat-pre-a">—</div>
-          <div class="matchup-stat-team-col team-b-col" id="stat-pre-b">—</div>
+          <div class="matchup-stat-val val-a" id="stat-rec-a">—</div>
+          <div class="matchup-stat-label">Record</div>
+          <div class="matchup-stat-val val-b" id="stat-rec-b">—</div>
 
           <!-- Conference -->
-          <div class="matchup-stat-label-col">Conference</div>
-          <div class="matchup-stat-team-col team-a-col" id="stat-conf-a">—</div>
-          <div class="matchup-stat-team-col team-b-col" id="stat-conf-b">—</div>
+          <div class="matchup-stat-val val-a" id="stat-conf-a">—</div>
+          <div class="matchup-stat-label">Conference</div>
+          <div class="matchup-stat-val val-b" id="stat-conf-b">—</div>
+
+          <!-- Off PPG -->
+          <div class="matchup-stat-val val-a" id="stat-off-a">—</div>
+          <div class="matchup-stat-label">Off PPG</div>
+          <div class="matchup-stat-val val-b" id="stat-off-b">—</div>
+
+          <!-- Def PPG -->
+          <div class="matchup-stat-val val-a" id="stat-def-a">—</div>
+          <div class="matchup-stat-label">Def PPG</div>
+          <div class="matchup-stat-val val-b" id="stat-def-b">—</div>
+
+          <!-- SOS -->
+          <div class="matchup-stat-val val-a" id="stat-sos-a">—</div>
+          <div class="matchup-stat-label">SOS</div>
+          <div class="matchup-stat-val val-b" id="stat-sos-b">—</div>
+
+          <!-- Win % -->
+          <div class="matchup-stat-val val-a" id="stat-pct-a">—</div>
+          <div class="matchup-stat-label">Win %</div>
+          <div class="matchup-stat-val val-b" id="stat-pct-b">—</div>
+        </div>
+      </div>
+
+      <!-- Side Panels (Form & ELO Context) -->
+      <div class="matchup-side-panels">
+        <!-- Form Panel -->
+        <div class="card panel-form">
+          <h3 class="panel-title">Recent Form</h3>
+          <div class="form-rows">
+            <div class="form-row">
+              <span class="form-team-name" id="form-name-a">—</span>
+              <div class="form-chips" id="form-chips-a"></div>
+            </div>
+            <div class="form-row">
+              <span class="form-team-name" id="form-name-b">—</span>
+              <div class="form-chips" id="form-chips-b"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ELO Context Panel -->
+        <div class="card panel-elo-context">
+          <h3 class="panel-title">ELO Context</h3>
+          <div class="elo-context-body" id="elo-context-content">
+            <!-- Rating bars and gap notes -->
+          </div>
         </div>
       </div>
 

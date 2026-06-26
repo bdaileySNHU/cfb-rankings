@@ -166,8 +166,8 @@
 
   <script>
     const BASE_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-      ? 'http://localhost:8000'
-      : 'https://cfb.bdailey.com';
+      ? `${location.protocol}//${location.host}`
+      : '';
 
     let adminKey = localStorage.getItem('admin_key') || '';
 
