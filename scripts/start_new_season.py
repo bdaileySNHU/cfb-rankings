@@ -122,7 +122,7 @@ def reset_team_ratings(db, season_year: int, dry_run: bool = True):
     if not dry_run:
         for team in teams:
             # Recalculate preseason rating
-            preseason_rating = ranking_service.calculate_preseason_rating(team)
+            preseason_rating = ranking_service.calculate_preseason_rating(team, season=season_year)
             team.elo_rating = preseason_rating
             team.initial_rating = preseason_rating
 
