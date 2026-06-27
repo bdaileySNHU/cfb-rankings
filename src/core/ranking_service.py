@@ -128,7 +128,7 @@ class RankingService:
         else:
             return self.K_FACTOR_LATE  # 32: Stable ratings
 
-    def _calculate_preseason_bonuses(self, team: Team) -> dict:
+    def _calculate_preseason_bonuses(self, team: Team, season: int = None) -> dict:
         """
         Calculate individual preseason bonus components for a team.
 
@@ -183,7 +183,7 @@ class RankingService:
             returning_bonus = 10.0
 
         # Position strength bonus
-        position_strength_bonus = self._calculate_position_strength_bonus(team)
+        position_strength_bonus = self._calculate_position_strength_bonus(team, season=season)
 
         return {
             "base": base,
@@ -215,7 +215,7 @@ class RankingService:
             - Team has player data imported
             Otherwise, gracefully falls back to 0.0 bonus (no impact)
         """
-        bonuses = self._calculate_preseason_bonuses(team)
+        bonuses = self._calculate_preseason_bonuses(team, season=season)
         base_formula_rating = (
             bonuses["base"]
             + bonuses["recruiting_bonus"]
@@ -256,7 +256,7 @@ class RankingService:
 
         return base_formula_rating
 
-    def _calculate_position_strength_bonus(self, team: Team) -> float:
+    def _calculate_position_strength_bonus(self, team: Team, season: int = None) -> float:
         """
         Calculate position strength bonus for a team (feature-flagged).
 
@@ -304,6 +304,7 @@ class RankingService:
                 weights=config["weights"],
                 db=self.db,
                 max_bonus=config["max_bonus"],
+                season=season,
             )
 
             logger.info(
@@ -437,7 +438,7 @@ class RankingService:
         teams = self.db.query(Team).filter(Team.is_fcs == False).all()
         result = []
         for team in teams:
-            bonuses = self._calculate_preseason_bonuses(team)
+            bonuses = self._calculate_preseason_bonuses(team, season=season)
             prev_elo = self._get_previous_season_elo(team.id, season)
             result.append({
                 "team_id": team.id,
@@ -985,7 +986,7 @@ class RankingService:
 
         for team in teams:
             # Recalculate preseason rating
-            team.elo_rating = self.calculate_preseason_rating(team)
+            team.elo_rating = self.calculate_preseason_rating(team, season=season_year)
             team.initial_rating = team.elo_rating
             team.wins = 0
             team.losses = 0
