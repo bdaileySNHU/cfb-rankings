@@ -12,7 +12,9 @@
 
 set -e
 export SEASON="${1:-2026}"
-PYTHON="${CFB_PYTHON:-sudo -u www-data venv/bin/python}"
+# sudo scrubs the environment, so SEASON has to be handed across explicitly.
+# The export above covers the CFB_PYTHON override case (no sudo involved).
+PYTHON="${CFB_PYTHON:-sudo -u www-data SEASON=$SEASON venv/bin/python}"
 cd "${CFB_ROOT:-/var/www/cfb-rankings}"
 
 echo "============================================================"
