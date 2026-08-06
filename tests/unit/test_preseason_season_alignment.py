@@ -1,3 +1,4 @@
+import itertools
 import pytest
 from unittest.mock import patch
 from sqlalchemy.orm import Session
@@ -23,6 +24,12 @@ def _make_team(db: Session, name: str, elo: float = 1500.0) -> Team:
     return team
 
 
+# Monotonic source of athlete ids. Not hash(name): string hashing is randomized
+# per process, so hash-derived ids collide at random and trip the unique
+# constraint on athlete_id.
+_athlete_ids = itertools.count(500000)
+
+
 def _make_roster_player(
     db: Session,
     team_id: int,
@@ -35,7 +42,7 @@ def _make_roster_player(
     player = RosterPlayer(
         season=season,
         team_id=team_id,
-        athlete_id=hash(name) % 1000000,
+        athlete_id=next(_athlete_ids),
         name=name,
         position=position,
         rating=rating,

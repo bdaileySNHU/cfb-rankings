@@ -333,10 +333,14 @@ class TestPositionStrengthIntegration:
 
         # Add perfect players at all positions
         positions = ["QB", "OL", "DL", "DB", "LB", "RB", "WR"]
-        for pos in positions:
+        for pos_index, pos in enumerate(positions):
             for i in range(5):
                 player = Player(
-                    cfbd_athlete_id=40000 + hash(f"{pos}{i}") % 10000,
+                    # Derived from the loop indices, not hash(): string hashing is
+                    # randomized per process, and 35 players drawn from a 10,000-wide
+                    # range collided about 5% of runs, tripping the unique constraint
+                    # on cfbd_athlete_id.
+                    cfbd_athlete_id=40000 + pos_index * 5 + i,
                     name=f"{pos} Player {i}",
                     team_id=team.id,
                     position=pos,
