@@ -223,6 +223,19 @@ path. Fixed in PR #9.
 **Effort:** 3–4 hours
 **Completed:** 2026-05-04 — `utilities/weekly_update.sh` created and cron entry
 active (`0 9 * * 1`) on VPS. Logs to `/var/log/cfb-rankings/weekly.log`.
+Dry-run tested and two bugs fixed 2026-08-06; log rotation added the same day.
+
+> **⚠ Two weekly update paths exist.** `deploy/` also ships a systemd timer
+> (`cfb-weekly-update.timer`) that runs a *different* script,
+> `scripts/weekly_update.py`, as `www-data` on Sunday 22:00 UTC, logging to
+> `weekly-update.log`. The cron entry runs `utilities/weekly_update.sh` as
+> `bdailey` on Monday 09:00, logging to `weekly.log`. If both are enabled the
+> import runs twice a week from two code paths. Confirm which is actually live
+> before Week 1:
+> ```bash
+> crontab -l | grep weekly
+> systemctl list-timers cfb-weekly-update.timer
+> ```
 
 Set up a cron job on the VPS that runs every Monday morning to:
 1. Fetch the previous week's game results from CFBD
@@ -238,9 +251,21 @@ Set up a cron job on the VPS that runs every Monday morning to:
   - Saves a `ranking_history` snapshot for the week
   - Logs success/failure with timestamp
 - [x] Add cron entry on VPS: `0 9 * * 1 /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1`
-- [ ] Test the script manually against Week 1 results before going live —
-  **still outstanding, do this before Aug 29**
-- [ ] Add log rotation for `/var/log/cfb-rankings/weekly.log`
+- [x] Test the script manually against Week 1 results before going live — done
+  2026-08-06 against a scratch DB copy. Found a data-loss bug: the ELO step
+  looped `save_weekly_rankings()` over every completed week, overwriting all
+  prior snapshots with current ratings (2025 week 14 went from Ohio State
+  1950.4 to Ole Miss 1696.0). Same bug in `src/importers/pipeline.py` and the
+  admin reprocess endpoint. Fixed and pinned by
+  `tests/unit/test_weekly_snapshot.py`.
+- [x] Add log rotation for `/var/log/cfb-rankings/weekly.log` —
+  `deploy/logrotate-cfb-rankings`, installed by `deploy/setup.sh`:
+  ```bash
+  sudo cp deploy/logrotate-cfb-rankings /etc/logrotate.d/cfb-rankings
+  sudo logrotate -d /etc/logrotate.d/cfb-rankings   # dry run, prints the plan
+  ```
+  Globs `/var/log/cfb-rankings/*.log` because three jobs write there — see the
+  note below on the two weekly update paths.
 
 **Acceptance Criteria:**
 - [x] Script runs end-to-end without manual intervention
