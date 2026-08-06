@@ -1,11 +1,17 @@
-// Self-check for the responsive ratings table.
+// Self-check for the responsive CSS-grid tables.
 //   node tests/frontend/test_board_columns.js
 //
-// The table is a CSS grid whose columns are dropped as the viewport narrows.
-// The invariant: at every breakpoint the number of *visible* columns must equal
-// the number of tracks in grid-template-columns. Too many tracks leaves phantom
-// empty columns; too few makes cells wrap onto a second line. Media queries are
-// cumulative, so each narrower breakpoint inherits everything hidden above it.
+// Each of these tables commits most of its width to fixed tracks and leaves one
+// or two `fr` columns to absorb the remainder. Below the fixed total, the `fr`
+// columns are the only ones that can give — so the *most* important column
+// (team name, matchup, opponent) is the first to vanish while fixed decoration
+// survives. The fix is to drop columns as the viewport narrows.
+//
+// The invariant checked here: at every breakpoint the number of visible columns
+// must equal the number of tracks in grid-template-columns. Too many tracks
+// leaves phantom empty columns; too few makes cells wrap onto a second row.
+// Media queries are cumulative, so each narrower breakpoint inherits everything
+// hidden above it.
 
 const assert = require('assert');
 const fs = require('fs');
@@ -15,7 +21,30 @@ const css = fs.readFileSync(
   path.join(__dirname, '../../frontend/css/components/board.css'), 'utf8'
 );
 
-const TOTAL_COLUMNS = 10; // RK TEAM CONF W-L ELO Δ1W OFF DEF SOS 10WK
+/** Grids to verify: selector, total column count, and the 1-based columns that
+ *  must never be hidden at any width. */
+const GRIDS = [
+  {
+    selector: '.tkr-grid',
+    total: 10, // RK TEAM CONF W-L ELO Δ1W OFF DEF SOS 10WK
+    mustKeep: { 1: 'RK', 2: 'TEAM', 5: 'ELO' },
+    narrowestVisible: 3,
+  },
+  {
+    selector: '.tkr-pgrid',
+    total: 5, // MATCHUP PROJ WIN-PROB SPREAD CONF
+    mustKeep: { 1: 'MATCHUP', 3: 'WIN PROB' },
+    narrowestVisible: 2,
+  },
+  {
+    selector: '.tkr-sched-grid',
+    total: 6, // WK LOC OPPONENT PROJ WIN-BAR ODDS
+    mustKeep: { 1: 'WK', 3: 'OPPONENT', 6: 'ODDS' },
+    narrowestVisible: 4,
+  },
+];
+
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Extract `@media (max-width: N px) { ... }` blocks, brace-matched. */
 function mediaBlocks(source) {
@@ -35,31 +64,6 @@ function mediaBlocks(source) {
   return blocks;
 }
 
-/** Columns hidden by `.tkr-grid > div:nth-child(N)` rules inside a block. */
-function hiddenIn(body) {
-  const hidden = new Set();
-  const re = /\.tkr-grid\s*>\s*div:nth-child\((\d+)\)[^{]*\{[^}]*display:\s*none/g;
-  let m;
-  while ((m = re.exec(body)) !== null) hidden.add(Number(m[1]));
-
-  // Also handle the grouped form: several selectors sharing one display:none.
-  const grouped = /((?:\.tkr-grid\s*>\s*div:nth-child\(\d+\)\s*,\s*)+\.tkr-grid\s*>\s*div:nth-child\(\d+\))\s*\{[^}]*display:\s*none/g;
-  while ((m = grouped.exec(body)) !== null) {
-    const nums = m[1].match(/nth-child\((\d+)\)/g) || [];
-    nums.forEach((n) => hidden.add(Number(n.match(/\d+/)[0])));
-  }
-  return hidden;
-}
-
-/** Track count of the last grid-template-columns declared for .tkr-grid. */
-function trackCount(body) {
-  const re = /\.tkr-grid\s*\{[^}]*grid-template-columns:\s*([^;]+);/g;
-  let m, last = null;
-  while ((m = re.exec(body)) !== null) last = m[1];
-  if (last === null) return null;
-  return last.trim().split(/\s+/).length;
-}
-
 /** The stylesheet with every @media block removed, i.e. the base rules. */
 function withoutMediaBlocks(source) {
   let out = '';
@@ -68,9 +72,8 @@ function withoutMediaBlocks(source) {
     const start = source.indexOf('@media', i);
     if (start === -1) { out += source.slice(i); break; }
     out += source.slice(i, start);
-    let j = source.indexOf('{', start);
+    let j = source.indexOf('{', start) + 1;
     let depth = 1;
-    j++;
     while (j < source.length && depth > 0) {
       if (source[j] === '{') depth++;
       else if (source[j] === '}') depth--;
@@ -81,50 +84,77 @@ function withoutMediaBlocks(source) {
   return out;
 }
 
-// Base (no media query): full 10 columns.
-const baseTracks = trackCount(withoutMediaBlocks(css));
-assert.strictEqual(
-  baseTracks, TOTAL_COLUMNS,
-  `base grid should declare ${TOTAL_COLUMNS} tracks, found ${baseTracks}`
-);
-
-// Walk breakpoints widest to narrowest, accumulating hidden columns.
-const blocks = mediaBlocks(css)
-  .filter((b) => hiddenIn(b.body).size > 0 || trackCount(b.body) !== null)
-  .sort((a, b) => b.width - a.width);
-
-assert.ok(blocks.length >= 3, 'expected several responsive breakpoints');
-
-const cumulativeHidden = new Set();
-let checked = 0;
-
-for (const block of blocks) {
-  hiddenIn(block.body).forEach((n) => cumulativeHidden.add(n));
-  const tracks = trackCount(block.body);
-  if (tracks === null) continue; // block hides nothing / redefines nothing
-
-  const visible = TOTAL_COLUMNS - cumulativeHidden.size;
-  assert.strictEqual(
-    tracks, visible,
-    `at max-width ${block.width}px: ${visible} columns visible but ${tracks} grid tracks declared ` +
-    `(hidden: ${[...cumulativeHidden].sort((a, b) => a - b).join(',')})`
+/** Columns hidden by `<sel> > div:nth-child(N)` rules, including grouped
+ *  selectors sharing a single display:none. */
+function hiddenIn(body, selector) {
+  const hidden = new Set();
+  const sel = esc(selector);
+  const rule = new RegExp(
+    `((?:${sel}\\s*>\\s*div:nth-child\\(\\d+\\)\\s*,\\s*)*${sel}\\s*>\\s*div:nth-child\\(\\d+\\))\\s*\\{[^}]*display:\\s*none`,
+    'g'
   );
-  checked++;
-
-  // RK (1), TEAM (2) and ELO (5) must survive every breakpoint — without them
-  // the table stops identifying which team a rating belongs to.
-  assert.ok(!cumulativeHidden.has(1), `RK hidden at ${block.width}px`);
-  assert.ok(!cumulativeHidden.has(2), `TEAM hidden at ${block.width}px`);
-  assert.ok(!cumulativeHidden.has(5), `ELO hidden at ${block.width}px`);
+  let m;
+  while ((m = rule.exec(body)) !== null) {
+    (m[1].match(/nth-child\((\d+)\)/g) || [])
+      .forEach((n) => hidden.add(Number(n.match(/\d+/)[0])));
+  }
+  return hidden;
 }
 
-assert.ok(checked >= 3, `expected to verify at least 3 breakpoints, verified ${checked}`);
+/** Track count of the last grid-template-columns declared for the selector. */
+function trackCount(body, selector) {
+  const re = new RegExp(`${esc(selector)}\\s*\\{[^}]*grid-template-columns:\\s*([^;]+);`, 'g');
+  let m, last = null;
+  while ((m = re.exec(body)) !== null) last = m[1];
+  return last === null ? null : last.trim().split(/\s+/).length;
+}
 
-// At the narrowest breakpoint we should be down to the essential three.
-const narrowest = blocks[blocks.length - 1];
-assert.strictEqual(
-  TOTAL_COLUMNS - cumulativeHidden.size, 3,
-  `narrowest breakpoint (${narrowest.width}px) should leave exactly RK/TEAM/ELO`
-);
+const base = withoutMediaBlocks(css);
+let totalChecked = 0;
 
-console.log(`board column self-check passed (${checked} breakpoints verified)`);
+for (const grid of GRIDS) {
+  const baseTracks = trackCount(base, grid.selector);
+  assert.strictEqual(
+    baseTracks, grid.total,
+    `${grid.selector}: base should declare ${grid.total} tracks, found ${baseTracks}`
+  );
+
+  const blocks = mediaBlocks(css)
+    .filter((b) => hiddenIn(b.body, grid.selector).size > 0 || trackCount(b.body, grid.selector) !== null)
+    .sort((a, b) => b.width - a.width);
+
+  assert.ok(blocks.length >= 2, `${grid.selector}: expected responsive breakpoints`);
+
+  const cumulativeHidden = new Set();
+  let checked = 0;
+
+  for (const block of blocks) {
+    hiddenIn(block.body, grid.selector).forEach((n) => cumulativeHidden.add(n));
+    const tracks = trackCount(block.body, grid.selector);
+    if (tracks === null) continue;
+
+    const visible = grid.total - cumulativeHidden.size;
+    assert.strictEqual(
+      tracks, visible,
+      `${grid.selector} at max-width ${block.width}px: ${visible} columns visible but ` +
+      `${tracks} grid tracks declared (hidden: ${[...cumulativeHidden].sort((a, b) => a - b).join(',')})`
+    );
+
+    for (const [col, name] of Object.entries(grid.mustKeep)) {
+      assert.ok(
+        !cumulativeHidden.has(Number(col)),
+        `${grid.selector}: ${name} (column ${col}) hidden at ${block.width}px`
+      );
+    }
+    checked++;
+  }
+
+  assert.ok(checked >= 2, `${grid.selector}: verified only ${checked} breakpoints`);
+  assert.strictEqual(
+    grid.total - cumulativeHidden.size, grid.narrowestVisible,
+    `${grid.selector}: narrowest breakpoint should leave ${grid.narrowestVisible} columns`
+  );
+  totalChecked += checked;
+}
+
+console.log(`grid column self-check passed (${GRIDS.length} grids, ${totalChecked} breakpoints)`);

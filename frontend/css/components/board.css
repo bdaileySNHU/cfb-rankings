@@ -708,3 +708,48 @@
   .tkr-grid > div { padding: 9px 6px; }
   .c-name { font-size: 12.5px; }
 }
+
+/* ── Game predictions: same fixed-track squeeze as the ratings table ──────────
+   1.5fr 76px 1.7fr 104px 72px — 252px of fixed tracks plus ~100px of cell
+   padding, so on a 390px screen MATCHUP and WIN PROB share what little is left
+   and both collapse. MATCHUP is kept at every width; it names the game.
+
+   Column order: 1 MATCHUP · 2 PROJ · 3 WIN PROB · 4 SPREAD · 5 CONF */
+
+@media (max-width: 900px) {
+  /* CONF — a coarse confidence chip, the win-prob bar says more */
+  .tkr-pgrid > div:nth-child(5) { display: none; }
+  .tkr-pgrid { grid-template-columns: 1.5fr 76px 1.7fr 104px; }
+}
+
+@media (max-width: 640px) {
+  /* PROJ — the projected score is implied by spread plus win probability */
+  .tkr-pgrid > div:nth-child(2) { display: none; }
+  .tkr-pgrid { grid-template-columns: 1.5fr 1.7fr 104px; }
+  .tkr-pgrid > div { padding: 11px 8px; }
+}
+
+@media (max-width: 420px) {
+  /* SPREAD — leaves the matchup and the win-probability bar */
+  .tkr-pgrid > div:nth-child(4) { display: none; }
+  .tkr-pgrid { grid-template-columns: 1.4fr 1.6fr; }
+  .tkr-pgrid > div { padding: 11px 6px; }
+}
+
+/* ── Upcoming schedule (team detail): same defect, same treatment ─────────────
+   40px 26px 1fr 70px 112px 52px plus 8px gaps — ~340px committed before the
+   opponent column gets anything.
+
+   Column order: 1 WK · 2 LOC · 3 OPPONENT · 4 PROJ · 5 WIN BAR · 6 ODDS */
+
+@media (max-width: 640px) {
+  /* PROJ score — odds and the bar carry the same story */
+  .tkr-sched-grid > div:nth-child(4) { display: none; }
+  .tkr-sched-grid { grid-template-columns: 36px 22px 1fr 90px 52px; }
+}
+
+@media (max-width: 420px) {
+  /* Drop the bar, keep the numeric odds */
+  .tkr-sched-grid > div:nth-child(5) { display: none; }
+  .tkr-sched-grid { grid-template-columns: 32px 20px 1fr 48px; gap: 6px; }
+}
