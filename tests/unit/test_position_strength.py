@@ -171,9 +171,12 @@ class TestGetPositionGroupScores:
             ("DL 2", "DE", 91.0),
         ]
 
-        for name, position, rating in players_data:
+        for index, (name, position, rating) in enumerate(players_data):
             player = Player(
-                cfbd_athlete_id=hash(name) % 1000000,
+                # Index-derived, not hash(): string hashing is randomized per
+                # process, so hash-based ids collide at random and trip the
+                # unique constraint on cfbd_athlete_id.
+                cfbd_athlete_id=100000 + index,
                 name=name,
                 team_id=team.id,
                 position=position,
@@ -627,10 +630,14 @@ class TestCalculatePositionStrength:
         test_db.commit()
 
         # Add elite players across all positions (all 99.0 rating)
+        athlete_id = 200000
         for group_name, positions in POSITION_GROUPS.items():
             for pos in positions[:3]:  # Add 3 players per position
+                athlete_id += 1
                 player = Player(
-                    cfbd_athlete_id=hash(f"{group_name}{pos}") % 1000000,
+                    # Counter, not hash(): see the note above on randomized
+                    # string hashing colliding across processes.
+                    cfbd_athlete_id=athlete_id,
                     name=f"{pos} Elite",
                     team_id=team.id,
                     position=pos,

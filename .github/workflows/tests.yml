@@ -111,8 +111,11 @@ jobs:
       - name: Setup test database
         run: |
           python3 << 'EOF'
-          from database import Base, engine, SessionLocal
-          from models import Season, Team, ConferenceType
+          # Paths are src.* since the restructure — the old top-level
+          # `from database import ...` died with ModuleNotFoundError on every
+          # run, so the E2E job never actually reached the tests.
+          from src.models.database import Base, engine, SessionLocal
+          from src.models.models import Season, Team, ConferenceType
 
           # Create tables
           Base.metadata.create_all(bind=engine)
