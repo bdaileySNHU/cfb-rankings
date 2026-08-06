@@ -32,7 +32,9 @@ async function loadTeamsMeta() {
 
 function stripeName(name) {
   var meta = teamsMeta[name] || {};
-  return meta.primary || 'var(--accent)';
+  if (!meta.primary) return 'var(--accent)';
+  // Contrast floor — many brand colours are near-black on the dark panel.
+  return window.TeamVisuals ? window.TeamVisuals.readable(meta.primary) : meta.primary;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -193,17 +195,19 @@ function updateURL() {
 // ── Avatars ───────────────────────────────────────────────────────────────────
 function renderAvatar(containerId, team) {
   const name = typeof team === 'string' ? team : team.name;
-  const espnId = typeof team === 'object' ? team.espn_id : null;
   const el = document.getElementById(containerId);
   el.innerHTML = '';
-  if (espnId) {
-    const img = document.createElement('img');
-    img.src = `https://a.espncdn.com/i/teamlogos/ncaa/500/${espnId}.png`;
-    img.width = 56; img.height = 56;
-    img.alt = name;
+
+  // CFBD logos rather than ESPN's CDN: every FBS team has one (ESPN ids were
+  // populated from a hand-maintained name map and covered 128 of 200), and CFBD
+  // ships a dark variant, which the theme toggle needs.
+  const meta = (typeof teamsMeta === 'object' && teamsMeta[name]) || null;
+  const markup = window.TeamVisuals ? window.TeamVisuals.logoImg(meta, 56, name) : '';
+  if (markup) {
+    el.innerHTML = markup;
+    const img = el.querySelector('img');
     img.style.borderRadius = '50%';
     img.onerror = () => { el.innerHTML = initialsAvatarSvg(name, 56); };
-    el.appendChild(img);
   } else {
     el.innerHTML = initialsAvatarSvg(name, 56);
   }

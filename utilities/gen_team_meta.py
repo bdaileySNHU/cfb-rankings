@@ -50,6 +50,12 @@ def main() -> None:
         secondary = cf.get("alternateColor") or cf.get("alt_color")
         if secondary:
             entry["secondary"] = secondary
+        # CFBD's own team id. Logo URLs are derived from it on the frontend:
+        #   https://cdn.collegefootballdata.com/logos[-dark]/{size}/{id}.png
+        # Storing the id rather than a URL keeps every size and the dark
+        # variant available without listing sixteen strings per team.
+        if cf.get("id") is not None and cf.get("logos"):
+            entry["cfbd_id"] = cf["id"]
         if not entry.get("primary"):
             missing_color.append(t.name)
         meta[t.name] = entry

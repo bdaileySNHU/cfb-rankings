@@ -22,7 +22,16 @@
 
   function metaOf(name) { return META[name] || {}; }
   function abbrName(name) { return metaOf(name).abbr || (name || '???').slice(0, 3).toUpperCase(); }
-  function stripeName(name) { return metaOf(name).primary || 'var(--accent)'; }
+  // Brand colours are often near-black (8 teams are #000000), so run them
+  // through the contrast floor before painting onto the panel.
+  function stripeName(name) {
+    var c = metaOf(name).primary;
+    if (!c) return 'var(--accent)';
+    return window.TeamVisuals ? window.TeamVisuals.readable(c) : c;
+  }
+  function logoImgFor(name, size) {
+    return window.TeamVisuals ? window.TeamVisuals.logoImg(metaOf(name), size, name) : '';
+  }
   function abbrOf(e) { return abbrName(e.team_name); }
   function stripeOf(e) { return stripeName(e.team_name); }
 
@@ -87,7 +96,9 @@
     var off = e.off, def = e.def;
     return '<div class="tkr-grid tkr-row" data-id="' + e.team_id + '">' +
       '<div class="c-rk">' + String(e.rank).padStart(2, '0') + '</div>' +
-      '<div class="c-team"><span class="c-stripe" style="background:' + stripeOf(e) + '"></span>' +
+      '<div class="c-team">' +
+        (logoImgFor(e.team_name, 24) ||
+          '<span class="c-stripe" style="background:' + stripeOf(e) + '"></span>') +
         '<span class="c-name">' + esc(e.team_name) + '</span></div>' +
       '<div class="c-conf">' + esc(e.conference_name || e.conference || '') + '</div>' +
       '<div class="c-wl ta-r">' + e.wins + '-' + e.losses + '</div>' +
