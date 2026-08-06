@@ -43,6 +43,7 @@
           '<span class="tkr-badge">S</span>' +
           '<span class="tkr-wordmark">STATURDAY<span class="dot">.TKR</span></span>' +
           '<span class="tkr-week" id="tkr-week"></span>' +
+          '<span class="tkr-countdown" id="tkr-countdown"></span>' +
         '</div>' +
         '<div class="tkr-header-right">' +
           '<nav class="tkr-nav">' + navLinks + '</nav>' +
