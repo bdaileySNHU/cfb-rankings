@@ -3,811 +3,946 @@
   "Air Force": {
     "abbr": "AF",
     "mascot": "Falcons",
-    "primary": "#004a7b",
-    "secondary": "#ffffff"
+    "primary": "#003594",
+    "secondary": "#ffffff",
+    "cfbd_id": 2005
   },
   "Akron": {
     "abbr": "AKR",
     "mascot": "Zips",
-    "primary": "#00285e",
-    "secondary": "#84754e"
+    "primary": "#041e42",
+    "secondary": "#a89968",
+    "cfbd_id": 2006
   },
   "Alabama": {
     "abbr": "ALA",
     "mascot": "Crimson Tide",
-    "primary": "#9e1632",
-    "secondary": "#ffffff"
+    "primary": "#9e1b32",
+    "secondary": "#ffffff",
+    "cfbd_id": 333
   },
   "App State": {
     "abbr": "APP",
     "mascot": "Mountaineers",
-    "primary": "#ffcc00",
-    "secondary": "#222222"
+    "primary": "#000000",
+    "secondary": "#ffcd00",
+    "cfbd_id": 2026
   },
   "Arizona": {
     "abbr": "ARIZ",
     "mascot": "Wildcats",
-    "primary": "#0c234b",
-    "secondary": "#ab0520"
+    "primary": "#cc0033",
+    "secondary": "#003366",
+    "cfbd_id": 12
   },
   "Arizona State": {
     "abbr": "ASU",
     "mascot": "Sun Devils",
-    "primary": "#8e0c3a",
-    "secondary": "#ffc72c"
+    "primary": "#ffc627",
+    "secondary": "#8c1d40",
+    "cfbd_id": 9
   },
   "Arkansas": {
     "abbr": "ARK",
     "mascot": "Razorbacks",
-    "primary": "#a41f35",
-    "secondary": "#ffffff"
+    "primary": "#a32136",
+    "secondary": "#ffffff",
+    "cfbd_id": 8
   },
   "Arkansas State": {
     "abbr": "ARST",
     "mascot": "Red Wolves",
-    "primary": "#e81018",
-    "secondary": "#000000"
+    "primary": "#cc092f",
+    "secondary": "#000000",
+    "cfbd_id": 2032
   },
   "Army": {
     "abbr": "ARMY",
     "mascot": "Black Knights",
-    "primary": "#ce9c00",
-    "secondary": "#231f20"
+    "primary": "#000000",
+    "secondary": "#d3bc8d",
+    "cfbd_id": 349
   },
   "Auburn": {
     "abbr": "AUB",
     "mascot": "Tigers",
-    "primary": "#002b5c",
-    "secondary": "#f26522"
+    "primary": "#0c2340",
+    "secondary": "#f26522",
+    "cfbd_id": 2
   },
   "BYU": {
     "abbr": "BYU",
     "mascot": "Cougars",
     "primary": "#003da5",
-    "secondary": "#ffffff"
+    "secondary": "#002e5d",
+    "cfbd_id": 252
   },
   "Ball State": {
     "abbr": "BALL",
     "mascot": "Cardinals",
-    "primary": "#DA0000",
-    "secondary": "#ffffff"
+    "primary": "#ba0c2f",
+    "secondary": "#ffffff",
+    "cfbd_id": 2050
   },
   "Baylor": {
     "abbr": "BAY",
     "mascot": "Bears",
     "primary": "#154734",
-    "secondary": "#ffb81c"
+    "secondary": "#ffb81c",
+    "cfbd_id": 239
   },
   "Boise State": {
     "abbr": "BOIS",
     "mascot": "Broncos",
     "primary": "#0033a0",
-    "secondary": "#fa4616"
+    "secondary": "#d64309",
+    "cfbd_id": 68
   },
   "Boston College": {
     "abbr": "BC",
     "mascot": "Eagles",
     "primary": "#8c2232",
-    "secondary": "#dbcca6"
+    "secondary": "#dbcca6",
+    "cfbd_id": 103
   },
   "Bowling Green": {
     "abbr": "BGSU",
     "mascot": "Falcons",
-    "primary": "#2b1000",
-    "secondary": "#492000"
+    "primary": "#fd5000",
+    "secondary": "#4f2c1d",
+    "cfbd_id": 189
   },
   "Buffalo": {
     "abbr": "BUF",
     "mascot": "Bulls",
-    "primary": "#041A9B",
-    "secondary": "#ebebeb"
+    "primary": "#005bbb",
+    "secondary": "#ffffff",
+    "cfbd_id": 2084
   },
   "California": {
     "abbr": "CAL",
     "mascot": "Golden Bears",
-    "primary": "#031522",
-    "secondary": "#ffc423"
+    "primary": "#041e42",
+    "secondary": "#ffc72c",
+    "cfbd_id": 25
   },
   "Central Michigan": {
     "abbr": "CMU",
     "mascot": "Chippewas",
     "primary": "#6a0032",
-    "secondary": "#ffc82e"
+    "secondary": "#ffc82e",
+    "cfbd_id": 2117
   },
   "Charlotte": {
     "abbr": "CLT",
     "mascot": "49ers",
-    "primary": "#046A38",
-    "secondary": "#B9975B"
+    "primary": "#005035",
+    "secondary": "#a49665",
+    "cfbd_id": 2429
   },
   "Cincinnati": {
     "abbr": "CIN",
     "mascot": "Bearcats",
-    "primary": "#E00122",
-    "secondary": "#000000"
+    "primary": "#000000",
+    "secondary": "#e00122",
+    "cfbd_id": 2132
   },
   "Clemson": {
     "abbr": "CLEM",
     "mascot": "Tigers",
     "primary": "#f56600",
-    "secondary": "#522d80"
+    "secondary": "#522d80",
+    "cfbd_id": 228
   },
   "Coastal Carolina": {
     "abbr": "CCU",
     "mascot": "Chanticleers",
-    "primary": "#007073",
-    "secondary": "#876447"
+    "primary": "#006f71",
+    "secondary": "#a27752",
+    "cfbd_id": 324
   },
   "Colorado": {
     "abbr": "COLO",
     "mascot": "Buffaloes",
-    "primary": "#CFB87C",
-    "secondary": "#000000"
+    "primary": "#cfb87c",
+    "secondary": "#000000",
+    "cfbd_id": 38
   },
   "Colorado State": {
     "abbr": "CSU",
     "mascot": "Rams",
     "primary": "#1e4d2b",
-    "secondary": "#c8c372"
+    "secondary": "#c8c372",
+    "cfbd_id": 36
   },
   "Delaware": {
     "abbr": "DEL",
     "mascot": "Blue Hens",
-    "primary": "#033594",
-    "secondary": "#e8ce31"
+    "primary": "#00539f",
+    "secondary": "#ffd200",
+    "cfbd_id": 48
   },
   "Duke": {
     "abbr": "DUKE",
     "mascot": "Blue Devils",
-    "primary": "#013088",
-    "secondary": "#ffffff"
+    "primary": "#00539b",
+    "secondary": "#ffffff",
+    "cfbd_id": 150
   },
   "East Carolina": {
     "abbr": "ECU",
     "mascot": "Pirates",
-    "primary": "#4b1869",
-    "secondary": "#f0907b"
+    "primary": "#592a8a",
+    "secondary": "#fdc82f",
+    "cfbd_id": 151
   },
   "Eastern Michigan": {
     "abbr": "EMU",
     "mascot": "Eagles",
-    "primary": "#00331b",
-    "secondary": "#f0f0f0"
+    "primary": "#046a38",
+    "secondary": "#ffffff",
+    "cfbd_id": 2199
   },
   "Florida": {
     "abbr": "FLA",
     "mascot": "Gators",
     "primary": "#0021a5",
-    "secondary": "#fa4616"
+    "secondary": "#fa4616",
+    "cfbd_id": 57
   },
   "Florida Atlantic": {
     "abbr": "FAU",
     "mascot": "Owls",
-    "primary": "#00447c",
-    "secondary": "#d31245"
+    "primary": "#003366",
+    "secondary": "#cc0000",
+    "cfbd_id": 2226
   },
   "Florida International": {
     "abbr": "FIU",
     "mascot": "Panthers",
-    "primary": "#001538",
-    "secondary": "#c5960c"
+    "primary": "#091f3f",
+    "secondary": "#c3993f",
+    "cfbd_id": 2229
   },
   "Florida State": {
     "abbr": "FSU",
     "mascot": "Seminoles",
     "primary": "#782f40",
-    "secondary": "#ceb888"
+    "secondary": "#ceb888",
+    "cfbd_id": 52
   },
   "Fresno State": {
     "abbr": "FRES",
     "mascot": "Bulldogs",
-    "primary": "#db0032",
-    "secondary": "#002e6d"
+    "primary": "#c41230",
+    "secondary": "#13284c",
+    "cfbd_id": 278
   },
   "Georgia": {
     "abbr": "UGA",
     "mascot": "Bulldogs",
     "primary": "#ba0c2f",
-    "secondary": "#000000"
+    "secondary": "#2c2a29",
+    "cfbd_id": 61
   },
   "Georgia Southern": {
     "abbr": "GASO",
     "mascot": "Eagles",
-    "primary": "#003775",
-    "secondary": "#f0f0f0"
+    "primary": "#041e42",
+    "secondary": "#ffffff",
+    "cfbd_id": 290
   },
   "Georgia State": {
     "abbr": "GAST",
     "mascot": "Panthers",
-    "primary": "#1e539a",
-    "secondary": "#ebebeb"
+    "primary": "#0039a6",
+    "secondary": "#ffffff",
+    "cfbd_id": 2247
   },
   "Georgia Tech": {
     "abbr": "GT",
     "mascot": "Yellow Jackets",
-    "primary": "#003057",
-    "secondary": "#b3a369"
+    "primary": "#b3a369",
+    "secondary": "#ffffff",
+    "cfbd_id": 59
   },
   "Hawai'i": {
     "abbr": "HAW",
     "mascot": "Rainbow Warriors",
-    "primary": "#003420",
-    "secondary": "#ffffff"
+    "primary": "#024731",
+    "secondary": "#000000",
+    "cfbd_id": 62
   },
   "Houston": {
     "abbr": "HOU",
     "mascot": "Cougars",
-    "primary": "#c92a39",
-    "secondary": "#ffffff"
+    "primary": "#c8102e",
+    "secondary": "#ffffff",
+    "cfbd_id": 248
   },
   "Illinois": {
     "abbr": "ILL",
     "mascot": "Fighting Illini",
     "primary": "#ff5f05",
-    "secondary": "#13294b"
+    "secondary": "#13294b",
+    "cfbd_id": 356
   },
   "Indiana": {
     "abbr": "IU",
     "mascot": "Hoosiers",
     "primary": "#990000",
-    "secondary": "#edebeb"
+    "secondary": "#ffffff",
+    "cfbd_id": 84
   },
   "Iowa": {
     "abbr": "IOWA",
     "mascot": "Hawkeyes",
     "primary": "#000000",
-    "secondary": "#FFCD00"
+    "secondary": "#ffcd00",
+    "cfbd_id": 2294
   },
   "Iowa State": {
     "abbr": "ISU",
     "mascot": "Cyclones",
-    "primary": "#822433",
-    "secondary": "#fdca2f"
+    "primary": "#c8102e",
+    "secondary": "#f1be48",
+    "cfbd_id": 66
   },
   "Jacksonville State": {
     "abbr": "JXST",
     "mascot": "Gamecocks",
-    "primary": "#b50500",
-    "secondary": "#b5b7ba"
+    "primary": "#cc0000",
+    "secondary": "#000000",
+    "cfbd_id": 55
   },
   "James Madison": {
     "abbr": "JMU",
     "mascot": "Dukes",
     "primary": "#450084",
-    "secondary": "#b5a068"
+    "secondary": "#cbb677",
+    "cfbd_id": 256
   },
   "Kansas": {
     "abbr": "KU",
     "mascot": "Jayhawks",
     "primary": "#0051ba",
-    "secondary": "#e8000d"
+    "secondary": "#e8000d",
+    "cfbd_id": 2305
   },
   "Kansas State": {
     "abbr": "KSU",
     "mascot": "Wildcats",
-    "primary": "#3c0969",
-    "secondary": "#e2e3e4"
+    "primary": "#512888",
+    "secondary": "#ffffff",
+    "cfbd_id": 2306
   },
   "Kennesaw State": {
     "abbr": "KENN",
     "mascot": "Owls",
     "primary": "#fdbb30",
-    "secondary": "#000000"
+    "secondary": "#0b1315",
+    "cfbd_id": 338
   },
   "Kent State": {
     "abbr": "KENT",
     "mascot": "Golden Flashes",
-    "primary": "#003976",
-    "secondary": "#efab00"
+    "primary": "#002664",
+    "secondary": "#eaab00",
+    "cfbd_id": 2309
   },
   "Kentucky": {
     "abbr": "UK",
     "mascot": "Wildcats",
     "primary": "#0033a0",
-    "secondary": "#ffffff"
+    "secondary": "#ffffff",
+    "cfbd_id": 96
   },
   "LSU": {
     "abbr": "LSU",
     "mascot": "Tigers",
     "primary": "#461d7c",
-    "secondary": "#fdd023"
+    "secondary": "#fdd023",
+    "cfbd_id": 99
   },
   "Liberty": {
     "abbr": "LIB",
     "mascot": "Flames",
-    "primary": "#071740",
-    "secondary": "#a61f21"
+    "primary": "#0a254e",
+    "secondary": "#b72025",
+    "cfbd_id": 2335
   },
   "Louisiana": {
     "abbr": "UL",
     "mascot": "Ragin' Cajuns",
     "primary": "#ce181e",
-    "secondary": "#ffffff"
+    "secondary": "#000000",
+    "cfbd_id": 309
   },
   "Louisiana Tech": {
     "abbr": "LT",
     "mascot": "Bulldogs",
-    "primary": "#002d65",
-    "secondary": "#d3313a"
+    "primary": "#003087",
+    "secondary": "#cb333b",
+    "cfbd_id": 2348
   },
   "Louisville": {
     "abbr": "LOU",
     "mascot": "Cardinals",
     "primary": "#c9001f",
-    "secondary": "#000000"
+    "secondary": "#000000",
+    "cfbd_id": 97
   },
   "Marshall": {
     "abbr": "MRSH",
     "mascot": "Thundering Herd",
-    "primary": "#00ae42",
-    "secondary": "#be854c"
+    "primary": "#00b140",
+    "secondary": "#000000",
+    "cfbd_id": 276
   },
   "Maryland": {
     "abbr": "MD",
     "mascot": "Terrapins",
-    "primary": "#D5002B",
-    "secondary": "#ffcd00"
+    "primary": "#ce1126",
+    "secondary": "#ffffff",
+    "cfbd_id": 120
   },
   "Massachusetts": {
     "abbr": "MASS",
     "mascot": "Minutemen",
-    "primary": "#971B2F",
-    "secondary": "#B1B3B3"
+    "primary": "#881c1c",
+    "secondary": "#ffffff",
+    "cfbd_id": 113
   },
   "Memphis": {
     "abbr": "MEM",
     "mascot": "Tigers",
-    "primary": "#004991",
-    "secondary": "#8e908f"
+    "primary": "#00498f",
+    "secondary": "#9c9ea1",
+    "cfbd_id": 235
   },
   "Miami": {
     "abbr": "MIA",
     "mascot": "Hurricanes",
-    "primary": "#005030",
-    "secondary": "#f47321"
+    "primary": "#f47321",
+    "secondary": "#005030",
+    "cfbd_id": 2390
   },
   "Miami (OH)": {
     "abbr": "M-OH",
     "mascot": "RedHawks",
-    "primary": "#a4000c",
-    "secondary": "#f0f0f0"
+    "primary": "#c41230",
+    "secondary": "#ffffff",
+    "cfbd_id": 193
   },
   "Michigan": {
     "abbr": "MICH",
     "mascot": "Wolverines",
     "primary": "#00274c",
-    "secondary": "#ffcb05"
+    "secondary": "#ffcb05",
+    "cfbd_id": 130
   },
   "Michigan State": {
     "abbr": "MSU",
     "mascot": "Spartans",
-    "primary": "#18453b",
-    "secondary": "#ffffff"
+    "primary": "#173f35",
+    "secondary": "#ffffff",
+    "cfbd_id": 127
   },
   "Middle Tennessee": {
     "abbr": "MTSU",
     "mascot": "Blue Raiders",
-    "primary": "#006db6",
-    "secondary": "#ffffff"
+    "primary": "#036eb7",
+    "secondary": "#ffffff",
+    "cfbd_id": 2393
   },
   "Minnesota": {
     "abbr": "MINN",
     "mascot": "Golden Gophers",
-    "primary": "#5e0a2f",
-    "secondary": "#fab41c"
+    "primary": "#7a0019",
+    "secondary": "#ffcc33",
+    "cfbd_id": 135
   },
   "Mississippi State": {
     "abbr": "MSST",
     "mascot": "Bulldogs",
     "primary": "#5d1725",
-    "secondary": "#c1c6c8"
+    "secondary": "#c1c6c8",
+    "cfbd_id": 344
   },
   "Missouri": {
     "abbr": "MIZ",
     "mascot": "Tigers",
     "primary": "#f1b82d",
-    "secondary": "#000000"
+    "secondary": "#000000",
+    "cfbd_id": 142
   },
   "NC State": {
     "abbr": "NCSU",
     "mascot": "Wolfpack",
     "primary": "#cc0000",
-    "secondary": "#ffffff"
+    "secondary": "#ffffff",
+    "cfbd_id": 152
   },
   "Navy": {
     "abbr": "NAVY",
     "mascot": "Midshipmen",
     "primary": "#00225b",
-    "secondary": "#b5a67c"
+    "secondary": "#b5a67c",
+    "cfbd_id": 2426
   },
   "Nebraska": {
     "abbr": "NEB",
     "mascot": "Cornhuskers",
     "primary": "#d00000",
-    "secondary": "#ffffff"
+    "secondary": "#ffffff",
+    "cfbd_id": 158
   },
   "Nevada": {
     "abbr": "NEV",
     "mascot": "Wolf Pack",
-    "primary": "#002d62",
-    "secondary": "#ffffff"
+    "primary": "#041e42",
+    "secondary": "#8a8d8f",
+    "cfbd_id": 2440
   },
   "New Mexico": {
     "abbr": "UNM",
     "mascot": "Lobos",
-    "primary": "#BA0C2F",
-    "secondary": "#a7a8aa"
+    "primary": "#ba0c2f",
+    "secondary": "#a7a8aa",
+    "cfbd_id": 167
   },
   "New Mexico State": {
     "abbr": "NMSU",
     "mascot": "Aggies",
-    "primary": "#891216",
-    "secondary": "#000000"
+    "primary": "#8c0b42",
+    "secondary": "#ffffff",
+    "cfbd_id": 166
   },
   "North Carolina": {
     "abbr": "UNC",
     "mascot": "Tar Heels",
     "primary": "#7bafd4",
-    "secondary": "#13294b"
+    "secondary": "#13294b",
+    "cfbd_id": 153
   },
   "North Texas": {
     "abbr": "UNT",
     "mascot": "Mean Green",
-    "primary": "#00853E",
-    "secondary": "#000000"
+    "primary": "#00853e",
+    "secondary": "#ffffff",
+    "cfbd_id": 249
   },
   "Northern Illinois": {
     "abbr": "NIU",
     "mascot": "Huskies",
-    "primary": "#F1122C",
-    "secondary": "#cc0000"
+    "primary": "#c8102e",
+    "secondary": "#000000",
+    "cfbd_id": 2459
   },
   "Northwestern": {
     "abbr": "NU",
     "mascot": "Wildcats",
     "primary": "#582c83",
-    "secondary": "#ffffff"
+    "secondary": "#ffffff",
+    "cfbd_id": 77
   },
   "Notre Dame": {
     "abbr": "ND",
     "mascot": "Fighting Irish",
     "primary": "#0c2340",
-    "secondary": "#c99700"
+    "secondary": "#c99700",
+    "cfbd_id": 87
   },
   "Ohio": {
     "abbr": "OHIO",
     "mascot": "Bobcats",
-    "primary": "#295A29",
-    "secondary": "#e4bb85"
+    "primary": "#024230",
+    "secondary": "#ffffff",
+    "cfbd_id": 195
   },
   "Ohio State": {
     "abbr": "OSU",
     "mascot": "Buckeyes",
-    "primary": "#ce1141",
-    "secondary": "#505056"
+    "primary": "#ba0c2f",
+    "secondary": "#a7b1b7",
+    "cfbd_id": 194
   },
   "Oklahoma": {
     "abbr": "OU",
     "mascot": "Sooners",
-    "primary": "#a32036",
-    "secondary": "#ffffff"
+    "primary": "#841617",
+    "secondary": "#ffffff",
+    "cfbd_id": 201
   },
   "Oklahoma State": {
     "abbr": "OKST",
     "mascot": "Cowboys",
-    "primary": "#FF7300",
-    "secondary": "#000000"
+    "primary": "#fe5c00",
+    "secondary": "#000000",
+    "cfbd_id": 197
   },
   "Old Dominion": {
     "abbr": "ODU",
     "mascot": "Monarchs",
-    "primary": "#00507d",
-    "secondary": "#a1d2f1"
+    "primary": "#043657",
+    "secondary": "#98c5ea",
+    "cfbd_id": 295
   },
   "Ole Miss": {
     "abbr": "MISS",
     "mascot": "Rebels",
     "primary": "#13294b",
-    "secondary": "#c8102e"
+    "secondary": "#cf142b",
+    "cfbd_id": 145
   },
   "Oregon": {
     "abbr": "ORE",
     "mascot": "Ducks",
     "primary": "#007030",
-    "secondary": "#fee11a"
+    "secondary": "#fee11a",
+    "cfbd_id": 2483
   },
   "Oregon State": {
     "abbr": "ORST",
     "mascot": "Beavers",
-    "primary": "#231f20",
-    "secondary": "#d73f09"
+    "primary": "#dc4405",
+    "secondary": "#000000",
+    "cfbd_id": 204
   },
   "Penn State": {
     "abbr": "PSU",
     "mascot": "Nittany Lions",
-    "primary": "#041E42",
-    "secondary": "#FFFFFF"
+    "primary": "#001e44",
+    "secondary": "#ffffff",
+    "cfbd_id": 213
   },
   "Pittsburgh": {
     "abbr": "PITT",
     "mascot": "Panthers",
-    "primary": "#003263",
-    "secondary": "#231f20"
+    "primary": "#003594",
+    "secondary": "#ffb81c",
+    "cfbd_id": 221
   },
   "Purdue": {
     "abbr": "PUR",
     "mascot": "Boilermakers",
-    "primary": "#000000",
-    "secondary": "#ceb888"
+    "primary": "#ceb888",
+    "secondary": "#000000",
+    "cfbd_id": 2509
   },
   "Rice": {
     "abbr": "RICE",
     "mascot": "Owls",
-    "primary": "#d1d5d8",
-    "secondary": "#003d7d"
+    "primary": "#00205b",
+    "secondary": "#c1c6c8",
+    "cfbd_id": 242
   },
   "Rutgers": {
     "abbr": "RUTG",
     "mascot": "Scarlet Knights",
-    "primary": "#d21034",
-    "secondary": "#ffffff"
+    "primary": "#ce0e2d",
+    "secondary": "#ffffff",
+    "cfbd_id": 164
   },
   "SMU": {
     "abbr": "SMU",
     "mascot": "Mustangs",
-    "primary": "#354ca1",
-    "secondary": "#cc0035"
+    "primary": "#d70000",
+    "secondary": "#0033a1",
+    "cfbd_id": 2567
   },
   "Sam Houston": {
     "abbr": "SHSU",
     "mascot": "Bearkats",
-    "primary": "#fe5000",
-    "secondary": "#000000"
+    "primary": "#f56423",
+    "secondary": "#ffffff",
+    "cfbd_id": 2534
   },
   "San Diego State": {
     "abbr": "SDSU",
     "mascot": "Aztecs",
-    "primary": "#c41230",
-    "secondary": "#000000"
+    "primary": "#a6192e",
+    "secondary": "#000000",
+    "cfbd_id": 21
   },
   "San Jos\u00e9 State": {
     "abbr": "SJSU",
     "mascot": "Spartans",
-    "primary": "#005893",
-    "secondary": "#fdba31"
+    "primary": "#0055a2",
+    "secondary": "#e5a823",
+    "cfbd_id": 23
   },
   "South Alabama": {
     "abbr": "USA",
     "mascot": "Jaguars",
-    "primary": "#00205B",
-    "secondary": "#BF0D3E"
+    "primary": "#00205b",
+    "secondary": "#bf0d3e",
+    "cfbd_id": 6
   },
   "South Carolina": {
     "abbr": "SC",
     "mascot": "Gamecocks",
     "primary": "#73000a",
-    "secondary": "#ffffff"
+    "secondary": "#000000",
+    "cfbd_id": 2579
   },
   "South Florida": {
     "abbr": "USF",
     "mascot": "Bulls",
-    "primary": "#004A36",
-    "secondary": "#231f20"
+    "primary": "#006747",
+    "secondary": "#cfc493",
+    "cfbd_id": 58
   },
   "Southern Miss": {
     "abbr": "USM",
     "mascot": "Golden Eagles",
-    "primary": "#FFAA3C",
-    "secondary": "#ffc423"
+    "primary": "#ffc72c",
+    "secondary": "#231f20",
+    "cfbd_id": 2572
   },
   "Stanford": {
     "abbr": "STAN",
     "mascot": "Cardinal",
     "primary": "#8c1515",
-    "secondary": "#ffffff"
+    "secondary": "#ffffff",
+    "cfbd_id": 24
   },
   "Syracuse": {
     "abbr": "SYR",
     "mascot": "Orange",
-    "primary": "#ff6500",
-    "secondary": "#000e54"
+    "primary": "#f76900",
+    "secondary": "#000e54",
+    "cfbd_id": 183
   },
   "TCU": {
     "abbr": "TCU",
     "mascot": "Horned Frogs",
     "primary": "#4d1979",
-    "secondary": "#f1f2f3"
+    "secondary": "#ffffff",
+    "cfbd_id": 2628
   },
   "Temple": {
     "abbr": "TEM",
     "mascot": "Owls",
-    "primary": "#A80532",
-    "secondary": "#a7a9ac"
+    "primary": "#a41e35",
+    "secondary": "#ffffff",
+    "cfbd_id": 218
   },
   "Tennessee": {
     "abbr": "TENN",
     "mascot": "Volunteers",
     "primary": "#ff8200",
-    "secondary": "#58595b"
+    "secondary": "#ffffff",
+    "cfbd_id": 2633
   },
   "Texas": {
     "abbr": "TEX",
     "mascot": "Longhorns",
-    "primary": "#c15d26",
-    "secondary": "#ffffff"
+    "primary": "#bf5700",
+    "secondary": "#ffffff",
+    "cfbd_id": 251
   },
   "Texas A&M": {
     "abbr": "TA&M",
     "mascot": "Aggies",
     "primary": "#500000",
-    "secondary": "#ffffff"
+    "secondary": "#ffffff",
+    "cfbd_id": 245
   },
   "Texas State": {
     "abbr": "TXST",
     "mascot": "Bobcats",
-    "primary": "#4e1719",
-    "secondary": "#b4975a"
+    "primary": "#501214",
+    "secondary": "#6a5638",
+    "cfbd_id": 326
   },
   "Texas Tech": {
     "abbr": "TTU",
     "mascot": "Red Raiders",
-    "primary": "#CC0000",
-    "secondary": "#000000"
+    "primary": "#c30020",
+    "secondary": "#000000",
+    "cfbd_id": 2641
   },
   "Toledo": {
     "abbr": "TOL",
     "mascot": "Rockets",
-    "primary": "#0a2240",
-    "secondary": "#ffcd00"
+    "primary": "#0b2240",
+    "secondary": "#ffcd00",
+    "cfbd_id": 2649
   },
   "Troy": {
     "abbr": "TROY",
     "mascot": "Trojans",
-    "primary": "#AE0210",
-    "secondary": "#88898c"
+    "primary": "#862633",
+    "secondary": "#b1b1b1",
+    "cfbd_id": 2653
   },
   "Tulane": {
     "abbr": "TULN",
     "mascot": "Green Wave",
-    "primary": "#006547",
-    "secondary": "#468ac9"
+    "primary": "#006747",
+    "secondary": "#418fde",
+    "cfbd_id": 2655
   },
   "Tulsa": {
     "abbr": "TLSA",
     "mascot": "Golden Hurricane",
     "primary": "#003595",
-    "secondary": "#d0b787"
+    "secondary": "#d0b787",
+    "cfbd_id": 202
   },
   "UAB": {
     "abbr": "UAB",
     "mascot": "Blazers",
-    "primary": "#003b28",
-    "secondary": "#ffc845"
+    "primary": "#1a5632",
+    "secondary": "#fdb913",
+    "cfbd_id": 5
   },
   "UCF": {
     "abbr": "UCF",
     "mascot": "Knights",
-    "primary": "#ba9b37",
-    "secondary": "#000000"
+    "primary": "#000000",
+    "secondary": "#b4a169",
+    "cfbd_id": 2116
   },
   "UCLA": {
     "abbr": "UCLA",
     "mascot": "Bruins",
     "primary": "#2774ae",
-    "secondary": "#f2a900"
+    "secondary": "#f2a900",
+    "cfbd_id": 26
   },
   "UConn": {
     "abbr": "CONN",
     "mascot": "Huskies",
-    "primary": "#0c2340",
-    "secondary": "#f1f2f3"
+    "primary": "#000e2f",
+    "secondary": "#ffffff",
+    "cfbd_id": 41
   },
   "UL Monroe": {
     "abbr": "ULM",
     "mascot": "Warhawks",
-    "primary": "#231F20",
-    "secondary": "#b18445"
+    "primary": "#840029",
+    "secondary": "#fdb913",
+    "cfbd_id": 2433
   },
   "UNLV": {
     "abbr": "UNLV",
     "mascot": "Rebels",
-    "primary": "#b10202",
-    "secondary": "#ffffff"
+    "primary": "#cf0a2c",
+    "secondary": "#cac8c8",
+    "cfbd_id": 2439
   },
   "USC": {
     "abbr": "USC",
     "mascot": "Trojans",
-    "primary": "#9e2237",
-    "secondary": "#ffcc00"
+    "primary": "#990000",
+    "secondary": "#ffcc00",
+    "cfbd_id": 30
   },
   "UTEP": {
     "abbr": "UTEP",
     "mascot": "Miners",
     "primary": "#ff8200",
-    "secondary": "#041e42"
+    "secondary": "#041e42",
+    "cfbd_id": 2638
   },
   "UTSA": {
     "abbr": "UTSA",
     "mascot": "Roadrunners",
-    "primary": "#002A5C",
-    "secondary": "#f47321"
+    "primary": "#0c2340",
+    "secondary": "#f15a22",
+    "cfbd_id": 2636
   },
   "Utah": {
     "abbr": "UTAH",
     "mascot": "Utes",
-    "primary": "#ea002a",
-    "secondary": "#ffffff"
+    "primary": "#be0000",
+    "secondary": "#ffffff",
+    "cfbd_id": 254
   },
   "Utah State": {
     "abbr": "USU",
     "mascot": "Aggies",
-    "primary": "#00263a",
-    "secondary": "#949ca1"
+    "primary": "#0f2439",
+    "secondary": "#ffffff",
+    "cfbd_id": 328
   },
   "Vanderbilt": {
     "abbr": "VAN",
     "mascot": "Commodores",
-    "primary": "#866d4b",
-    "secondary": "#000000"
+    "primary": "#000000",
+    "secondary": "#cfae70",
+    "cfbd_id": 238
   },
   "Virginia": {
     "abbr": "UVA",
     "mascot": "Cavaliers",
     "primary": "#232d4b",
-    "secondary": "#f84c1e"
+    "secondary": "#f84c1e",
+    "cfbd_id": 258
   },
   "Virginia Tech": {
     "abbr": "VT",
     "mascot": "Hokies",
-    "primary": "#630031",
-    "secondary": "#cf4520"
+    "primary": "#861f41",
+    "secondary": "#e87722",
+    "cfbd_id": 259
   },
   "Wake Forest": {
     "abbr": "WAKE",
     "mascot": "Demon Deacons",
-    "primary": "#9E7E38",
-    "secondary": "#000000"
+    "primary": "#ceb888",
+    "secondary": "#2c2a29",
+    "cfbd_id": 154
   },
   "Washington": {
     "abbr": "WASH",
     "mascot": "Huskies",
     "primary": "#33006f",
-    "secondary": "#e8d3a2"
+    "secondary": "#e8d3a2",
+    "cfbd_id": 264
   },
   "Washington State": {
     "abbr": "WSU",
     "mascot": "Cougars",
-    "primary": "#981e32",
-    "secondary": "#ffffff"
+    "primary": "#a60f2d",
+    "secondary": "#4d4d4d",
+    "cfbd_id": 265
   },
   "West Virginia": {
     "abbr": "WVU",
     "mascot": "Mountaineers",
-    "primary": "#002855",
-    "secondary": "#eaaa00"
+    "primary": "#eaaa00",
+    "secondary": "#002855",
+    "cfbd_id": 277
   },
   "Western Kentucky": {
     "abbr": "WKU",
     "mascot": "Hilltoppers",
-    "primary": "#F32026",
-    "secondary": "#b3b5b8"
+    "primary": "#c60c30",
+    "secondary": "#ffffff",
+    "cfbd_id": 98
   },
   "Western Michigan": {
     "abbr": "WMU",
     "mascot": "Broncos",
     "primary": "#532e1f",
-    "secondary": "#8b7f79"
+    "secondary": "#f1c500",
+    "cfbd_id": 2711
   },
   "Wisconsin": {
     "abbr": "WIS",
     "mascot": "Badgers",
-    "primary": "#c4012f",
-    "secondary": "#ffffff"
+    "primary": "#a00000",
+    "secondary": "#ffffff",
+    "cfbd_id": 275
   },
   "Wyoming": {
     "abbr": "WYO",
     "mascot": "Cowboys",
     "primary": "#492f24",
-    "secondary": "#ffc425"
+    "secondary": "#ffc425",
+    "cfbd_id": 2751
   }
 }

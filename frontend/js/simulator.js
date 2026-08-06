@@ -50,7 +50,9 @@ function loadTeamsMeta() {
 
 function stripeName(name) {
   var meta = teamsMeta[name] || {};
-  return meta.primary || 'var(--accent)';
+  if (!meta.primary) return 'var(--accent)';
+  // Contrast floor — many brand colours are near-black on the dark panel.
+  return window.TeamVisuals ? window.TeamVisuals.readable(meta.primary) : meta.primary;
 }
 
 // ---- Boot ----

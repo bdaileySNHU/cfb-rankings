@@ -126,6 +126,10 @@
 .c-rk { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--fg3); }
 .c-team { display: flex; align-items: center; gap: 8px; overflow: hidden; }
 .c-stripe { width: 5px; height: 17px; border-radius: 2px; flex-shrink: 0; }
+/* Team logo in place of the colour stripe. object-fit keeps non-square marks
+   from stretching; the box stays stripe-adjacent in width so row rhythm holds. */
+.team-logo { flex-shrink: 0; object-fit: contain; display: block; }
+.c-team .team-logo { width: 24px; height: 24px; margin: -3px 0; }
 .c-name { color: var(--fg); font-weight: 600; font-size: 13px; letter-spacing: -0.01em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .c-conf { color: var(--fg2); font-size: 12px; }
