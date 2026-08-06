@@ -238,11 +238,16 @@ Examples:
     season_obj.current_week = final_week
     db.commit()
 
-    # Save rankings through actual max week (including championship week if present)
-    print(f"\nSaving final rankings through Week {final_week}...")
+    # Snapshot ONLY the latest week. save_weekly_rankings() writes the CURRENT
+    # teams-table ratings under the week it is given, so looping it from week 1
+    # stamps end-of-import ratings across every prior week — destroying the real
+    # week-by-week history this table exists to hold.
+    # ponytail: a full rebuild therefore records just the final week. Snapshot
+    # inside the per-week processing loop in games.py if intermediate weeks of a
+    # rebuilt season ever need to be accurate.
+    print(f"\nSaving final rankings for Week {final_week}...")
     # ranking_service already created above for conference championships
-    for week in range(1, final_week + 1):
-        ranking_service.save_weekly_rankings(season, week)
+    ranking_service.save_weekly_rankings(season, final_week)
 
     # Show final rankings
     print("\n" + "=" * 80)

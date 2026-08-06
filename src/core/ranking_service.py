@@ -906,6 +906,12 @@ class RankingService:
         this method needs to build rankings from the teams table (current ELO state) instead
         of calling get_current_rankings() which would create circular logic.
 
+        WARNING: this writes whatever the teams table holds *right now* under the
+        given week, replacing any existing rows for that season/week. It is only
+        correct for the week that just finished processing. Calling it in a loop
+        over past weeks stamps today's ratings across all of history and destroys
+        the real week-by-week record — see tests/unit/test_weekly_snapshot.py.
+
         Args:
             season: Season year
             week: Week number

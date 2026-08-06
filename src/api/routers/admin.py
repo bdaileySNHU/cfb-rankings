@@ -1066,19 +1066,25 @@ async def trigger_import(
                 logger.warning(f"Error processing game {g.id}: {e}")
                 db.rollback()
 
-        # ── Step 3: Save weekly snapshots ─────────────────────────────────
-        from sqlalchemy import text as sa_text
-        weeks_done = db.execute(sa_text(
-            f"SELECT DISTINCT week FROM games WHERE season={season} AND is_processed=1 ORDER BY week"
-        )).fetchall()
+        # ── Step 3: Snapshot the week that just completed ──────────────────
+        # Only the latest week. save_weekly_rankings() writes the CURRENT
+        # teams-table ratings under the week it is given, so looping it over
+        # every completed week overwrites all prior snapshots with today's
+        # numbers and flattens the recorded history.
+        if games_processed:
+            from sqlalchemy import text as sa_text
+            row = db.execute(sa_text(
+                f"SELECT MAX(week) FROM games WHERE season={season} AND is_processed=1"
+            )).fetchone()
+            latest_week = row[0] if row else None
 
-        for (wk,) in weeks_done:
-            try:
-                rs.save_weekly_rankings(season=season, week=wk)
-                db.commit()
-                snapshots_saved += 1
-            except Exception as e:
-                logger.warning(f"Error saving snapshot for week {wk}: {e}")
+            if latest_week is not None:
+                try:
+                    rs.save_weekly_rankings(season=season, week=latest_week)
+                    db.commit()
+                    snapshots_saved += 1
+                except Exception as e:
+                    logger.warning(f"Error saving snapshot for week {latest_week}: {e}")
 
         log_lines.append(f"Games processed: {games_processed}, snapshots: {snapshots_saved}")
 
