@@ -667,3 +667,44 @@
   .tkr-path-grid { flex-direction: column; gap: 8px; }
   .tkr-path-arrow { display: none; }
 }
+
+/* ── Ratings table: shed columns as the viewport narrows ──────────────────────
+   Every column except TEAM has a fixed track (~620px of them), so on a narrow
+   screen the fixed tracks hold their width and the 1fr TEAM column is the one
+   crushed to nothing — the team name disappears while SOS and the sparkline
+   survive. Dropping columns least-informative-first keeps RK / TEAM / ELO
+   readable all the way down.
+
+   Column order: 1 RK · 2 TEAM · 3 CONF · 4 W-L · 5 ELO · 6 Δ1W · 7 OFF ·
+                 8 DEF · 9 SOS · 10 10WK
+   Head and body rows share .tkr-grid, so one nth-child rule hides both. */
+
+@media (max-width: 1100px) {
+  /* 10WK sparkline — decorative next to the ELO number it summarizes */
+  .tkr-grid > div:nth-child(10) { display: none; }
+  .tkr-grid { grid-template-columns: 44px 1fr 88px 62px 78px 64px 70px 70px 60px; }
+}
+
+@media (max-width: 900px) {
+  /* OFF / DEF / SOS — available on the team detail view */
+  .tkr-grid > div:nth-child(7),
+  .tkr-grid > div:nth-child(8),
+  .tkr-grid > div:nth-child(9) { display: none; }
+  .tkr-grid { grid-template-columns: 44px 1fr 88px 62px 78px 64px; }
+}
+
+@media (max-width: 640px) {
+  /* CONF and Δ1W — the conference stripe still carries the affiliation */
+  .tkr-grid > div:nth-child(3),
+  .tkr-grid > div:nth-child(6) { display: none; }
+  .tkr-grid { grid-template-columns: 40px 1fr 58px 72px; }
+  .tkr-grid > div { padding: 9px 8px; }
+}
+
+@media (max-width: 420px) {
+  /* Down to the irreducible three: rank, team, rating */
+  .tkr-grid > div:nth-child(4) { display: none; }
+  .tkr-grid { grid-template-columns: 34px 1fr 68px; }
+  .tkr-grid > div { padding: 9px 6px; }
+  .c-name { font-size: 12.5px; }
+}
