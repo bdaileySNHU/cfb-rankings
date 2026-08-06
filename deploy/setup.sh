@@ -103,6 +103,12 @@ systemctl daemon-reload
 systemctl enable cfb-rankings
 systemctl start cfb-rankings
 
+# Install log rotation
+echo "🗒️  Installing log rotation..."
+mkdir -p /var/log/cfb-rankings
+cp deploy/logrotate-cfb-rankings /etc/logrotate.d/cfb-rankings
+logrotate -d /etc/logrotate.d/cfb-rankings >/dev/null && echo "  ✓ logrotate config valid"
+
 # Install Nginx configuration
 echo "🌐 Installing Nginx configuration..."
 # Update domain in config

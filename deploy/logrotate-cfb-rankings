@@ -1,0 +1,32 @@
+# Log rotation for Stat-urday — EPIC-033 Story 33.3
+#
+# Install:  sudo cp deploy/logrotate-cfb-rankings /etc/logrotate.d/cfb-rankings
+# Verify:   sudo logrotate -d /etc/logrotate.d/cfb-rankings     # dry run
+# Force:    sudo logrotate -f /etc/logrotate.d/cfb-rankings     # rotate now
+#
+# Globs the whole directory because three different jobs write there:
+#   weekly.log         utilities/weekly_update.sh   (cron, user bdailey)
+#   weekly-update.log  scripts/weekly_update.py     (systemd timer, user www-data)
+#   update-games.log   scripts/update-production-data.sh (manual)
+
+/var/log/cfb-rankings/*.log {
+    monthly
+    rotate 12
+    # A weekly job writes ~4 entries per file, so 12 months of history.
+
+    compress
+    delaycompress
+    missingok
+    notifempty
+
+    # No mode/owner arguments: the replacement inherits them from the log it
+    # replaces. The writers run as different users (bdailey via cron, www-data
+    # via the systemd timer), so hardcoding one owner would break the other.
+    create
+
+    # A failing import can be noisy — cap the file even mid-month.
+    maxsize 10M
+
+    # If logrotate reports "parent directory has insecure permissions", add an
+    # su line matching the owner of /var/log/cfb-rankings, e.g. `su bdailey bdailey`.
+}
