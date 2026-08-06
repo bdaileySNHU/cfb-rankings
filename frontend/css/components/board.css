@@ -27,6 +27,13 @@
 .tkr-wordmark { font-family: var(--font-mono); font-weight: 700; font-size: 14px; color: var(--fg); }
 .tkr-wordmark .dot { color: var(--accent); }
 .tkr-week { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg3); margin-left: 4px; }
+.tkr-countdown {
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--accent);
+  margin-left: 8px; white-space: nowrap;
+  /* Digits change every second — fixed advance stops the header jittering. */
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 700px) { .tkr-countdown { display: none; } }
 .tkr-header-right { display: flex; align-items: center; gap: 18px; min-width: 0; }
 .tkr-nav { display: flex; gap: 14px; min-width: 0; overflow: hidden; }
 /* Theme pill must always stay reachable — never let the nav squeeze it off-screen */
