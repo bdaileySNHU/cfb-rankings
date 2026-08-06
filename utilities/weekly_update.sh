@@ -50,6 +50,33 @@ if [ -f "$PROJECT_DIR/.env" ]; then
     set +a
 fi
 
+# ── Notification helper ───────────────────────────────────────────────────────
+# Defined before first use: the CFBD_API_KEY and active-season checks below both
+# call it, and a bash function is not callable until its definition has run.
+_send_notification() {
+    local title="$1"
+    local body="$2"
+
+    # Slack webhook
+    if [ -n "${SLACK_WEBHOOK_URL:-}" ]; then
+        curl -s -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            --data "{\"text\":\"$title\n$body\"}" \
+            --max-time 10 \
+            && echo "✓ Slack notification sent" \
+            || echo "⚠ Slack notification failed (continuing)"
+    fi
+
+    # Email fallback
+    if [ -n "${NOTIFY_EMAIL:-}" ]; then
+        if command -v mail &>/dev/null; then
+            echo "$body" | mail -s "$title" "$NOTIFY_EMAIL" \
+                && echo "✓ Email notification sent to $NOTIFY_EMAIL" \
+                || echo "⚠ Email notification failed (continuing)"
+        fi
+    fi
+}
+
 if [ -z "${CFBD_API_KEY:-}" ]; then
     echo "✗ ERROR: CFBD_API_KEY not set. Aborting."
     _send_notification "❌ Weekly update FAILED" "CFBD_API_KEY is not set on the server."
@@ -74,34 +101,6 @@ if [ "$SEASON" = "0" ]; then
     exit 1
 fi
 echo "✓ Active season: $SEASON"
-
-# ── Notification helper ───────────────────────────────────────────────────────
-_send_notification() {
-    local title="$1"
-    local body="$2"
-
-    # Slack webhook
-    if [ -n "${SLACK_WEBHOOK_URL:-}" ]; then
-        local payload
-        payload=$(printf '{"text":"%s\\n%s"}' "$title" "$body" | sed 's/"/\\"/g')
-        # Build clean JSON directly
-        curl -s -X POST "$SLACK_WEBHOOK_URL" \
-            -H 'Content-Type: application/json' \
-            --data "{\"text\":\"$title\n$body\"}" \
-            --max-time 10 \
-            && echo "✓ Slack notification sent" \
-            || echo "⚠ Slack notification failed (continuing)"
-    fi
-
-    # Email fallback
-    if [ -n "${NOTIFY_EMAIL:-}" ]; then
-        if command -v mail &>/dev/null; then
-            echo "$body" | mail -s "$title" "$NOTIFY_EMAIL" \
-                && echo "✓ Email notification sent to $NOTIFY_EMAIL" \
-                || echo "⚠ Email notification failed (continuing)"
-        fi
-    fi
-}
 
 # ── Step 1: Import latest schedule + results (with retry) ────────────────────
 echo ""
@@ -177,18 +176,24 @@ for game in unprocessed:
 
 print(f"DONE:{processed_count}")
 
-from sqlalchemy import text
-weeks = db.execute(text(
-    f"SELECT DISTINCT week FROM games WHERE season={season} AND is_processed=1 ORDER BY week"
-)).fetchall()
+# Snapshot ONLY the week that just completed. save_weekly_rankings() writes the
+# CURRENT teams-table ratings under the week you name, so looping it over every
+# completed week stamps today's ratings across all of history — flattening the
+# rank movement and ELO charts. Past weeks are already recorded; leave them.
+if processed_count:
+    from sqlalchemy import text
+    row = db.execute(text(
+        f"SELECT MAX(week) FROM games WHERE season={season} AND is_processed=1"
+    )).fetchone()
+    latest_week = row[0] if row else None
 
-for (week,) in weeks:
-    try:
-        rs.save_weekly_rankings(season=season, week=week)
-        db.commit()
-        print(f"SNAPSHOT:{week}")
-    except Exception as e:
-        print(f"ERROR_SNAPSHOT:{week}:{e}")
+    if latest_week is not None:
+        try:
+            rs.save_weekly_rankings(season=season, week=latest_week)
+            db.commit()
+            print(f"SNAPSHOT:{latest_week}")
+        except Exception as e:
+            print(f"ERROR_SNAPSHOT:{latest_week}:{e}")
 
 db.close()
 EOF
