@@ -153,7 +153,7 @@ def analyze_prediction_accuracy():
     """Analyze how well ELO predicted game outcomes"""
     db = SessionLocal()
 
-    from models import Game, Team
+    from src.models.models import Game, Team
 
     print()
     print("=" * 100)
@@ -236,7 +236,7 @@ def show_elo_insights():
     print("\nBIGGEST RATING CHANGES FROM PRESEASON:")
     print("-" * 100)
 
-    from models import Team
+    from src.models.models import Team
 
     teams = db.query(Team).all()
     changes = [
