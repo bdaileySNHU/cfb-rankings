@@ -420,13 +420,21 @@ def main():
     logger.info("Check 2: Detecting current week from CFBD API...")
     try:
         current_week = get_current_week_wrapper()
-        if not current_week:
-            logger.warning(
-                "Could not detect current week - aborting weekly update. "
-                "This may indicate the season hasn't started yet."
+        if current_week is None:
+            # Between Aug 1 and kickoff, is_active_season() is already True (it
+            # is calendar-based) while CFBD has no completed games to derive a
+            # week from. That is the normal state for roughly four weeks, not a
+            # failure — exiting non-zero here marked the unit failed on every
+            # run and buried any genuine problem in the noise.
+            #
+            # A real API failure is not this branch: get_current_week_wrapper()
+            # re-raises those, and the handler below catches them and exits 1.
+            logger.info(
+                "No completed games yet - season has not kicked off. "
+                "Skipping weekly update (this is normal in the preseason)."
             )
             logger.info("=" * 80)
-            sys.exit(1)
+            sys.exit(0)  # Graceful exit - not an error
             return  # Prevent execution from continuing in tests where sys.exit is mocked
         logger.info(f"✓ Current week: {current_week}")
     except Exception as e:
