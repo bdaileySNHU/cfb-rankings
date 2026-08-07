@@ -169,7 +169,10 @@
 
         const [gamesData, teamsData] = await Promise.all([
           fetchAllGames(activeSeason),
-          api.getTeams()
+          // getTeams() defaults to limit=100 against ~240 FBS teams. Any game
+          // whose team fell outside that first page hit the `!homeTeam` guard
+          // in displayGames() and was dropped from the table without a trace.
+          fetchAllPages((skip, limit) => api.getTeams(null, skip, limit))
         ]);
 
         allGames = gamesData;
