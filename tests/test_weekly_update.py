@@ -374,3 +374,52 @@ class TestUpdateCurrentWeekIntegration:
         # The function catches all exceptions and returns 0
         # Logs error with exc_info=True for debugging
         assert True  # Implementation verified
+
+    def test_preseason_does_not_drag_current_week_backwards(self, test_db):
+        """No processed games must leave current_week where preseason init put it.
+
+        The weekly timer fires on a schedule, including before kickoff. Deriving
+        the week from processed games yields nothing then, and defaulting to 0
+        would move the season off week 1 — the rankings endpoint serves the
+        snapshot for current_week, so the site would silently fall back to the
+        preseason snapshot.
+        """
+        from src.models.models import Season
+
+        test_db.add(Season(year=2026, current_week=1, is_active=True))
+        test_db.commit()
+
+        result = weekly_update.update_current_week(2026, db=test_db)
+
+        assert result == 1
+        season = test_db.query(Season).filter(Season.year == 2026).first()
+        assert season.current_week == 1
+
+    def test_current_week_follows_processed_games_in_season(self, test_db):
+        """Once games are processed, the week tracks the latest processed one."""
+        from src.models.models import ConferenceType, Game, Season, Team
+
+        test_db.add(Season(year=2026, current_week=1, is_active=True))
+        home = Team(name="Home U", conference=ConferenceType.POWER_5)
+        away = Team(name="Away U", conference=ConferenceType.POWER_5)
+        test_db.add_all([home, away])
+        test_db.commit()
+
+        for week, processed, score in ((2, True, 21), (3, True, 28), (4, False, 0)):
+            test_db.add(
+                Game(
+                    home_team_id=home.id,
+                    away_team_id=away.id,
+                    home_score=score,
+                    away_score=0,
+                    week=week,
+                    season=2026,
+                    is_processed=processed,
+                )
+            )
+        test_db.commit()
+
+        # Week 4 exists but is unplayed, so the week must land on 3.
+        assert weekly_update.update_current_week(2026, db=test_db) == 3
+        season = test_db.query(Season).filter(Season.year == 2026).first()
+        assert season.current_week == 3

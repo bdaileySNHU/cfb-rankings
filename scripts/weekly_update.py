@@ -240,7 +240,10 @@ def update_current_week(season_year: int, db: "Session" = None) -> int:
         # Import here to avoid circular imports
         from sqlalchemy import func
 
-        from models import Game, Season
+        # src.models.models, not a bare `models` — the phase-5 restructure moved
+        # it, and the broad except below turned the resulting ModuleNotFoundError
+        # into a silent "return 0" on every run.
+        from src.models.models import Game, Season
 
         # Use provided session or create new one
         db_provided = db is not None
@@ -255,14 +258,31 @@ def update_current_week(season_year: int, db: "Session" = None) -> int:
 
         try:
             # Get max week from processed games this season
-            max_week = (
+            latest_processed = (
                 db.query(func.max(Game.week))
                 .filter(Game.season == season_year, Game.is_processed == True)
                 .scalar()
             )
 
-            # Default to 0 if no games processed
-            max_week = max_week or 0
+            # Get season record
+            season = db.query(Season).filter(Season.year == season_year).first()
+            if not season:
+                logger.error(f"Season {season_year} not found in database")
+                return 0
+
+            # Preseason: no games processed yet, so there is no week to derive.
+            # Defaulting to 0 here would drag current_week backwards off whatever
+            # the preseason init set, and the rankings endpoint serves the
+            # snapshot for current_week — so the site would fall back to the
+            # week 0 snapshot. Hold position until real results exist.
+            if latest_processed is None:
+                logger.info(
+                    f"No processed games for season {season_year} — "
+                    f"leaving current week at {season.current_week}"
+                )
+                return season.current_week
+
+            max_week = latest_processed
 
             # Validate week is reasonable (0-15 for college football)
             if not validate_week_number(max_week, season_year):
@@ -270,12 +290,6 @@ def update_current_week(season_year: int, db: "Session" = None) -> int:
                     f"Week validation failed for {max_week}, "
                     f"skipping update for season {season_year}"
                 )
-                return 0
-
-            # Get season record
-            season = db.query(Season).filter(Season.year == season_year).first()
-            if not season:
-                logger.error(f"Season {season_year} not found in database")
                 return 0
 
             # Update if changed
