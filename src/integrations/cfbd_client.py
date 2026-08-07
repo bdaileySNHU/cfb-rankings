@@ -62,6 +62,43 @@ _warning_thresholds_logged = {
 }
 
 
+# Remaining monthly calls as last reported by CFBD. The tracking decorator wraps
+# _get and only sees its parsed return value, so _get stashes the header here for
+# it to pick up. Single-threaded import scripts and one request per call make a
+# module-level slot sufficient.
+# ponytail: not thread-safe — if calls ever go concurrent, a row could record a
+# sibling request's figure. Move it onto the response path proper if that happens.
+_last_calllimit_remaining = None
+
+CALLLIMIT_HEADER = "x-calllimit-remaining"
+
+
+def record_calllimit_remaining(response) -> "int | None":
+    """Capture CFBD's remaining-calls header off a response.
+
+    Returns the parsed value, or None when the header is absent or unparseable —
+    a malformed header must never break the API call that carried it.
+    """
+    global _last_calllimit_remaining
+    try:
+        raw = response.headers.get(CALLLIMIT_HEADER)
+    except AttributeError:
+        return None
+    if raw is None:
+        return None
+    try:
+        _last_calllimit_remaining = int(raw)
+    except (TypeError, ValueError):
+        logger.debug(f"Unparseable {CALLLIMIT_HEADER}: {raw!r}")
+        return None
+    return _last_calllimit_remaining
+
+
+def get_last_calllimit_remaining() -> "int | None":
+    """Most recent remaining-calls figure CFBD reported, or None if unseen."""
+    return _last_calllimit_remaining
+
+
 def track_api_usage(func):
     """
     Decorator to track CFBD API usage in database.
@@ -103,6 +140,7 @@ def track_api_usage(func):
                     status_code=status_code,
                     response_time_ms=response_time_ms,
                     month=month,
+                    calllimit_remaining=get_last_calllimit_remaining(),
                 )
                 db.add(usage_record)
                 db.commit()
@@ -184,6 +222,36 @@ def get_monthly_usage(month: str = None, db: "Session" = None) -> dict:
             .all()
         )
 
+        # CFBD's own figure, from the most recent response that carried the
+        # header. Authoritative where the local count is not: api_usage only sees
+        # calls made from this host, so prod and dev each undercount, and
+        # CFBD_MONTHLY_LIMIT is a hand-configured guess that goes stale on a plan
+        # change. Prefer it when present and fall back to the estimate.
+        reported_remaining = (
+            db.query(APIUsage.calllimit_remaining)
+            .filter(APIUsage.month == month, APIUsage.calllimit_remaining.isnot(None))
+            .order_by(APIUsage.id.desc())
+            .limit(1)
+            .scalar()
+        )
+
+        # Calls consumed account-wide, which is what the plan is actually
+        # measured against — derived only when CFBD has told us something.
+        reported_limit = None
+        if reported_remaining is not None:
+            effective_remaining = reported_remaining
+            # The configured limit is the only stated total we have; if it is
+            # below what CFBD says is left, the plan was upgraded and the config
+            # is stale. Surface the discrepancy rather than reporting nonsense.
+            reported_limit = max(monthly_limit, reported_remaining)
+            percentage_used = (
+                ((reported_limit - reported_remaining) / reported_limit) * 100
+                if reported_limit > 0
+                else 0
+            )
+        else:
+            effective_remaining = remaining_calls
+
         # Determine warning level
         warning_level = None
         if percentage_used >= 95:
@@ -198,7 +266,15 @@ def get_monthly_usage(month: str = None, db: "Session" = None) -> dict:
             "total_calls": total_calls,
             "monthly_limit": monthly_limit,
             "percentage_used": round(percentage_used, 2),
-            "remaining_calls": remaining_calls,
+            "remaining_calls": effective_remaining,
+            # Nulls mean CFBD has not reported yet this month (no calls made, or
+            # rows predate the column) — the numbers above are then local estimates.
+            "reported_remaining_calls": reported_remaining,
+            "reported_limit": reported_limit,
+            "locally_counted_remaining": remaining_calls,
+            "limit_config_stale": (
+                reported_remaining is not None and reported_remaining > monthly_limit
+            ),
             "average_calls_per_day": round(avg_per_day, 2),
             "warning_level": warning_level,
             "top_endpoints": [
@@ -326,6 +402,9 @@ class CFBDClient:
         for attempt in range(4):
             try:
                 response = requests.get(url, headers=self.headers, params=params)
+                # Record before any early exit — a 429 still carries the header,
+                # and that is exactly when the real number matters most.
+                record_calllimit_remaining(response)
                 if response.status_code == 429:
                     wait = 30 * (attempt + 1)
                     print(f"  Rate limited (429). Waiting {wait}s before retry {attempt + 1}/3...")
