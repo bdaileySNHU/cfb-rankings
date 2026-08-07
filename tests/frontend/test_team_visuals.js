@@ -156,3 +156,22 @@ const pairs = teams.length * (teams.length - 1) * 2;
 console.log(
   `team visuals self-check passed (${teams.length} teams, both themes, ${pairs} bar pairings)`
 );
+
+// ── Conference display labels ──
+// "FBS Independents" overflows a table cell. Shortened for display only; the
+// stored value must stay intact because ranking_service matches on the exact
+// string when deciding who counts as an independent.
+assert.strictEqual(TV.confLabel('FBS Independents'), 'Ind');
+assert.strictEqual(TV.confLabel('Independents'), 'Ind');
+assert.strictEqual(TV.confLabel('Independent'), 'Ind');
+
+// Everything else passes through untouched.
+assert.strictEqual(TV.confLabel('Big Ten'), 'Big Ten');
+assert.strictEqual(TV.confLabel('Mountain West'), 'Mountain West');
+
+// Missing/empty conference must render as empty, never "undefined".
+assert.strictEqual(TV.confLabel(null), '');
+assert.strictEqual(TV.confLabel(undefined), '');
+assert.strictEqual(TV.confLabel(''), '');
+
+console.log('conference label self-check passed');

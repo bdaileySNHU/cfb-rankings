@@ -102,7 +102,7 @@
         (logoImgFor(e.team_name, 24) ||
           '<span class="c-stripe" style="background:' + stripeOf(e) + '"></span>') +
         '<span class="c-name">' + esc(e.team_name) + '</span></div>' +
-      '<div class="c-conf">' + esc(e.conference_name || e.conference || '') + '</div>' +
+      '<div class="c-conf">' + esc(TeamVisuals.confLabel(e.conference_name) || e.conference || '') + '</div>' +
       '<div class="c-wl ta-r">' + e.wins + '-' + e.losses + '</div>' +
       '<div class="c-elo ta-r">' + fmtElo(e.elo_rating) + '</div>' +
       '<div class="c-delta ta-r ' + trendClass(d) + '">' + deltaText(d) + '</div>' +
@@ -278,7 +278,7 @@
       badgeRow += '<span class="badge-rank">No. ' + e.rank + '</span>';
     }
     if (e.conference_name) {
-      badgeRow += '<span class="badge-conf">' + esc(e.conference_name) + '</span>';
+      badgeRow += '<span class="badge-conf">' + esc(TeamVisuals.confLabel(e.conference_name)) + '</span>';
     }
     badgeRow += '<span class="badge-record-wk">' + e.wins + '–' + e.losses + ' · WK' + CURRENT_WEEK + '</span>';
 
@@ -802,7 +802,7 @@
     return '<div class="bk-champ"><div class="bk-champ-lbl">◆ TITLE FAVORITE</div>' +
       '<div class="bk-champ-name"><span class="bk-stripe" style="background:' + c + '"></span>' + esc(abbrName(ch.name)) + '</div>' +
       '<div class="bk-champ-full">' + esc(ch.name) + '</div>' +
-      '<div class="bk-champ-sub">No. ' + ch.seed + ' SEED · ' + esc(ch.conference_name || '') + '</div>' +
+      '<div class="bk-champ-sub">No. ' + ch.seed + ' SEED · ' + esc(TeamVisuals.confLabel(ch.conference_name)) + '</div>' +
       '<div class="bk-champ-win"><span>TITLE-GAME WIN</span><span class="v">' + Math.round(ch.title_game_win_prob) + '%</span></div></div>';
   }
 

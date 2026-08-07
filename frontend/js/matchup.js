@@ -370,8 +370,8 @@ function renderStatsGrid(data) {
   document.getElementById('stat-rec-a').textContent = `${a.wins}–${a.losses}`;
   document.getElementById('stat-rec-b').textContent = `${b.wins}–${b.losses}`;
 
-  document.getElementById('stat-conf-a').textContent = statVal(a.conference_name || a.conference);
-  document.getElementById('stat-conf-b').textContent = statVal(b.conference_name || b.conference);
+  document.getElementById('stat-conf-a').textContent = statVal(TeamVisuals.confLabel(a.conference_name) || a.conference);
+  document.getElementById('stat-conf-b').textContent = statVal(TeamVisuals.confLabel(b.conference_name) || b.conference);
   document.getElementById('stat-conf-a').style.color = 'var(--fg2)';
   document.getElementById('stat-conf-b').style.color = 'var(--fg2)';
   document.getElementById('stat-conf-a').style.fontWeight = '500';

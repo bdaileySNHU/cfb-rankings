@@ -297,11 +297,10 @@ function render() {
     var rowId = 'row-' + team.team_id;
     var breakdownId = 'breakdown-' + team.team_id;
 
-    // Bold simulated ranks for top 4 using inline accent style
-    var rankStyle = rank <= 4 ? 'font-weight: 700; color: var(--accent);' : '';
-
     rows += '<div class="sim-grid-row" id="' + rowId + '" onclick="toggleBreakdown(' + team.team_id + ')">' +
-      '<div class="c-rk"><span class="' + rankClass(rank) + '" style="' + rankStyle + '">' + rank + '</span></div>' +
+      // No inline colour here: .rank-badge.top-5 already paints the badge with
+      // var(--accent), so tinting the text to match rendered ranks 1-4 invisible.
+      '<div class="c-rk"><span class="' + rankClass(rank) + '">' + rank + '</span></div>' +
       '<div class="c-chg ' + chgClass + '">' + chgStr + '</div>' +
       '<div class="c-team">' +
         '<span class="c-stripe" style="background:' + stripeName(team.team_name) + '"></span>' +
