@@ -1,3 +1,12 @@
+# DISABLED — do not enable. Cron runs utilities/weekly_update.sh, which is the
+# one weekly scheduler. This timer drives scripts/weekly_update.py, an earlier
+# and less capable implementation (no retries, no movement report, no
+# notifications). Both ran weekly for a period, duplicating import and snapshot
+# work. Kept for reference and for running the service by hand.
+# See docs/SEASON-RUNBOOK.md §3.
+#
+#   sudo systemctl disable --now cfb-weekly-update.timer
+
 [Unit]
 Description=CFB Rankings Weekly Update Timer
 Documentation=https://github.com/your-repo/cfb-rankings

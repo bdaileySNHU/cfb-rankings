@@ -4,9 +4,11 @@
 # Verify:   sudo logrotate -d /etc/logrotate.d/cfb-rankings     # dry run
 # Force:    sudo logrotate -f /etc/logrotate.d/cfb-rankings     # rotate now
 #
-# Globs the whole directory because three different jobs write there:
-#   weekly.log         utilities/weekly_update.sh   (cron, user bdailey)
-#   weekly-update.log  scripts/weekly_update.py     (systemd timer, user www-data)
+# Globs the whole directory because several jobs write there:
+#   weekly.log         utilities/weekly_update.sh   (cron — the live scheduler)
+#   weekly-update.log  scripts/weekly_update.py     (manual runs only; the
+#                      systemd timer that drove this is disabled, see
+#                      docs/SEASON-RUNBOOK.md §3)
 #   update-games.log   scripts/update-production-data.sh (manual)
 
 /var/log/cfb-rankings/*.log {

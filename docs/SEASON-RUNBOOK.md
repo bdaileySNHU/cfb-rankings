@@ -211,6 +211,9 @@ If predictions return an empty list, confirm games are in the DB and the season 
 
 ### Automated cron (runs at 9 AM every Monday)
 
+**Cron is the one scheduler.** Install under the crontab of the user that owns
+the deployment:
+
 ```
 0 9 * * 1 /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
 ```
@@ -218,10 +221,40 @@ If predictions return an empty list, confirm games are in the DB and the season 
 The script:
 1. Loads `CFBD_API_KEY` from `.env` if not already set
 2. Detects the active season from the DB
-3. Runs `import_real_data.py --season <SEASON>` to pull latest scores
+3. Runs `import_real_data.py --season <SEASON>` to pull latest scores (with retries)
 4. Processes all unprocessed games with scores through the ELO algorithm
 5. Saves `ranking_history` snapshots for each newly completed week
-6. Restarts the `cfb-rankings` service
+6. Computes the rank-movement report and sends Slack / email notifications
+7. Restarts the `cfb-rankings` service
+
+#### The systemd timer is disabled — do not re-enable it
+
+`deploy/cfb-weekly-update.{service,timer}` run `scripts/weekly_update.py`, an
+earlier and less capable implementation: no retries, no movement report, no
+notifications. For a period both it and cron ran weekly, each doing overlapping
+import and snapshot work. The timer is now disabled:
+
+```bash
+sudo systemctl disable --now cfb-weekly-update.timer
+```
+
+The unit files are kept because `weekly_update.py` still holds the pre-flight
+checks (quota guard, week detection) and is useful to run by hand. Running it on
+a schedule alongside cron is what caused the duplication.
+
+#### Caveat: cron runs as your user, not www-data
+
+The job writes to `/var/www/cfb-rankings` — including the database — as whoever
+owns the crontab. If that is not `www-data`, files gradually change owner and a
+later `sudo -u www-data git pull` fails with `unable to unlink old <file>:
+Permission denied`. Recover with:
+
+```bash
+sudo bash deploy/fix-permissions.sh
+```
+
+To stop it recurring, move the entry to www-data's crontab
+(`sudo crontab -u www-data -e`) so the job runs as the user that owns the files.
 
 ### Run the weekly update manually (if cron fails or needs re-running)
 
