@@ -212,7 +212,14 @@
       const tbody = document.getElementById('games-tbody');
       tbody.innerHTML = '';
 
-      games.sort((a, b) => b.week - a.week || b.id - a.id).forEach(game => {
+      // Chronological: week 1 first. Descending suited a results table mid-season,
+      // but this is mostly a forward schedule now. game_date breaks ties within a
+      // week; the few rows CFBD has not timed yet fall back to id.
+      games.sort((a, b) =>
+        a.week - b.week ||
+        (a.game_date || '').localeCompare(b.game_date || '') ||
+        a.id - b.id
+      ).forEach(game => {
         const row = document.createElement('tr');
 
         // Check if game has been played (scores exist)
