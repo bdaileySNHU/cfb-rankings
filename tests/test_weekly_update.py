@@ -250,10 +250,36 @@ class TestMainFunction:
     @patch("weekly_update.is_active_season")
     @patch("weekly_update.get_current_week_wrapper")
     @patch("weekly_update.sys.exit")
-    def test_no_current_week_exits_with_error(self, mock_exit, mock_get_week, mock_is_active):
-        """No current week should exit with error code 1"""
+    def test_preseason_no_current_week_exits_gracefully(
+        self, mock_exit, mock_get_week, mock_is_active
+    ):
+        """Calendar-active but not yet kicked off is normal, not a failure.
+
+        is_active_season() turns true on Aug 1 while the first game is ~4 weeks
+        out, so CFBD has no completed games to derive a week from. Exiting
+        non-zero there marked the systemd unit failed on every run for a month
+        and buried any real problem in the noise.
+        """
         mock_is_active.return_value = True
         mock_get_week.return_value = None
+
+        weekly_update.main()
+
+        mock_exit.assert_called_once_with(0)
+
+    @patch("weekly_update.is_active_season")
+    @patch("weekly_update.get_current_week_wrapper")
+    @patch("weekly_update.sys.exit")
+    def test_week_detection_failure_still_exits_with_error(
+        self, mock_exit, mock_get_week, mock_is_active
+    ):
+        """A genuine CFBD failure must stay an error.
+
+        get_current_week_wrapper() re-raises API failures rather than returning
+        None, so the graceful-skip path above must not swallow them.
+        """
+        mock_is_active.return_value = True
+        mock_get_week.side_effect = Exception("CFBD unreachable")
 
         weekly_update.main()
 
