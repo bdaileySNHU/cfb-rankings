@@ -239,7 +239,22 @@
     }
   }
 
+  // Display names for conferences whose CFBD label is too long for a table
+  // cell. Presentation only — the stored value stays as CFBD sends it, because
+  // ranking_service matches independents on the exact string.
+  var CONF_LABELS = {
+    'FBS Independents': 'Ind',
+    'Independents': 'Ind',
+    'Independent': 'Ind',
+  };
+
+  function confLabel(name) {
+    if (!name) return '';
+    return CONF_LABELS[name] || name;
+  }
+
   var api = {
+    confLabel: confLabel,
     readable: readable,
     tooSimilar: tooSimilar,
     distinguish: distinguish,

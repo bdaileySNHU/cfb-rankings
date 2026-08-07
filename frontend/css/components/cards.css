@@ -78,6 +78,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* Inside a narrow grid cell a flex item shrinks on the main axis only, which
+     turns the circle into an ellipse. Hold the width. */
+  flex-shrink: 0;
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;

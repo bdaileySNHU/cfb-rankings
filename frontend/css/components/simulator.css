@@ -179,6 +179,9 @@
   color: var(--fg3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  /* Fixed-width columns are sized for their cells, not their labels — let a
+     long header run rather than wrap to a second line. */
+  white-space: nowrap;
   padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   display: flex;
@@ -210,6 +213,15 @@
 /* Cell Alignments & Formatting */
 .sim-grid-row .c-rk {
   justify-content: flex-start;
+  /* The default 14px side padding leaves 28px for a 30px badge. Trim it so the
+     badge keeps its circle at every breakpoint. */
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.sim-grid-row .c-rk .rank-badge {
+  width: 30px;
+  height: 30px;
+  font-size: 12.5px;
 }
 .sim-grid-row .c-chg {
   font-family: var(--font-mono);
@@ -397,6 +409,17 @@
 @media (max-width: 680px) {
   .sim-grid {
     grid-template-columns: 40px 45px 1fr 90px 75px;
+  }
+  /* Below this the rank column is narrower than any legible circle, and a
+     3-digit rank would not fit one anyway. Drop to a plain number. */
+  .sim-grid-row .c-rk .rank-badge {
+    width: auto;
+    height: auto;
+    background: none;
+    border: none;
+    border-radius: 0;
+    color: var(--fg);
+    font-size: 12px;
   }
   .sim-grid-header div:nth-child(4), /* CONF */
   .sim-grid-header div:nth-child(6), /* OFF RTNG */
