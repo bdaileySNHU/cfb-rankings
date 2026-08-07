@@ -109,13 +109,9 @@
     <div class="tkr-filter-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-bottom: 0.5rem;">
       <h2 style="font-family: var(--font-sans); font-size: 14.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg); margin: 0;">All Games</h2>
       <div class="filters">
+        <!-- Options are rebuilt from the loaded schedule by populateWeekFilter() -->
         <select class="filter-select" id="week-filter">
           <option value="">All Weeks</option>
-          <option value="1">Week 1</option>
-          <option value="2">Week 2</option>
-          <option value="3">Week 3</option>
-          <option value="4">Week 4</option>
-          <option value="5">Week 5</option>
         </select>
       </div>
     </div>
@@ -153,6 +149,7 @@
   </footer>
 
   <script src="js/api.js"></script>
+  <script src="js/paging.js"></script>
   <script src="js/date-utils.js"></script>
   <script src="js/season.js"></script>
   <script src="js/countdown.js"></script>
@@ -171,7 +168,7 @@
         const activeSeason = await api.getActiveSeason();
 
         const [gamesData, teamsData] = await Promise.all([
-          api.getGames({ season: activeSeason, limit: 200 }),
+          fetchAllGames(activeSeason),
           api.getTeams()
         ]);
 
@@ -180,12 +177,29 @@
         // Create teams lookup
         teamsData.forEach(t => teams[t.id] = t);
 
+        populateWeekFilter(allGames);
         displayGames(allGames);
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('games-container').classList.remove('hidden');
       } catch (err) {
         console.error('Error loading games:', err);
       }
+    }
+
+    // A full season is ~900 games and the API caps limit at 500, so the old
+    // single limit=200 request truncated to whichever weeks sort first — the
+    // reason weeks past the cutoff rendered empty.
+    function fetchAllGames(season) {
+      return fetchAllPages((skip, limit) => api.getGames({ season, skip, limit }));
+    }
+
+    // Weeks were hardcoded 1-5. Build them from the schedule instead so bowl and
+    // championship weeks show up without another edit.
+    function populateWeekFilter(games) {
+      const select = document.getElementById('week-filter');
+      const weeks = [...new Set(games.map(g => g.week))].sort((a, b) => a - b);
+      select.innerHTML = '<option value="">All Weeks</option>' +
+        weeks.map(w => `<option value="${w}">Week ${w}</option>`).join('');
     }
 
     function filterGames() {
