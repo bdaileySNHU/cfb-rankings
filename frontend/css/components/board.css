@@ -19,6 +19,7 @@
   height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
 }
 .tkr-brand { display: flex; align-items: center; gap: 11px; }
+.tkr-home { display: flex; align-items: center; gap: 11px; text-decoration: none; }
 .tkr-badge {
   width: 27px; height: 27px; border-radius: 7px; background: var(--accent);
   display: flex; align-items: center; justify-content: center;

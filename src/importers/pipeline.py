@@ -14,6 +14,7 @@ except (PermissionError, FileNotFoundError):
     pass
 
 from src.core.ranking_service import RankingService
+from src.importers.common import resolve_final_week
 from src.importers.games import import_games
 from src.importers.postseason import (
     import_bowl_games,
@@ -229,10 +230,9 @@ Examples:
         .first()
     )
 
-    if actual_max_week:
-        final_week = actual_max_week.week
-    else:
-        final_week = max_week
+    final_week = resolve_final_week(
+        actual_max_week.week if actual_max_week else None, season_obj.current_week
+    )
 
     # Update season current week to actual max
     season_obj.current_week = final_week
