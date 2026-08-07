@@ -35,19 +35,21 @@
   function abbrOf(e) { return abbrName(e.team_name); }
   function stripeOf(e) { return stripeName(e.team_name); }
 
-  // Two brand colors "clash" when their hexes are too close — recolor one for
-  // contrast in the split win-prob bar. ponytail: simple RGB distance.
   function rgb(hex) {
     var m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
     if (!m) return null;
     var n = parseInt(m[1], 16);
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   }
-  function clash(a, b) {
-    var ra = rgb(a), rb = rgb(b);
-    if (!ra || !rb) return false;
-    var d = Math.abs(ra[0] - rb[0]) + Math.abs(ra[1] - rb[1]) + Math.abs(ra[2] - rb[2]);
-    return d < 90;
+
+  // Colour for `awayName` in a split bar shared with `homeName`. Falls back to
+  // the away team's alternate colour when the two brands read as the same, so a
+  // red-vs-red matchup stays two team colours instead of one going grey.
+  function pairColor(awayName, homeName) {
+    var awayMeta = metaOf(awayName);
+    var homePrimary = metaOf(homeName).primary;
+    if (!window.TeamVisuals || !awayMeta.primary || !homePrimary) return stripeName(awayName);
+    return window.TeamVisuals.distinguish(awayMeta, homePrimary);
   }
 
   // d = rank_change (prevRank - rank). >0 up, <0 down, 0 flat.
@@ -727,8 +729,10 @@
 
   function predRow(p) {
     var aw = p.away_team, hm = p.home_team;
-    var awColor = stripeName(aw), hmColor = stripeName(hm);
-    if (clash(awColor, hmColor)) awColor = 'var(--fg3)';
+    var hmColor = stripeName(hm);
+    // The away side gives way when the two brands are hard to tell apart,
+    // preferring the away team's own alternate colour over a neutral.
+    var awColor = pairColor(aw, hm);
     var awP = Math.round(p.away_win_probability), hmP = Math.round(p.home_win_probability);
     var sep = p.is_neutral_site ? 'v' : '@';
     var margin = Math.abs(p.predicted_home_score - p.predicted_away_score);
@@ -782,8 +786,7 @@
 
   function matchCard(m) {
     var hi = m.high, lo = m.low, hiWin = m.winner_id === hi.team_id;
-    var hC = stripeName(hi.name), lC = stripeName(lo.name);
-    if (clash(hC, lC)) lC = 'var(--fg3)';
+    var hC = stripeName(hi.name), lC = pairColor(lo.name, hi.name);
     var label = m.neutral ? esc(m.label.toUpperCase()) : '△ ' + esc(abbrName(hi.name));
     return '<div class="bk-card"><div class="bk-label">' + label + '</div>' +
       '<div class="bk-box">' + bkTeamRow(hi, hiWin, hC) + bkTeamRow(lo, !hiWin, lC) +

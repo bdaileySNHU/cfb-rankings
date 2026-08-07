@@ -106,4 +106,53 @@ assert.ok(
 const missing = teams.filter(([, m]) => m.cfbd_id == null).map(([n]) => n);
 assert.strictEqual(missing.length, 0, `teams without a cfbd_id: ${missing.join(', ')}`);
 
-console.log(`team visuals self-check passed (${teams.length} teams, both themes)`);
+// ── Split-bar colour separation ──────────────────────────────────────────────
+
+// Same hue and similar lightness is the case that was slipping through: two
+// reds side by side read as one bar.
+assert.ok(TV.tooSimilar('#cc0000', '#b00000'), 'two similar reds are too similar');
+// Different hue at similar lightness is fine — red vs blue is legible.
+assert.ok(!TV.tooSimilar('#cc0000', '#0000cc'), 'red vs blue is distinguishable');
+// Same hue at very different lightness is fine — dark red vs pink.
+assert.ok(!TV.tooSimilar('#330000', '#ff9999'), 'dark vs light red is distinguishable');
+
+// Every ordered pair of real teams must come out separable, and none may be
+// left on the neutral if the team has a usable alternate colour.
+let unresolved = [];
+let viaNeutral = 0;
+for (const [awayName, awayMeta] of teams) {
+  for (const [homeName, homeMeta] of teams) {
+    if (awayName === homeName) continue;
+    for (const light of [false, true]) {
+      const home = TV.readable(homeMeta.primary, { light });
+      const away = TV.distinguish(awayMeta, homeMeta.primary, { light });
+      if (TV.tooSimilar(away, home)) unresolved.push(`${awayName} vs ${homeName} (light=${light})`);
+      // Whatever we pick must still be visible on the panel.
+      const surface = light ? TV.LIGHT_SURFACE : TV.DARK_SURFACE;
+      assert.ok(
+        TV.contrast(away, surface) >= TV.MIN_CONTRAST - 0.001,
+        `${awayName} vs ${homeName}: ${away} fails panel contrast`
+      );
+      if (away === '#b8bcc4' || away === '#4a4a4a') viaNeutral++;
+    }
+  }
+}
+assert.strictEqual(
+  unresolved.length, 0,
+  `pairs still indistinguishable: ${unresolved.slice(0, 5).join('; ')}`
+);
+assert.strictEqual(viaNeutral, 0, `${viaNeutral} pairs fell back to a neutral colour`);
+
+// The screenshot cases specifically: a red away team against a red home team
+// should end up on the away team's alternate, not grey.
+const usc = meta['USC'];
+const uscVsRed = TV.distinguish(usc, '#c8102e', { light: false }); // vs Houston red
+assert.ok(
+  !TV.tooSimilar(uscVsRed, TV.readable('#c8102e', { light: false })),
+  `USC vs a red opponent still clashes: ${uscVsRed}`
+);
+
+const pairs = teams.length * (teams.length - 1) * 2;
+console.log(
+  `team visuals self-check passed (${teams.length} teams, both themes, ${pairs} bar pairings)`
+);

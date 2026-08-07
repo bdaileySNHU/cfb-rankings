@@ -119,6 +119,82 @@
     return lightTheme ? '#4a4a4a' : '#b8bcc4';
   }
 
+  // ── Telling two teams apart in a split bar ──────────────────────────────────
+
+  var MIN_PAIR_CONTRAST = 1.6;  // lightness separation that reads at a glance
+  var MIN_HUE_DELTA = 40;       // degrees; below this two colours read as "same"
+  var GREY_SAT = 0.15;          // below this, hue carries no information
+
+  function hueDegrees(hsl) { return hsl[0] * 360; }
+
+  /**
+   * True when two colours are hard to tell apart side by side.
+   *
+   * Lightness alone can separate them (dark red vs pink), and hue alone can
+   * (red vs blue) — it takes *both* being close to be a problem. Near-greys are
+   * judged on lightness only, since their hue is noise.
+   */
+  function tooSimilar(a, b) {
+    var ra = parseHex(a), rb = parseHex(b);
+    if (!ra || !rb) return false;
+    if (contrast(ra, rb) >= MIN_PAIR_CONTRAST) return false;
+
+    var ha = rgbToHsl(ra), hb = rgbToHsl(rb);
+    if (ha[1] < GREY_SAT || hb[1] < GREY_SAT) return true;
+
+    var d = Math.abs(hueDegrees(ha) - hueDegrees(hb));
+    if (d > 180) d = 360 - d;
+    return d < MIN_HUE_DELTA;
+  }
+
+  /**
+   * Pick a colour for `away` that is distinguishable from `home` in a split bar.
+   *
+   * Ladder, stopping at the first rung that works:
+   *   1. the away team's own colour, if it already separates
+   *   2. the away team's alternate ("away") colour — keeps team identity
+   *   3. lightness-shift the away colour, preserving hue
+   *   4. a neutral, as a last resort
+   *
+   * Every candidate must also clear the panel contrast floor, so nothing
+   * returned here is invisible against the background.
+   */
+  function distinguish(awayMeta, homeColor, opts) {
+    opts = opts || {};
+    var lightTheme = opts.light !== undefined ? opts.light : isLightTheme();
+    var o = { light: lightTheme };
+    var home = readable(homeColor, o);
+
+    var away = readable((awayMeta && awayMeta.primary) || '', o);
+    if (!parseHex(away)) return away;
+    if (!tooSimilar(away, home)) return away;
+
+    // 2. The away team's alternate colour — still their brand.
+    if (awayMeta && awayMeta.secondary) {
+      var alt = readable(awayMeta.secondary, o);
+      if (parseHex(alt) && !tooSimilar(alt, home)) return alt;
+    }
+
+    // 3. Shift lightness, keeping hue so it still reads as the team's colour.
+    var surface = parseHex(lightTheme ? LIGHT_SURFACE : DARK_SURFACE);
+    var hsl = rgbToHsl(parseHex(away));
+    for (var dir = 0; dir < 2; dir++) {
+      var step = dir === 0 ? (lightTheme ? 0.03 : -0.03) : (lightTheme ? -0.03 : 0.03);
+      var l = hsl[2];
+      for (var i = 0; i < 33; i++) {
+        l = Math.max(0, Math.min(1, l + step));
+        var cand = toHex(hslToRgb([hsl[0], hsl[1], l]));
+        if (!tooSimilar(cand, home) && contrast(parseHex(cand), surface) >= MIN_CONTRAST) {
+          return cand;
+        }
+        if (l <= 0 || l >= 1) break;
+      }
+    }
+
+    // 4. Neutral. Distinguishable from any hue, still readable on the panel.
+    return lightTheme ? '#4a4a4a' : '#b8bcc4';
+  }
+
   /** CFBD logo URL for a team meta entry, or null when the team has no id. */
   function logoUrl(meta, size, opts) {
     opts = opts || {};
@@ -165,6 +241,8 @@
 
   var api = {
     readable: readable,
+    tooSimilar: tooSimilar,
+    distinguish: distinguish,
     contrast: function (a, b) {
       var ra = parseHex(a), rb = parseHex(b);
       return ra && rb ? contrast(ra, rb) : null;
