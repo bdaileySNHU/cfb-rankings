@@ -313,3 +313,26 @@ class TestMockClientErrorHandling:
         alabama = team_objects["Alabama"]
         assert alabama.recruiting_rank == 999  # Default for unranked
         assert alabama.returning_production == 0.5  # Default
+
+
+@pytest.mark.integration
+class TestResolveFinalWeek:
+    """Which week an import leaves the season sitting on."""
+
+    def test_uses_latest_processed_week_in_season(self):
+        from src.importers import resolve_final_week
+
+        assert resolve_final_week(7, 6) == 7
+
+    def test_preseason_stays_put_instead_of_jumping_to_max_week(self):
+        # Nothing processed yet: --max-week 15 pulls the whole schedule, but the
+        # season is still on week 1. Advancing here would stamp a 0-0 snapshot
+        # over the preseason rankings.
+        from src.importers import resolve_final_week
+
+        assert resolve_final_week(None, 1) == 1
+
+    def test_week_zero_is_a_real_week_not_a_missing_one(self):
+        from src.importers import resolve_final_week
+
+        assert resolve_final_week(0, 5) == 0

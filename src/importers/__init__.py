@@ -12,6 +12,7 @@ from src.importers.common import (
     find_existing_game,
     get_or_create_fcs_team,
     parse_game_date,
+    resolve_final_week,
 )
 from src.importers.games import import_games
 from src.importers.pipeline import main
@@ -46,6 +47,7 @@ __all__ = [
     "main",
     "parse_game_date",
     "print_duplicate_report",
+    "resolve_final_week",
     "validate_api_connection",
     "validate_import_results",
 ]

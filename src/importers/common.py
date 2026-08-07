@@ -21,6 +21,18 @@ CONFERENCE_MAP = {
 }
 
 
+def resolve_final_week(latest_processed_week, current_week: int) -> int:
+    """Week the season should sit on after an import.
+
+    ``--max-week`` says how far the SCHEDULE was pulled, not how far the season
+    has played, so it is not a safe fallback. In preseason nothing is processed
+    yet and ``latest_processed_week`` is None; advancing to --max-week there
+    would jump current_week to 15 and stamp a 0-0 snapshot over the preseason
+    rankings. Stay put instead.
+    """
+    return latest_processed_week if latest_processed_week is not None else current_week
+
+
 def parse_game_date(game_data: dict) -> datetime:
     """
     Parse game date from CFBD API response.

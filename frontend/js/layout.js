@@ -40,8 +40,10 @@
     '<header class="tkr-header">' +
       '<div class="tkr-header-inner">' +
         '<div class="tkr-brand">' +
-          '<span class="tkr-badge">S</span>' +
-          '<span class="tkr-wordmark">STATURDAY<span class="dot">.TKR</span></span>' +
+          '<a class="tkr-home" href="index.html" aria-label="Staturday home">' +
+            '<span class="tkr-badge">S</span>' +
+            '<span class="tkr-wordmark">STATURDAY<span class="dot">.TKR</span></span>' +
+          '</a>' +
           '<span class="tkr-week" id="tkr-week"></span>' +
           '<span class="tkr-countdown" id="tkr-countdown"></span>' +
         '</div>' +

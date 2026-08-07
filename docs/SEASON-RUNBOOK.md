@@ -138,11 +138,22 @@ were imported correctly.
 ### 1g. Import the game schedule
 
 ```bash
-sudo -u www-data venv/bin/python3 import_real_data.py --season 2026
+sudo -u www-data venv/bin/python3 import_real_data.py --season 2026 --max-week 15
 ```
 
 This pulls all scheduled games (with 0-0 placeholder scores for future games) from the
 CFBD API and inserts them into the `games` table.
+
+**`--max-week` is required in the preseason.** Without it the pipeline auto-detects
+the max week from CFBD; before kickoff there is no week data, so it falls back to
+week 1 and you import only the opening weekend. Week 15 covers the full regular
+season plus Army–Navy. In-season (`utilities/weekly_update.sh`) auto-detection
+works fine and the flag is unnecessary.
+
+Re-running this is safe and idempotent — existing games are matched and updated
+in place. Re-run it if `game_date` is null on scheduled games (rows written before
+the camelCase `startDate` fix in `src/importers/common.py` have no date; a re-import
+backfills them).
 
 ### 1h. Restart the API service
 
