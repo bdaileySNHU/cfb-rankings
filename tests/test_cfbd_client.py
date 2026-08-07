@@ -521,3 +521,130 @@ class TestGetCurrentSeasonWithDateLogic:
         mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
 
         assert client.get_current_season() == 2025  # Playoffs ongoing
+
+
+class TestCallLimitHeader:
+    """CFBD reports remaining monthly calls on every response.
+
+    This is the only authoritative quota figure: counting api_usage rows misses
+    calls made from other hosts, and CFBD_MONTHLY_LIMIT is hand-configured and
+    goes stale on a plan change.
+    """
+
+    def _response(self, headers):
+        response = Mock()
+        response.headers = headers
+        return response
+
+    def test_parses_header(self):
+        from src.integrations.cfbd_client import record_calllimit_remaining
+
+        assert record_calllimit_remaining(self._response({"x-calllimit-remaining": "28989"})) == 28989
+
+    def test_last_value_is_readable_by_the_tracking_decorator(self):
+        from src.integrations.cfbd_client import (
+            get_last_calllimit_remaining,
+            record_calllimit_remaining,
+        )
+
+        record_calllimit_remaining(self._response({"x-calllimit-remaining": "1234"}))
+        assert get_last_calllimit_remaining() == 1234
+
+    def test_missing_header_returns_none(self):
+        from src.integrations.cfbd_client import record_calllimit_remaining
+
+        assert record_calllimit_remaining(self._response({})) is None
+
+    def test_garbage_header_does_not_raise(self):
+        """A malformed header must never break the API call that carried it."""
+        from src.integrations.cfbd_client import record_calllimit_remaining
+
+        assert record_calllimit_remaining(self._response({"x-calllimit-remaining": "lots"})) is None
+        assert record_calllimit_remaining(self._response({"x-calllimit-remaining": None})) is None
+
+    def test_response_without_headers_does_not_raise(self):
+        from src.integrations.cfbd_client import record_calllimit_remaining
+
+        assert record_calllimit_remaining(object()) is None
+
+
+class TestMonthlyUsageReporting:
+    """get_monthly_usage prefers CFBD's figure over the local estimate."""
+
+    def _seed(self, db, month, rows):
+        from src.models.models import APIUsage
+
+        for remaining in rows:
+            db.add(
+                APIUsage(
+                    endpoint="/games",
+                    status_code=200,
+                    response_time_ms=1.0,
+                    month=month,
+                    calllimit_remaining=remaining,
+                )
+            )
+        db.commit()
+
+    def test_uses_most_recent_reported_figure(self, test_db, monkeypatch):
+        from src.integrations.cfbd_client import get_monthly_usage
+
+        monkeypatch.setenv("CFBD_MONTHLY_LIMIT", "30000")
+        # Three calls; the newest row carries the current figure.
+        self._seed(test_db, "2026-08", [28991, 28990, 28989])
+
+        usage = get_monthly_usage("2026-08", db=test_db)
+
+        assert usage["reported_remaining_calls"] == 28989
+        assert usage["remaining_calls"] == 28989
+        # Local count sees only its own 3 rows and would claim 29997.
+        assert usage["locally_counted_remaining"] == 29997
+
+    def test_falls_back_to_local_estimate_when_unreported(self, test_db, monkeypatch):
+        from src.integrations.cfbd_client import get_monthly_usage
+
+        monkeypatch.setenv("CFBD_MONTHLY_LIMIT", "30000")
+        self._seed(test_db, "2026-08", [None, None])
+
+        usage = get_monthly_usage("2026-08", db=test_db)
+
+        assert usage["reported_remaining_calls"] is None
+        assert usage["remaining_calls"] == 29998
+
+    def test_flags_a_stale_configured_limit(self, test_db, monkeypatch):
+        """More calls left than the configured ceiling means the plan was upgraded."""
+        from src.integrations.cfbd_client import get_monthly_usage
+
+        monkeypatch.setenv("CFBD_MONTHLY_LIMIT", "30000")
+        self._seed(test_db, "2026-08", [45000])
+
+        usage = get_monthly_usage("2026-08", db=test_db)
+
+        assert usage["limit_config_stale"] is True
+        assert usage["reported_limit"] == 45000
+        # Must not report a negative or >100% usage off the stale ceiling.
+        assert 0 <= usage["percentage_used"] <= 100
+
+    def test_percentage_tracks_the_reported_figure(self, test_db, monkeypatch):
+        from src.integrations.cfbd_client import get_monthly_usage
+
+        monkeypatch.setenv("CFBD_MONTHLY_LIMIT", "1000")
+        self._seed(test_db, "2026-08", [250])  # 750 of 1000 consumed
+
+        usage = get_monthly_usage("2026-08", db=test_db)
+
+        assert usage["percentage_used"] == 75.0
+        assert usage["warning_level"] is None  # below the 80% threshold
+
+    def test_warning_level_fires_off_the_reported_figure(self, test_db, monkeypatch):
+        """The threshold must follow CFBD's number, not the local row count."""
+        from src.integrations.cfbd_client import get_monthly_usage
+
+        monkeypatch.setenv("CFBD_MONTHLY_LIMIT", "1000")
+        # One local row, so the local estimate would say 0.1% used and stay silent.
+        self._seed(test_db, "2026-08", [80])  # 920 of 1000 actually consumed
+
+        usage = get_monthly_usage("2026-08", db=test_db)
+
+        assert usage["percentage_used"] == 92.0
+        assert usage["warning_level"] == "90%"

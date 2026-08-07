@@ -585,6 +585,12 @@ class APIUsage(Base):
     status_code = Column(Integer, nullable=False)
     response_time_ms = Column(Float, default=0.0)
     month = Column(String(7), index=True, nullable=False)  # YYYY-MM format
+    # CFBD returns the account's remaining monthly calls on every response
+    # (x-calllimit-remaining). Authoritative, unlike counting local rows: it
+    # accounts for calls made from other hosts and needs no configured limit.
+    # Null for rows written before this column existed, or if the header is
+    # missing from a response.
+    calllimit_remaining = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     def __repr__(self):
