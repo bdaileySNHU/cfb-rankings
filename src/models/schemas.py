@@ -429,6 +429,18 @@ class APIUsageResponse(BaseModel):
     top_endpoints: List[EndpointUsage]
     last_updated: datetime
 
+    # CFBD's own quota figures, from the x-calllimit-remaining header. Null until
+    # a call has been made this month with the header recorded, in which case the
+    # fields above are local estimates. Declared here because response_model
+    # silently drops undeclared keys — omitting them made the values invisible to
+    # every client even though the endpoint was computing them.
+    reported_remaining_calls: Optional[int] = None
+    reported_limit: Optional[int] = None
+    locally_counted_remaining: Optional[int] = None
+    # True when CFBD reports more calls left than CFBD_MONTHLY_LIMIT allows —
+    # the plan was upgraded and .env was not.
+    limit_config_stale: Optional[bool] = None
+
 
 # ============================================================================
 # Admin - Manual Update Trigger Schemas

@@ -349,3 +349,55 @@ class TestAPIIntegration:
         assert status_response.status_code == 200
         assert status_response.json()["task_id"] == task_id
         assert status_response.json()["status"] in ["started", "running", "completed", "failed"]
+
+
+class TestAPIUsageResponseShape:
+    """The response model must not drop CFBD's reported quota fields.
+
+    get_monthly_usage() computed them correctly, but response_model silently
+    strips undeclared keys, so they never reached any client.
+    """
+
+    def test_reported_fields_survive_the_response_model(self):
+        from src.models.schemas import APIUsageResponse
+
+        payload = {
+            "month": "2026-08",
+            "total_calls": 346,
+            "monthly_limit": 30000,
+            "percentage_used": 3.39,
+            "remaining_calls": 28983,
+            "average_calls_per_day": 49.4,
+            "warning_level": None,
+            "top_endpoints": [],
+            "last_updated": datetime.utcnow(),
+            "reported_remaining_calls": 28983,
+            "reported_limit": 30000,
+            "locally_counted_remaining": 29654,
+            "limit_config_stale": False,
+        }
+
+        serialized = APIUsageResponse(**payload).model_dump()
+
+        assert serialized["reported_remaining_calls"] == 28983
+        assert serialized["reported_limit"] == 30000
+        assert serialized["locally_counted_remaining"] == 29654
+        assert serialized["limit_config_stale"] is False
+
+    def test_reported_fields_are_optional(self):
+        """Before any call carries the header, they are absent — not an error."""
+        from src.models.schemas import APIUsageResponse
+
+        serialized = APIUsageResponse(
+            month="2026-08",
+            total_calls=0,
+            monthly_limit=30000,
+            percentage_used=0.0,
+            remaining_calls=30000,
+            average_calls_per_day=0.0,
+            top_endpoints=[],
+            last_updated=datetime.utcnow(),
+        ).model_dump()
+
+        assert serialized["reported_remaining_calls"] is None
+        assert serialized["limit_config_stale"] is None
