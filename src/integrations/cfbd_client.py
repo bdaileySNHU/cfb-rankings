@@ -884,6 +884,55 @@ class CFBDClient:
 
         return result
 
+    def get_team_ppa_season(self, year: int, team: Optional[str] = None) -> List[Dict]:
+        """
+        Get opponent-adjusted team season PPA (Predicted Points Added per play).
+
+        This is the efficiency signal behind CORE-style ratings: CFBD has already
+        done both adjustment stages (situational context, then opponent strength
+        across the schedule network), so we consume the adjusted numbers rather
+        than refitting them from play-level data.
+
+        In-season the endpoint returns season-to-date values, so calling it during
+        week N yields a point-in-time rating with no lookahead.
+
+        Part of: EPIC-045 (CORE-style efficiency blend) - Story 45.1
+
+        Args:
+            year: Season year (e.g., 2025)
+            team: Optional team name filter (e.g., "Georgia")
+
+        Returns:
+            List of team PPA dictionaries, each containing:
+                - team: str - CFBD team name
+                - conference: str
+                - offense: dict - includes "overall" (adjusted PPA per play, higher is better)
+                - defense: dict - includes "overall" (adjusted PPA allowed per play, lower is better)
+
+            Returns empty list if API call fails or no data available.
+
+        Example:
+            >>> client = CFBDClient()
+            >>> ppa = client.get_team_ppa_season(year=2025)
+            >>> net = ppa[0]["offense"]["overall"] - ppa[0]["defense"]["overall"]
+
+        Note:
+            - Automatically tracked via @track_api_usage decorator (through _get)
+            - Gracefully handles API errors by returning empty list
+            - API endpoint: GET /ppa/teams
+        """
+        params: Dict = {"year": year}
+        if team:
+            params["team"] = team
+
+        result = self._get("/ppa/teams", params=params)
+
+        if result is None:
+            logger.warning(f"Failed to fetch team PPA for year={year}, team={team}")
+            return []
+
+        return result
+
     def get_team_talent(self, year: int) -> List[Dict]:
         """
         Get team talent composite scores

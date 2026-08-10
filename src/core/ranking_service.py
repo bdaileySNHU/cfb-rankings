@@ -34,15 +34,185 @@ Note:
 
 import logging
 import math
+import os
+import statistics
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, object_session
 
 logger = logging.getLogger(__name__)
 
 from src.models.models import ConferenceType, Game, Prediction, RankingHistory, Season, Team
+
+# ── EPIC-045: CORE-style efficiency blend ────────────────────────────────────
+# ELO is result-driven (who won, by how much). Opponent-adjusted PPA is
+# efficiency-driven (how many points per play a team creates and allows). They
+# disagree about teams that keep winning close games against weak opponents, so
+# blending the two produces a rating neither signal gives alone.
+#
+# The two signals live on different scales, and the mismatch is not small: over
+# 2025 this model's FBS ELO spans ~215 points while net PPA spans ~0.63/play.
+# Converting PPA with a fixed points-per-play constant therefore injects far more
+# spread than the blend weight advertises. Instead both signals are standardized
+# to z-scores and efficiency is expressed on ELO's own mean and spread, so
+# EFFICIENCY_WEIGHT means what it says and the mapping recalibrates itself as
+# ELO disperses over the course of a season.
+
+# How much of the final rating comes from efficiency. Tunable without a redeploy;
+# EFFICIENCY_WEIGHT=0 disables the blend entirely and restores pure ELO.
+EFFICIENCY_WEIGHT = float(os.getenv("EFFICIENCY_WEIGHT", "0.25"))
+
+# Adjusted PPA is unstable on a handful of games, and CFBD's opponent adjustment
+# has little schedule network to work with early. Below this week, pure ELO.
+EFFICIENCY_MIN_WEEK = 4
+
+# Standardizing needs enough teams for the mean/stdev to mean anything.
+EFFICIENCY_MIN_TEAMS = 20
+
+
+def net_ppa(team: Team) -> Optional[float]:
+    """Net opponent-adjusted PPA per play (offense minus defense allowed)."""
+    if team.offense_ppa is None or team.defense_ppa is None:
+        return None
+    return team.offense_ppa - team.defense_ppa
+
+
+def efficiency_scale(db: Session) -> Optional[Tuple[float, float, float, float]]:
+    """Population stats needed to express efficiency on the ELO scale.
+
+    Computed over FBS teams that have efficiency data, so the mapping tracks
+    however wide or compressed ELO happens to be at this point in the season.
+
+    Args:
+        db: SQLAlchemy session
+
+    Returns:
+        (mean_elo, stdev_elo, mean_net, stdev_net), or None if there is not
+        enough data to standardize — in which case callers fall back to pure ELO.
+    """
+    # The blend is an enhancement, never a hard dependency: any problem reading
+    # the population falls back to pure ELO rather than breaking predictions.
+    try:
+        teams = [
+            t
+            for t in db.query(Team).filter(Team.is_fcs == False).all()  # noqa: E712
+            if net_ppa(t) is not None
+        ]
+    except Exception as e:  # pragma: no cover - defensive
+        logger.warning(f"Could not compute efficiency scale, falling back to pure ELO: {e}")
+        return None
+
+    if len(teams) < EFFICIENCY_MIN_TEAMS:
+        return None
+
+    elos = [t.elo_rating for t in teams]
+    nets = [net_ppa(t) for t in teams]
+    stdev_elo = statistics.stdev(elos)
+    stdev_net = statistics.stdev(nets)
+    if stdev_elo <= 0 or stdev_net <= 0:
+        return None
+
+    return statistics.fmean(elos), stdev_elo, statistics.fmean(nets), stdev_net
+
+
+def efficiency_rating(team: Team, scale: Tuple[float, float, float, float]) -> Optional[float]:
+    """Express a team's efficiency on the ELO scale.
+
+    Args:
+        team: Team with offense_ppa / defense_ppa populated by the efficiency import
+        scale: Output of :func:`efficiency_scale`
+
+    Returns:
+        Efficiency-implied ELO rating, or None if the team has no PPA data
+        (preseason, FCS opponents, or a team CFBD does not cover).
+    """
+    net = net_ppa(team)
+    if net is None:
+        return None
+
+    mean_elo, stdev_elo, mean_net, stdev_net = scale
+    return mean_elo + ((net - mean_net) / stdev_net) * stdev_elo
+
+
+def blend_rating(
+    elo: float,
+    eff: Optional[float],
+    weight: float = None,
+    week: Optional[int] = None,
+    min_week: int = None,
+) -> float:
+    """Combine an ELO rating with an efficiency rating on the same scale.
+
+    The single place the blend arithmetic lives, so that tuning tools
+    (scripts/backtest_efficiency_blend.py) and production cannot drift apart.
+
+    Args:
+        elo: Pure ELO rating
+        eff: Efficiency rating on the ELO scale, or None if unavailable
+        weight: Efficiency share; defaults to EFFICIENCY_WEIGHT
+        week: Season week, or None to skip the early-season gate
+        min_week: Earliest week the blend applies; defaults to EFFICIENCY_MIN_WEEK
+
+    Returns:
+        Blended rating, or ``elo`` unchanged whenever the blend does not apply
+    """
+    weight = EFFICIENCY_WEIGHT if weight is None else weight
+    min_week = EFFICIENCY_MIN_WEEK if min_week is None else min_week
+
+    if weight <= 0 or eff is None:
+        return elo
+    if week is not None and week < min_week:
+        return elo
+
+    return (1 - weight) * elo + weight * eff
+
+
+def effective_rating(
+    team: Team,
+    week: Optional[int] = None,
+    scale: Optional[Tuple[float, float, float, float]] = None,
+) -> float:
+    """Return the rating used for rankings and predictions.
+
+    Blends the team's stored ELO with its efficiency-implied rating. Falls back
+    to pure ELO when efficiency data is missing, the blend is switched off, or
+    the season is too young for adjusted PPA to be meaningful.
+
+    The blend is deliberately applied at read time. ``teams.elo_rating`` stays a
+    pure ELO value so that game-by-game updates never compound efficiency into
+    themselves, and setting EFFICIENCY_WEIGHT back to 0 fully reverts the system
+    with no data repair.
+
+    Args:
+        team: Team to rate
+        week: Season week the rating is for; None skips the early-season gate
+            (used for end-of-season snapshots, where the sample is complete)
+        scale: Precomputed :func:`efficiency_scale` output. Pass it when rating
+            many teams at once; otherwise it is derived from the team's session.
+
+    Returns:
+        Blended rating on the ELO scale
+    """
+    if EFFICIENCY_WEIGHT <= 0:
+        return team.elo_rating
+
+    if week is not None and week < EFFICIENCY_MIN_WEEK:
+        return team.elo_rating
+
+    if net_ppa(team) is None:
+        return team.elo_rating
+
+    if scale is None:
+        db = object_session(team)
+        if db is None:
+            return team.elo_rating
+        scale = efficiency_scale(db)
+        if scale is None:
+            return team.elo_rating
+
+    return blend_rating(team.elo_rating, efficiency_rating(team, scale), week=week)
 
 
 class RankingService:
@@ -922,8 +1092,16 @@ class RankingService:
             RankingHistory.season == season, RankingHistory.week == week
         ).delete()
 
-        # Build rankings from current teams table state (not from ranking_history)
-        teams = self.db.query(Team).order_by(Team.elo_rating.desc()).all()
+        # Build rankings from current teams table state (not from ranking_history).
+        # EPIC-045: the snapshot stores the blended rating, so rankings and their
+        # history reflect efficiency without any read-path change. Sorting happens
+        # in Python because the blend is not expressible in SQL.
+        scale = efficiency_scale(self.db)
+        teams = sorted(
+            self.db.query(Team).all(),
+            key=lambda t: effective_rating(t, week, scale),
+            reverse=True,
+        )
 
         for rank, team in enumerate(teams, start=1):
             # Calculate season-specific wins/losses
@@ -937,7 +1115,7 @@ class RankingService:
                 week=week,
                 season=season,
                 rank=rank,
-                elo_rating=team.elo_rating,
+                elo_rating=effective_rating(team, week, scale),  # EPIC-045: blended
                 wins=wins,  # Season-specific wins
                 losses=losses,  # Season-specific losses
                 sos=sos,
@@ -1049,6 +1227,7 @@ def generate_predictions(
     # Execute query
     games = query.all()
     predictions = []
+    scale = efficiency_scale(db)  # EPIC-045: compute once for the whole slate
 
     for game in games:
         # Get team data
@@ -1060,7 +1239,7 @@ def generate_predictions(
             continue
 
         # Generate prediction
-        prediction = _calculate_game_prediction(game, home_team, away_team)
+        prediction = _calculate_game_prediction(game, home_team, away_team, scale)
         predictions.append(prediction)
 
     return predictions
@@ -1149,16 +1328,25 @@ def _validate_prediction_teams(home_team: Team, away_team: Team) -> bool:
     return True
 
 
-def _calculate_game_prediction(game: Game, home_team: Team, away_team: Team) -> Dict[str, Any]:
+def _calculate_game_prediction(
+    game: Game,
+    home_team: Team,
+    away_team: Team,
+    scale: Optional[Tuple[float, float, float, float]] = None,
+) -> Dict[str, Any]:
     """
     Calculate prediction for a single game.
 
     Uses standard ELO formula for win probability and estimates scores
     based on rating difference.
     """
+    # EPIC-045: predict off the blended rating, not raw ELO
+    home_elo = effective_rating(home_team, game.week, scale)
+    away_elo = effective_rating(away_team, game.week, scale)
+
     # Apply home field advantage (unless neutral site)
-    home_rating = home_team.elo_rating + (0 if game.is_neutral_site else 65)
-    away_rating = away_team.elo_rating
+    home_rating = home_elo + (0 if game.is_neutral_site else 65)
+    away_rating = away_elo
 
     # Calculate win probability (standard ELO formula)
     rating_diff = home_rating - away_rating
@@ -1206,8 +1394,8 @@ def _calculate_game_prediction(game: Game, home_team: Team, away_team: Team) -> 
         "home_win_probability": round(home_win_prob * 100, 1),
         "away_win_probability": round(away_win_prob * 100, 1),
         "confidence": confidence,
-        "home_team_rating": home_team.elo_rating,
-        "away_team_rating": away_team.elo_rating,
+        "home_team_rating": home_elo,
+        "away_team_rating": away_elo,
     }
 
 
@@ -1394,8 +1582,9 @@ def create_and_store_prediction(db: Session, game: Game) -> Optional[Prediction]
             if prediction_data["predicted_winner_id"] == home_team.id
             else prediction_data["away_win_probability"] / 100.0
         ),
-        home_elo_at_prediction=home_team.elo_rating,
-        away_elo_at_prediction=away_team.elo_rating,
+        # EPIC-045: record the rating the prediction was actually made from
+        home_elo_at_prediction=prediction_data["home_team_rating"],
+        away_elo_at_prediction=prediction_data["away_team_rating"],
         was_correct=None,  # Will be set when game completes
     )
 

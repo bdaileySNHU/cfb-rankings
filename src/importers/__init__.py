@@ -14,6 +14,7 @@ from src.importers.common import (
     parse_game_date,
     resolve_final_week,
 )
+from src.importers.efficiency import import_team_efficiency
 from src.importers.games import import_games
 from src.importers.pipeline import main
 from src.importers.polls import import_ap_poll_rankings
@@ -43,6 +44,7 @@ __all__ = [
     "import_conference_championships",
     "import_games",
     "import_playoff_games",
+    "import_team_efficiency",
     "import_teams",
     "main",
     "parse_game_date",

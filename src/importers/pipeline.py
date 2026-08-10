@@ -15,6 +15,7 @@ except (PermissionError, FileNotFoundError):
 
 from src.core.ranking_service import RankingService
 from src.importers.common import resolve_final_week
+from src.importers.efficiency import import_team_efficiency
 from src.importers.games import import_games
 from src.importers.postseason import (
     import_bowl_games,
@@ -237,6 +238,10 @@ Examples:
     # Update season current week to actual max
     season_obj.current_week = final_week
     db.commit()
+
+    # EPIC-045: refresh adjusted PPA before snapshotting, so the ratings written
+    # to ranking_history reflect the efficiency blend for this week.
+    import_team_efficiency(cfbd, db, year=season)
 
     # Snapshot ONLY the latest week. save_weekly_rankings() writes the CURRENT
     # teams-table ratings under the week it is given, so looping it from week 1
