@@ -409,7 +409,7 @@ class RankingService:
 
                     if returning_prod is not None:
                         dynamic_regression = base_regression + (returning_prod - 0.5) * returning_scale
-                        regression = max(0.30, min(0.85, dynamic_regression))
+                        regression = max(0.30, min(0.95, dynamic_regression))
                     else:
                         regression = base_regression
 

@@ -384,3 +384,19 @@ class TestBuildProjection:
             PlayoffSimulation.season == 2033
         ).count()
         assert rows == 1
+
+
+def test_every_run_awards_exactly_one_legal_field():
+    """Bids, titles and conference crowns are conserved per run.
+
+    This is the cheapest guard against an illegal field: if selection ever drops
+    an auto-bid or double-counts a team, the per-run averages stop being whole
+    numbers. A marginal probability like bid_pct cannot catch that on its own.
+    """
+    inputs = build_inputs()
+    result = ss.simulate_season(inputs, runs=50, seed=99)
+    runs = result["runs"]
+
+    assert sum(result["bid_count"]) == FIELD_SIZE * runs
+    assert sum(result["title_count"]) == runs
+    assert sum(result["conf_title_count"]) == len(CONFERENCES) * runs
