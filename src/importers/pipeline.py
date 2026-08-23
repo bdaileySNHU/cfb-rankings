@@ -254,6 +254,22 @@ Examples:
     # ranking_service already created above for conference championships
     ranking_service.save_weekly_rankings(season, final_week)
 
+    # Refresh the Monte Carlo playoff projection off the ratings just written.
+    # Takes a few seconds, so it is cached here rather than run per request.
+    # A simulation failure must never fail the import — the projection endpoint
+    # falls back to the deterministic current-ratings bracket.
+    try:
+        from src.core.season_simulation import DEFAULT_RUNS, refresh_projection
+
+        print(f"Simulating {DEFAULT_RUNS:,} seasons for the playoff projection...")
+        projection = refresh_projection(db, season)
+        if projection["field"]:
+            print(f"✓ Projected champion: {projection['champion']['name']}")
+        else:
+            print("⚠️  Not enough teams for a playoff field — projection skipped")
+    except Exception as e:  # noqa: BLE001 - never break the import over a projection
+        print(f"⚠️  Playoff simulation failed (projection will fall back): {e}")
+
     # Show final rankings
     print("\n" + "=" * 80)
     print("FINAL RANKINGS")

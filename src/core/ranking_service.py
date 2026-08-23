@@ -1406,12 +1406,29 @@ _QF_BOWLS = ["Rose Bowl", "Sugar Bowl", "Fiesta Bowl", "Peach Bowl"]
 _SF_BOWLS = ["Cotton Bowl", "Orange Bowl"]
 _INDEPENDENT_CONFS = {None, "", "Independent", "Independents", "FBS Independents"}
 
+# CFP format knobs. The 2025-26 format is a 12-team field with five conference
+# champions auto-bid and straight 1-12 seeding by rating. The format is under
+# active revision, so keep these as constants rather than magic numbers.
+FIELD_SIZE = 12
+POWER_AUTO_BIDS = 4
+G5_AUTO_BIDS = 1
 
-def _project_matchup(high: dict, low: dict, neutral: bool, label: str) -> dict:
+# A conference too small to be a real league does not get a projected champion.
+# ponytail: guards against stale realignment data (the teams table currently
+# lists a 2-team Pac-12); self-corrects once the team importer refreshes.
+MIN_CONFERENCE_SIZE = 4
+
+
+def _project_matchup(high: dict, low: dict, neutral: bool, label: str, rng=None) -> dict:
     """Simulate one playoff game. `high` is the higher seed (hosts unless neutral).
 
     Mirrors _calculate_game_prediction exactly: +65 home-field unless neutral,
     400-scale logistic win prob, scores = 30 ± (rating_diff / 100) * 3.5.
+
+    Args:
+        rng: When given, the winner is *sampled* from the win probability instead
+            of chalked to the favorite. The Monte Carlo season simulation passes
+            one; the deterministic projection leaves it None.
     """
     home_elo = high["elo"] + (0 if neutral else 65)
     away_elo = low["elo"]
@@ -1423,7 +1440,8 @@ def _project_matchup(high: dict, low: dict, neutral: bool, label: str) -> dict:
                  "elo": high["elo"], "score": hs, "win_prob": round(home_wp * 100, 1)}
     low_side = {"seed": low["seed"], "team_id": low["team_id"], "name": low["name"],
                 "elo": low["elo"], "score": ls, "win_prob": round((1 - home_wp) * 100, 1)}
-    winner = high_side if home_wp >= 0.5 else low_side
+    high_wins = (rng.random() < home_wp) if rng is not None else (home_wp >= 0.5)
+    winner = high_side if high_wins else low_side
     return {"label": label, "neutral": neutral, "high": high_side, "low": low_side,
             "winner_id": winner["team_id"], "winner_seed": winner["seed"]}
 
@@ -1432,103 +1450,149 @@ def _winner_of(m: dict) -> dict:
     return m["high"] if m["winner_id"] == m["high"]["team_id"] else m["low"]
 
 
-def _sim(a: dict, b: dict, neutral: bool, label: str) -> dict:
+def _sim(a: dict, b: dict, neutral: bool, label: str, rng=None) -> dict:
     high, low = (a, b) if a["seed"] < b["seed"] else (b, a)
-    return _project_matchup(high, low, neutral, label)
+    return _project_matchup(high, low, neutral, label, rng)
 
 
-def project_playoff_bracket(db: Session, season: int) -> dict:
-    """Project the 12-team CFP bracket from current Elo (EPIC-044 Story 44.11).
+def conference_sizes(db: Session) -> Dict[str, int]:
+    """FBS member count per conference name, used for champion eligibility."""
+    sizes: Dict[str, int] = {}
+    for name, in db.query(Team.conference_name).filter(Team.is_fcs == False).all():  # noqa: E712
+        if name in _INDEPENDENT_CONFS:
+            continue
+        sizes[name] = sizes.get(name, 0) + 1
+    return sizes
 
-    Field selection (CFP-style): each conference's highest-Elo team is its
-    projected champion; the 4 highest-Elo power (P5) champions plus the single
-    highest-Elo Group-of-5 champion get auto-bids; the field is filled to 12 with
-    the highest-Elo remaining teams as at-large. All 12 are then seeded strictly
-    by Elo (straight seeding); seeds 1–4 get first-round byes.
+
+def top_rated_champions(rankings: List[dict], conf_sizes: Dict[str, int]) -> List[dict]:
+    """Projected conference champions = highest-rated team in each eligible league.
+
+    The cheap stand-in used when no season has been simulated. Conferences below
+    MIN_CONFERENCE_SIZE are skipped so stale realignment data cannot mint a
+    champion (and therefore an auto-bid) out of a two-team conference.
     """
-    svc = RankingService(db)
-    rankings = svc.get_current_rankings(season, limit=60)
-    if len(rankings) < 12:
-        return {"season": season, "field": [], "first_round": [], "quarterfinals": [],
-                "semifinals": [], "final": None, "champion": None}
-
-    by_id = {r["team_id"]: r for r in rankings}
-
-    # Projected conference champions = top-Elo team per conference (excl. independents/FCS).
-    champ_by_conf: dict = {}
+    champ_by_conf: Dict[str, dict] = {}
     for r in rankings:
         conf = r.get("conference_name")
         if conf in _INDEPENDENT_CONFS or r.get("conference") == "FCS":
             continue
+        if conf_sizes.get(conf, 0) < MIN_CONFERENCE_SIZE:
+            continue
         cur = champ_by_conf.get(conf)
         if cur is None or r["elo_rating"] > cur["elo_rating"]:
             champ_by_conf[conf] = r
-    champs = list(champ_by_conf.values())
-    power_champs = sorted([c for c in champs if c.get("conference") in ("P5", "P4")],
-                          key=lambda c: c["elo_rating"], reverse=True)
-    g5_champs = sorted([c for c in champs if c.get("conference") == "G5"],
-                       key=lambda c: c["elo_rating"], reverse=True)
+    return list(champ_by_conf.values())
 
-    auto = power_champs[:4] + g5_champs[:1]
-    if len(auto) < 5:  # backfill if a tier is short
-        for c in sorted(champs, key=lambda c: c["elo_rating"], reverse=True):
-            if c not in auto:
-                auto.append(c)
-            if len(auto) >= 5:
+
+def select_cfp_field(rankings: List[dict], champs: List[dict]) -> List[dict]:
+    """Seed the CFP field from a rating-ordered team list and a champion list.
+
+    The single place the CFP selection rule lives, so the deterministic
+    projection and the Monte Carlo simulation cannot drift apart. Both callers
+    pass dicts carrying team_id / team_name / elo_rating / conference /
+    conference_name; `rankings` must already be sorted by rating descending.
+
+    POWER_AUTO_BIDS highest-rated P5 champions plus G5_AUTO_BIDS highest-rated
+    G5 champion take auto-bids, the field fills to FIELD_SIZE with the best
+    remaining teams, and all of them are seeded straight by rating.
+    """
+    auto_total = POWER_AUTO_BIDS + G5_AUTO_BIDS
+    by_rating = lambda c: c["elo_rating"]  # noqa: E731
+    power_champs = sorted([c for c in champs if c.get("conference") == "P5"],
+                          key=by_rating, reverse=True)
+    g5_champs = sorted([c for c in champs if c.get("conference") == "G5"],
+                       key=by_rating, reverse=True)
+
+    auto = power_champs[:POWER_AUTO_BIDS] + g5_champs[:G5_AUTO_BIDS]
+    if len(auto) < auto_total:  # backfill if a tier is short
+        auto_so_far = {c["team_id"] for c in auto}
+        for c in sorted(champs, key=by_rating, reverse=True):
+            if len(auto) >= auto_total:
                 break
+            if c["team_id"] not in auto_so_far:
+                auto.append(c)
+                auto_so_far.add(c["team_id"])
     auto_ids = {c["team_id"] for c in auto}
 
     field = list(auto)
-    for r in rankings:  # at-large by Elo
-        if len(field) >= 12:
+    for r in rankings:  # at-large by rating
+        if len(field) >= FIELD_SIZE:
             break
         if r["team_id"] not in auto_ids:
             field.append(r)
 
-    field.sort(key=lambda r: r["elo_rating"], reverse=True)
+    field.sort(key=by_rating, reverse=True)
     champ_ids = {c["team_id"] for c in champs}
-    seeded = []
-    for i, r in enumerate(field[:12]):
-        seeded.append({
-            "seed": i + 1, "team_id": r["team_id"], "name": r["team_name"],
-            "elo": r["elo_rating"], "conference_name": r.get("conference_name"),
-            "is_champ": r["team_id"] in champ_ids, "auto_bid": r["team_id"] in auto_ids,
-        })
-    s = {t["seed"]: t for t in seeded}  # seed → team
-
-    # First round (seeds 5–12 host higher seed, on campus → not neutral).
-    fr = [
-        _sim(s[8], s[9], False, s[8]["name"]),
-        _sim(s[5], s[12], False, s[5]["name"]),
-        _sim(s[7], s[10], False, s[7]["name"]),
-        _sim(s[6], s[11], False, s[6]["name"]),
+    return [
+        {"seed": i + 1, "team_id": r["team_id"], "name": r["team_name"],
+         "elo": r["elo_rating"], "conference_name": r.get("conference_name"),
+         "is_champ": r["team_id"] in champ_ids, "auto_bid": r["team_id"] in auto_ids}
+        for i, r in enumerate(field[:FIELD_SIZE])
     ]
-    # Quarterfinals (neutral): byes enter vs first-round winners.
+
+
+def run_bracket(seeded: List[dict], rng=None) -> dict:
+    """Play the 12-team bracket out from a seeded field.
+
+    Seeds 5-12 meet on the higher seed's campus; every later round is neutral.
+    Pass an `rng` to sample each game instead of advancing the favorite.
+    """
+    s = {t["seed"]: t for t in seeded}  # seed → team
+    fr = [
+        _sim(s[8], s[9], False, s[8]["name"], rng),
+        _sim(s[5], s[12], False, s[5]["name"], rng),
+        _sim(s[7], s[10], False, s[7]["name"], rng),
+        _sim(s[6], s[11], False, s[6]["name"], rng),
+    ]
     qf = [
-        _sim(s[1], _winner_of(fr[0]), True, _QF_BOWLS[0]),
-        _sim(s[4], _winner_of(fr[1]), True, _QF_BOWLS[1]),
-        _sim(s[2], _winner_of(fr[2]), True, _QF_BOWLS[2]),
-        _sim(s[3], _winner_of(fr[3]), True, _QF_BOWLS[3]),
+        _sim(s[1], _winner_of(fr[0]), True, _QF_BOWLS[0], rng),
+        _sim(s[4], _winner_of(fr[1]), True, _QF_BOWLS[1], rng),
+        _sim(s[2], _winner_of(fr[2]), True, _QF_BOWLS[2], rng),
+        _sim(s[3], _winner_of(fr[3]), True, _QF_BOWLS[3], rng),
     ]
     sf = [
-        _sim(_winner_of(qf[0]), _winner_of(qf[1]), True, _SF_BOWLS[0]),
-        _sim(_winner_of(qf[2]), _winner_of(qf[3]), True, _SF_BOWLS[1]),
+        _sim(_winner_of(qf[0]), _winner_of(qf[1]), True, _SF_BOWLS[0], rng),
+        _sim(_winner_of(qf[2]), _winner_of(qf[3]), True, _SF_BOWLS[1], rng),
     ]
-    final = _sim(_winner_of(sf[0]), _winner_of(sf[1]), True, "CFP Championship")
+    final = _sim(_winner_of(sf[0]), _winner_of(sf[1]), True, "CFP Championship", rng)
     champ = _winner_of(final)
-
     return {
-        "season": season,
-        "field": seeded,
-        "first_round": fr,
-        "quarterfinals": qf,
-        "semifinals": sf,
-        "final": final,
+        "first_round": fr, "quarterfinals": qf, "semifinals": sf, "final": final,
         "champion": {
             "seed": champ["seed"], "team_id": champ["team_id"], "name": champ["name"],
             "conference_name": s[champ["seed"]]["conference_name"],
             "title_game_win_prob": champ["win_prob"],
         },
+    }
+
+
+def project_playoff_bracket(db: Session, season: int) -> dict:
+    """Project the 12-team CFP bracket from current ratings (EPIC-044 Story 44.11).
+
+    The cheap, deterministic projection: each conference's highest-rated team is
+    treated as its champion, the field is selected and straight-seeded by
+    :func:`select_cfp_field`, and every round chalks to the favorite.
+
+    This is the fallback shown before a season has been simulated. The richer
+    view — playoff odds from a simulated season — lives in
+    :mod:`src.core.season_simulation`.
+    """
+    svc = RankingService(db)
+    rankings = svc.get_current_rankings(season, limit=60)
+    if len(rankings) < FIELD_SIZE:
+        return {"season": season, "field": [], "first_round": [], "quarterfinals": [],
+                "semifinals": [], "final": None, "champion": None,
+                "method": "current_ratings"}
+
+    champs = top_rated_champions(rankings, conference_sizes(db))
+    seeded = select_cfp_field(rankings, champs)
+
+    return {
+        "season": season,
+        "field": seeded,
+        "method": "current_ratings",
+        **run_bracket(seeded),
     }
 
 
