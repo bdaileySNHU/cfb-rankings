@@ -37,6 +37,12 @@ pip install -r requirements-prod.txt
 # echo "🗄️  Setting up database..."
 # python3 -c "from src.models.database import init_db; init_db()"
 
+# Fail before the restart, not after. A skipped migration means the new code
+# queries a column the database does not have, and every request touching that
+# table 500s. set -e stops here with the old service still serving.
+echo "🔍 Checking database schema against the models..."
+python scripts/check_schema.py
+
 # Restart the service
 echo "🔄 Restarting service..."
 systemctl restart $SERVICE_NAME

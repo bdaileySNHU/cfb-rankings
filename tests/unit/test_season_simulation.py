@@ -8,8 +8,7 @@ import pytest
 from src.core import season_simulation as ss
 from src.core.ranking_service import (
     FIELD_SIZE,
-    G5_AUTO_BIDS,
-    POWER_AUTO_BIDS,
+    CHAMPION_AUTO_BIDS,
     RankingService,
     select_cfp_field,
 )
@@ -224,23 +223,48 @@ class TestSelectCfpField:
         rankings = self.make_rankings()
         champs = rankings[:len(CONFERENCES)]
         field = select_cfp_field(rankings, champs)
-        assert sum(t["auto_bid"] for t in field) == POWER_AUTO_BIDS + G5_AUTO_BIDS
+        assert sum(t["auto_bid"] for t in field) == CHAMPION_AUTO_BIDS
 
-    def test_low_rated_g5_champion_still_gets_in(self):
-        """The Group-of-5 auto-bid is the whole point of the rule."""
-        rankings = self.make_rankings(n=60)
-        g5 = {
+    def _tiny_champ(self, tier="G5"):
+        return {
             "team_id": 999,
-            "team_name": "Tiny G5",
-            "conference": "G5",
+            "team_name": "Tiny Champ",
+            "conference": tier,
             "conference_name": "Mountain West",
             "elo_rating": 1200.0,  # nowhere near the at-large cut
         }
-        rankings.append(g5)
+
+    def test_weak_champion_rides_an_auto_bid_when_champions_are_scarce(self):
+        """Only five champions exist, so even a terrible one is a top-5 champion."""
+        rankings = self.make_rankings(n=60)
+        tiny = self._tiny_champ()
+        rankings.append(tiny)
         power = [r for r in rankings if r["conference"] == "P5"][:4]
-        field = select_cfp_field(rankings, power + [g5])
-        assert 999 in {t["team_id"] for t in field}
+
+        field = select_cfp_field(rankings, power + [tiny])
+
         assert next(t for t in field if t["team_id"] == 999)["auto_bid"] is True
+
+    def test_sixth_ranked_champion_is_shut_out(self):
+        """Auto-bids go to the five best champions, not one per tier.
+
+        The old rule reserved a slot for the highest-rated G5 champion, which
+        would drag this team in over a better-rated P5 champion. The real CFP
+        rule has no reserved slot: with five P5 conferences chasing five spots,
+        a G5 champion can miss entirely.
+        """
+        rankings = self.make_rankings(n=60)
+        tiny = self._tiny_champ()
+        rankings.append(tiny)
+        power = [r for r in rankings if r["conference"] == "P5"][:5]
+        assert len(power) == 5, "need five P5 champions to crowd the G5 out"
+
+        field = select_cfp_field(rankings, power + [tiny])
+
+        auto_ids = {t["team_id"] for t in field if t["auto_bid"]}
+        assert 999 not in auto_ids
+        assert auto_ids == {c["team_id"] for c in power}
+        assert sum(t["auto_bid"] for t in field) == CHAMPION_AUTO_BIDS
 
 
 class TestSimulateSeason:
@@ -317,7 +341,7 @@ class TestBuildProjection:
         assert projection["runs"] == 30
         assert len(projection["field"]) == FIELD_SIZE
         assert [t["seed"] for t in projection["field"]] == list(range(1, FIELD_SIZE + 1))
-        assert sum(t["auto_bid"] for t in projection["field"]) == POWER_AUTO_BIDS + G5_AUTO_BIDS
+        assert sum(t["auto_bid"] for t in projection["field"]) == CHAMPION_AUTO_BIDS
 
         # Probabilities are present and sane.
         for t in projection["field"]:
