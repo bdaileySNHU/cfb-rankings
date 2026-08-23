@@ -1410,8 +1410,11 @@ _INDEPENDENT_CONFS = {None, "", "Independent", "Independents", "FBS Independents
 # champions auto-bid and straight 1-12 seeding by rating. The format is under
 # active revision, so keep these as constants rather than magic numbers.
 FIELD_SIZE = 12
-POWER_AUTO_BIDS = 4
-G5_AUTO_BIDS = 1
+# The five highest-ranked conference champions, regardless of tier. There is no
+# reserved Group-of-5 slot: a G5 champion is in only when it out-ranks the other
+# champions, which is how Boise State got in for 2024 and how a G5 champion can
+# be shut out entirely once five P5 conferences are chasing the same five spots.
+CHAMPION_AUTO_BIDS = 5
 
 # A conference too small to be a real league does not get a projected champion.
 # ponytail: guards against stale realignment data (the teams table currently
@@ -1493,26 +1496,13 @@ def select_cfp_field(rankings: List[dict], champs: List[dict]) -> List[dict]:
     pass dicts carrying team_id / team_name / elo_rating / conference /
     conference_name; `rankings` must already be sorted by rating descending.
 
-    POWER_AUTO_BIDS highest-rated P5 champions plus G5_AUTO_BIDS highest-rated
-    G5 champion take auto-bids, the field fills to FIELD_SIZE with the best
-    remaining teams, and all of them are seeded straight by rating.
+    The CHAMPION_AUTO_BIDS highest-rated conference champions take auto-bids, the
+    field fills to FIELD_SIZE with the best remaining teams, and all of them are
+    seeded straight by rating. Tier does not enter into it -- see
+    CHAMPION_AUTO_BIDS.
     """
-    auto_total = POWER_AUTO_BIDS + G5_AUTO_BIDS
     by_rating = lambda c: c["elo_rating"]  # noqa: E731
-    power_champs = sorted([c for c in champs if c.get("conference") == "P5"],
-                          key=by_rating, reverse=True)
-    g5_champs = sorted([c for c in champs if c.get("conference") == "G5"],
-                       key=by_rating, reverse=True)
-
-    auto = power_champs[:POWER_AUTO_BIDS] + g5_champs[:G5_AUTO_BIDS]
-    if len(auto) < auto_total:  # backfill if a tier is short
-        auto_so_far = {c["team_id"] for c in auto}
-        for c in sorted(champs, key=by_rating, reverse=True):
-            if len(auto) >= auto_total:
-                break
-            if c["team_id"] not in auto_so_far:
-                auto.append(c)
-                auto_so_far.add(c["team_id"])
+    auto = sorted(champs, key=by_rating, reverse=True)[:CHAMPION_AUTO_BIDS]
     auto_ids = {c["team_id"] for c in auto}
 
     field = list(auto)
