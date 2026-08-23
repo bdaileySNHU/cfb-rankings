@@ -91,6 +91,8 @@ class Team(Base):
         transfer_count: Number of incoming transfer players
         elo_rating: Current Modified ELO rating
         initial_rating: Preseason ELO rating (before any games)
+        offense_ppa: Opponent-adjusted offensive PPA per play (higher is better)
+        defense_ppa: Opponent-adjusted defensive PPA allowed per play (lower is better)
         wins: Cumulative win count (all seasons)
         losses: Cumulative loss count (all seasons)
         created_at: Record creation timestamp
@@ -139,6 +141,12 @@ class Team(Base):
     initial_rating = Column(Float, default=1500.0)  # Store preseason rating
     wins = Column(Integer, default=0)
     losses = Column(Integer, default=0)
+
+    # EPIC-045: CORE-style efficiency (opponent-adjusted PPA per play, season-to-date).
+    # NULL until the first efficiency import of a season; the rating blend falls
+    # back to pure ELO when either value is missing.
+    offense_ppa = Column(Float, nullable=True)
+    defense_ppa = Column(Float, nullable=True)
 
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
