@@ -14,7 +14,7 @@ httpx==0.28.1              # Required by FastAPI TestClient (upgraded for Starle
 factory-boy==3.3.0         # Test data factories
 
 # Frontend E2E Testing
-playwright==1.40.0         # Browser automation for E2E tests
+playwright==1.62.0         # Browser automation for E2E tests
 
 # Test Utilities
 pytest-xdist==3.5.0        # Parallel test execution

@@ -69,9 +69,23 @@ def test_db():
     # Create session
     db = TestingSessionLocal()
 
+    # Point the app at this database too. E2E tests seed through `test_db` but
+    # read the result back through a real HTTP request to the live server, which
+    # otherwise hits the developer's cfb_rankings.db and never sees the fixture
+    # data. A fresh session per request keeps the server thread off `db`.
+    def override_get_db():
+        request_db = TestingSessionLocal()
+        try:
+            yield request_db
+        finally:
+            request_db.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+
     try:
         yield db
     finally:
+        app.dependency_overrides.pop(get_db, None)
         db.close()
         # Drop all tables after test
         Base.metadata.drop_all(bind=engine)
@@ -283,6 +297,7 @@ def live_server():
     Yields:
         str: Base URL of the running server (e.g., "http://localhost:8765")
     """
+    import socket
     import threading
     import time
 
@@ -292,7 +307,7 @@ def live_server():
 
     # Use a different port for E2E tests to avoid conflicts
     test_port = 8765
-    base_url = f"http://localhost:{test_port}"
+    base_url = f"http://127.0.0.1:{test_port}"
 
     # Start server in background thread
     config = uvicorn.Config(app, host="127.0.0.1", port=test_port, log_level="error")
@@ -304,8 +319,16 @@ def live_server():
     thread = threading.Thread(target=run_server, daemon=True)
     thread.start()
 
-    # Wait for server to start
-    time.sleep(2)
+    # Wait for the server to accept connections. A fixed sleep is either slow or
+    # (on a loaded CI runner) too short, which shows up as a flaky first test.
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        with socket.socket() as probe:
+            if probe.connect_ex(("127.0.0.1", test_port)) == 0:
+                break
+        time.sleep(0.1)
+    else:
+        raise RuntimeError(f"E2E server did not start on port {test_port}")
 
     yield base_url
 
