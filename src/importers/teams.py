@@ -6,6 +6,17 @@ from src.integrations.cfbd_client import CFBDClient
 from src.models.models import ConferenceType, Team
 
 
+def conference_tier(team_name: str, conference_name: str) -> ConferenceType:
+    """P5/G5 tier for a conference, with Notre Dame's independent-but-P5 quirk.
+
+    Shared by the create and update paths deliberately: conference used to be set
+    only on create, so realignment never reached teams that already existed.
+    """
+    if team_name == "Notre Dame":
+        return ConferenceType.POWER_5
+    return CONFERENCE_MAP.get(conference_name, ConferenceType.GROUP_5)
+
+
 def import_teams(cfbd: CFBDClient, db, year: int):
     """Import all FBS teams (or reuse existing teams in incremental mode)"""
     print(f"\nImporting FBS teams for {year}...")
@@ -77,6 +88,15 @@ def import_teams(cfbd: CFBDClient, db, year: int):
             transfer_portal_points = team_scores.get(team_name, {}).get("points", 0)
             transfer_portal_count = team_scores.get(team_name, {}).get("count", 0)
 
+            # Conferences move. Realignment has to reach teams that already
+            # exist, or the tier stays whatever it was the year they were added.
+            if existing_team.conference_name != conference_name:
+                print(
+                    f"  Realigned: {team_name} {existing_team.conference_name} -> {conference_name}"
+                )
+            existing_team.conference_name = conference_name
+            existing_team.conference = conference_tier(team_name, conference_name)
+
             # Update preseason factors
             existing_team.recruiting_rank = recruiting_rank
             existing_team.returning_production = returning_prod
@@ -88,12 +108,7 @@ def import_teams(cfbd: CFBDClient, db, year: int):
             teams_reused += 1
         else:
             # Create new team
-            # Map conference to tier (P5/G5/FCS)
-            conference_tier = CONFERENCE_MAP.get(conference_name, ConferenceType.GROUP_5)
-
-            # Special case: Notre Dame is P5 Independent
-            if team_name == "Notre Dame":
-                conference_tier = ConferenceType.POWER_5
+            tier = conference_tier(team_name, conference_name)
 
             # Get preseason data
             recruiting_rank = recruiting_map.get(team_name, 999)
@@ -107,7 +122,7 @@ def import_teams(cfbd: CFBDClient, db, year: int):
             # EPIC-012: Create team with BOTH conference tier and name
             team = Team(
                 name=team_name,
-                conference=conference_tier,  # P5/G5/FCS (for logic)
+                conference=tier,  # P5/G5/FCS (for logic)
                 conference_name=conference_name,  # "Big Ten", "SEC", etc. (for display)
                 recruiting_rank=recruiting_rank,
                 returning_production=returning_prod,
@@ -122,7 +137,7 @@ def import_teams(cfbd: CFBDClient, db, year: int):
             teams_created += 1
 
             print(
-                f"  Added: {team_name} - {conference_name} ({conference_tier.value}) - Recruiting: #{recruiting_rank}, Returning: {returning_prod*100:.0f}%, Portal: #{transfer_portal_rank}"
+                f"  Added: {team_name} - {conference_name} ({tier.value}) - Recruiting: #{recruiting_rank}, Returning: {returning_prod*100:.0f}%, Portal: #{transfer_portal_rank}"
             )
 
     db.commit()

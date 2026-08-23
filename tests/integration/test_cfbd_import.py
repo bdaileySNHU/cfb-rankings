@@ -115,6 +115,33 @@ class TestTeamImportWithMock:
         assert alabama.conference == ConferenceType.POWER_5  # SEC -> P5
         assert boise.conference == ConferenceType.GROUP_5  # Mountain West -> G5
 
+    def test_reimport_moves_realigned_teams(self, test_db: Session, mock_cfbd_client):
+        """A team that changed conferences since the last import gets moved.
+
+        Conference used to be written only when a team was first created, so a
+        team already in the table kept whatever conference it was born with --
+        which left the 2026 Pac-12 sitting at two members.
+        """
+        from import_real_data import import_teams
+
+        import_teams(mock_cfbd_client, test_db, year=2025)
+        boise = test_db.query(Team).filter(Team.name == "Boise State").one()
+        assert boise.conference_name == "Mountain West"
+        assert boise.conference == ConferenceType.GROUP_5
+
+        # Boise State leaves for the rebuilt Pac-12, which is a P5 conference.
+        realigned = [dict(t) for t in mock_cfbd_client.get_teams(2026)]
+        for team in realigned:
+            if team["school"] == "Boise State":
+                team["conference"] = "Pac-12"
+        mock_cfbd_client.get_teams.return_value = realigned
+
+        import_teams(mock_cfbd_client, test_db, year=2026)
+
+        boise = test_db.query(Team).filter(Team.name == "Boise State").one()
+        assert boise.conference_name == "Pac-12"
+        assert boise.conference == ConferenceType.POWER_5
+
     def test_import_teams_calculates_preseason_ratings(self, test_db: Session, mock_cfbd_client):
         """Test that preseason ratings are calculated during import"""
         # Arrange
