@@ -42,6 +42,7 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
@@ -748,3 +749,39 @@ class APPollRanking(Base):
     def __repr__(self):
         """Return string representation showing season, week, rank, and team."""
         return f"<APPollRanking(season={self.season}, week={self.week}, rank=#{self.rank}, team={self.team.name if self.team else 'Unknown'})>"
+
+
+class PlayoffSimulation(Base):
+    """Cached output of a Monte Carlo season simulation.
+
+    Simulating ten thousand seasons takes several seconds — too slow to do
+    inside a web request, and the answer only changes once a week when new
+    results land. So the weekly import writes the projection here as JSON and
+    the API serves it back.
+
+    Attributes:
+        season: Season year the projection covers
+        week: The week the season had reached when the simulation ran
+        runs: Number of simulated seasons behind the numbers
+        payload: The full projection as a JSON string
+        created_at: When the simulation ran
+
+    One row per (season, week); re-running a week replaces it.
+    """
+
+    __tablename__ = "playoff_simulation"
+
+    id = Column(Integer, primary_key=True, index=True)
+    season = Column(Integer, nullable=False, index=True)
+    week = Column(Integer, nullable=False, index=True)
+    runs = Column(Integer, nullable=False)
+    payload = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("season", "week", name="uq_playoff_sim_season_week"),
+    )
+
+    def __repr__(self):
+        """Return string representation showing season, week and run count."""
+        return f"<PlayoffSimulation(season={self.season}, week={self.week}, runs={self.runs})>"

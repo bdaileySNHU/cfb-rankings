@@ -225,6 +225,27 @@
 .tkr-bracket-meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; color: var(--fg3);
   text-transform: uppercase; text-align: right; line-height: 1.6; white-space: nowrap; }
 .bk-cols { display: flex; gap: 14px; min-height: 640px; overflow-x: auto; }
+
+/* Playoff odds strip: per-team probabilities from the season simulation.
+   Only rendered when the projection came from a Monte Carlo run. */
+.bk-odds { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+.bk-odds.hidden { display: none; }
+.bk-odds-title { font-size: 13px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.01em; }
+.bk-odds-head, .bk-odds-row { display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 12px; padding: 3px 0; }
+.bk-odds-head { font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--fg3); border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-bottom: 4px; }
+.bk-odds-row.out { color: var(--fg2); }
+.bk-odds-seed { width: 22px; text-align: right; color: var(--fg3); flex: none; }
+.bk-odds-name { flex: 1 1 auto; min-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-odds-bar { flex: 2 1 90px; height: 6px; border-radius: 3px; background: var(--panel2); overflow: hidden; }
+.bk-odds-head .bk-odds-bar { background: none; }
+.bk-odds-bar i { display: block; height: 100%; border-radius: 3px; }
+.bk-odds-pct { width: 52px; text-align: right; font-weight: 700; flex: none; }
+.bk-odds-sub { width: 46px; text-align: right; color: var(--fg3); flex: none; }
+.bk-odds-split { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--fg3); margin: 10px 0 4px;
+  border-top: 1px dashed var(--line); padding-top: 8px; }
 .bk-col { flex: 1 1 0; min-width: 152px; display: flex; flex-direction: column; }
 .bk-round { border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 10px; }
 .bk-round-t { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.05em;

@@ -268,7 +268,19 @@
           } else {
             cfpSub = 'HOSTS R1';
           }
+          if (pt.bid_pct != null) cfpSub += ' · ' + fmtPct(pt.bid_pct) + ' BID';
           break;
+        }
+      }
+      // Outside the projected field, the simulation still has an opinion.
+      if (cfpSeed === '—' && PLAYOFF_DATA.bubble) {
+        for (var j = 0; j < PLAYOFF_DATA.bubble.length; j++) {
+          var bt = PLAYOFF_DATA.bubble[j];
+          if (bt.team_id === e.team_id && bt.bid_pct != null) {
+            cfpSeed = fmtPct(bt.bid_pct);
+            cfpSub = 'BID ODDS · ON THE BUBBLE';
+            break;
+          }
         }
       }
     }
@@ -806,10 +818,67 @@
       '<div class="bk-champ-win"><span>TITLE-GAME WIN</span><span class="v">' + Math.round(ch.title_game_win_prob) + '%</span></div></div>';
   }
 
+  // Percentages read better without a trailing ".0" on whole numbers.
+  function fmtPct(v) {
+    if (v == null) return '—';
+    return (Math.round(v * 10) / 10).toFixed(v < 10 ? 1 : 0) + '%';
+  }
+
+  function oddsRow(t, inField) {
+    var c = stripeName(t.name);
+    return '<div class="bk-odds-row' + (inField ? '' : ' out') + '">' +
+      '<span class="bk-odds-seed">' + (inField ? t.seed : '—') + '</span>' +
+      '<span class="bk-stripe" style="background:' + c + '"></span>' +
+      '<span class="bk-odds-name">' + esc(abbrName(t.name)) + '</span>' +
+      '<span class="bk-odds-bar"><i style="width:' + Math.max(1, Math.round(t.bid_pct)) + '%;background:' + c + '"></i></span>' +
+      '<span class="bk-odds-pct">' + fmtPct(t.bid_pct) + '</span>' +
+      '<span class="bk-odds-sub">' + fmtPct(t.conf_title_pct) + '</span>' +
+      '<span class="bk-odds-sub">' + fmtPct(t.title_pct) + '</span></div>';
+  }
+
+  // Per-team probabilities only exist for a simulated season; the deterministic
+  // current-ratings fallback has nothing to put here.
+  function renderOdds(data) {
+    var host = document.getElementById('tkr-bracket-odds');
+    if (!host) return;
+    if (data.method !== 'monte_carlo' || !data.field.length || data.field[0].bid_pct == null) {
+      host.innerHTML = '';
+      host.classList.add('hidden');
+      return;
+    }
+    var head = '<div class="bk-odds-head"><span class="bk-odds-seed">SD</span>' +
+      '<span class="bk-stripe"></span><span class="bk-odds-name">TEAM</span>' +
+      '<span class="bk-odds-bar"></span><span class="bk-odds-pct">PLAYOFF</span>' +
+      '<span class="bk-odds-sub">CONF</span><span class="bk-odds-sub">TITLE</span></div>';
+    var rows = data.field.map(function (t) { return oddsRow(t, true); }).join('');
+    var bubble = (data.bubble || []).slice(0, 8);
+    if (bubble.length) {
+      rows += '<div class="bk-odds-split">ON THE BUBBLE</div>' +
+        bubble.map(function (t) { return oddsRow(t, false); }).join('');
+    }
+    host.innerHTML = '<h3 class="bk-odds-title">Playoff odds</h3>' + head + rows;
+    host.classList.remove('hidden');
+  }
+
+  function renderBracketHead(data) {
+    var sub = document.querySelector('.tkr-bracket-sub');
+    var meta = document.querySelector('.tkr-bracket-meta');
+    if (sub) {
+      sub.textContent = data.method === 'monte_carlo'
+        ? 'Consensus field from ' + Number(data.runs).toLocaleString() + ' simulated seasons · ▸ marks the favored side advancing.'
+        : 'Seeded from current ratings · ▸ marks the favored side advancing.';
+    }
+    if (meta) {
+      meta.innerHTML = '12-TEAM FIELD<br>SEEDS 1–4 BYE' +
+        (data.through_week != null ? '<br>THROUGH WK ' + data.through_week : '');
+    }
+  }
+
   function renderBracket(data) {
     var card = document.getElementById('tkr-bracket');
     if (!card) return;
     if (!data || !data.field || !data.field.length) { card.classList.add('hidden'); return; }
+    renderBracketHead(data);
     var cols = ROUNDS.map(function (r) {
       var items = r.key === 'final' ? (data.final ? [data.final] : []) : (data[r.key] || []);
       return '<div class="bk-col"><div class="bk-round"><div class="bk-round-t">' + r.t + '</div>' +
@@ -819,6 +888,7 @@
     cols += '<div class="bk-col champion"><div class="bk-round"><div class="bk-round-t">CHAMPION</div>' +
       '<div class="bk-round-d">PROJECTED</div></div><div class="bk-col-body">' + championCard(data.champion) + '</div></div>';
     document.getElementById('tkr-bracket-cols').innerHTML = cols;
+    renderOdds(data);
     card.classList.remove('hidden');
   }
 

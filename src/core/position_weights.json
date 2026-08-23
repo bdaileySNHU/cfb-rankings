@@ -16,9 +16,9 @@
     "ST": 0.0
   },
   "max_bonus": 150,
-  "previous_season_weight": 0.35,
-  "mean_regression_factor": 0.60,
-  "returning_regression_scale": 0.60,
+  "previous_season_weight": 0.60,
+  "mean_regression_factor": 0.75,
+  "returning_regression_scale": 0.45,
   "top_players_per_position": {
     "QB": 3,
     "OL": 5,
@@ -37,9 +37,9 @@
     "blend_weight": "EPIC-040: w_prod in [0,1] — production share of the blend (recruiting gets 1 - w_prod). Used by import_production.py when computing blended_rating.",
     "weights": "Position group weights (must sum to 1.0) - reflects relative importance of each position to team success",
     "max_bonus": "Maximum bonus points contribution to preseason rating (base 1500 + other bonuses + this)",
-    "previous_season_weight": "EPIC-030: How much previous season ELO blends into preseason (0=disabled, 0.35=recommended). Start at 0.0 until validated.",
-    "mean_regression_factor": "EPIC-030: Base regression toward 1500 before blending (0=full reset, 1=no regression). Default 0.60.",
-    "returning_regression_scale": "EPIC-030: How much returning_production modulates regression. Formula: clamp(base + (ret_prod - 0.5) * scale, 0.30, 0.85). Default 0.60.",
+    "previous_season_weight": "EPIC-030: How much previous season ELO blends into preseason (0=disabled). Raised 0.35->0.60 on 2026-08-23: a chained 2021-2025 replay (3080 games) put the optimal total shrink on last season near 0.75, versus the 0.21 that 0.35*0.60 produced.",
+    "mean_regression_factor": "EPIC-030: Base regression toward 1500 before blending (0=full reset, 1=no regression). 0.75 fitted on a 2021-2025 game-level log-loss sweep.",
+    "returning_regression_scale": "EPIC-030: How much returning_production modulates regression. Formula: clamp(base + (ret_prod - 0.5) * scale, 0.30, 0.95). 0.45 fitted on 528 team-seasons; effect is real but small (t=+1.70).",
     "top_players_per_position": "Number of top recruits to consider when calculating position group strength",
     "rationale": {
       "QB_30_percent": "Quarterback is most valuable position in college football",

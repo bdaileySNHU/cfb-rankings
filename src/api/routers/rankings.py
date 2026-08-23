@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from src.core.ranking_service import RankingService, project_playoff_bracket
+from src.core.season_simulation import load_cached_projection, refresh_projection
 from src.models import schemas
 from src.models.database import get_db
 from src.models.models import Game, RankingHistory, Season, Team
@@ -288,15 +289,43 @@ async def get_postseason(season: int, db: Session = Depends(get_db)):
 
 
 @router.get("/api/playoff-projection", tags=["Rankings"])
-async def get_playoff_projection(season: Optional[int] = None, db: Session = Depends(get_db)):
-    """Project the 12-team CFP bracket from current Elo (EPIC-044 Story 44.11).
+async def get_playoff_projection(
+    season: Optional[int] = None,
+    refresh: bool = False,
+    db: Session = Depends(get_db),
+):
+    """Project the 12-team CFP bracket (EPIC-044 Story 44.11).
 
-    CFP-style field selection (conference-champion auto-bids + at-large), straight
-    seeding by Elo, each round simulated with the standard prediction formula.
+    Serves the cached Monte Carlo projection: the remaining schedule played out
+    thousands of times, with ratings evolving game by game and a synthesized
+    conference championship in every eligible league. Each team carries its
+    playoff-bid, conference-title and national-title probability, and the
+    rendered bracket is the consensus field.
+
+    Falls back to the deterministic current-ratings bracket when no simulation
+    has been cached yet, distinguishable by ``method``: ``"monte_carlo"`` versus
+    ``"current_ratings"``.
+
+    Args:
+        season: Season year (defaults to the active season)
+        refresh: Re-run the simulation now instead of reading the cache. Takes
+            several seconds; intended for admin and debugging, not page loads.
+        db: Database session (injected by FastAPI)
+
+    Example:
+        GET /api/playoff-projection?season=2026
     """
     if not season:
         active = db.query(Season).filter(Season.is_active == True).first()
         season = active.year if active else datetime.now().year
+
+    if refresh:
+        return refresh_projection(db, season)
+
+    cached = load_cached_projection(db, season)
+    if cached:
+        return cached
+
     return project_playoff_bracket(db, season)
 
 
