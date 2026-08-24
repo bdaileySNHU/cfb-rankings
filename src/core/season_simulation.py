@@ -378,6 +378,7 @@ def build_projection(
         return {
             "season": season, "field": [], "first_round": [], "quarterfinals": [],
             "semifinals": [], "final": None, "champion": None, "bubble": [],
+            "teams": [],
             "runs": 0, "method": "monte_carlo", "through_week": inputs.through_week,
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -457,10 +458,27 @@ def build_projection(
         for s in consensus[:BUBBLE_SIZE]
     ]
 
+    # Every team's odds, not just the twelve in the field and thirteen on the
+    # bubble: the rankings board carries these four numbers on every ranked row,
+    # so the payload has to cover all of FBS. Keys are listed out rather than
+    # copied wholesale so the internal "_i" index cannot leak into the payload.
+    all_teams = [
+        {
+            "team_id": st["team_id"],
+            "name": st["team_name"],
+            "bid_pct": st["bid_pct"],
+            "conf_title_pct": st["conf_title_pct"],
+            "title_pct": st["title_pct"],
+            "proj_wins": st["proj_wins"],
+        }
+        for st in ranked_by_bid
+    ]
+
     return {
         "season": season,
         "field": seeded,
         "bubble": bubble,
+        "teams": all_teams,
         "runs": agg["runs"],
         "method": "monte_carlo",
         "through_week": inputs.through_week,

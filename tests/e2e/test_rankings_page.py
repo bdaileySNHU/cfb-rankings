@@ -146,6 +146,44 @@ class TestRankingsTableDisplay:
         expect(rows.nth(1)).to_contain_text("Georgia")
         expect(rows.nth(2)).to_contain_text("Ohio State")
 
+    def test_projection_columns_render(self, browser_page, seed_board):
+        """Cached simulation -> endpoint -> schema -> grid, end to end.
+
+        The other tests in this file seed no simulation, so they already cover
+        the em-dash path; this is the one that proves a real number arrives.
+        """
+        # Arrange
+        page, base_url = browser_page
+        from src.models.models import ConferenceType, Team
+
+        alabama = Team(
+            name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
+        )
+        seed_board(
+            alabama,
+            odds={
+                "Alabama": {
+                    "bid_pct": 62.5,
+                    "conf_title_pct": 21.4,
+                    "title_pct": 8.1,
+                    "proj_wins": 9.3,
+                }
+            },
+        )
+
+        # Act
+        page.goto(f"{base_url}/frontend/index.html")
+        page.wait_for_selector(".tkr-row", timeout=5000)
+
+        # Assert - the headers exist and the row carries the numbers.
+        # fmtPct rounds at or above 10% and keeps a decimal below it.
+        expect(page.locator(".tkr-head")).to_contain_text("BID%")
+        expect(page.locator(".tkr-head")).to_contain_text("PROJ W")
+        first_row = page.locator(".tkr-row").first
+        expect(first_row).to_contain_text("63%")
+        expect(first_row).to_contain_text("8.1%")
+        expect(first_row).to_contain_text("9.3")
+
     def test_conference_displayed(self, browser_page, seed_board):
         """Test that team conference is displayed"""
         # Arrange

@@ -109,6 +109,10 @@
       '<div class="heat ta-r" data-kind="off" data-v="' + (off == null ? '' : off) + '">' + (off == null ? '—' : off) + '</div>' +
       '<div class="heat ta-r" data-kind="def" data-v="' + (def == null ? '' : def) + '">' + (def == null ? '—' : def) + '</div>' +
       '<div class="c-sos ta-r' + (sosWarn ? ' warn' : '') + '">' + (e.sos == null ? '—' : e.sos.toFixed(3)) + '</div>' +
+      '<div class="c-odds ta-r">' + fmtPct(e.bid_pct) + '</div>' +
+      '<div class="c-odds ta-r">' + fmtPct(e.conf_title_pct) + '</div>' +
+      '<div class="c-odds ta-r">' + fmtPct(e.title_pct) + '</div>' +
+      '<div class="c-projw ta-r">' + (e.proj_wins == null ? '—' : e.proj_wins.toFixed(1)) + '</div>' +
       '<div class="ta-c">' + sparkline(e.elo_history, d) + '</div>' +
     '</div>';
   }
@@ -117,7 +121,10 @@
     var head = '<div class="tkr-grid tkr-head">' +
       '<div>RK</div><div>TEAM</div><div>CONF</div><div class="ta-r">W-L</div>' +
       '<div class="ta-r" style="color:var(--accent)">ELO</div><div class="ta-r">Δ1W</div>' +
-      '<div class="ta-r">OFF</div><div class="ta-r">DEF</div><div class="ta-r">SOS</div><div class="ta-c">10WK</div></div>';
+      '<div class="ta-r">OFF</div><div class="ta-r">DEF</div><div class="ta-r">SOS</div>' +
+      '<div class="ta-r">BID%</div><div class="ta-r">CONF%</div>' +
+      '<div class="ta-r">NAT%</div><div class="ta-r">PROJ W</div>' +
+      '<div class="ta-c">10WK</div></div>';
     
     // Apply filters
     var filtered = ENTRIES;
@@ -285,6 +292,19 @@
       }
     }
 
+    // Monte Carlo projection tiles. The rankings payload carries these per team,
+    // so no lookup into PLAYOFF_DATA is needed. The row is dropped entirely when
+    // no simulation covers the week — four em-dash tiles say nothing.
+    var hasOdds = e.bid_pct != null || e.conf_title_pct != null ||
+      e.title_pct != null || e.proj_wins != null;
+    var oddsTiles = !hasOdds ? '' :
+      '<div class="tkr-tiles-6 tkr-tiles-4">' +
+        tile('PLAYOFF BID', fmtPct(e.bid_pct)) +
+        tile('CONF TITLE', fmtPct(e.conf_title_pct)) +
+        tile('NAT TITLE', fmtPct(e.title_pct)) +
+        tile('PROJ WINS', e.proj_wins == null ? '—' : e.proj_wins.toFixed(1)) +
+      '</div>';
+
     var badgeRow = '';
     if (e.rank) {
       badgeRow += '<span class="badge-rank">No. ' + e.rank + '</span>';
@@ -321,6 +341,8 @@
         tile('WIN%', winpct) +
         '<div class="tkr-mtile cfp-seed"><div class="lbl">CFP SEED</div><div class="val">' + cfpSeed + '</div><div class="sub" style="font-family:var(--font-mono);font-size:9.5px;color:var(--fg3);margin-top:4px;text-transform:uppercase;">' + cfpSub + '</div></div>' +
       '</div>' +
+
+      oddsTiles +
 
       '<div class="tkr-detail-grid">' +
         '<div>' +
