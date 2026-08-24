@@ -786,6 +786,10 @@
     '</div>';
   }
 
+  // Rows shown before the "show more" cut. A full week runs 60+ games, which
+  // buries the bracket below it.
+  var PRED_VISIBLE = 15;
+
   function renderPredictions(list) {
     var card = document.getElementById('tkr-preds');
     if (!card) return;
@@ -793,7 +797,23 @@
     set('tkr-preds-meta', 'WK' + list[0].week + ' · ' + list.length + ' GAMES');
     var head = '<div class="tkr-pgrid tkr-phead"><div>MATCHUP</div><div>PROJ</div>' +
       '<div>WIN PROB</div><div>SPREAD</div><div>CONF</div></div>';
-    document.getElementById('tkr-preds-body').innerHTML = head + list.map(predRow).join('');
+    var rows = list.map(predRow);
+    var body = head + rows.slice(0, PRED_VISIBLE).join('');
+    var rest = rows.slice(PRED_VISIBLE);
+    if (rest.length) {
+      body += '<div id="tkr-preds-rest" class="hidden">' + rest.join('') + '</div>' +
+        '<button type="button" class="tkr-preds-more" id="tkr-preds-more">' +
+        'Show ' + rest.length + ' more</button>';
+    }
+    document.getElementById('tkr-preds-body').innerHTML = body;
+    var more = document.getElementById('tkr-preds-more');
+    if (more) {
+      more.addEventListener('click', function () {
+        var restEl = document.getElementById('tkr-preds-rest');
+        var hidden = restEl.classList.toggle('hidden');
+        more.textContent = hidden ? 'Show ' + rest.length + ' more' : 'Show fewer';
+      });
+    }
     card.classList.remove('hidden');
   }
 
