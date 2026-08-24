@@ -23,6 +23,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # The frontend self-checks are plain node scripts with no package.json and
+      # no dependencies — they read frontend/js and frontend/css as text and
+      # assert on it. They run before the Python suite because they finish in
+      # under a second and catch a class of grid/markup drift pytest cannot see.
+      # Globbed, so a new tests/frontend/*.js is picked up without touching this
+      # file. node ships on the runner image already.
+      - name: Run frontend self-checks
+        run: |
+          for f in tests/frontend/*.js; do
+            echo "── $f"
+            node "$f"
+          done
+
       # Set up Python
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
