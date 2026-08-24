@@ -46,13 +46,15 @@
       </div>
 
       <!-- Game predictions (rendered by board.js; hidden until loaded) -->
-      <div class="tkr-preds-card hidden" id="tkr-preds">
-        <div class="tkr-preds-head">
-          <h2 class="tkr-preds-title">Game Predictions</h2>
-          <span class="tkr-preds-meta" id="tkr-preds-meta"></span>
-        </div>
+      <details class="tkr-preds-card hidden" id="tkr-preds" open>
+        <summary>
+          <div class="tkr-preds-head">
+            <h2 class="tkr-preds-title">Game Predictions</h2>
+            <span class="tkr-preds-meta" id="tkr-preds-meta"></span>
+          </div>
+        </summary>
         <div id="tkr-preds-body"></div>
-      </div>
+      </details>
 
       <!-- Projected playoff bracket (rendered by board.js; hidden until loaded) -->
       <div class="tkr-bracket-card hidden" id="tkr-bracket">

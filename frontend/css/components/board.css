@@ -108,7 +108,7 @@
 .tkr-table { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--panel); }
 .tkr-grid {
   display: grid;
-  grid-template-columns: 44px 1fr 88px 62px 78px 64px 70px 70px 60px 84px;
+  grid-template-columns: 44px 1fr 88px 62px 78px 64px 70px 70px 60px 58px 62px 58px 64px 84px;
   align-items: center;
 }
 .tkr-head {
@@ -139,6 +139,9 @@
 .c-delta { font-family: var(--font-mono); font-size: 12px; font-weight: 600; }
 .c-sos { font-family: var(--font-mono); font-size: 12px; color: var(--fg2); }
 .c-sos.warn { color: var(--warn); }
+/* Monte Carlo projection columns: BID% / CONF% / NAT% / PROJ W. */
+.c-odds { font-family: var(--font-mono); font-size: 12px; color: var(--fg2); }
+.c-projw { font-family: var(--font-mono); font-size: 12px; color: var(--fg); }
 .heat { font-family: var(--font-mono); font-size: 12px; color: var(--fg); }
 .trend-pos { color: var(--pos); }
 .trend-neg { color: var(--neg); }
@@ -197,6 +200,13 @@
 .tkr-preds-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
 .tkr-preds-title { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
 .tkr-preds-meta { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.04em; color: var(--fg3); text-transform: uppercase; }
+/* The card is a <details>, so collapsing is the browser's job — no JS. The
+   default marker is replaced with a chevron on the title to match the board. */
+.tkr-preds-card > summary { cursor: pointer; list-style: none; }
+.tkr-preds-card > summary::-webkit-details-marker { display: none; }
+.tkr-preds-title::after { content: ' \25BE'; color: var(--fg3); font-weight: 400; }
+.tkr-preds-card:not([open]) .tkr-preds-title::after { content: ' \25B8'; }
+.tkr-preds-card:not([open]) .tkr-preds-head { margin-bottom: 0; }
 .tkr-pgrid { display: grid; grid-template-columns: 1.5fr 76px 1.7fr 104px 72px; align-items: center; }
 .tkr-phead { font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
   text-transform: uppercase; color: var(--fg3); border-bottom: 1px solid var(--line); }
@@ -437,6 +447,9 @@
 .tkr-tiles-6 .tkr-mtile.cfp-seed .val {
   color: var(--accent);
 }
+/* Projection tiles: same treatment, four across. Narrow screens still get the
+   two-up override from the 720px block below, which is declared later. */
+.tkr-tiles-4 { grid-template-columns: repeat(4, 1fr); }
 
 /* ── Upcoming Schedule ── */
 .tkr-sched-card {
@@ -695,41 +708,59 @@
 }
 
 /* ── Ratings table: shed columns as the viewport narrows ──────────────────────
-   Every column except TEAM has a fixed track (~620px of them), so on a narrow
+   Every column except TEAM has a fixed track (~862px of them), so on a narrow
    screen the fixed tracks hold their width and the 1fr TEAM column is the one
    crushed to nothing — the team name disappears while SOS and the sparkline
    survive. Dropping columns least-informative-first keeps RK / TEAM / ELO
    readable all the way down.
 
    Column order: 1 RK · 2 TEAM · 3 CONF · 4 W-L · 5 ELO · 6 Δ1W · 7 OFF ·
-                 8 DEF · 9 SOS · 10 10WK
+                 8 DEF · 9 SOS · 10 BID% · 11 CONF% · 12 NAT% · 13 PROJ W ·
+                 14 10WK
+   Projection columns shed in reverse order of interest: PROJ W is derivable
+   from the record, then the two secondary probabilities, leaving BID% as the
+   last projection number standing.
    Head and body rows share .tkr-grid, so one nth-child rule hides both. */
 
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
   /* 10WK sparkline — decorative next to the ELO number it summarizes */
-  .tkr-grid > div:nth-child(10) { display: none; }
-  .tkr-grid { grid-template-columns: 44px 1fr 88px 62px 78px 64px 70px 70px 60px; }
+  .tkr-grid > div:nth-child(14) { display: none; }
+  .tkr-grid { grid-template-columns: 44px 1fr 88px 62px 78px 64px 70px 70px 60px 58px 62px 58px 64px; }
 }
 
-@media (max-width: 900px) {
-  /* OFF / DEF / SOS — available on the team detail view */
+@media (max-width: 1100px) {
+  /* PROJ W — record plus games remaining says most of it */
+  .tkr-grid > div:nth-child(13) { display: none; }
+  .tkr-grid { grid-template-columns: 44px 1fr 88px 62px 78px 64px 70px 70px 60px 58px 62px 58px; }
+}
+
+@media (max-width: 980px) {
+  /* OFF / DEF — available on the team detail view */
   .tkr-grid > div:nth-child(7),
-  .tkr-grid > div:nth-child(8),
-  .tkr-grid > div:nth-child(9) { display: none; }
-  .tkr-grid { grid-template-columns: 44px 1fr 88px 62px 78px 64px; }
+  .tkr-grid > div:nth-child(8) { display: none; }
+  .tkr-grid { grid-template-columns: 44px 1fr 88px 62px 78px 64px 60px 58px 62px 58px; }
+}
+
+@media (max-width: 860px) {
+  /* SOS, plus the secondary probabilities — BID% is the headline number */
+  .tkr-grid > div:nth-child(9),
+  .tkr-grid > div:nth-child(11),
+  .tkr-grid > div:nth-child(12) { display: none; }
+  .tkr-grid { grid-template-columns: 44px 1fr 88px 62px 78px 64px 58px; }
 }
 
 @media (max-width: 640px) {
   /* CONF and Δ1W — the conference stripe still carries the affiliation */
   .tkr-grid > div:nth-child(3),
   .tkr-grid > div:nth-child(6) { display: none; }
-  .tkr-grid { grid-template-columns: 40px 1fr 58px 72px; }
+  .tkr-grid { grid-template-columns: 40px 1fr 58px 72px 58px; }
   .tkr-grid > div { padding: 9px 8px; }
 }
 
 @media (max-width: 420px) {
   /* Down to the irreducible three: rank, team, rating */
-  .tkr-grid > div:nth-child(4) { display: none; }
+  .tkr-grid > div:nth-child(4),
+  .tkr-grid > div:nth-child(10) { display: none; }
   .tkr-grid { grid-template-columns: 34px 1fr 68px; }
   .tkr-grid > div { padding: 9px 6px; }
   .c-name { font-size: 12.5px; }

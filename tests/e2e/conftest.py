@@ -6,9 +6,11 @@ empty board no matter what ELO it set. ``seed_board`` inserts the season, the
 teams, and the matching week snapshot together.
 """
 
+import json
+
 import pytest
 
-from src.models.models import RankingHistory, Season
+from src.models.models import PlayoffSimulation, RankingHistory, Season
 
 
 @pytest.fixture
@@ -21,9 +23,15 @@ def seed_board(test_db):
 
     Ranks are assigned by ELO descending, matching what the ranking service
     would produce for a real week.
+
+    Pass ``odds={"Alabama": {"bid_pct": 62.5, ...}}`` to also cache a playoff
+    simulation for the same (year, week), keyed by team name because the ids
+    do not exist until the flush below. The rankings endpoint only reads a
+    simulation whose week matches the board's, so seeding both together is the
+    point.
     """
 
-    def _seed(*teams, year=2024, week=5):
+    def _seed(*teams, year=2024, week=5, odds=None):
         test_db.add(Season(year=year, current_week=week, is_active=True))
         test_db.add_all(teams)
         test_db.flush()  # assign team ids
@@ -42,6 +50,15 @@ def seed_board(test_db):
                     losses=team.losses,
                 )
             )
+
+        if odds:
+            payload = {"teams": [
+                dict(odds[t.name], team_id=t.id, name=t.name)
+                for t in teams if t.name in odds
+            ]}
+            test_db.add(PlayoffSimulation(
+                season=year, week=week, runs=10, payload=json.dumps(payload)
+            ))
 
         test_db.commit()
         return teams

@@ -143,7 +143,17 @@ async def get_rankings(
                 def_by_team[tid] = def_by_team.get(tid, 0) + (pa or 0)
                 counts[tid] = counts.get(tid, 0) + 1
 
-    # Attach rank_change, elo_history, espn_id, off, def to each ranking entry
+    # Monte Carlo projection columns (BID% / CONF% / NAT% / PROJ W). One cached
+    # row, matched to the exact week being displayed — a week-8 simulation must
+    # never be shown beside week-3 rankings. The simulation is far too slow to
+    # run in-request, so a week with no cached row simply has no odds.
+    odds_by_team: dict = {}
+    if team_ids:
+        projection = load_cached_projection(db, season, week=target_week)
+        for t in (projection or {}).get("teams") or []:
+            odds_by_team[t["team_id"]] = t
+
+    # Attach rank_change, elo_history, espn_id, off, def, odds to each entry
     for entry in rankings:
         tid = entry["team_id"]
         current_rank = entry["rank"]
@@ -160,6 +170,12 @@ async def get_rankings(
         n = counts.get(tid, 0) if team_ids else 0
         entry["off"] = round(off_by_team.get(tid, 0) / n, 1) if n else None
         entry["def"] = round(def_by_team.get(tid, 0) / n, 1) if n else None
+
+        o = odds_by_team.get(tid)
+        entry["bid_pct"] = o["bid_pct"] if o else None
+        entry["conf_title_pct"] = o["conf_title_pct"] if o else None
+        entry["title_pct"] = o["title_pct"] if o else None
+        entry["proj_wins"] = o["proj_wins"] if o else None
 
     return {
         "week": current_week,

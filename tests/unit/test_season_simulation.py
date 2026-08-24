@@ -359,6 +359,71 @@ class TestBuildProjection:
         assert len(projection["semifinals"]) == 2
         assert projection["champion"]["team_id"] in field_ids
 
+    def test_projection_covers_every_team(self, db_session):
+        """The board carries odds on every ranked row, so the payload must too."""
+        from src.models.models import ConferenceType, Season, Team
+
+        db_session.add(Season(year=2034, current_week=4, is_active=False))
+        for conf, tier in CONFERENCES.items():
+            for j in range(TEAMS_PER_CONF):
+                db_session.add(Team(
+                    name=f"{conf} {j}",
+                    conference=(
+                        ConferenceType.POWER_5 if tier == "P5" else ConferenceType.GROUP_5
+                    ),
+                    conference_name=conf,
+                    is_fcs=False,
+                    elo_rating=1500.0 + (TEAMS_PER_CONF - j) * 30,
+                ))
+        db_session.commit()
+        n_teams = len(CONFERENCES) * TEAMS_PER_CONF
+
+        projection = ss.build_projection(db_session, 2034, runs=30, seed=7)
+        teams = projection["teams"]
+
+        ids = [t["team_id"] for t in teams]
+        assert len(teams) == n_teams
+        assert len(set(ids)) == n_teams
+
+        # A strict superset of what the bracket panel already publishes.
+        shown = {t["team_id"] for t in projection["field"]}
+        shown |= {t["team_id"] for t in projection["bubble"]}
+        assert shown < set(ids)
+
+        for t in teams:
+            # The internal loop index and the rating swap must not leak out.
+            assert set(t) == {
+                "team_id", "name", "bid_pct", "conf_title_pct", "title_pct", "proj_wins"
+            }
+            assert 0.0 <= t["bid_pct"] <= 100.0
+            assert 0.0 <= t["conf_title_pct"] <= 100.0
+            assert 0.0 <= t["title_pct"] <= 100.0
+            assert t["proj_wins"] >= 0.0
+
+        # One source of truth: a team in both lists reports the same odds.
+        by_id = {t["team_id"]: t for t in teams}
+        for f in projection["field"]:
+            assert by_id[f["team_id"]]["bid_pct"] == f["bid_pct"]
+            assert by_id[f["team_id"]]["proj_wins"] == f["proj_wins"]
+
+    def test_short_field_payload_has_teams_key(self, db_session):
+        """Too few teams to simulate still returns the key, just empty."""
+        from src.models.models import ConferenceType, Season, Team
+
+        db_session.add(Season(year=2035, current_week=1, is_active=False))
+        for j in range(FIELD_SIZE - 1):
+            db_session.add(Team(
+                name=f"Tiny {j}",
+                conference=ConferenceType.POWER_5,
+                conference_name="Tiny",
+                is_fcs=False,
+                elo_rating=1500.0,
+            ))
+        db_session.commit()
+
+        projection = ss.build_projection(db_session, 2035, runs=5, seed=1)
+        assert projection["teams"] == []
+
     def test_cache_round_trip(self, db_session):
         from src.models.models import ConferenceType, Season, Team
 
@@ -384,6 +449,7 @@ class TestBuildProjection:
         assert cached["runs"] == stored["runs"] == 20
         assert cached["through_week"] == 3
         assert [t["team_id"] for t in cached["field"]] == [t["team_id"] for t in stored["field"]]
+        assert cached["teams"] == stored["teams"]
 
     def test_refresh_replaces_rather_than_duplicates(self, db_session):
         from src.models.models import ConferenceType, PlayoffSimulation, Season, Team

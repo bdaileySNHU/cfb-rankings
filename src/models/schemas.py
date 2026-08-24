@@ -265,6 +265,15 @@ class RankingEntry(BaseModel):
         None, alias="def", description="Avg points allowed per game (DEF heat cell)"
     )
 
+    # Monte Carlo projection columns. Attached from the cached playoff_simulation
+    # row for this exact week; None when no simulation covers the week shown.
+    bid_pct: Optional[float] = Field(None, description="Playoff bid probability (0-100)")
+    conf_title_pct: Optional[float] = Field(
+        None, description="Conference title probability (0-100)"
+    )
+    title_pct: Optional[float] = Field(None, description="National title probability (0-100)")
+    proj_wins: Optional[float] = Field(None, description="Projected final regular-season wins")
+
 
 class RankingsResponse(BaseModel):
     """Response for rankings endpoint"""

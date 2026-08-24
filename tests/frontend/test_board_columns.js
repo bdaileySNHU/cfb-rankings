@@ -26,7 +26,7 @@ const css = fs.readFileSync(
 const GRIDS = [
   {
     selector: '.tkr-grid',
-    total: 10, // RK TEAM CONF W-L ELO Δ1W OFF DEF SOS 10WK
+    total: 14, // RK TEAM CONF W-L ELO Δ1W OFF DEF SOS BID% CONF% NAT% PROJ W 10WK
     mustKeep: { 1: 'RK', 2: 'TEAM', 5: 'ELO' },
     narrowestVisible: 3,
   },
