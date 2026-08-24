@@ -7,13 +7,9 @@ Tests verify the full stack works together:
 - Data is rendered correctly in the DOM
 - User interactions work as expected
 
-NOTE: These E2E tests require a running FastAPI server.
-Run manually with: pytest tests/e2e/ -v
-Or skip E2E tests with: pytest -m "not e2e"
-
-To run E2E tests:
-1. Start the FastAPI server: python3 main.py (in another terminal)
-2. Run: pytest tests/e2e/ -v
+The `live_server` fixture starts the app itself, so no separate server is
+needed: run `pytest tests/e2e/ -v`, or skip these with `pytest -m "not e2e"`.
+Chromium must be installed once via `python -m playwright install chromium`.
 """
 
 import pytest
@@ -61,9 +57,11 @@ class TestRankingsPageLoad:
         # Act
         page.goto(f"{base_url}/frontend/index.html")
 
-        # Assert - Navigation links are present
-        nav_links = page.locator("nav a")
-        expect(nav_links).to_have_count(7)  # Rankings, Teams, Games, Compare, etc.
+        # Assert - The main navigation destinations are present. Asserting the
+        # link names rather than a count means adding a page to layout.js does
+        # not fail this test, but dropping one of these does.
+        for name in ("Rankings", "Games", "Compare"):
+            expect(page.locator("nav a", has_text=name)).to_be_visible()
 
 
 @pytest.mark.e2e
@@ -71,25 +69,20 @@ class TestRankingsPageLoad:
 class TestRankingsTableDisplay:
     """Tests for rankings table rendering with API data"""
 
-    def test_rankings_table_displays(self, browser_page, test_db):
+    def test_rankings_table_displays(self, browser_page, seed_board):
         """Test that rankings table is rendered"""
         # Arrange
         page, base_url = browser_page
-        from src.models.models import ConferenceType, Season, Team
+        from src.models.models import ConferenceType, Team
 
         # Create test data
-        season = Season(year=2024, current_week=5, is_active=True)
-        test_db.add(season)
-
         team1 = Team(
             name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
         )
         team2 = Team(
             name="Georgia", conference=ConferenceType.POWER_5, elo_rating=1840.0, wins=4, losses=1
         )
-        test_db.add(team1)
-        test_db.add(team2)
-        test_db.commit()
+        seed_board(team1, team2)
 
         # Act - Load page and wait for data to load
         page.goto(f"{base_url}/frontend/index.html")
@@ -99,20 +92,16 @@ class TestRankingsTableDisplay:
         table_rows = page.locator(".tkr-row")
         expect(table_rows).to_have_count(2, timeout=5000)
 
-    def test_rankings_table_shows_correct_data(self, browser_page, test_db):
+    def test_rankings_table_shows_correct_data(self, browser_page, seed_board):
         """Test that rankings table displays team data correctly"""
         # Arrange
         page, base_url = browser_page
-        from src.models.models import ConferenceType, Season, Team
-
-        season = Season(year=2024, current_week=1, is_active=True)
-        test_db.add(season)
+        from src.models.models import ConferenceType, Team
 
         alabama = Team(
             name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=1, losses=0
         )
-        test_db.add(alabama)
-        test_db.commit()
+        seed_board(alabama, week=1)
 
         # Act
         page.goto(f"{base_url}/frontend/index.html")
@@ -124,14 +113,11 @@ class TestRankingsTableDisplay:
         expect(first_row).to_contain_text("1850")
         expect(first_row).to_contain_text("1-0")
 
-    def test_rankings_sorted_by_elo(self, browser_page, test_db):
+    def test_rankings_sorted_by_elo(self, browser_page, seed_board):
         """Test that teams are sorted by ELO rating descending"""
         # Arrange
         page, base_url = browser_page
-        from src.models.models import ConferenceType, Season, Team
-
-        season = Season(year=2024, is_active=True)
-        test_db.add(season)
+        from src.models.models import ConferenceType, Team
 
         # Create teams in mixed order
         team3 = Team(
@@ -148,8 +134,7 @@ class TestRankingsTableDisplay:
             name="Georgia", conference=ConferenceType.POWER_5, elo_rating=1840.0, wins=3, losses=0
         )
 
-        test_db.add_all([team3, team1, team2])
-        test_db.commit()
+        seed_board(team3, team1, team2)
 
         # Act
         page.goto(f"{base_url}/frontend/index.html")
@@ -161,14 +146,11 @@ class TestRankingsTableDisplay:
         expect(rows.nth(1)).to_contain_text("Georgia")
         expect(rows.nth(2)).to_contain_text("Ohio State")
 
-    def test_conference_displayed(self, browser_page, test_db):
+    def test_conference_displayed(self, browser_page, seed_board):
         """Test that team conference is displayed"""
         # Arrange
         page, base_url = browser_page
-        from src.models.models import ConferenceType, Season, Team
-
-        season = Season(year=2024, is_active=True)
-        test_db.add(season)
+        from src.models.models import ConferenceType, Team
 
         team = Team(
             name="Boise State",
@@ -177,8 +159,7 @@ class TestRankingsTableDisplay:
             wins=5,
             losses=0,
         )
-        test_db.add(team)
-        test_db.commit()
+        seed_board(team)
 
         # Act
         page.goto(f"{base_url}/frontend/index.html")
@@ -194,20 +175,16 @@ class TestRankingsTableDisplay:
 class TestRankingsPageInteractions:
     """Tests for user interactions on rankings page"""
 
-    def test_click_team_navigates_to_detail(self, browser_page, test_db):
+    def test_click_team_navigates_to_detail(self, browser_page, seed_board):
         """Test clicking a team name navigates to team detail page"""
         # Arrange
         page, base_url = browser_page
-        from src.models.models import ConferenceType, Season, Team
-
-        season = Season(year=2024, is_active=True)
-        test_db.add(season)
+        from src.models.models import ConferenceType, Team
 
         alabama = Team(
             name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
         )
-        test_db.add(alabama)
-        test_db.commit()
+        seed_board(alabama)
 
         # Act - Navigate to rankings and click team
         page.goto(f"{base_url}/frontend/index.html")

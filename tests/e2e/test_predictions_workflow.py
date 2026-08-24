@@ -42,7 +42,7 @@ class TestPredictionsPageLoad:
         # Assert - Header is visible
         header = page.locator("h1")
         expect(header).to_be_visible()
-        expect(header).to_contain_text("Games")
+        expect(header).to_contain_text("Game Schedule")
 
     def test_page_has_navigation(self, browser_page):
         """Test that page has navigation menu"""

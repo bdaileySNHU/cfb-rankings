@@ -17,7 +17,7 @@ from playwright.sync_api import Page, expect
 class TestTeamDetailPageLoad:
     """Tests for team detail page loading"""
 
-    def test_team_detail_page_loads(self, browser_page, test_db):
+    def test_team_detail_page_loads(self, browser_page, seed_board):
         """Test that team detail page loads successfully"""
         # Arrange
         page, base_url = browser_page
@@ -26,8 +26,7 @@ class TestTeamDetailPageLoad:
         team = Team(
             name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
         )
-        test_db.add(team)
-        test_db.commit()
+        seed_board(team)
 
         # Act - Navigate to team detail page
         page.goto(f"{base_url}/frontend/team.html?id={team.id}")
@@ -36,7 +35,7 @@ class TestTeamDetailPageLoad:
         # Assert - Page loads
         expect(page).to_have_title("Stat·urday — Power Ratings")
 
-    def test_team_name_displayed(self, browser_page, test_db):
+    def test_team_name_displayed(self, browser_page, seed_board):
         """Test that team name is displayed on page"""
         # Arrange
         page, base_url = browser_page
@@ -45,16 +44,13 @@ class TestTeamDetailPageLoad:
         team = Team(
             name="Georgia", conference=ConferenceType.POWER_5, elo_rating=1840.0, wins=4, losses=1
         )
-        test_db.add(team)
-        test_db.commit()
+        seed_board(team)
 
         # Act
         page.goto(f"{base_url}/frontend/team.html?id={team.id}")
-        page.wait_for_timeout(1000)
 
-        # Assert - Team name is visible
-        page_content = page.content()
-        assert "Georgia" in page_content
+        # Assert - Team name is visible in the detail panel
+        expect(page.locator("#tkr-detail")).to_contain_text("Georgia")
 
 
 @pytest.mark.e2e
@@ -62,7 +58,7 @@ class TestTeamDetailPageLoad:
 class TestTeamDetailData:
     """Tests for team detail data display"""
 
-    def test_team_stats_displayed(self, browser_page, test_db):
+    def test_team_stats_displayed(self, browser_page, seed_board):
         """Test that team stats are displayed correctly"""
         # Arrange
         page, base_url = browser_page
@@ -71,26 +67,23 @@ class TestTeamDetailData:
         team = Team(
             name="Ohio State",
             conference=ConferenceType.POWER_5,
-            elo_rating=1830.5,
+            elo_rating=1830.0,  # whole number: the board renders Math.round(elo)
             wins=7,
             losses=2,
             recruiting_rank=3,
             returning_production=0.75,
         )
-        test_db.add(team)
-        test_db.commit()
+        seed_board(team)
 
         # Act
         page.goto(f"{base_url}/frontend/team.html?id={team.id}")
-        page.wait_for_timeout(1500)
-
-        page_content = page.content()
 
         # Assert - Stats are shown
-        assert "1830" in page_content or "1831" in page_content  # ELO rating (rounded)
-        assert "7-2" in page_content or "7" in page_content  # Record
+        detail = page.locator("#tkr-detail")
+        expect(detail).to_contain_text("1830")  # ELO rating (rounded)
+        expect(detail).to_contain_text("7")  # Record
 
-    def test_conference_displayed(self, browser_page, test_db):
+    def test_conference_displayed(self, browser_page, seed_board):
         """Test that team conference is displayed"""
         # Arrange
         page, base_url = browser_page
@@ -103,17 +96,13 @@ class TestTeamDetailData:
             wins=8,
             losses=1,
         )
-        test_db.add(team)
-        test_db.commit()
+        seed_board(team)
 
         # Act
         page.goto(f"{base_url}/frontend/team.html?id={team.id}")
-        page.wait_for_timeout(1000)
-
-        page_content = page.content()
 
         # Assert - Conference is shown
-        assert "G5" in page_content or "Group" in page_content
+        expect(page.locator("#tkr-detail")).to_contain_text("G5")
 
 
 @pytest.mark.e2e
@@ -121,7 +110,7 @@ class TestTeamDetailData:
 class TestTeamSchedule:
     """Tests for team schedule/games display"""
 
-    def test_schedule_table_exists(self, browser_page, test_db):
+    def test_schedule_table_exists(self, browser_page, test_db, seed_board):
         """Test that schedule table is rendered"""
         # Arrange
         page, base_url = browser_page
@@ -133,8 +122,7 @@ class TestTeamSchedule:
         away_team = Team(
             name="Georgia", conference=ConferenceType.POWER_5, elo_rating=1840.0, wins=0, losses=1
         )
-        test_db.add_all([home_team, away_team])
-        test_db.commit()
+        seed_board(home_team, away_team)
 
         # Create a game
         game = Game(
@@ -162,7 +150,7 @@ class TestTeamSchedule:
             or "Georgia" in page_content
         )
 
-    def test_schedule_shows_opponent(self, browser_page, test_db):
+    def test_schedule_shows_opponent(self, browser_page, test_db, seed_board):
         """Test that schedule shows opponent name"""
         # Arrange
         page, base_url = browser_page
@@ -180,8 +168,7 @@ class TestTeamSchedule:
             wins=0,
             losses=1,
         )
-        test_db.add_all([home_team, away_team])
-        test_db.commit()
+        seed_board(home_team, away_team)
 
         game = Game(
             home_team_id=home_team.id,
@@ -198,13 +185,11 @@ class TestTeamSchedule:
 
         # Act - View Michigan's schedule
         page.goto(f"{base_url}/frontend/team.html?id={home_team.id}")
-        page.wait_for_timeout(2000)
 
-        page_content = page.content()
-
-        # Assert - Opponent name appears
-        assert "Ohio State" in page_content
-        assert "42" in page_content  # Score shown
+        # Assert - Opponent name and score appear in the results log
+        results = page.locator("#tkr-log")
+        expect(results).to_contain_text("Ohio State")
+        expect(results).to_contain_text("42")
 
 
 @pytest.mark.e2e
@@ -212,7 +197,7 @@ class TestTeamSchedule:
 class TestTeamDetailNavigation:
     """Tests for navigation on team detail page"""
 
-    def test_back_to_rankings_link_works(self, browser_page, test_db):
+    def test_back_to_rankings_link_works(self, browser_page, seed_board):
         """Test that navigation back to rankings page works"""
         # Arrange
         page, base_url = browser_page
@@ -221,8 +206,7 @@ class TestTeamDetailNavigation:
         team = Team(
             name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
         )
-        test_db.add(team)
-        test_db.commit()
+        seed_board(team)
 
         # Act - Navigate to team detail, then click back to rankings
         page.goto(f"{base_url}/frontend/team.html?id={team.id}")
@@ -254,7 +238,7 @@ class TestTeamDetailNavigation:
 class TestTeamDetailAPIIntegration:
     """Tests verifying API integration on team detail page"""
 
-    def test_api_calls_made_on_load(self, browser_page, test_db):
+    def test_api_calls_made_on_load(self, browser_page, seed_board):
         """Test that page makes API calls for team data and schedule"""
         # Arrange
         page, base_url = browser_page
@@ -263,8 +247,7 @@ class TestTeamDetailAPIIntegration:
         team = Team(
             name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
         )
-        test_db.add(team)
-        test_db.commit()
+        seed_board(team)
 
         # Track API requests
         api_requests = []
@@ -277,27 +260,24 @@ class TestTeamDetailAPIIntegration:
 
         # Act
         page.goto(f"{base_url}/frontend/team.html?id={team.id}")
-        page.wait_for_timeout(2000)
+        expect(page.locator("#tkr-detail")).to_be_visible()
+        page.wait_for_timeout(1000)  # let the detail panel's follow-up calls fire
 
         # Assert - API calls were made
         assert len(api_requests) > 0
-        # Should call /api/teams/{id} and possibly /api/teams/{id}/schedule
-        assert any(f"/teams/{team.id}" in url for url in api_requests)
+        # The detail panel pulls the team's schedule to build the results log
+        assert any(f"/teams/{team.id}" in url for url in api_requests), api_requests
 
-    def test_full_user_workflow_rankings_to_team(self, browser_page, test_db):
+    def test_full_user_workflow_rankings_to_team(self, browser_page, seed_board):
         """Test complete user workflow: rankings -> team detail -> back"""
         # Arrange
         page, base_url = browser_page
-        from src.models.models import ConferenceType, Season, Team
-
-        season = Season(year=2024, is_active=True)
-        test_db.add(season)
+        from src.models.models import ConferenceType, Team
 
         alabama = Team(
             name="Alabama", conference=ConferenceType.POWER_5, elo_rating=1850.0, wins=5, losses=0
         )
-        test_db.add(alabama)
-        test_db.commit()
+        seed_board(alabama)
 
         # Act - Start at rankings
         page.goto(f"{base_url}/frontend/index.html")
