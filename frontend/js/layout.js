@@ -14,6 +14,18 @@
   var showSeason = cfg.season !== 'false';
   var isBoard = currentPage === 'index.html' || currentPage === '';
 
+  // Umami analytics, injected here rather than pasted into eight <head> blocks.
+  // data-domains keeps localhost and any preview host out of the numbers, and
+  // admin.html is skipped so dashboard visits do not count as traffic.
+  if (currentPage !== 'admin.html') {
+    var umami = document.createElement('script');
+    umami.defer = true;
+    umami.src = 'https://analytics.bdailey.com/script.js';
+    umami.dataset.websiteId = '130cfa1d-3da5-4015-b68a-a927951aeaf8';
+    umami.dataset.domains = 'cfb.bdailey.com';
+    document.head.appendChild(umami);
+  }
+
   var links = [
     ['index.html', 'Rankings'],
     ['games.html', 'Games'],
