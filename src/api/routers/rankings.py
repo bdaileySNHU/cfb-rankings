@@ -294,7 +294,7 @@ async def get_postseason(season: int, db: Session = Depends(get_db)):
             "home_score": g.home_score,
             "away_score": g.away_score,
             "is_neutral_site": g.is_neutral_site,
-            "game_date": g.game_date.isoformat() if g.game_date else None,
+            "game_date": schemas.iso_utc(g.game_date),
             "winner_team_id": g.home_team_id if home_won else g.away_team_id,
             "winner_name": home.name if home_won else away.name,
             "loser_name": away.name if home_won else home.name,

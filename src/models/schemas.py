@@ -33,12 +33,27 @@ Note:
     at /docs endpoint. Keep descriptions clear and concise.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 from src.models.models import ConferenceType
+
+
+def iso_utc(dt: Optional[datetime]) -> Optional[str]:
+    """Serialize a game datetime as an explicit-UTC ISO 8601 string.
+
+    Game datetimes arrive from CFBD in UTC, but SQLite drops the tzinfo, so
+    they come back off the ORM naive. Emitting those bare (``2026-08-30T00:00:00``)
+    makes JavaScript's ``new Date()`` read them as *local* time, which shifts
+    every night kickoff onto the following day. Stamp the UTC offset back on.
+    """
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat()
 
 
 # Team Schemas
@@ -194,6 +209,10 @@ class GameBase(BaseModel):
     game_date: Optional[datetime] = Field(None, description="Game date and time")
     game_type: Optional[str] = Field(None, description="Game classification: 'conference_championship', 'bowl', 'playoff', or None for regular season")
     postseason_name: Optional[str] = Field(None, description="Bowl or playoff name (e.g., 'Rose Bowl Game', 'CFP Semifinal')")
+
+    @field_serializer("game_date")
+    def _serialize_game_date(self, dt: Optional[datetime], _info) -> Optional[str]:
+        return iso_utc(dt)
 
 
 class GameCreate(GameBase):

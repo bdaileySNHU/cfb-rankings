@@ -132,7 +132,9 @@ class TestGeneratePredictions:
 
         mock_db.query.return_value = mock_season_query
 
-        predictions = generate_predictions(mock_db, next_week=True, season_year=2025)
+        # No dated games, so prediction falls back to week-number filtering
+        with patch("src.core.ranking_service.next_slate_window", return_value=None):
+            predictions = generate_predictions(mock_db, next_week=True, season_year=2025)
 
         assert predictions == []  # Should return empty list
 
