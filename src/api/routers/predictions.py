@@ -14,6 +14,7 @@ from src.core.ranking_service import (
     generate_predictions,
     get_overall_prediction_accuracy,
     get_team_prediction_accuracy,
+    next_slate_window,
 )
 from src.models import schemas
 from src.models.database import get_db
@@ -62,10 +63,19 @@ async def get_predictions(
         # Apply filters
         if week is not None:
             query = query.filter(Game.week == week)
+        elif next_week:
+            # Narrow to the next slate by date, not by week number — a CFB week
+            # can straddle a nine-day span (see next_slate_window).
+            window = next_slate_window(db, season)
+            if window:
+                slate_week, start, end = window
+                query = query.filter(
+                    Game.week == slate_week, Game.game_date >= start, Game.game_date < end
+                )
         if team_id:
             query = query.filter(or_(Game.home_team_id == team_id, Game.away_team_id == team_id))
 
-        stored_predictions = query.all()
+        stored_predictions = query.order_by(Game.game_date, Game.id).all()
 
         # If we have stored predictions, return those
         if stored_predictions:
@@ -103,6 +113,7 @@ async def get_predictions(
                     "confidence": confidence,
                     "week": game.week,
                     "season": game.season,
+                    "game_date": schemas.iso_utc(game.game_date),
                 })
             return result
 
@@ -208,7 +219,7 @@ async def get_historical_predictions(
                 game_id=game.id,
                 week=game.week,
                 season=game.season,
-                game_date=game.game_date.isoformat() if game.game_date else None,
+                game_date=schemas.iso_utc(game.game_date),
                 is_neutral_site=game.is_neutral_site,
                 home_team_id=home_team.id,
                 home_team=home_team.name,

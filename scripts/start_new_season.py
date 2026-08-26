@@ -90,11 +90,14 @@ def create_new_season(db, season_year: int, dry_run: bool = True):
         Season object (or None in dry run)
     """
     print(f"\nCreating {season_year} season:")
-    print(f"  - Starting week: 1")
+    # current_week tracks the last week we *processed*, so a season with no
+    # results yet is week 0. Seeding 1 made the site claim week 1 was already
+    # in the books and pushed "next week" predictions past the opener.
+    print(f"  - Starting week: 0 (preseason)")
     print(f"  - Active: True")
 
     if not dry_run:
-        new_season = Season(year=season_year, current_week=1, is_active=True)
+        new_season = Season(year=season_year, current_week=0, is_active=True)
         db.add(new_season)
         db.commit()
         print(f"  ✅ Created season {season_year}")

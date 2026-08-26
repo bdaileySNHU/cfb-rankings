@@ -36,7 +36,7 @@ import logging
 import math
 import os
 import statistics
-from datetime import datetime
+from datetime import date, datetime, time, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import or_
@@ -1181,6 +1181,69 @@ class RankingService:
 # Prediction Functions (standalone, not part of RankingService class)
 
 
+# A CFB week normally runs 5 days or less, even with midweek MACtion pulling
+# Tuesday and Wednesday games in ahead of Saturday. Only a genuinely split week
+# — 2026's week 1, which plays 8 games on Aug 29 and the other 91 over Labor Day
+# weekend nine days later — opens a hole this big.
+SLATE_SPLIT_DAYS = 4
+
+
+def next_slate_window(
+    db: Session, season_year: int, today: Optional[date] = None
+) -> Optional[Tuple[int, datetime, datetime]]:
+    """Find the next slate of games as a date window rather than a week number.
+
+    Week numbers are usually a fine proxy for "what's on next", but not always:
+    CFBD's 2026 week 1 spans Aug 29 through Sep 7. Filtering by week alone puts
+    all 99 of those games on the board at once and keeps them there for a week
+    and a half.
+
+    So: walk the season's remaining weeks in order, split any week that has an
+    internal gap of SLATE_SPLIT_DAYS or more, and return the first resulting
+    slate that hasn't finished yet, as a (week, start, end) triple covering a
+    half-open date range.
+
+    Returns None when no unprocessed game carries a date, so callers can fall
+    back to week-number filtering.
+    """
+    rows = (
+        db.query(Game.week, Game.game_date)
+        .filter(
+            Game.season == season_year,
+            Game.is_processed == False,  # noqa: E712
+            Game.game_date.isnot(None),
+        )
+        .all()
+    )
+    if not rows:
+        return None
+
+    # Game datetimes are stored as naive UTC, so group on UTC days.
+    days_by_week: Dict[int, set] = {}
+    for week, when in rows:
+        days_by_week.setdefault(week, set()).add(when.date())
+    today = today or datetime.utcnow().date()
+
+    for week in sorted(days_by_week):
+        days = sorted(days_by_week[week])
+        slate = [days[0]]
+        for day in days[1:]:
+            if (day - slate[-1]).days < SLATE_SPLIT_DAYS:
+                slate.append(day)
+                continue
+            if slate[-1] >= today:
+                break
+            slate = [day]
+        if slate[-1] >= today:
+            return (
+                week,
+                datetime.combine(slate[0], time.min),
+                datetime.combine(slate[-1] + timedelta(days=1), time.min),
+            )
+
+    return None  # every remaining game is in the past
+
+
 def generate_predictions(
     db: Session,
     week: Optional[int] = None,
@@ -1210,13 +1273,20 @@ def generate_predictions(
 
     # Apply week filter
     if next_week:
-        # Get current week from Season model
         current_week = db.query(Season.current_week).filter(Season.year == season_year).scalar()
-
         if current_week is None:
             return []  # No active season
 
-        query = query.filter(Game.week == current_week + 1)
+        window = next_slate_window(db, season_year)
+        if window is None:
+            # Undated schedule (or nothing left to play) — fall back to the
+            # week after the last one we processed.
+            query = query.filter(Game.week == current_week + 1)
+        else:
+            slate_week, start, end = window
+            query = query.filter(
+                Game.week == slate_week, Game.game_date >= start, Game.game_date < end
+            )
     elif week is not None:
         query = query.filter(Game.week == week)
 

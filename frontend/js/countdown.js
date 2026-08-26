@@ -10,9 +10,9 @@
 
   var base = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : '/api';
 
-  // game_date is stored UTC-naive and serialized without an offset
-  // ("2026-08-29T16:00:00"). JS parses offset-less date-time strings as LOCAL
-  // time, which would skew the countdown by the viewer's UTC offset.
+  // The API stamps game_date with a UTC offset, but older cached responses (and
+  // the raw sqlite " "-separated form) can arrive bare. JS reads an offset-less
+  // date-time as LOCAL, which skews the countdown by the viewer's UTC offset.
   function parseUtc(s) {
     if (!s) return null;
     var iso = /(Z|[+-]\d{2}:?\d{2})$/.test(s) ? s : s + 'Z';
