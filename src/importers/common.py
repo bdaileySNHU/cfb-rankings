@@ -11,7 +11,10 @@ CONFERENCE_MAP = {
     "Big Ten": ConferenceType.POWER_5,
     "ACC": ConferenceType.POWER_5,
     "Big 12": ConferenceType.POWER_5,
-    "Pac-12": ConferenceType.POWER_5,
+    # The 2026 Pac-12 is a rebuilt Group of Six league (Boise State, Colorado
+    # State, Fresno State, San Diego State, Utah State and Texas State joining
+    # Oregon State and Washington State), not the old power conference.
+    "Pac-12": ConferenceType.GROUP_5,
     "American Athletic": ConferenceType.GROUP_5,
     "Mountain West": ConferenceType.GROUP_5,
     "Conference USA": ConferenceType.GROUP_5,

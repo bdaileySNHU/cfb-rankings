@@ -129,17 +129,28 @@ class TestTeamImportWithMock:
         assert boise.conference_name == "Mountain West"
         assert boise.conference == ConferenceType.GROUP_5
 
-        # Boise State leaves for the rebuilt Pac-12, which is a P5 conference.
-        realigned = [dict(t) for t in mock_cfbd_client.get_teams(2026)]
-        for team in realigned:
-            if team["school"] == "Boise State":
-                team["conference"] = "Pac-12"
-        mock_cfbd_client.get_teams.return_value = realigned
+        def realign(school: str, conference: str):
+            teams = [dict(t) for t in mock_cfbd_client.get_teams(2026)]
+            for team in teams:
+                if team["school"] == school:
+                    team["conference"] = conference
+            mock_cfbd_client.get_teams.return_value = teams
 
+        # Boise State leaves for the rebuilt Pac-12, which is a Group of Six
+        # league in 2026 -- the name moves, the tier does not.
+        realign("Boise State", "Pac-12")
         import_teams(mock_cfbd_client, test_db, year=2026)
 
         boise = test_db.query(Team).filter(Team.name == "Boise State").one()
         assert boise.conference_name == "Pac-12"
+        assert boise.conference == ConferenceType.GROUP_5
+
+        # A move up a level has to carry the tier with it.
+        realign("Boise State", "SEC")
+        import_teams(mock_cfbd_client, test_db, year=2027)
+
+        boise = test_db.query(Team).filter(Team.name == "Boise State").one()
+        assert boise.conference_name == "SEC"
         assert boise.conference == ConferenceType.POWER_5
 
     def test_import_teams_calculates_preseason_ratings(self, test_db: Session, mock_cfbd_client):

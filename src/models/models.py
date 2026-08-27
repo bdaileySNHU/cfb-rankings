@@ -58,7 +58,8 @@ class ConferenceType(str, enum.Enum):
     for ELO calculations and matchup multipliers:
 
     Attributes:
-        POWER_5: Power 5 conferences (SEC, Big Ten, Big 12, ACC, Pac-12)
+        POWER_5: Power conferences (SEC, Big Ten, Big 12, ACC). The rebuilt
+            2026 Pac-12 is Group of Six, not P5.
         GROUP_5: Group of 5 conferences (AAC, C-USA, MAC, MWC, Sun Belt)
         FCS: Football Championship Subdivision (lower division)
 
