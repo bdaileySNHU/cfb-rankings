@@ -185,6 +185,8 @@ def replay_season(db_path: Path, season: int, weekly_eff: dict) -> list:
             records.append(
                 {
                     "week": week,
+                    "home": home.name,
+                    "away": away.name,
                     "neutral": bool(game.is_neutral_site),
                     "home_elo": home.elo_rating,
                     "away_elo": away.elo_rating,

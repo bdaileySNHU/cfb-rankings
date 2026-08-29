@@ -939,6 +939,69 @@ class CFBDClient:
 
         return result
 
+    def get_core_ratings(
+        self, year: int, week: Optional[int] = None, team: Optional[str] = None
+    ) -> List[Dict]:
+        """Get CFBD's CORE ratings — an independent yardstick for our own ELO.
+
+        These are opponent-adjusted points-above-average, so a rating of 17 means
+        roughly seventeen points better than a neutral-site average team. We do
+        not blend them: CORE is built from the same adjusted PPA that already
+        feeds the efficiency blend, so folding it in would double-count. It is
+        here to compare against.
+
+        Args:
+            year: Season year
+            week: Optional week; omit for the full season to date
+            team: Optional team name filter
+
+        Returns:
+            List of rating dicts with team, overall, offense, defense,
+            throughWeek. Empty list on failure.
+
+        Note:
+            - API endpoint: GET /ratings/core
+        """
+        params: Dict = {"year": year}
+        if week:
+            params["week"] = week
+        if team:
+            params["team"] = team
+
+        result = self._get("/ratings/core", params=params)
+        if result is None:
+            logger.warning(f"Failed to fetch CORE ratings for year={year}")
+            return []
+        return result
+
+    def get_lines(self, year: int, week: Optional[int] = None) -> List[Dict]:
+        """Get betting lines for a season.
+
+        Used only to score our predictions against the market, never as a model
+        input — the closing spread is the benchmark, not a feature.
+
+        Args:
+            year: Season year
+            week: Optional week; omit for the whole season in one call
+
+        Returns:
+            List of game dicts, each with a "lines" list of per-provider spreads.
+            Spreads are from the home team's perspective, so a home favorite
+            carries a negative number. Empty list on failure.
+
+        Note:
+            - API endpoint: GET /lines
+        """
+        params: Dict = {"year": year}
+        if week:
+            params["week"] = week
+
+        result = self._get("/lines", params=params)
+        if result is None:
+            logger.warning(f"Failed to fetch lines for year={year}, week={week}")
+            return []
+        return result
+
     def get_team_talent(self, year: int) -> List[Dict]:
         """
         Get team talent composite scores

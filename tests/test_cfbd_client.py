@@ -219,6 +219,40 @@ class TestCFBDAPIEndpoints:
         assert "excludeGarbageTime" not in mock_get.call_args[1]["params"]
 
     @patch("src.integrations.cfbd_client.requests.get")
+    def test_get_core_ratings(self, mock_get, client):
+        """CORE ratings pass through year, and week only when asked for"""
+        mock_response = Mock()
+        mock_response.json.return_value = []
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        client.get_core_ratings(2025)
+        params = mock_get.call_args[1]["params"]
+        assert params["year"] == 2025
+        assert "week" not in params
+
+        client.get_core_ratings(2025, week=6, team="Georgia")
+        params = mock_get.call_args[1]["params"]
+        assert params["week"] == 6
+        assert params["team"] == "Georgia"
+
+    @patch("src.integrations.cfbd_client.requests.get")
+    def test_get_lines(self, mock_get, client):
+        """Lines default to a whole season in one call"""
+        mock_response = Mock()
+        mock_response.json.return_value = []
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        client.get_lines(2025)
+        params = mock_get.call_args[1]["params"]
+        assert params["year"] == 2025
+        assert "week" not in params
+
+        client.get_lines(2025, week=3)
+        assert mock_get.call_args[1]["params"]["week"] == 3
+
+    @patch("src.integrations.cfbd_client.requests.get")
     def test_get_ap_poll(self, mock_get, client):
         """Test get_ap_poll() method"""
         mock_response = Mock()
