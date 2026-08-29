@@ -70,9 +70,14 @@ RATING_SCALE = 400
 POINTS_PER_100_ELO = 7.0
 
 
-def load_ppa_games(year: int, cache_dir: Path) -> list:
-    """Fetch /ppa/games for a season, caching so re-runs cost no API calls."""
-    cache = cache_dir / f"ppa_games_{year}.json"
+def load_ppa_games(year: int, cache_dir: Path, exclude_garbage_time: bool = False) -> list:
+    """Fetch /ppa/games for a season, caching so re-runs cost no API calls.
+
+    ``exclude_garbage_time`` asks CFBD to drop plays its garbage-time classifier
+    flags, and caches to a separate file so both variants can coexist.
+    """
+    suffix = "_nogarbage" if exclude_garbage_time else ""
+    cache = cache_dir / f"ppa_games_{year}{suffix}.json"
     if cache.exists():
         print(f"  using cached {cache.relative_to(project_root)}")
         return json.loads(cache.read_text())
@@ -82,7 +87,10 @@ def load_ppa_games(year: int, cache_dir: Path) -> list:
         sys.exit("ERROR: CFBD_API_KEY not set and no cache available")
 
     print(f"  fetching /ppa/games for {year} (1 API call)...")
-    rows = CFBDClient(api_key)._get("/ppa/games", params={"year": year})
+    params = {"year": year}
+    if exclude_garbage_time:
+        params["excludeGarbageTime"] = "true"
+    rows = CFBDClient(api_key)._get("/ppa/games", params=params)
     if not rows:
         sys.exit(f"ERROR: no PPA game data returned for {year}")
 
@@ -240,6 +248,11 @@ def main():
     parser.add_argument("--weights", type=float, nargs="+", default=DEFAULT_WEIGHTS)
     parser.add_argument("--min-weeks", type=int, nargs="+", default=DEFAULT_MIN_WEEKS)
     parser.add_argument("--db", default=str(project_root / "cfb_rankings.db"))
+    parser.add_argument(
+        "--exclude-garbage-time",
+        action="store_true",
+        help="source efficiency from CFBD's garbage-time-filtered PPA",
+    )
     args = parser.parse_args()
 
     source_db = Path(args.db)
@@ -251,7 +264,9 @@ def main():
     try:
         for season in args.seasons:
             print(f"\n{'=' * 70}\nSeason {season}\n{'=' * 70}")
-            ppa_rows = load_ppa_games(season, project_root / "data")
+            ppa_rows = load_ppa_games(
+                season, project_root / "data", args.exclude_garbage_time
+            )
             weekly_eff = build_weekly_efficiency(ppa_rows)
 
             # Replay against a copy — the real database is never touched

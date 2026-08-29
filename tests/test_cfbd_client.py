@@ -205,6 +205,20 @@ class TestCFBDAPIEndpoints:
         assert params["seasonType"] == "regular"
 
     @patch("src.integrations.cfbd_client.requests.get")
+    def test_get_team_ppa_season_excludes_garbage_time(self, mock_get, client):
+        """Team PPA filters garbage time by default, and can opt back in"""
+        mock_response = Mock()
+        mock_response.json.return_value = []
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        client.get_team_ppa_season(2025)
+        assert mock_get.call_args[1]["params"]["excludeGarbageTime"] == "true"
+
+        client.get_team_ppa_season(2025, exclude_garbage_time=False)
+        assert "excludeGarbageTime" not in mock_get.call_args[1]["params"]
+
+    @patch("src.integrations.cfbd_client.requests.get")
     def test_get_ap_poll(self, mock_get, client):
         """Test get_ap_poll() method"""
         mock_response = Mock()

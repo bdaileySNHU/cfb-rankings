@@ -884,7 +884,9 @@ class CFBDClient:
 
         return result
 
-    def get_team_ppa_season(self, year: int, team: Optional[str] = None) -> List[Dict]:
+    def get_team_ppa_season(
+        self, year: int, team: Optional[str] = None, exclude_garbage_time: bool = True
+    ) -> List[Dict]:
         """
         Get opponent-adjusted team season PPA (Predicted Points Added per play).
 
@@ -901,6 +903,9 @@ class CFBDClient:
         Args:
             year: Season year (e.g., 2025)
             team: Optional team name filter (e.g., "Georgia")
+            exclude_garbage_time: Drop plays CFBD's garbage-time classifier flags.
+                On by default — backtesting both variants over 2024-25 showed the
+                filtered signal beats the raw one in every blend weight tested.
 
         Returns:
             List of team PPA dictionaries, each containing:
@@ -922,6 +927,8 @@ class CFBDClient:
             - API endpoint: GET /ppa/teams
         """
         params: Dict = {"year": year}
+        if exclude_garbage_time:
+            params["excludeGarbageTime"] = "true"
         if team:
             params["team"] = team
 
