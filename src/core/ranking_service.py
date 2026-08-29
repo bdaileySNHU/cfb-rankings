@@ -7,7 +7,7 @@ production) with game-by-game rating updates.
 The service handles:
     - Preseason rating calculation from recruiting and transfer data
     - Game processing with ELO updates (including progressive K-factor)
-    - Margin of victory adjustments with garbage time detection
+    - Margin of victory adjustments
     - Conference-based multipliers for cross-tier matchups
     - Strength of schedule calculations
     - Weekly ranking snapshots and historical tracking
@@ -225,7 +225,7 @@ class RankingService:
     The service uses a Modified ELO algorithm that incorporates:
         - Preseason factors (recruiting rank, transfer portal, returning production)
         - Progressive K-factor (64→48→32 across season for optimal calibration)
-        - Margin of victory with garbage time detection
+        - Margin of victory scaled by the log of the final margin
         - Conference-based multipliers (FBS/FCS, P5/G5)
         - Home field advantage (65 ELO points)
 
@@ -238,8 +238,6 @@ class RankingService:
         K_FACTOR_EARLY: K-factor for weeks 1-4 (64)
         K_FACTOR_MID: K-factor for weeks 5-8 (48)
         K_FACTOR_LATE: K-factor for weeks 9+ (32)
-        GARBAGE_TIME_THRESHOLD: Point differential triggering garbage time (21)
-        GARBAGE_TIME_Q4_WEIGHT: Weight for Q4 scoring in garbage time (0.25)
 
     Example:
         >>> service = RankingService(db)
@@ -259,10 +257,6 @@ class RankingService:
     K_FACTOR_EARLY = 64  # Weeks 1-4: Aggressive K for rapid preseason correction
     K_FACTOR_MID = 48  # Weeks 5-8: Higher K for continued adjustment
     K_FACTOR_LATE = 32  # Weeks 9+: Standard K for stable ratings
-
-    # EPIC-021: Garbage Time Configuration
-    GARBAGE_TIME_THRESHOLD = 21  # Point differential entering Q4 that triggers reduced weighting
-    GARBAGE_TIME_Q4_WEIGHT = 0.25  # Weight applied to Q4 in garbage time (25% of normal)
 
     def __init__(self, db: Session):
         """Initialize the ranking service with a database session.
@@ -662,88 +656,6 @@ class RankingService:
         multiplier = math.log(abs(point_differential) + 1)
         return min(multiplier, self.MAX_MOV_MULTIPLIER)
 
-    def calculate_quarter_weighted_mov(self, game: Game, winner_is_home: bool) -> float:
-        """
-        Calculate margin of victory multiplier using quarter-by-quarter scores
-        with garbage time adjustment (EPIC-021)
-
-        Processes each quarter separately and applies reduced weight to 4th quarter
-        scoring when the game enters garbage time (large differential after Q3).
-
-        Args:
-            game: Game object with quarter scores populated
-            winner_is_home: True if home team won, False if away team won
-
-        Returns:
-            Weighted MOV multiplier (float, capped at MAX_MOV_MULTIPLIER)
-
-        Algorithm:
-            1. Calculate cumulative score differential after each quarter
-            2. Detect garbage time: |differential after Q3| > GARBAGE_TIME_THRESHOLD
-            3. Weight each quarter's contribution:
-               - Q1, Q2, Q3: Full weight (1.0)
-               - Q4: Full weight (1.0) in close games, reduced weight (0.25) in garbage time
-            4. Combine quarters into overall MOV multiplier
-        """
-        # Ensure quarter data exists
-        if any(
-            q is None
-            for q in [
-                game.q1_home,
-                game.q1_away,
-                game.q2_home,
-                game.q2_away,
-                game.q3_home,
-                game.q3_away,
-                game.q4_home,
-                game.q4_away,
-            ]
-        ):
-            # Fall back to legacy MOV if any quarter missing
-            point_diff = abs(game.home_score - game.away_score)
-            return self.calculate_mov_multiplier(point_diff)
-
-        # Extract quarter scores (winner perspective)
-        if winner_is_home:
-            winner_quarters = [game.q1_home, game.q2_home, game.q3_home, game.q4_home]
-            loser_quarters = [game.q1_away, game.q2_away, game.q3_away, game.q4_away]
-        else:
-            winner_quarters = [game.q1_away, game.q2_away, game.q3_away, game.q4_away]
-            loser_quarters = [game.q1_home, game.q2_home, game.q3_home, game.q4_home]
-
-        # Calculate cumulative differential after Q3 (before Q4)
-        differential_after_q3 = sum(winner_quarters[:3]) - sum(loser_quarters[:3])
-
-        # Detect garbage time
-        is_garbage_time = abs(differential_after_q3) > self.GARBAGE_TIME_THRESHOLD
-
-        # Calculate quarter-by-quarter MOV contributions
-        quarter_movs = []
-        for i in range(4):
-            # Calculate differential for this quarter
-            quarter_diff = winner_quarters[i] - loser_quarters[i]
-
-            # Apply weight: reduced for Q4 in garbage time, full otherwise
-            if i == 3 and is_garbage_time:
-                weight = self.GARBAGE_TIME_Q4_WEIGHT
-            else:
-                weight = 1.0
-
-            # Calculate MOV for this quarter (using log function like legacy)
-            if quarter_diff > 0:
-                quarter_mov = math.log(abs(quarter_diff) + 1) * weight
-            else:
-                # Quarter was even or loser outscored winner
-                quarter_mov = 0.0
-
-            quarter_movs.append(quarter_mov)
-
-        # Combine quarters: average (treats each quarter equally)
-        combined_mov = sum(quarter_movs) / 4.0
-
-        # Cap at maximum
-        return min(combined_mov, self.MAX_MOV_MULTIPLIER)
-
     def get_conference_multiplier(
         self, winner_conf: ConferenceType, loser_conf: ConferenceType
     ) -> Tuple[float, float]:
@@ -852,25 +764,7 @@ class RankingService:
         loser_expected = 1.0 - winner_expected
 
         # Calculate margin of victory multiplier
-        # EPIC-021: Use quarter-weighted calculation if quarter data available
-        if all(
-            [
-                game.q1_home is not None,
-                game.q1_away is not None,
-                game.q2_home is not None,
-                game.q2_away is not None,
-                game.q3_home is not None,
-                game.q3_away is not None,
-                game.q4_home is not None,
-                game.q4_away is not None,
-            ]
-        ):
-            # Quarter data available - use new algorithm
-            mov_multiplier = self.calculate_quarter_weighted_mov(game, is_home_win)
-        else:
-            # No quarter data - use legacy algorithm
-            point_diff = abs(winner_score - loser_score)
-            mov_multiplier = self.calculate_mov_multiplier(point_diff)
+        mov_multiplier = self.calculate_mov_multiplier(abs(winner_score - loser_score))
 
         # Get conference multipliers
         winner_conf_mult, loser_conf_mult = self.get_conference_multiplier(

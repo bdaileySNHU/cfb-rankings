@@ -16,7 +16,6 @@ Key Features:
     - Automatic API usage tracking with threshold warnings (80%, 90%, 95%)
     - Request/response logging for debugging
     - Season and week detection utilities
-    - Quarter-by-quarter line score fetching for garbage time detection
 
 API Key:
     Required for most endpoints. Get a free key at:

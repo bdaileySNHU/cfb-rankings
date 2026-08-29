@@ -1,5 +1,12 @@
 # EPIC-021 Production Deployment Checklist
 
+> **Superseded (2026-08-29).** Quarter-weighted MOV was removed. It never ran in
+> production — the CFBD field it depended on had gone away, so every game fell back
+> to the final margin. Once the data was repaired, backtesting 2021-25 showed the
+> algorithm cost accuracy (0.7001 -> 0.6954) and Brier score (0.1927 -> 0.1944),
+> so ratings stay on the final margin. Quarter scores are still imported.
+
+
 **Epic:** Quarter-Weighted ELO with Garbage Time Adjustment
 **Deployment Date:** _____________
 **Deployed By:** _____________

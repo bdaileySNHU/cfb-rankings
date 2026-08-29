@@ -1,5 +1,12 @@
 # Epic 021: Quarter-Weighted ELO with Garbage Time Adjustment
 
+> **Superseded (2026-08-29).** Quarter-weighted MOV was removed. It never ran in
+> production — the CFBD field it depended on had gone away, so every game fell back
+> to the final margin. Once the data was repaired, backtesting 2021-25 showed the
+> algorithm cost accuracy (0.7001 -> 0.6954) and Brier score (0.1927 -> 0.1944),
+> so ratings stay on the final margin. Quarter scores are still imported.
+
+
 **Epic Number**: EPIC-021
 **Created**: 2025-11-16
 **Status**: ✅ Completed
