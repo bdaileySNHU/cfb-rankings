@@ -131,6 +131,32 @@ def find_existing_game(db, home_team_id: int, away_team_id: int, week: int, seas
     )
 
 
+def line_scores_from_game(game_data: dict):
+    """Pull quarter scores out of a /games payload (EPIC-021).
+
+    CFBD returns these inline on the game record, so no extra request is
+    needed.
+
+    Returns None when there is nothing usable: a game not yet played, one still
+    in progress, or one that went to overtime. Overtime is excluded because the
+    quarter fields only model four periods, so the OT points would never sum to
+    the final score and validation would reject them anyway. Those games fall
+    back to the whole-game margin, which is the right call for a one-score
+    finish regardless.
+
+    Args:
+        game_data: One game dict from CFBDClient.get_games()
+
+    Returns:
+        dict with "home"/"away" lists of 4 quarter scores, or None
+    """
+    home = game_data.get("homeLineScores") or []
+    away = game_data.get("awayLineScores") or []
+    if len(home) != 4 or len(away) != 4:
+        return None
+    return {"home": home, "away": away}
+
+
 def apply_quarter_scores(game: Game, line_scores) -> None:
     """
     Apply fetched quarter scores to a game and validate them (EPIC-021).

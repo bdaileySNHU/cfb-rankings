@@ -27,6 +27,7 @@ import logging
 
 from sqlalchemy.orm import Session
 
+from src.importers.common import line_scores_from_game
 from src.integrations.cfbd_client import CFBDClient
 from src.models.database import SessionLocal
 from src.models.models import Game
@@ -34,6 +35,9 @@ from src.models.models import Game
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+# Weeks above this are bowls/playoff in our schema, postseason in CFBD's.
+REGULAR_SEASON_MAX_WEEK = 15
 
 
 class QuarterScoreBackfiller:
@@ -43,6 +47,7 @@ class QuarterScoreBackfiller:
         self.db = db
         self.cfbd_client = cfbd_client
         self.dry_run = dry_run
+        self._week_cache: Dict[Tuple[int, int], dict] = {}
         self.stats = {
             "total": 0,
             "backfilled": 0,
@@ -53,7 +58,12 @@ class QuarterScoreBackfiller:
 
     def get_games_needing_backfill(self, season: int = None, limit: int = None) -> List[Game]:
         """Fetch games with NULL quarter scores"""
-        query = self.db.query(Game).filter(Game.q1_home.is_(None))
+        # Unplayed games have no line scores to fetch; skipping them keeps a run
+        # from spending its API calls on next season's schedule.
+        query = self.db.query(Game).filter(
+            Game.q1_home.is_(None),
+            (Game.home_score > 0) | (Game.away_score > 0),
+        )
 
         if season:
             query = query.filter(Game.season == season)
@@ -65,6 +75,31 @@ class QuarterScoreBackfiller:
 
         return query.all()
 
+    def line_scores_for(self, game: Game) -> dict:
+        """Look up one game's quarter scores, fetching its whole week once.
+
+        CFBD returns line scores inline on /games, so a week costs a single
+        request no matter how many games in it still need backfilling.
+        """
+        # Bowls and playoff rounds live on CFBD's postseason schedule, whose week
+        # numbering does not match the weeks 16+ we store them under, so fetch
+        # that whole slate at once and match on team names like everything else.
+        is_postseason = game.week > REGULAR_SEASON_MAX_WEEK
+        key = (game.season, "post" if is_postseason else game.week)
+        if key not in self._week_cache:
+            logger.info(f"Fetching {game.season} {key[1]} (1 API call)")
+            if is_postseason:
+                week_games = (
+                    self.cfbd_client.get_games(game.season, season_type="postseason") or []
+                )
+            else:
+                week_games = self.cfbd_client.get_games(game.season, week=game.week) or []
+            self._week_cache[key] = {
+                (g.get("homeTeam"), g.get("awayTeam")): line_scores_from_game(g)
+                for g in week_games
+            }
+        return self._week_cache[key].get((game.home_team.name, game.away_team.name))
+
     def backfill_game(self, game: Game) -> bool:
         """
         Backfill quarter scores for a single game
@@ -73,15 +108,7 @@ class QuarterScoreBackfiller:
             True if successful, False otherwise
         """
         try:
-            # Fetch quarter scores from CFBD API
-            # Note: game_id parameter is for logging only; API uses year/week/team names to find the game
-            line_scores = self.cfbd_client.get_game_line_scores(
-                game_id=game.id,  # Local database ID (for logging purposes only)
-                year=game.season,
-                week=game.week,
-                home_team=game.home_team.name,
-                away_team=game.away_team.name,
-            )
+            line_scores = self.line_scores_for(game)
 
             if line_scores is None:
                 logger.debug(f"No line scores available for game {game.id}")

@@ -7,6 +7,7 @@ from src.importers.common import (
     apply_quarter_scores,
     find_existing_game,
     get_or_create_fcs_team,
+    line_scores_from_game,
     parse_game_date,
 )
 from src.importers.polls import import_ap_poll_rankings
@@ -155,13 +156,7 @@ def import_games(
                     existing_game.game_date = parse_game_date(game_data)
 
                     # EPIC-021: Fetch and update quarter scores
-                    line_scores = cfbd.get_game_line_scores(
-                        game_id=game_data.get("id", 0),
-                        year=year,
-                        week=week,
-                        home_team=home_team_name,
-                        away_team=away_team_name,
-                    )
+                    line_scores = line_scores_from_game(game_data)
                     apply_quarter_scores(existing_game, line_scores)
 
                     # Mark as unprocessed so ELO calculation runs
@@ -226,13 +221,7 @@ def import_games(
             # EPIC-021: Fetch quarter scores if game is completed
             line_scores = None
             if not is_future_game:
-                line_scores = cfbd.get_game_line_scores(
-                    game_id=game_data.get("id", 0),
-                    year=year,
-                    week=week,
-                    home_team=home_team_name,
-                    away_team=away_team_name,
-                )
+                line_scores = line_scores_from_game(game_data)
 
             game = Game(
                 home_team_id=home_team.id,
