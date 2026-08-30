@@ -225,8 +225,9 @@
       ).forEach(game => {
         const row = document.createElement('tr');
 
-        // Check if game has been played (scores exist)
-        const hasScore = game.home_score !== null && game.away_score !== null;
+        // Check if game has been played (see isPlayed in date-utils.js —
+        // scheduled games carry placeholder 0-0 scores, not nulls).
+        const hasScore = isPlayed(game);
 
         if (hasScore) {
           // Completed game - display winner/loser
