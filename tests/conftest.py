@@ -9,6 +9,8 @@ This module provides test fixtures for:
 """
 
 import os
+import uuid
+
 import pytest
 from starlette.testclient import TestClient
 from sqlalchemy import create_engine
@@ -50,11 +52,27 @@ def test_db():
     Yields:
         Session: SQLAlchemy database session for test use
     """
-    # Create in-memory SQLite engine with shared cache
-    # Using file::memory:?cache=shared ensures all connections share the same in-memory database
+    # Each test gets its own named in-memory database. Shared cache is still
+    # required, because the E2E server thread reads through a different
+    # connection than the one seeding the data — but the name must be unique
+    # per test, not the process-wide "file::memory:".
+    #
+    # With one shared database, the session-scoped `live_server` kept serving
+    # while this function-scoped fixture tore down, so an in-flight browser
+    # request held a read lock on sqlite_master while drop_all ran:
+    # "database table is locked: DROP TABLE predictions". The drop then failed
+    # half-done and left rows behind, and the next test's Season insert died
+    # with "UNIQUE constraint failed: seasons.year".
+    db_name = f"testdb_{uuid.uuid4().hex}"
     engine = create_engine(
-        "sqlite:///file::memory:?cache=shared&uri=true", connect_args={"check_same_thread": False}
+        f"sqlite:///file:{db_name}?mode=memory&cache=shared&uri=true",
+        connect_args={"check_same_thread": False},
     )
+
+    # A named in-memory database is destroyed the moment its last connection
+    # closes, which the pool is free to do between requests. Hold one open for
+    # the life of the fixture so the schema survives.
+    keepalive = engine.connect()
 
     # Create session factory
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -87,8 +105,12 @@ def test_db():
     finally:
         app.dependency_overrides.pop(get_db, None)
         db.close()
-        # Drop all tables after test
-        Base.metadata.drop_all(bind=engine)
+        # No drop_all: the database is private to this test and dies with its
+        # last connection. Dropping tables is what raced the server thread, and
+        # a late request from the finished test now hits its own expiring
+        # database instead of corrupting the next one.
+        keepalive.close()
+        engine.dispose()
 
 
 @pytest.fixture(scope="function")
