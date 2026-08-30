@@ -138,3 +138,33 @@ function formatGameDateMobile(dateString) {
     return 'TBD';
   }
 }
+
+/**
+ * Has this game actually been played?
+ *
+ * The importer stores scheduled games with placeholder 0-0 scores rather than
+ * nulls, so a null check alone reports a future game as final — and 0 > 0 is
+ * false, which silently crowns the away team as winner. This mirrors the rule
+ * RankingService.process_game() uses to reject a future game.
+ *
+ * @param {{home_score: ?number, away_score: ?number}} game - Game from the API
+ * @returns {boolean} True if the game has a real result
+ *
+ * @example
+ * isPlayed({home_score: 15, away_score: 10})  // true
+ * isPlayed({home_score: 0, away_score: 0})    // false — scheduled
+ * isPlayed({home_score: null, away_score: 3}) // false
+ */
+function isPlayed(game) {
+  if (!game) return false;
+  if (game.home_score === null || game.home_score === undefined) return false;
+  if (game.away_score === null || game.away_score === undefined) return false;
+  // ponytail: a real 0-0 final does not happen in modern CFB. Switch to
+  // is_processed if the sport ever produces one.
+  return !(game.home_score === 0 && game.away_score === 0);
+}
+
+// Expose the pure helpers so the node self-checks can exercise them.
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { formatGameDate, formatGameDateMobile, isPlayed };
+}
