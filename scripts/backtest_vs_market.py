@@ -58,7 +58,7 @@ from backtest_efficiency_blend import (  # noqa: E402
     POINTS_PER_100_ELO,
     build_weekly_efficiency,
     load_ppa_games,
-    replay_season,
+    replay_seasons,
 )
 
 
@@ -123,41 +123,43 @@ def main():
     if not source_db.exists():
         sys.exit(f"ERROR: database not found: {source_db}")
 
-    rows = []
+    seasons = sorted(args.seasons)
+    weekly_eff = {}
+    spreads_by_season = {}
+    for season in seasons:
+        print(f"\nSeason {season}")
+        weekly_eff[season] = build_weekly_efficiency(
+            load_ppa_games(season, project_root / "data", exclude_garbage_time=True)
+        )
+        spreads_by_season[season] = load_lines(season, project_root / "data")
+
     tmpdir = Path(tempfile.mkdtemp(prefix="market-backtest-"))
     try:
-        for season in args.seasons:
-            print(f"\nSeason {season}")
-            weekly_eff = build_weekly_efficiency(
-                load_ppa_games(season, project_root / "data", exclude_garbage_time=True)
-            )
-            spreads = load_lines(season, project_root / "data")
-
-            work_db = tmpdir / f"market_{season}.db"
-            shutil.copy(source_db, work_db)
-            print("  replaying season...")
-            records = replay_season(work_db, season, weekly_eff)
-
-            matched = 0
-            for record in records:
-                spread = spreads.get((record["week"], record["home"], record["away"]))
-                if spread is None:
-                    continue
-                actual = record["home_score"] - record["away_score"]
-                if actual == 0:
-                    continue
-                matched += 1
-                rows.append(
-                    {
-                        "season": season,
-                        "ours": predicted_margin(record, args.weight, args.min_week),
-                        "market": -spread,  # spread is what the home team gets
-                        "actual": actual,
-                    }
-                )
-            print(f"  {len(records)} games replayed, {matched} matched to a closing line")
+        replayed = replay_seasons(source_db, seasons, weekly_eff, tmpdir)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
+
+    rows = []
+    for season, records in replayed:
+        spreads = spreads_by_season[season]
+        matched = 0
+        for record in records:
+            spread = spreads.get((record["week"], record["home"], record["away"]))
+            if spread is None:
+                continue
+            actual = record["home_score"] - record["away_score"]
+            if actual == 0:
+                continue
+            matched += 1
+            rows.append(
+                {
+                    "season": season,
+                    "ours": predicted_margin(record, args.weight, args.min_week),
+                    "market": -spread,  # spread is what the home team gets
+                    "actual": actual,
+                }
+            )
+        print(f"  {season}: {len(records)} games replayed, {matched} matched to a closing line")
 
     if not rows:
         sys.exit("ERROR: no games matched a betting line")

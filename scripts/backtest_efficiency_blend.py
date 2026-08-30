@@ -21,6 +21,17 @@ running mean correlates **0.987** with ``/ppa/teams``, with near-identical sprea
 correction. Since the blend standardizes both signals to z-scores, only the
 correlation matters, not the scale.
 
+Season chaining
+---------------
+Seasons replay in order against one database, because preseason ratings regress
+toward the previous season's final ELO. Replaying each season in isolation left
+that lookup empty and started every team from formula ratings built out of
+today's teams table — this season's recruiting and returning production applied
+to a season years ago. Chaining is worth about 0.003 of Brier on its own.
+
+The first season in the window still has nothing behind it, so drop it before
+reading any result as a tuning signal.
+
 Known limitation: that 0.987 is a full-season comparison. There is no historical
 CFBD snapshot to validate the proxy at week 6, and unbalanced early schedules are
 exactly where opponent adjustment earns its keep — so treat early-week results as
@@ -55,7 +66,7 @@ from sqlalchemy.orm import sessionmaker  # noqa: E402
 from src.core import ranking_service as rs  # noqa: E402
 from src.core.ranking_service import RankingService, blend_rating  # noqa: E402
 from src.integrations.cfbd_client import CFBDClient  # noqa: E402
-from src.models.models import Game, Team  # noqa: E402
+from src.models.models import Game, RankingHistory, Team  # noqa: E402
 
 # Regular season only. /ppa/games numbers postseason rounds on its own scheme,
 # which does not line up with the games table's weeks 16-19.
@@ -206,8 +217,45 @@ def replay_season(db_path: Path, season: int, weekly_eff: dict) -> list:
             except ValueError:
                 continue  # invalid game for ranking purposes; skip like production does
 
+    # Record where the season finished so the next one can regress toward it.
+    service.save_final_season_snapshot(season)
+
     session.close()
     return records
+
+
+def replay_seasons(source_db: Path, seasons: list, weekly_eff: dict, tmpdir: Path) -> list:
+    """Replay seasons in chronological order against one database.
+
+    Seasons have to share a database and run in order because preseason ratings
+    regress toward the previous season's final ELO (EPIC-030). Replaying each
+    season against a fresh copy leaves that lookup empty, so every season starts
+    from formula ratings built out of whatever the teams table holds today —
+    which is this season's inputs, not the replayed one's.
+
+    The first season in the chain still has nothing behind it. Nothing can be
+    done about that; it is the price of the window starting somewhere.
+
+    Returns a list of (season, records) in order.
+    """
+    work_db = tmpdir / "chained.db"
+    shutil.copy(source_db, work_db)
+
+    # Clear any snapshots inside the replayed span so the chain builds its own
+    # rather than reading production's.
+    engine = create_engine(f"sqlite:///{work_db}")
+    session = sessionmaker(bind=engine)()
+    session.query(RankingHistory).filter(RankingHistory.season.in_(seasons)).delete(
+        synchronize_session=False
+    )
+    session.commit()
+    session.close()
+
+    out = []
+    for season in sorted(seasons):
+        print(f"  replaying {season}...")
+        out.append((season, replay_season(work_db, season, weekly_eff[season])))
+    return out
 
 
 def score(records: list, weight: float, min_week: int) -> dict:
@@ -261,27 +309,23 @@ def main():
     if not source_db.exists():
         sys.exit(f"ERROR: database not found: {source_db}")
 
-    all_records = []
+    weekly_eff = {}
+    for season in sorted(args.seasons):
+        print(f"\n{'=' * 70}\nSeason {season}\n{'=' * 70}")
+        weekly_eff[season] = build_weekly_efficiency(
+            load_ppa_games(season, project_root / "data", args.exclude_garbage_time)
+        )
+
     tmpdir = Path(tempfile.mkdtemp(prefix="blend-backtest-"))
     try:
-        for season in args.seasons:
-            print(f"\n{'=' * 70}\nSeason {season}\n{'=' * 70}")
-            ppa_rows = load_ppa_games(
-                season, project_root / "data", args.exclude_garbage_time
-            )
-            weekly_eff = build_weekly_efficiency(ppa_rows)
-
-            # Replay against a copy — the real database is never touched
-            work_db = tmpdir / f"backtest_{season}.db"
-            shutil.copy(source_db, work_db)
-
-            print("  replaying season...")
-            records = replay_season(work_db, season, weekly_eff)
-            covered = sum(1 for r in records if r["home_eff"] is not None)
-            print(f"  {len(records)} games predicted, {covered} with efficiency data")
-            all_records.append((season, records))
+        # Replayed against a copy — the real database is never touched
+        all_records = replay_seasons(source_db, sorted(args.seasons), weekly_eff, tmpdir)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
+
+    for season, records in all_records:
+        covered = sum(1 for r in records if r["home_eff"] is not None)
+        print(f"  {season}: {len(records)} games predicted, {covered} with efficiency data")
 
     combined = [r for _, recs in all_records for r in recs]
     for label, records in [(f"{s}", r) for s, r in all_records] + [("ALL", combined)]:
