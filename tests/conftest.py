@@ -109,8 +109,14 @@ def test_db():
         # last connection. Dropping tables is what raced the server thread, and
         # a late request from the finished test now hits its own expiring
         # database instead of corrupting the next one.
+        #
+        # Deliberately no engine.dispose() either. dispose() closes the pool's
+        # connections from this thread, and closing a sqlite connection while
+        # the E2E server thread is executing on it segfaults the interpreter
+        # (exit 139) rather than raising. The engine falls out of scope here and
+        # its connections close with it once nothing is using them. Only
+        # keepalive is closed by hand: it is never lent to the server thread.
         keepalive.close()
-        engine.dispose()
 
 
 @pytest.fixture(scope="function")
@@ -358,15 +364,24 @@ def live_server():
 
 
 @pytest.fixture(scope="function")
-def browser_page(live_server):
+def browser_page(live_server, test_db):
     """
     Provide a Playwright browser page for E2E tests.
 
     This fixture creates a new browser context and page for each test,
     ensuring test isolation. Screenshots are captured on failure.
 
+    Depends on `test_db` purely for teardown ordering. Tests take
+    (browser_page, seed_board), which used to build the page first and tear it
+    down last — so the database went away while the page was still open and
+    fetching, and the server thread kept issuing queries against a database
+    being dismantled. Requesting test_db here inverts that: the database is
+    built first and closed last, after the page is gone and no further requests
+    can arrive.
+
     Args:
         live_server: Base URL of the running server
+        test_db: Session for this test, ordered to outlive the browser
 
     Yields:
         tuple: (page, base_url) - Playwright page object and server URL
