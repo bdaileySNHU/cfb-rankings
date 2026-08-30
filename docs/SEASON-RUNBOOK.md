@@ -207,16 +207,30 @@ If predictions return an empty list, confirm games are in the DB and the season 
 
 ---
 
-## 3. Weekly Update (every Monday after games)
+## 3. Weekly Update (daily during the season)
 
-### Automated cron (runs at 9 AM every Monday)
+### Automated cron (runs at 6 AM daily)
 
 **Cron is the one scheduler.** Install under the crontab of the user that owns
 the deployment:
 
 ```
-0 9 * * 1 /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+0 6 * * * /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
 ```
+
+6 AM clears the late Pacific kickoffs that finish around 1–2 AM Eastern, so
+Saturday's scores are on the site by Sunday breakfast rather than Monday
+morning. The times above are **server local time** — check with `timedatectl`
+and shift to `0 10 * * *` if the box runs UTC.
+
+Daily is safe and cheap. The import updates games in place rather than
+duplicating them, the ELO step only picks up `is_processed = 0`, and
+`save_weekly_rankings()` deletes and rewrites the week it snapshots — so a
+Sunday run that catches a week mid-flight is corrected by Monday's. One run
+costs roughly 40 CFBD calls against a 30,000/month limit.
+
+Success notifications only fire when games were actually processed; failures
+always notify.
 
 The script:
 1. Loads `CFBD_API_KEY` from `.env` if not already set
@@ -259,10 +273,16 @@ To stop it recurring, move the entry to www-data's crontab
 ### Run the weekly update manually (if cron fails or needs re-running)
 
 ```bash
-cd /var/www/cfb-rankings
-export CFBD_API_KEY=<your-key>
-bash utilities/weekly_update.sh
+sudo -u www-data bash /var/www/cfb-rankings/utilities/weekly_update.sh
+sudo systemctl restart cfb-rankings   # step 4 warns if www-data lacks sudo
 ```
+
+No `CFBD_API_KEY` export needed: the script sources
+`/var/www/cfb-rankings/.env` itself, which is also why the cron entry carries
+no key. It has to run **as `www-data`** to do that — `.env` is mode 600 and
+owned by `www-data`, so running it as your own user fails with
+`grep: /var/www/cfb-rankings/.env: Permission denied` followed by
+`✗ ERROR: CFBD_API_KEY not set`. Same reason the crontab belongs to `www-data`.
 
 ### Check the weekly log
 
@@ -310,7 +330,6 @@ specific week without running the full pipeline.
 
 ```bash
 cd /var/www/cfb-rankings
-export CFBD_API_KEY=<your-key>
 sudo -u www-data venv/bin/python3 import_real_data.py --season 2026 --max-week 8
 ```
 
@@ -361,7 +380,6 @@ Bowl games use a separate postseason import path inside `import_real_data.py`
 
 ```bash
 cd /var/www/cfb-rankings
-export CFBD_API_KEY=<your-key>
 sudo -u www-data venv/bin/python3 import_real_data.py --season 2026
 ```
 
@@ -556,7 +574,7 @@ EOF
 2. Re-import scores and reprocess:
 
 ```bash
-export CFBD_API_KEY=<your-key>
+cd /var/www/cfb-rankings
 sudo -u www-data venv/bin/python3 import_real_data.py --season 2026
 bash utilities/weekly_update.sh
 ```

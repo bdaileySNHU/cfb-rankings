@@ -1,7 +1,7 @@
 #!/bin/bash
 # EPIC-033 Story 33.3 / EPIC-035: Automated Weekly Update with Monitoring
 #
-# Runs every Monday morning via cron to:
+# Runs daily via cron during the season to:
 #   1. Pull the latest game schedule from CFBD (with retry logic)
 #   2. Import completed game results (3 attempts, exponential backoff)
 #   3. Process results through the ELO algorithm
@@ -10,8 +10,12 @@
 #   6. Restart the API service
 #   7. Send Slack / email notification with result summary
 #
-# Cron entry (run as bdailey, 9am every Monday):
-#   0 9 * * 1 /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+# Cron entry (run as the user that owns the deployment, 6am daily):
+#   0 6 * * * /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+#
+# Re-running is safe: the import updates games in place, the ELO step only picks
+# up is_processed=0, and save_weekly_rankings() rewrites the week's snapshot.
+# A day with no finished games costs ~40 CFBD calls and changes nothing.
 #
 # Logs:    /var/log/cfb-rankings/weekly.log
 # Env vars required:
@@ -338,7 +342,7 @@ echo ""
 echo "[4/4] Restarting cfb-rankings service..."
 if [ "${SKIP_SERVICE_RESTART:-0}" = "1" ]; then
     echo "⚠ Skipping service restart (called via API — restart not needed)"
-elif sudo systemctl restart cfb-rankings 2>/dev/null; then
+elif sudo -n systemctl restart cfb-rankings 2>/dev/null; then
     echo "✓ Service restarted"
 else
     echo "⚠ Could not restart service (may need sudo permissions — restart manually)"
@@ -349,7 +353,13 @@ NOTIFY_BODY="Season $SEASON | Processed: $GAMES_PROCESSED games | Snapshots: $SN
 if [ -n "$DIFF_TEXT" ]; then
     NOTIFY_BODY="$NOTIFY_BODY\n\nBig movers (5+ spots):\n$DIFF_TEXT"
 fi
-_send_notification "✅ Weekly update complete ($SEASON)" "$NOTIFY_BODY"
+# ponytail: on a daily cron most runs process nothing — notifying every time
+# trains people to ignore the channel. Failures notify unconditionally above.
+if [ "$GAMES_PROCESSED" -gt 0 ]; then
+    _send_notification "✅ Weekly update complete ($SEASON)" "$NOTIFY_BODY"
+else
+    echo "No new games — skipping success notification"
+fi
 
 # ── Write final import log ─────────────────────────────────────────────────────
 "$PYTHON" - <<EOF
@@ -364,7 +374,7 @@ else:
     log_data = {}
 
 log_data.update({
-    "last_run": datetime.datetime.utcnow().isoformat() + "Z",
+    "last_run": datetime.datetime.now(datetime.UTC).isoformat(),
     "season": $SEASON,
     "games_processed": $GAMES_PROCESSED,
     "status": "success",
