@@ -364,24 +364,19 @@ def live_server():
 
 
 @pytest.fixture(scope="function")
-def browser_page(live_server, test_db):
+def browser_page(live_server):
     """
     Provide a Playwright browser page for E2E tests.
 
     This fixture creates a new browser context and page for each test,
     ensuring test isolation. Screenshots are captured on failure.
 
-    Depends on `test_db` purely for teardown ordering. Tests take
-    (browser_page, seed_board), which used to build the page first and tear it
-    down last — so the database went away while the page was still open and
-    fetching, and the server thread kept issuing queries against a database
-    being dismantled. Requesting test_db here inverts that: the database is
-    built first and closed last, after the page is gone and no further requests
-    can arrive.
+    Do not make this depend on test_db to force teardown ordering: doing so
+    wedges the server thread and every page.goto times out, static files
+    included. Isolation comes from each test owning its own database instead.
 
     Args:
         live_server: Base URL of the running server
-        test_db: Session for this test, ordered to outlive the browser
 
     Yields:
         tuple: (page, base_url) - Playwright page object and server URL
