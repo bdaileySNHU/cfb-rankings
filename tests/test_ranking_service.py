@@ -97,6 +97,8 @@ class TestGeneratePredictions:
         # Mock Game query
         mock_game_query = Mock()
         mock_game_query.filter.return_value = mock_game_query
+        mock_game_query.join.return_value = mock_game_query
+        mock_game_query.order_by.return_value = mock_game_query
         mock_game_query.all.return_value = [sample_game]
 
         # Mock Team queries
@@ -145,6 +147,8 @@ class TestGeneratePredictions:
         # Mock Game query
         mock_game_query = Mock()
         mock_game_query.filter.return_value = mock_game_query
+        mock_game_query.join.return_value = mock_game_query
+        mock_game_query.order_by.return_value = mock_game_query
         mock_game_query.all.return_value = [sample_game]
 
         # Mock Team queries
@@ -178,6 +182,8 @@ class TestGeneratePredictions:
             # Mock empty query results
             mock_query = Mock()
             mock_query.filter.return_value = mock_query
+            mock_query.join.return_value = mock_query
+            mock_query.order_by.return_value = mock_query
             mock_query.all.return_value = []
             mock_db.query.return_value = mock_query
 
@@ -270,6 +276,8 @@ class TestPredictionEdgeCases:
         """Test that empty game query returns empty predictions list"""
         mock_query = Mock()
         mock_query.filter.return_value = mock_query
+        mock_query.join.return_value = mock_query
+        mock_query.order_by.return_value = mock_query
         mock_query.all.return_value = []
         mock_db.query.return_value = mock_query
 
@@ -286,6 +294,8 @@ class TestPredictionEdgeCases:
 
         mock_game_query = Mock()
         mock_game_query.filter.return_value = mock_game_query
+        mock_game_query.join.return_value = mock_game_query
+        mock_game_query.order_by.return_value = mock_game_query
         mock_game_query.all.return_value = [game]
 
         mock_team_query = Mock()
@@ -315,6 +325,8 @@ class TestPredictionDataStructure:
 
         mock_query = Mock()
         mock_query.filter.return_value = mock_query
+        mock_query.join.return_value = mock_query
+        mock_query.order_by.return_value = mock_query
         mock_query.all.return_value = []
         db.query.return_value = mock_query
 

@@ -75,7 +75,13 @@ async def get_predictions(
         if team_id:
             query = query.filter(or_(Game.home_team_id == team_id, Game.away_team_id == team_id))
 
-        stored_predictions = query.order_by(Game.game_date, Game.id).all()
+        # Slate order matches how scoreboards present a day's games: kickoff
+        # time first, then alphabetically by the visiting team.
+        stored_predictions = (
+            query.join(Team, Game.away_team_id == Team.id)
+            .order_by(Game.game_date, Team.name, Game.id)
+            .all()
+        )
 
         # If we have stored predictions, return those
         if stored_predictions:
