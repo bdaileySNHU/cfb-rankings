@@ -19,7 +19,7 @@ from factories import GameFactory, SeasonFactory, TeamFactory, configure_factori
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from src.models.models import ConferenceType, Game, Season, Team
+from src.models.models import ConferenceType, Game, Prediction, Season, Team
 
 
 @pytest.mark.integration
@@ -411,3 +411,99 @@ class TestPredictionsEndpoint:
         predictions = response.json()
         assert len(predictions) == 1
         assert predictions[0]["season"] == 2024
+
+
+@pytest.mark.integration
+class TestPredictionSlateOrdering:
+    """Predictions come back in scoreboard order: kickoff time, then visitor A-Z.
+
+    Both paths that serve /api/predictions are covered — the stored-prediction
+    path and the generate-on-the-fly fallback — because they order independently.
+    """
+
+    WEEK = 5
+
+    def _build_slate(self, test_db: Session):
+        """Three kickoffs across two time slots, inserted out of order.
+
+        Insertion order is deliberately neither chronological nor alphabetical,
+        so a passing assertion cannot be satisfied by primary-key order.
+        """
+        configure_factories(test_db)
+        year = datetime.now().year
+        SeasonFactory(year=year, current_week=self.WEEK - 1)
+
+        early = datetime(year, 9, 20, 19, 0)  # 7:00 PM slot
+        late = datetime(year, 9, 20, 20, 0)  # 8:00 PM slot
+
+        # (away name, kickoff) — inserted late-slot-first, Z-before-A
+        slate = [
+            ("Wyoming", late),
+            ("Colorado", late),
+            ("Zephyr State", early),
+            ("Akron", early),
+        ]
+        for away_name, kickoff in slate:
+            GameFactory(
+                home_team=TeamFactory(elo_rating=1600),
+                away_team=TeamFactory(name=away_name, elo_rating=1500),
+                season=year,
+                week=self.WEEK,
+                game_date=kickoff,
+                is_processed=False,
+            )
+        test_db.commit()
+        return year
+
+    def test_generated_predictions_ordered_by_kickoff_then_visitor(
+        self, test_client: TestClient, test_db: Session
+    ):
+        """On-the-fly generation path orders by kickoff, then away team name."""
+        year = self._build_slate(test_db)
+
+        response = test_client.get(
+            f"/api/predictions?week={self.WEEK}&next_week=false&season={year}"
+        )
+
+        assert response.status_code == 200
+        assert [p["away_team"] for p in response.json()] == [
+            "Akron",
+            "Zephyr State",
+            "Colorado",
+            "Wyoming",
+        ]
+
+    def test_stored_predictions_ordered_by_kickoff_then_visitor(
+        self, test_client: TestClient, test_db: Session
+    ):
+        """Stored-prediction path applies the same ordering."""
+        year = self._build_slate(test_db)
+
+        # Store a prediction for every game so the endpoint takes the stored path.
+        for game in test_db.query(Game).filter(Game.season == year).all():
+            test_db.add(
+                Prediction(
+                    game_id=game.id,
+                    predicted_winner_id=game.home_team_id,
+                    predicted_home_score=28,
+                    predicted_away_score=21,
+                    win_probability=0.65,
+                    home_elo_at_prediction=1600.0,
+                    away_elo_at_prediction=1500.0,
+                )
+            )
+        test_db.commit()
+
+        response = test_client.get(
+            f"/api/predictions?week={self.WEEK}&next_week=false&season={year}"
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body) == 4, "expected the stored-prediction path, not generation"
+        assert [p["away_team"] for p in body] == [
+            "Akron",
+            "Zephyr State",
+            "Colorado",
+            "Wyoming",
+        ]

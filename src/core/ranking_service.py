@@ -1294,8 +1294,13 @@ def generate_predictions(
     if team_id is not None:
         query = query.filter(or_(Game.home_team_id == team_id, Game.away_team_id == team_id))
 
-    # Execute query
-    games = query.all()
+    # Execute query. Slate order matches how scoreboards present a day's games:
+    # kickoff time first, then alphabetically by the visiting team.
+    games = (
+        query.join(Team, Game.away_team_id == Team.id)
+        .order_by(Game.game_date, Team.name, Game.id)
+        .all()
+    )
     predictions = []
     scale = efficiency_scale(db)  # EPIC-045: compute once for the whole slate
 
