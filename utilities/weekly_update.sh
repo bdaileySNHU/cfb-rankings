@@ -147,17 +147,20 @@ echo "[2/4] Processing unprocessed games through ELO algorithm..."
 ELO_RESULT=$("$PYTHON" - <<EOF
 import sys
 from src.models.database import SessionLocal
-from src.models.models import Game, Season as SeasonModel
+from src.models.models import Game, Season as SeasonModel, has_been_played
 from src.core.ranking_service import RankingService
 
 db = SessionLocal()
 season = $SEASON
 
+# has_been_played() excludes games that have not kicked off. They are stored
+# 0-0 rather than NULL, so the old "IS NOT NULL" filter matched every future
+# game and handed each one to process_game(), which rejected it — a log full of
+# ERROR_GAME lines for games months away.
 unprocessed = db.query(Game).filter(
     Game.season == season,
     Game.is_processed == False,
-    Game.home_score != None,
-    Game.away_score != None,
+    has_been_played(),
 ).order_by(Game.week.asc(), Game.game_date.asc()).all()
 
 if not unprocessed:
