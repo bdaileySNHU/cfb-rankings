@@ -1481,19 +1481,24 @@ _QF_BOWLS = ["Rose Bowl", "Sugar Bowl", "Fiesta Bowl", "Peach Bowl"]
 _SF_BOWLS = ["Cotton Bowl", "Orange Bowl"]
 _INDEPENDENT_CONFS = {None, "", "Independent", "Independents", "FBS Independents"}
 
-# CFP format knobs. The 2025-26 format is a 12-team field with five conference
-# champions auto-bid and straight 1-12 seeding by rating. The format is under
-# active revision, so keep these as constants rather than magic numbers.
+# CFP format knobs. The 2026 format is a 12-team field with five auto-bids and
+# straight 1-12 seeding by rating. The format is revised most years, so keep
+# these as constants rather than magic numbers.
 FIELD_SIZE = 12
-# The five highest-ranked conference champions, regardless of tier. There is no
-# reserved Group-of-5 slot: a G5 champion is in only when it out-ranks the other
-# champions, which is how Boise State got in for 2024 and how a G5 champion can
-# be shut out entirely once five P5 conferences are chasing the same five spots.
-CHAMPION_AUTO_BIDS = 5
+# Four of the auto-bids belong to the Power 4 champions outright -- ranking does
+# not enter into it, so a 20th-rated ACC champion is still in. This replaced the
+# 2024-25 rule, where the five *highest-ranked* champions took the auto-bids and
+# a P4 champion could be left out.
+POWER_4_CONFS = frozenset({"ACC", "Big Ten", "Big 12", "SEC"})
+# The fifth goes to the highest-ranked team from the Group of Six -- champion or
+# not, which is new for 2026: a G6 team that loses its title game can still hold
+# the bid. Derived from POWER_4_CONFS rather than listed, so a G6 league that
+# renames or realigns needs no edit here.
+AUTO_BIDS = len(POWER_4_CONFS) + 1
 
 # A conference too small to be a real league does not get a projected champion.
-# ponytail: guards against stale realignment data (the teams table currently
-# lists a 2-team Pac-12); self-corrects once the team importer refreshes.
+# ponytail: guards against stale realignment data -- the teams table sat on a
+# 2-team Pac-12 until the 2026 membership sync. Cheap insurance for the next one.
 MIN_CONFERENCE_SIZE = 4
 
 
@@ -1571,16 +1576,35 @@ def select_cfp_field(rankings: List[dict], champs: List[dict]) -> List[dict]:
     pass dicts carrying team_id / team_name / elo_rating / conference /
     conference_name; `rankings` must already be sorted by rating descending.
 
-    The CHAMPION_AUTO_BIDS highest-rated conference champions take auto-bids, the
-    field fills to FIELD_SIZE with the best remaining teams, and all of them are
-    seeded straight by rating. Tier does not enter into it -- see
-    CHAMPION_AUTO_BIDS.
+    The 2026 rule: the four POWER_4_CONFS champions are in on their titles, the
+    highest-ranked Group of Six team takes the fifth auto-bid whether or not it
+    won its league, Notre Dame is in automatically if it lands in the top
+    FIELD_SIZE, the field fills to FIELD_SIZE with the best remaining teams, and
+    all of them are seeded straight by rating.
     """
     by_rating = lambda c: c["elo_rating"]  # noqa: E731
-    auto = sorted(champs, key=by_rating, reverse=True)[:CHAMPION_AUTO_BIDS]
+    auto = [c for c in champs if c.get("conference_name") in POWER_4_CONFS]
     auto_ids = {c["team_id"] for c in auto}
 
-    field = list(auto)
+    for r in rankings:  # highest-ranked G6 team, champion or not
+        conf = r.get("conference_name")
+        if conf in POWER_4_CONFS or conf in _INDEPENDENT_CONFS or r.get("conference") == "FCS":
+            continue
+        if r["team_id"] not in auto_ids:
+            auto.append(r)
+            auto_ids.add(r["team_id"])
+        break
+
+    # Notre Dame's standing invitation. Only ever bites when the auto-bids push
+    # the at-large cut above the Irish -- otherwise the rating fill takes them
+    # anyway, since our rating order *is* our ranking.
+    for r in rankings[:FIELD_SIZE]:
+        if r["team_name"] == "Notre Dame" and r["team_id"] not in auto_ids:
+            auto.append(r)
+            auto_ids.add(r["team_id"])
+            break
+
+    field = sorted(auto, key=by_rating, reverse=True)[:FIELD_SIZE]
     for r in rankings:  # at-large by rating
         if len(field) >= FIELD_SIZE:
             break

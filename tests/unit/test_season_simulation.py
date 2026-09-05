@@ -8,7 +8,8 @@ import pytest
 from src.core import season_simulation as ss
 from src.core.ranking_service import (
     FIELD_SIZE,
-    CHAMPION_AUTO_BIDS,
+    AUTO_BIDS,
+    POWER_4_CONFS,
     RankingService,
     select_cfp_field,
 )
@@ -223,48 +224,62 @@ class TestSelectCfpField:
         rankings = self.make_rankings()
         champs = rankings[:len(CONFERENCES)]
         field = select_cfp_field(rankings, champs)
-        assert sum(t["auto_bid"] for t in field) == CHAMPION_AUTO_BIDS
+        assert sum(t["auto_bid"] for t in field) == AUTO_BIDS
 
-    def _tiny_champ(self, tier="G5"):
+    def _weak_champ(self, conf, team_id=999, name="Weak Champ"):
         return {
-            "team_id": 999,
-            "team_name": "Tiny Champ",
-            "conference": tier,
-            "conference_name": "Mountain West",
+            "team_id": team_id,
+            "team_name": name,
+            "conference": "P5" if conf in POWER_4_CONFS else "G5",
+            "conference_name": conf,
             "elo_rating": 1200.0,  # nowhere near the at-large cut
         }
 
-    def test_weak_champion_rides_an_auto_bid_when_champions_are_scarce(self):
-        """Only five champions exist, so even a terrible one is a top-5 champion."""
+    def test_power_four_champion_is_in_however_badly_rated(self):
+        """The 2026 rule hands the P4 champions their bids outright."""
         rankings = self.make_rankings(n=60)
-        tiny = self._tiny_champ()
-        rankings.append(tiny)
-        power = [r for r in rankings if r["conference"] == "P5"][:4]
+        weak = self._weak_champ("ACC")
+        rankings.append(weak)
 
-        field = select_cfp_field(rankings, power + [tiny])
+        field = select_cfp_field(rankings, [weak])
 
         assert next(t for t in field if t["team_id"] == 999)["auto_bid"] is True
 
-    def test_sixth_ranked_champion_is_shut_out(self):
-        """Auto-bids go to the five best champions, not one per tier.
-
-        The old rule reserved a slot for the highest-rated G5 champion, which
-        would drag this team in over a better-rated P5 champion. The real CFP
-        rule has no reserved slot: with five P5 conferences chasing five spots,
-        a G5 champion can miss entirely.
-        """
+    def test_group_of_six_bid_follows_the_ranking_not_the_title(self):
+        """The fifth bid is the best-ranked G6 team, champion or not."""
         rankings = self.make_rankings(n=60)
-        tiny = self._tiny_champ()
-        rankings.append(tiny)
-        power = [r for r in rankings if r["conference"] == "P5"][:5]
-        assert len(power) == 5, "need five P5 champions to crowd the G5 out"
+        weak = self._weak_champ("Mountain West")
+        rankings.append(weak)
+        power = [r for r in rankings if r["conference_name"] in POWER_4_CONFS][:4]
+        best_g6 = next(r for r in rankings if r["conference_name"] not in POWER_4_CONFS)
+        assert best_g6["team_id"] != weak["team_id"]
 
-        field = select_cfp_field(rankings, power + [tiny])
+        field = select_cfp_field(rankings, power + [weak])
 
         auto_ids = {t["team_id"] for t in field if t["auto_bid"]}
-        assert 999 not in auto_ids
-        assert auto_ids == {c["team_id"] for c in power}
-        assert sum(t["auto_bid"] for t in field) == CHAMPION_AUTO_BIDS
+        assert auto_ids == {c["team_id"] for c in power} | {best_g6["team_id"]}
+        assert 999 not in {t["team_id"] for t in field}
+
+    def test_notre_dame_is_automatic_inside_the_top_twelve(self):
+        """Weak auto-bids push the at-large cut above the Irish; they are in anyway."""
+        rankings = self.make_rankings(n=60)
+        irish = {
+            "team_id": 500, "team_name": "Notre Dame", "conference": "P5",
+            "conference_name": "FBS Independents",
+            "elo_rating": rankings[9]["elo_rating"] - 5,  # ranked 11th
+        }
+        rankings.insert(10, irish)
+        champs = [self._weak_champ(c, team_id=900 + i, name=f"{c} champ")
+                  for i, c in enumerate(sorted(POWER_4_CONFS))]
+        rankings.extend(champs)
+        rankings.sort(key=lambda r: r["elo_rating"], reverse=True)
+        assert rankings.index(irish) < FIELD_SIZE
+
+        field = select_cfp_field(rankings, champs)
+
+        irish_seed = next(t for t in field if t["team_id"] == 500)
+        assert irish_seed["auto_bid"] is True
+        assert len(field) == FIELD_SIZE
 
 
 class TestSimulateSeason:
@@ -341,7 +356,7 @@ class TestBuildProjection:
         assert projection["runs"] == 30
         assert len(projection["field"]) == FIELD_SIZE
         assert [t["seed"] for t in projection["field"]] == list(range(1, FIELD_SIZE + 1))
-        assert sum(t["auto_bid"] for t in projection["field"]) == CHAMPION_AUTO_BIDS
+        assert sum(t["auto_bid"] for t in projection["field"]) == AUTO_BIDS
 
         # Probabilities are present and sane.
         for t in projection["field"]:
