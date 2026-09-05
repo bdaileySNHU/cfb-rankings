@@ -349,8 +349,8 @@
           '<div class="tkr-chartcard" style="margin-bottom:14px;"><h3>Elo history</h3>' + detailChart(e.elo_history) + '</div>' +
           // CFP Path (P6)
           '<div id="tkr-path-container" class="hidden"></div>' +
-          // Upcoming Schedule (P4)
-          '<div class="tkr-sched-card"><h3>Upcoming schedule</h3><div id="tkr-sched-body"><div style="color:var(--fg3);font-family:var(--font-mono);font-size:11px;">Loading predictions…</div></div></div>' +
+          // Season Schedule (P4)
+          '<div class="tkr-sched-card"><h3>Schedule</h3><div id="tkr-sched-body"><div style="color:var(--fg3);font-family:var(--font-mono);font-size:11px;">Loading predictions…</div></div></div>' +
         '</div>' +
         '<div>' +
           '<div class="tkr-logcard" style="margin-bottom:14px;"><h3>Results</h3><div class="tkr-log" id="tkr-log">' +
@@ -368,7 +368,7 @@
     document.getElementById('tkr-back').addEventListener('click', showBoard);
     
     loadResults(e);
-    loadUpcomingSchedule(e);
+    loadSchedule(e);
     renderConferenceLadder(e);
     renderCFPPath(e);
   }
@@ -407,75 +407,54 @@
     });
   }
 
-  // Upcoming schedule logic (P4)
-  function loadUpcomingSchedule(e) {
+  // Season schedule (P4). Played weeks show the final, the current week is
+  // highlighted, and later weeks show the model's projection.
+  function loadSchedule(e) {
     var container = document.getElementById('tkr-sched-body');
     if (!container) return;
 
     var season = (window.__tkrSeason) || new Date().getFullYear();
-    
+
     Promise.all([
       api.getPredictions({ teamId: e.team_id, nextWeek: false, season: season }),
       api.getTeamSchedule(e.team_id, season)
     ]).then(function (results) {
       var preds = results[0] || [];
-      var schedule = results[1] || {};
-      var games = schedule.games || [];
+      var games = (results[1] || {}).games || [];
 
-      var unplayedGames = games.filter(function (g) { return !g.is_played; });
-      var upcomingRows = [];
-      var weekIndex = CURRENT_WEEK + 1;
-      
-      var maxScheduleWeek = games.reduce(function (max, g) { return g.week > max ? g.week : max; }, 14);
-      if (maxScheduleWeek < 14) maxScheduleWeek = 14;
+      // One row per week from the season opener through the last scheduled
+      // game. Regular-season weeks with no game are byes; empty postseason
+      // weeks are simply skipped — a team that misses the CFP has no bye there.
+      var gameByWeek = {};
+      var maxWeek = 14;
+      var minWeek = 1;
+      for (var i = 0; i < games.length; i++) {
+        var g = games[i];
+        if (gameByWeek[g.week] == null) gameByWeek[g.week] = g;
+        if (g.week > maxWeek) maxWeek = g.week;
+        if (g.week < minWeek) minWeek = g.week;
+      }
 
-      while (upcomingRows.length < 5 && weekIndex <= maxScheduleWeek + 4) {
-        var game = null;
-        for (var j = 0; j < unplayedGames.length; j++) {
-          if (unplayedGames[j].week === weekIndex) {
-            game = unplayedGames[j];
-            break;
-          }
-        }
-        
+      var rows = [];
+      for (var w = minWeek; w <= maxWeek; w++) {
+        var game = gameByWeek[w];
         if (game) {
           var pred = null;
           for (var k = 0; k < preds.length; k++) {
-            if (preds[k].game_id === game.game_id) {
-              pred = preds[k];
-              break;
-            }
+            if (preds[k].game_id === game.game_id) { pred = preds[k]; break; }
           }
-          upcomingRows.push({
-            type: 'game',
-            week: weekIndex,
-            game: game,
-            pred: pred
-          });
-        } else {
-          var playedGame = null;
-          for (var j = 0; j < games.length; j++) {
-            if (games[j].week === weekIndex) {
-              playedGame = games[j];
-              break;
-            }
-          }
-          if (!playedGame && weekIndex <= maxScheduleWeek) {
-            upcomingRows.push({
-              type: 'bye',
-              week: weekIndex
-            });
-          }
+          rows.push({ type: game.is_played ? 'result' : 'game', week: w, game: game, pred: pred });
+        } else if (w <= 14) {
+          rows.push({ type: 'bye', week: w });
         }
-        weekIndex++;
       }
 
-      if (!upcomingRows.length) {
-        container.innerHTML = '<div style="color:var(--fg3);font-family:var(--font-mono);font-size:11px;">No upcoming games.</div>';
+      if (!rows.length) {
+        container.innerHTML = '<div style="color:var(--fg3);font-family:var(--font-mono);font-size:11px;">No games scheduled.</div>';
         return;
       }
 
-      container.innerHTML = upcomingRows.map(function (row) {
+      container.innerHTML = rows.map(function (row) {
         var wkLabel = 'WK' + row.week;
         if (row.week === 15) wkLabel = 'CONF';
         else if (row.week === 16) wkLabel = 'CFP R1';
@@ -483,8 +462,10 @@
         else if (row.week === 18) wkLabel = 'CFP SF';
         else if (row.week === 19) wkLabel = 'CFP CG';
 
+        var rowClass = 'tkr-sched-grid' + (row.week === CURRENT_WEEK ? ' is-current' : '');
+
         if (row.type === 'bye') {
-          return '<div class="tkr-sched-grid">' +
+          return '<div class="' + rowClass + '">' +
             '<div class="tkr-sched-wk">' + wkLabel + '</div>' +
             '<div class="tkr-sched-loc"></div>' +
             '<div class="tkr-sched-opp tkr-sched-bye">BYE</div>' +
@@ -495,62 +476,65 @@
         }
 
         var game = row.game;
-        var pred = row.pred;
-
         var loc = game.is_neutral_site ? '◇' : (game.is_home ? 'vs' : '@');
         var oppName = game.opponent_name;
-        var oppPrimary = stripeName(oppName);
+        var oppCell = '<div class="tkr-sched-opp ' + '%CLS%' + '">' +
+            '<span class="tkr-sched-stripe" style="background:' + stripeName(oppName) + '"></span>' +
+            '<span>' + esc(abbrName(oppName)) + '</span>' +
+          '</div>';
 
+        if (row.type === 'result') {
+          var pf = game.is_home ? game.home_score : game.away_score;
+          var pa = game.is_home ? game.away_score : game.home_score;
+          var win = pf > pa;
+          var resClass = win ? 'fav' : 'dog';
+          return '<div class="' + rowClass + '">' +
+            '<div class="tkr-sched-wk">' + wkLabel + '</div>' +
+            '<div class="tkr-sched-loc">' + loc + '</div>' +
+            oppCell.replace('%CLS%', resClass) +
+            '<div class="tkr-sched-proj">' + pf + '–' + pa + '</div>' +
+            '<div class="tkr-sched-bar-container"></div>' +
+            '<div class="tkr-sched-odds ' + resClass + '">' + (win ? 'W' : 'L') + '</div>' +
+          '</div>';
+        }
+
+        var pred = row.pred;
         var projText = '—';
         var pWin = 0;
-        var isFav = false;
-        
+
         if (pred) {
           var favScore = Math.max(pred.predicted_home_score, pred.predicted_away_score);
           var dogScore = Math.min(pred.predicted_home_score, pred.predicted_away_score);
           projText = favScore + '–' + dogScore;
-
-          pWin = game.is_home ? pred.away_win_probability : pred.home_win_probability;
-          isFav = pWin >= 50;
+          // home/away_win_probability are the *home* and *away* team's odds, so
+          // pick the side this team is actually on.
+          pWin = game.is_home ? pred.home_win_probability : pred.away_win_probability;
         } else {
-          var activeElo = e.elo_rating;
-          var oppEntry = null;
-          for (var i = 0; i < ENTRIES.length; i++) {
-            if (ENTRIES[i].team_id === game.opponent_id) {
-              oppEntry = ENTRIES[i];
-              break;
-            }
+          var oppElo = 1500;
+          for (var m = 0; m < ENTRIES.length; m++) {
+            if (ENTRIES[m].team_id === game.opponent_id) { oppElo = ENTRIES[m].elo_rating; break; }
           }
-          var oppElo = oppEntry ? oppEntry.elo_rating : 1500;
-          var homeAdj = (game.is_home ? activeElo + 65 : activeElo);
-          var oppAdj = (game.is_home ? oppElo : oppElo + 65);
-          var activeWinProb = 1 / (1 + Math.pow(10, (oppAdj - homeAdj) / 400));
-          pWin = Math.round((1 - activeWinProb) * 100);
-          isFav = pWin >= 50;
+          var teamAdj = e.elo_rating + (game.is_home ? 65 : 0);
+          var oppAdj = oppElo + (game.is_home ? 0 : 65);
+          pWin = 100 / (1 + Math.pow(10, (oppAdj - teamAdj) / 400));
         }
 
-        var oppClass = isFav ? 'fav' : 'dog';
-        var barClass = isFav ? 'fav' : 'dog';
-        var oddsClass = isFav ? 'fav' : 'dog';
-
-        return '<div class="tkr-sched-grid">' +
+        var cls = pWin >= 50 ? 'fav' : 'dog';
+        return '<div class="' + rowClass + '">' +
           '<div class="tkr-sched-wk">' + wkLabel + '</div>' +
           '<div class="tkr-sched-loc">' + loc + '</div>' +
-          '<div class="tkr-sched-opp ' + oppClass + '">' +
-            '<span class="tkr-sched-stripe" style="background:' + oppPrimary + '"></span>' +
-            '<span>' + esc(abbrName(oppName)) + '</span>' +
-          '</div>' +
+          oppCell.replace('%CLS%', cls) +
           '<div class="tkr-sched-proj">' + projText + '</div>' +
           '<div class="tkr-sched-bar-container">' +
-            '<div class="tkr-sched-bar-fill ' + barClass + '" style="width:' + pWin.toFixed(0) + '%;"></div>' +
+            '<div class="tkr-sched-bar-fill ' + cls + '" style="width:' + pWin.toFixed(0) + '%;"></div>' +
           '</div>' +
-          '<div class="tkr-sched-odds ' + oddsClass + '">' + pWin.toFixed(0) + '%</div>' +
+          '<div class="tkr-sched-odds ' + cls + '">' + pWin.toFixed(0) + '%</div>' +
         '</div>';
       }).join('');
 
     }).catch(function (err) {
-      console.error('Error loading upcoming schedule:', err);
-      container.innerHTML = '<div style="color:var(--fg3);font-family:var(--font-mono);font-size:11px;">Predictions unavailable.</div>';
+      console.error('Error loading schedule:', err);
+      container.innerHTML = '<div style="color:var(--fg3);font-family:var(--font-mono);font-size:11px;">Schedule unavailable.</div>';
     });
   }
 

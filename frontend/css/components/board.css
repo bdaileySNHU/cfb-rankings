@@ -542,6 +542,11 @@
 .tkr-sched-bye {
   color: var(--fg3);
 }
+/* Current week: the row the season is standing on right now. */
+.tkr-sched-grid.is-current {
+  background: var(--accent-dim);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
 
 /* ── Conference Ladder ── */
 .tkr-ladder-card {
