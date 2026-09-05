@@ -3,10 +3,20 @@
 // and the in-place team detail view.
 (function () {
   'use strict';
-  // Heat colors per theme: [r,g,b, alphaMax]. Spec §07.
+  // Heat colors per theme: [r,g,b, alphaMax]. Spec §07. Both columns run the
+  // same red-to-green scale — red is bad, green is good — so a cell's color
+  // reads the same way whichever column it sits in.
+  var HEAT_GOOD = { dark: [63, 179, 127, 0.28], light: [31, 138, 91, 0.18] };
+  var HEAT_BAD = { dark: [232, 99, 90, 0.28], light: [196, 69, 58, 0.18] };
+
+  // Where each column's scale is centered (uncolored) and how far from that
+  // center a team has to be to saturate. Tuned to the 2025 field: both points
+  // per game and points allowed averaged ~26, with the 10th and 90th
+  // percentiles ~10 either side. Worth a look each season — the sport's
+  // scoring drifts, and a stale center tints the whole board one color.
   var HEAT = {
-    off: { dark: [63, 179, 127, 0.28], light: [31, 138, 91, 0.18] },
-    def: { dark: [232, 99, 90, 0.28], light: [196, 69, 58, 0.18] },
+    off: { center: 26, span: 10, better: 'high' },
+    def: { center: 26, span: 10, better: 'low' },
   };
 
   var META = {};       // teams-meta.json
@@ -77,11 +87,15 @@
       'stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>';
   }
 
+  // Diverging scale: -1 is as bad as the column shades, +1 as good, 0 uncolored.
+  // A team with no games played has no value and stays unshaded.
   function heatBg(kind, v) {
     if (v == null) return 'transparent';
-    var c = HEAT[kind][isLight() ? 'light' : 'dark'];
-    var t = kind === 'off' ? clamp((v - 28) / 16, 0, 1) : clamp((v - 14) / 12, 0, 1);
-    return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (t * c[3]).toFixed(3) + ')';
+    var scale = HEAT[kind];
+    var t = clamp((v - scale.center) / scale.span, -1, 1);
+    if (scale.better === 'low') t = -t;
+    var c = (t >= 0 ? HEAT_GOOD : HEAT_BAD)[isLight() ? 'light' : 'dark'];
+    return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (Math.abs(t) * c[3]).toFixed(3) + ')';
   }
 
   function paintHeat() {
