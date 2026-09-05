@@ -29,6 +29,7 @@ from src.models.models import (
     Season,
     Team,
     UpdateTask,
+    has_been_played,
 )
 import json
 import subprocess
@@ -1048,8 +1049,7 @@ async def trigger_import(
             .filter(
                 Game.season == season,
                 Game.is_processed == False,
-                Game.home_score != None,
-                Game.away_score != None,
+                has_been_played(),
             )
             .order_by(Game.week.asc())
             .all()

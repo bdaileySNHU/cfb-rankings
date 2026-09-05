@@ -44,6 +44,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    or_,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -786,3 +787,22 @@ class PlayoffSimulation(Base):
     def __repr__(self):
         """Return string representation showing season, week and run count."""
         return f"<PlayoffSimulation(season={self.season}, week={self.week}, runs={self.runs})>"
+
+
+def has_been_played():
+    """SQL predicate selecting games that have actually kicked off.
+
+    An unplayed game is stored 0-0, **not** NULL: ``home_score`` and
+    ``away_score`` are NOT NULL columns, so a ``home_score != None`` filter
+    excludes nothing and sweeps every future game into whatever follows. That
+    is what filled the weekly-update log with ERROR_GAME lines for games months
+    away — ``RankingService.process_game()`` rejects each one on the same 0-0
+    check used here and throughout ``src/importers``.
+
+    A genuine 0-0 final does not occur in modern college football, so 0-0 is a
+    safe sentinel for "no result yet".
+
+    Example:
+        >>> db.query(Game).filter(Game.season == 2026, has_been_played()).all()
+    """
+    return or_(Game.home_score != 0, Game.away_score != 0)
