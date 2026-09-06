@@ -12,7 +12,7 @@ Tests cover:
 """
 
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 from factories import GameFactory, SeasonFactory, TeamFactory, configure_factories
@@ -507,3 +507,98 @@ class TestPredictionSlateOrdering:
             "Colorado",
             "Wyoming",
         ]
+
+
+@pytest.mark.integration
+class TestStoredAndGeneratedPredictionsMerge:
+    """A partially-stored season must still project every remaining game.
+
+    The weekly update stores the next slate only. Serving stored predictions
+    *instead of* generated ones emptied the rest of the board: a team page asks
+    for the whole season and got back the one week that happened to be on file.
+    """
+
+    WEEK = 5
+
+    def _season(self, test_db: Session):
+        configure_factories(test_db)
+        year = datetime.now().year
+        SeasonFactory(year=year, current_week=self.WEEK - 1)
+        team = TeamFactory(name="Huskies", elo_rating=1680)
+        for week in (self.WEEK, self.WEEK + 1, self.WEEK + 2):
+            GameFactory(
+                home_team=team,
+                away_team=TeamFactory(elo_rating=1500),
+                season=year,
+                week=week,
+                game_date=datetime(year, 9, 20, 19, 0) + timedelta(weeks=week - self.WEEK),
+                is_processed=False,
+            )
+        test_db.commit()
+        return year, team
+
+    def _store(self, test_db: Session, game, home_score, away_score):
+        test_db.add(
+            Prediction(
+                game_id=game.id,
+                predicted_winner_id=game.home_team_id,
+                predicted_home_score=home_score,
+                predicted_away_score=away_score,
+                win_probability=0.69,
+                home_elo_at_prediction=1234.0,
+                away_elo_at_prediction=1111.0,
+            )
+        )
+        test_db.commit()
+
+    def test_unstored_weeks_still_come_back(
+        self, test_client: TestClient, test_db: Session
+    ):
+        year, team = self._season(test_db)
+        slate_game = (
+            test_db.query(Game)
+            .filter(Game.season == year, Game.week == self.WEEK)
+            .one()
+        )
+        self._store(test_db, slate_game, 35, 25)
+
+        response = test_client.get(
+            f"/api/predictions?team_id={team.id}&next_week=false&season={year}"
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert sorted(p["week"] for p in body) == [self.WEEK, self.WEEK + 1, self.WEEK + 2]
+        assert all(p["predicted_home_score"] is not None for p in body)
+
+    def test_stored_prediction_wins_over_a_fresh_one(
+        self, test_client: TestClient, test_db: Session
+    ):
+        """The stored row carries the rating the call was made at — keep it."""
+        year, team = self._season(test_db)
+        slate_game = (
+            test_db.query(Game)
+            .filter(Game.season == year, Game.week == self.WEEK)
+            .one()
+        )
+        self._store(test_db, slate_game, 35, 25)
+
+        response = test_client.get(
+            f"/api/predictions?team_id={team.id}&next_week=false&season={year}"
+        )
+
+        stored = next(p for p in response.json() if p["week"] == self.WEEK)
+        assert (stored["predicted_home_score"], stored["predicted_away_score"]) == (35, 25)
+        assert stored["home_team_rating"] == 1234.0
+
+    def test_no_game_is_returned_twice(self, test_client: TestClient, test_db: Session):
+        year, team = self._season(test_db)
+        for game in test_db.query(Game).filter(Game.season == year).all():
+            self._store(test_db, game, 30, 20)
+
+        response = test_client.get(
+            f"/api/predictions?team_id={team.id}&next_week=false&season={year}"
+        )
+
+        game_ids = [p["game_id"] for p in response.json()]
+        assert len(game_ids) == len(set(game_ids)) == 3
