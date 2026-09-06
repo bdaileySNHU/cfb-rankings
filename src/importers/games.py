@@ -164,8 +164,11 @@ def import_games(
                     )
                     apply_quarter_scores(existing_game, line_scores)
 
-                    # Mark as unprocessed so ELO calculation runs
-                    existing_game.is_processed = False
+                    # FBS vs FBS still needs the ELO pass below. An FCS game
+                    # never gets one, so a final score is all it will ever have:
+                    # leaving it unprocessed hides it from the schedule and the
+                    # W-L record, which read is_processed, not the exclusion flag.
+                    existing_game.is_processed = is_fcs_game
 
                     db.commit()
                     db.refresh(existing_game)
@@ -205,6 +208,9 @@ def import_games(
                         result = ranking_service.process_game(existing_game)
                         week_imported += 1
                         total_imported += 1
+                    else:
+                        existing_game.is_processed = True
+                        db.commit()
                     continue
 
             # EPIC-008 Story 002: Game doesn't exist - INSERT NEW GAME
@@ -281,6 +287,8 @@ def import_games(
                 fcs_opponent = away_team if home_is_fbs else home_team
                 fbs_team_obj = home_team if home_is_fbs else away_team
                 print(f"    {fbs_team_obj.name} vs {fcs_opponent.name} (FCS - not ranked)")
+                game.is_processed = True
+                db.commit()
                 fcs_games_imported += 1
 
         # Print week summary

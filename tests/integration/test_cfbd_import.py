@@ -279,7 +279,16 @@ class TestGameImportWithMock:
         fcs_game = test_db.query(Game).first()
         assert fcs_game is not None
         assert fcs_game.excluded_from_rankings is True
-        assert fcs_game.is_processed is False
+        # Excluded from the ELO math, but still a played game: is_processed is
+        # what the schedule and get_season_record read, so leaving it False
+        # dropped every FBS-vs-FCS result off the site.
+        assert fcs_game.is_processed is True
+        assert fcs_game.home_rating_change in (None, 0.0)
+
+        from src.core.ranking_service import RankingService
+
+        alabama = test_db.query(Team).filter(Team.name == "Alabama").first()
+        assert RankingService(test_db).get_season_record(alabama.id, 2025) == (1, 0)
 
     def test_import_games_handles_neutral_site(self, test_db: Session, mock_cfbd_client):
         """Test that neutral site flag is properly imported"""

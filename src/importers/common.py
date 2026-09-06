@@ -3,7 +3,9 @@
 from datetime import datetime
 
 from src.integrations.cfbd_client import CFBDClient
-from src.models.models import ConferenceType, Game, Team
+from sqlalchemy import and_, or_
+
+from src.models.models import ConferenceType, Game, Prediction, Team
 
 # Conference mapping from CFBD to our system
 CONFERENCE_MAP = {
@@ -107,28 +109,80 @@ def get_or_create_fcs_team(db, team_name: str, team_objects: dict) -> Team:
 
 def find_existing_game(db, home_team_id: int, away_team_id: int, week: int, season: int) -> Game:
     """
-    Look up an existing game by its identifying fields.
+    Look up an existing game by its identifying fields, in either orientation.
+
+    CFBD reissues a matchup with the host and visitor swapped when a venue is
+    settled after the schedule first goes out. Matching on the exact
+    home/away pair missed those rows and inserted a second copy of the game —
+    2026 week 1 carried both "Notre Dame @ Wisconsin" and "Wisconsin @ Notre
+    Dame", and both sat unprocessed, so the matchup showed up twice on the
+    prediction board and never resolved.
+
+    So: consider both orientations. If both copies exist, keep one and drop the
+    rest, then re-orient the survivor to match the feed. A processed game is
+    never re-oriented or deleted — its rating changes are already keyed to the
+    sides it was scored with, and the flip is a scheduling correction that only
+    ever arrives before kickoff.
 
     Args:
         db: Database session
-        home_team_id: Home team ID
-        away_team_id: Away team ID
+        home_team_id: Home team ID per the CFBD feed
+        away_team_id: Away team ID per the CFBD feed
         week: Week number
         season: Season year
 
     Returns:
         Game or None
     """
-    return (
+    candidates = (
         db.query(Game)
         .filter(
-            Game.home_team_id == home_team_id,
-            Game.away_team_id == away_team_id,
             Game.week == week,
             Game.season == season,
+            or_(
+                and_(Game.home_team_id == home_team_id, Game.away_team_id == away_team_id),
+                and_(Game.home_team_id == away_team_id, Game.away_team_id == home_team_id),
+            ),
         )
-        .first()
+        .order_by(Game.id)
+        .all()
     )
+    if not candidates:
+        return None
+
+    # A processed copy is the one carrying ELO history, so it wins. Otherwise
+    # keep the row already facing the way the feed does, then the oldest.
+    def keep_rank(game):
+        return (
+            not game.is_processed,
+            game.home_team_id != home_team_id,
+            game.id,
+        )
+
+    game, *duplicates = sorted(candidates, key=keep_rank)
+
+    for dupe in duplicates:
+        db.query(Prediction).filter(Prediction.game_id == dupe.id).delete()
+        db.delete(dupe)
+    if duplicates:
+        print(
+            f"    Removed {len(duplicates)} duplicate row(s) for game {game.id} "
+            f"(week {week}, {season})"
+        )
+
+    if game.home_team_id != home_team_id and not game.is_processed:
+        game.home_team_id, game.away_team_id = home_team_id, away_team_id
+        game.home_score, game.away_score = game.away_score, game.home_score
+        for q in ("q1", "q2", "q3", "q4"):
+            home_attr, away_attr = f"{q}_home", f"{q}_away"
+            home_q, away_q = getattr(game, home_attr), getattr(game, away_attr)
+            setattr(game, home_attr, away_q)
+            setattr(game, away_attr, home_q)
+
+    if duplicates or db.is_modified(game):
+        db.commit()
+
+    return game
 
 
 def apply_quarter_scores(game: Game, line_scores) -> None:
