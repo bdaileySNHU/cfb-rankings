@@ -91,6 +91,11 @@ const rowsOf = (html) => html.split('<div class="tkr-sched-grid').slice(1);
   assert.ok(/WK2<[\s\S]*?21–28[\s\S]*?tkr-sched-odds dog">L</.test(rows[1]),
     'week 2 should show the road loss from this team\'s side');
 
+  // A final and a projection are both two numbers on a dash, so the score cell
+  // has to say which it is on its own — a projected 35–25 read as played.
+  assert.ok(rows[0].includes('tkr-sched-proj is-final'), 'a final is tagged as final');
+  assert.ok(!rows[0].includes('is-proj'), 'a final is never tagged as a projection');
+
   // The current week is highlighted, and only it.
   assert.strictEqual((html.match(/is-current/g) || []).length, 1, 'exactly one current row');
   assert.ok(rows[2].startsWith(' is-current'), 'week 3 (the current week) is highlighted');
@@ -98,6 +103,8 @@ const rowsOf = (html) => html.split('<div class="tkr-sched-grid').slice(1);
   // A road favourite reads its own side of the prediction, not the home team's.
   assert.ok(rows[3].includes('>72%<'), 'week 4 should show this team\'s 72%, not the home 28%');
   assert.ok(rows[3].includes('30–24'), 'projection prints favourite first');
+  assert.ok(rows[3].includes('tkr-sched-proj is-proj'), 'a projection is tagged as one');
+  assert.ok(!rows[3].includes('is-final'), 'a projection is never tagged as a final');
 
   // No prediction row falls back to Elo, and the home field goes to us.
   assert.ok(rows[14].includes('CFP R1'), 'last row is the playoff game');

@@ -506,7 +506,7 @@
             '<div class="tkr-sched-wk">' + wkLabel + '</div>' +
             '<div class="tkr-sched-loc">' + loc + '</div>' +
             oppCell.replace('%CLS%', resClass) +
-            '<div class="tkr-sched-proj">' + pf + '–' + pa + '</div>' +
+            '<div class="tkr-sched-proj is-final">' + pf + '–' + pa + '</div>' +
             '<div class="tkr-sched-bar-container"></div>' +
             '<div class="tkr-sched-odds ' + resClass + '">' + (win ? 'W' : 'L') + '</div>' +
           '</div>';
@@ -538,7 +538,7 @@
           '<div class="tkr-sched-wk">' + wkLabel + '</div>' +
           '<div class="tkr-sched-loc">' + loc + '</div>' +
           oppCell.replace('%CLS%', cls) +
-          '<div class="tkr-sched-proj">' + projText + '</div>' +
+          '<div class="tkr-sched-proj is-proj">' + projText + '</div>' +
           '<div class="tkr-sched-bar-container">' +
             '<div class="tkr-sched-bar-fill ' + cls + '" style="width:' + pWin.toFixed(0) + '%;"></div>' +
           '</div>' +

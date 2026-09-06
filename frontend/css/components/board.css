@@ -510,6 +510,16 @@
   font-size: 12px;
   color: var(--fg);
 }
+/* The score cell is the one place a final and a forecast look alike — both are
+   two numbers on a dash — so a projected 35–25 read as a game already played.
+   Finals sit up in full ink and bold; projections lean over in dimmer ink. */
+.tkr-sched-proj.is-final {
+  font-weight: 700;
+}
+.tkr-sched-proj.is-proj {
+  font-style: italic;
+  color: var(--fg2);
+}
 .tkr-sched-bar-container {
   height: 5px;
   background: var(--line);
