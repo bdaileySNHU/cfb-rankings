@@ -256,6 +256,9 @@
 .bk-odds-bar i { display: block; height: 100%; border-radius: 3px; }
 .bk-odds-pct { width: 52px; text-align: right; font-weight: 700; flex: none; }
 .bk-odds-sub { width: 46px; text-align: right; color: var(--fg3); flex: none; }
+.bk-odds-aq { width: 20px; flex: none; font-family: var(--font-mono); font-size: 8.5px;
+  letter-spacing: 0.04em; color: var(--fg3); text-align: center; }
+.bk-odds-note { margin-top: 10px; font-size: 10px; line-height: 1.5; color: var(--fg3); }
 .bk-odds-split { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em;
   text-transform: uppercase; color: var(--fg3); margin: 10px 0 4px;
   border-top: 1px dashed var(--line); padding-top: 8px; }
