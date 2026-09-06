@@ -245,6 +245,10 @@ def _new_run_state(inputs: SimInputs) -> dict:
         "conf_wins": list(inputs.conf_wins),
         "conf_losses": list(inputs.conf_losses),
         "tiers": inputs.tiers,
+        # Indices of every team that reached a conference title game this run.
+        # Reaching it is the hard part in a 16-team league, so it is counted
+        # separately from winning it.
+        "ccg": [],
     }
 
 
@@ -266,6 +270,7 @@ def _conference_champions(inputs: SimInputs, sim: dict, rng) -> List[int]:
             reverse=True,
         )
         one, two = ranked[0], ranked[1]
+        sim["ccg"] += [one, two]
         champions.append(_play(sim, one, two, CHAMPIONSHIP_WEEK, True, True, rng))
     return champions
 
@@ -296,9 +301,11 @@ def simulate_season(
     bid_count = [0] * n
     seed_sum = [0] * n
     conf_title_count = [0] * n
+    ccg_count = [0] * n
     title_count = [0] * n
     rating_sum = [0.0] * n
     win_sum = [0] * n
+    loss_sum = [0] * n
 
     by_index = {}
     team_dicts = [
@@ -331,6 +338,8 @@ def simulate_season(
         seeded = select_cfp_field(ranked, champs)
         bracket = run_bracket(seeded, rng)
 
+        for i in sim["ccg"]:
+            ccg_count[i] += 1
         for i in champion_idx:
             conf_title_count[i] += 1
         for t in seeded:
@@ -342,15 +351,18 @@ def simulate_season(
         for i in range(n):
             rating_sum[i] += finals[i]
             win_sum[i] += sim["wins"][i]
+            loss_sum[i] += sim["losses"][i]
 
     return {
         "runs": runs,
         "bid_count": bid_count,
         "seed_sum": seed_sum,
         "conf_title_count": conf_title_count,
+        "ccg_count": ccg_count,
         "title_count": title_count,
         "rating_sum": rating_sum,
         "win_sum": win_sum,
+        "loss_sum": loss_sum,
     }
 
 
@@ -399,8 +411,10 @@ def build_projection(
             "bid_pct": round(100.0 * bids / r, 1),
             "avg_seed": round(agg["seed_sum"][i] / bids, 1) if bids else None,
             "conf_title_pct": round(100.0 * agg["conf_title_count"][i] / r, 1),
+            "ccg_pct": round(100.0 * agg["ccg_count"][i] / r, 1),
             "title_pct": round(100.0 * agg["title_count"][i] / r, 1),
             "proj_wins": round(agg["win_sum"][i] / r, 1),
+            "proj_losses": round(agg["loss_sum"][i] / r, 1),
             "_i": i,
         })
 
@@ -443,8 +457,10 @@ def build_projection(
             "bid_pct": st["bid_pct"],
             "avg_seed": st["avg_seed"],
             "conf_title_pct": st["conf_title_pct"],
+            "ccg_pct": st["ccg_pct"],
             "title_pct": st["title_pct"],
             "proj_wins": st["proj_wins"],
+            "proj_losses": st["proj_losses"],
         })
 
     in_field = {t["team_id"] for t in seeded}
@@ -454,7 +470,8 @@ def build_projection(
         {"team_id": s["team_id"], "name": s["team_name"], "elo": s["elo_rating"],
          "conference_name": s["conference_name"], "bid_pct": s["bid_pct"],
          "avg_seed": s["avg_seed"], "conf_title_pct": s["conf_title_pct"],
-         "title_pct": s["title_pct"], "proj_wins": s["proj_wins"]}
+         "ccg_pct": s["ccg_pct"], "title_pct": s["title_pct"],
+         "proj_wins": s["proj_wins"], "proj_losses": s["proj_losses"]}
         for s in consensus[:BUBBLE_SIZE]
     ]
 
@@ -466,10 +483,13 @@ def build_projection(
         {
             "team_id": st["team_id"],
             "name": st["team_name"],
+            "conference_name": st["conference_name"],
             "bid_pct": st["bid_pct"],
             "conf_title_pct": st["conf_title_pct"],
+            "ccg_pct": st["ccg_pct"],
             "title_pct": st["title_pct"],
             "proj_wins": st["proj_wins"],
+            "proj_losses": st["proj_losses"],
         }
         for st in ranked_by_bid
     ]

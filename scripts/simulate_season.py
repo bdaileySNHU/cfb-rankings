@@ -56,14 +56,16 @@ def main():
             return 1
 
         print(f"✓ Done in {elapsed:.1f}s (through week {projection['through_week']})\n")
-        header = f'{"SEED":>4}  {"TEAM":<22} {"CONFERENCE":<18} {"RATING":>8} {"BID%":>6} {"CONF%":>6} {"NAT%":>6} {"PROJ W":>7}'
+        header = f'{"SEED":>4}  {"TEAM":<22} {"CONFERENCE":<18} {"RATING":>8} {"BID%":>6} {"CONF%":>6} {"NAT%":>6} {"PROJ REC":>9}'
         print(header)
         print("-" * len(header))
         for t in projection["field"]:
+            rec = f'{round(t["proj_wins"])}-{round(t["proj_losses"])}'
             print(
                 f'{t["seed"]:>4}  {t["name"]:<22} {str(t["conference_name"]):<18} '
                 f'{t["elo"]:8.1f} {t["bid_pct"]:6.1f} {t["conf_title_pct"]:6.1f} '
-                f'{t["title_pct"]:6.1f} {t["proj_wins"]:7.1f}'
+                f'{t["title_pct"]:6.1f} '
+                f'{rec:>9}'
             )
 
         if projection["bubble"]:
