@@ -261,7 +261,7 @@
   function renderHeader(data) {
     var wk = document.getElementById('tkr-week');
     if (wk) wk.textContent = 'WK' + data.week + ' · ' + data.season;
-    set('tkr-subtitle', 'Elo model · ' + data.total_teams + ' FBS teams · updated after every final');
+    set('tkr-subtitle', 'Elo model · ' + data.total_teams + ' FBS teams · updated after every final · FCS games excluded from metrics');
   }
 
   // ── Detail view ──
@@ -892,6 +892,8 @@
       '<span class="bk-odds-seed">' + (inField ? t.seed : '—') + '</span>' +
       teamLink(t.name, '<span class="bk-stripe" style="background:' + c + '"></span>' +
         '<span class="bk-odds-name">' + esc(abbrName(t.name)) + '</span>', t.team_id) +
+      '<span class="bk-odds-aq" title="' + (t.auto_bid ? 'Automatic bid as a projected conference champion' : '') + '">' +
+        (t.auto_bid ? 'AQ' : '') + '</span>' +
       '<span class="bk-odds-bar"><i style="width:' + Math.max(1, Math.round(t.bid_pct)) + '%;background:' + c + '"></i></span>' +
       '<span class="bk-odds-pct">' + fmtPct(t.bid_pct) + '</span>' +
       '<span class="bk-odds-sub">' + fmtPct(t.conf_title_pct) + '</span>' +
@@ -910,15 +912,25 @@
     }
     var head = '<div class="bk-odds-head"><span class="bk-odds-seed">SD</span>' +
       '<span class="bk-stripe"></span><span class="bk-odds-name">TEAM</span>' +
+      '<span class="bk-odds-aq"></span>' +
       '<span class="bk-odds-bar"></span><span class="bk-odds-pct">PLAYOFF</span>' +
       '<span class="bk-odds-sub">CONF</span><span class="bk-odds-sub">TITLE</span></div>';
-    var rows = data.field.map(function (t) { return oddsRow(t, true); }).join('');
+    // The bar measures playoff odds, so the rows are ordered by playoff odds too
+    // — seeds stay in the SD column, and the bracket above already reads in seed
+    // order. Sorting on anything else leaves the bars jumping around at random.
+    var field = data.field.slice().sort(function (a, b) { return b.bid_pct - a.bid_pct; });
+    var rows = field.map(function (t) { return oddsRow(t, true); }).join('');
     var bubble = (data.bubble || []).slice(0, 8);
     if (bubble.length) {
       rows += '<div class="bk-odds-split">ON THE BUBBLE</div>' +
         bubble.map(function (t) { return oddsRow(t, false); }).join('');
     }
-    host.innerHTML = '<h3 class="bk-odds-title">Playoff odds</h3>' + head + rows;
+    // Five of the twelve bids are reserved for conference champions, so a bubble
+    // team can carry longer playoff odds than a seeded AQ team and still be out.
+    var note = '<div class="bk-odds-note">AQ = projected conference champion. ' +
+      'Five bids are reserved for champions, so a bubble team can show longer ' +
+      'odds than a seeded AQ team.</div>';
+    host.innerHTML = '<h3 class="bk-odds-title">Playoff odds</h3>' + head + rows + note;
     host.classList.remove('hidden');
   }
 

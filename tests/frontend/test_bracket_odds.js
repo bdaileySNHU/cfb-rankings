@@ -75,6 +75,31 @@ assert.strictEqual(rows.length, 12 + 8, 'twelve seeds plus eight bubble teams');
 assert.ok(host.innerHTML.includes('ON THE BUBBLE'), 'bubble section is labelled');
 assert.ok(!/undefined/.test(host.innerHTML), 'no undefined leaked into the markup');
 
+// ── Rows are ordered by the metric the bar draws, and auto-bids are marked ──
+// Five of the twelve bids go to conference champions, so a low-probability
+// champion can be seeded ahead of teams with far longer odds. The bars would
+// jump around at random if the rows kept seed order, and the AQ tag is what
+// explains a seeded team sitting below the bubble.
+const jumbled = [
+  { team_id: 1, seed: 1, name: 'Champ', bid_pct: 16.2, conf_title_pct: 15.6,
+    title_pct: 0.7, auto_bid: true },
+  { team_id: 2, seed: 2, name: 'AtLarge', bid_pct: 70.7, conf_title_pct: 23,
+    title_pct: 11.6, auto_bid: false },
+  { team_id: 3, seed: 3, name: 'Middle', bid_pct: 41.9, conf_title_pct: 11.5,
+    title_pct: 4.1, auto_bid: false },
+];
+renderOdds({ method: 'monte_carlo', field: jumbled, bubble: [] });
+const order = [...host.innerHTML.matchAll(/class="bk-odds-name">([^<]+)/g)]
+  .map((m) => m[1]).slice(1); // drop the header's TEAM cell
+assert.deepStrictEqual(order, ['AtLarge', 'Middle', 'Champ'],
+  'rows sort by playoff odds, the metric the bar draws');
+assert.deepStrictEqual(jumbled.map((t) => t.team_id), [1, 2, 3],
+  'sorting is display-only and must not reorder the caller\'s field');
+const aq = host.innerHTML.match(/class="bk-odds-aq"[^>]*>AQ</g) || [];
+assert.strictEqual(aq.length, 1, 'only the auto-bid team carries the AQ tag');
+assert.ok(/Five bids are reserved/.test(host.innerHTML),
+  'the note explains why a bubble team can out-odds a seeded team');
+
 // The deterministic fallback must stay hidden rather than print empty columns.
 renderOdds({
   method: 'current_ratings',
