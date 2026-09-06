@@ -83,52 +83,61 @@ async def get_predictions(
             .all()
         )
 
-        # If we have stored predictions, return those
-        if stored_predictions:
-            logger.info(f"Returning {len(stored_predictions)} stored predictions")
-            result = []
-            for pred in stored_predictions:
-                game = pred.game
+        stored_by_game = {}
+        for pred in stored_predictions:
+            game = pred.game
 
-                # Calculate confidence level based on win probability
-                win_prob = pred.win_probability * 100
-                if win_prob >= 80:
-                    confidence = "Very High"
-                elif win_prob >= 70:
-                    confidence = "High"
-                elif win_prob >= 60:
-                    confidence = "Medium"
-                else:
-                    confidence = "Low"
+            # Calculate confidence level based on win probability
+            win_prob = pred.win_probability * 100
+            if win_prob >= 80:
+                confidence = "Very High"
+            elif win_prob >= 70:
+                confidence = "High"
+            elif win_prob >= 60:
+                confidence = "Medium"
+            else:
+                confidence = "Low"
 
-                result.append({
-                    "game_id": game.id,
-                    "home_team_id": game.home_team_id,
-                    "home_team": game.home_team.name,
-                    "home_team_rating": pred.home_elo_at_prediction,
-                    "away_team_id": game.away_team_id,
-                    "away_team": game.away_team.name,
-                    "away_team_rating": pred.away_elo_at_prediction,
-                    "predicted_winner_id": pred.predicted_winner_id,
-                    "predicted_winner": pred.predicted_winner.name if pred.predicted_winner else None,
-                    "predicted_home_score": pred.predicted_home_score,
-                    "predicted_away_score": pred.predicted_away_score,
-                    "home_win_probability": pred.win_probability * 100 if pred.predicted_winner_id == game.home_team_id else (1 - pred.win_probability) * 100,
-                    "away_win_probability": pred.win_probability * 100 if pred.predicted_winner_id == game.away_team_id else (1 - pred.win_probability) * 100,
-                    "is_neutral_site": game.is_neutral_site,
-                    "confidence": confidence,
-                    "week": game.week,
-                    "season": game.season,
-                    "game_date": schemas.iso_utc(game.game_date),
-                })
-            return result
+            stored_by_game[game.id] = {
+                "game_id": game.id,
+                "home_team_id": game.home_team_id,
+                "home_team": game.home_team.name,
+                "home_team_rating": pred.home_elo_at_prediction,
+                "away_team_id": game.away_team_id,
+                "away_team": game.away_team.name,
+                "away_team_rating": pred.away_elo_at_prediction,
+                "predicted_winner_id": pred.predicted_winner_id,
+                "predicted_winner": pred.predicted_winner.name if pred.predicted_winner else None,
+                "predicted_home_score": pred.predicted_home_score,
+                "predicted_away_score": pred.predicted_away_score,
+                "home_win_probability": pred.win_probability * 100 if pred.predicted_winner_id == game.home_team_id else (1 - pred.win_probability) * 100,
+                "away_win_probability": pred.win_probability * 100 if pred.predicted_winner_id == game.away_team_id else (1 - pred.win_probability) * 100,
+                "is_neutral_site": game.is_neutral_site,
+                "confidence": confidence,
+                "week": game.week,
+                "season": game.season,
+                "game_date": schemas.iso_utc(game.game_date),
+            }
 
-        # Otherwise, generate predictions on-the-fly
-        logger.info("No stored predictions found, generating new predictions")
-        predictions = generate_predictions(
+        # Generate the rest. Returning only what happens to be stored would empty
+        # out most of the board: the weekly update stores the next slate alone, so
+        # a season-wide request (the team page asks for one) would come back with
+        # a single week and drop the projection off every other row.
+        generated = generate_predictions(
             db=db, week=week, team_id=team_id, next_week=next_week, season_year=season
         )
-        return predictions
+
+        # A stored prediction wins over a freshly generated one for the same game:
+        # it carries the rating the call was actually made at, which is the whole
+        # point of storing it. generate_predictions already returns the slate in
+        # display order, so overlay in place rather than re-sorting.
+        result = [stored_by_game.pop(entry["game_id"], entry) for entry in generated]
+        result.extend(stored_by_game.values())
+        logger.info(
+            f"Returning {len(result)} predictions "
+            f"({len(stored_predictions)} stored, {len(generated)} generated)"
+        )
+        return result
     except Exception as e:
         logger.error(f"Error getting predictions: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting predictions: {str(e)}")
