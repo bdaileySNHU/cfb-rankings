@@ -43,6 +43,23 @@
     return window.TeamVisuals ? window.TeamVisuals.logoImg(metaOf(name), size, name) : '';
   }
   function abbrOf(e) { return abbrName(e.team_name); }
+
+  // Team-page links for the abbreviations rendered below the board. Rankings
+  // rows carry the ids, so names are resolved against ENTRIES; anything not in
+  // the current rankings (rare) just renders unlinked.
+  var IDS = null;
+  function idOf(name) {
+    if (!IDS) {
+      IDS = {};
+      ENTRIES.forEach(function (e) { IDS[e.team_name] = e.team_id; });
+    }
+    return IDS[name];
+  }
+  function teamLink(name, inner, id) {
+    if (id == null) id = idOf(name);
+    if (id == null) return inner;
+    return '<a class="tkr-tlink" href="team.html?id=' + encodeURIComponent(id) + '">' + inner + '</a>';
+  }
   function stripeOf(e) { return stripeName(e.team_name); }
 
   function rgb(hex) {
@@ -72,9 +89,12 @@
     return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
 
   // ── Sparkline (70×22 viewBox, non-scaling stroke). Spec §07. ──
-  function sparkline(history, d) {
+  // Coloured by the Elo it draws, not by rank_change — a team can gain Elo and
+  // still slide a spot, and a red line climbing reads as a bug.
+  function sparkline(history) {
     var h = (history || []).filter(function (x) { return typeof x === 'number'; });
     if (h.length < 2) return '';
+    var d = Math.round(h[h.length - 1]) - Math.round(h[0]);
     var min = Math.min.apply(null, h), max = Math.max.apply(null, h);
     var range = max - min || 1;
     var pts = h.map(function (v, i) {
@@ -127,7 +147,7 @@
       '<div class="c-odds ta-r">' + fmtPct(e.conf_title_pct) + '</div>' +
       '<div class="c-odds ta-r">' + fmtPct(e.title_pct) + '</div>' +
       '<div class="c-projw ta-r">' + (e.proj_wins == null ? '—' : e.proj_wins.toFixed(1)) + '</div>' +
-      '<div class="ta-c">' + sparkline(e.elo_history, d) + '</div>' +
+      '<div class="ta-c">' + sparkline(e.elo_history) + '</div>' +
     '</div>';
   }
 
@@ -771,9 +791,9 @@
     var favAbbr = abbrName(p.predicted_winner);
     return '<div class="tkr-pgrid tkr-prow">' +
       '<div class="tkr-match">' +
-        '<span class="stripe" style="background:' + stripeName(aw) + '"></span>' + esc(abbrName(aw)) +
+        teamLink(aw, '<span class="stripe" style="background:' + stripeName(aw) + '"></span>' + esc(abbrName(aw))) +
         '<span class="at">' + sep + '</span>' +
-        '<span class="stripe" style="background:' + hmColor + '"></span>' + esc(abbrName(hm)) + '</div>' +
+        teamLink(hm, '<span class="stripe" style="background:' + hmColor + '"></span>' + esc(abbrName(hm))) + '</div>' +
       '<div class="tkr-proj">' + p.predicted_away_score + '-' + p.predicted_home_score + '</div>' +
       '<div class="tkr-prob"><div class="tkr-bar">' +
           '<span style="width:' + awP + '%;background:' + awColor + '"></span>' +
@@ -831,8 +851,8 @@
     return '<div class="bk-team' + (win ? ' win' : ' out') + '">' +
       '<span class="bk-mk">' + (win ? '▸' : '') + '</span>' +
       '<span class="bk-seed">' + t.seed + '</span>' +
-      '<span class="bk-stripe" style="background:' + color + '"></span>' +
-      '<span class="bk-ab">' + esc(abbrName(t.name)) + '</span>' +
+      teamLink(t.name, '<span class="bk-stripe" style="background:' + color + '"></span>' +
+        '<span class="bk-ab">' + esc(abbrName(t.name)) + '</span>', t.team_id) +
       '<span class="bk-sc">' + t.score + '</span></div>';
   }
 
@@ -852,7 +872,9 @@
     if (!ch) return '';
     var c = stripeName(ch.name);
     return '<div class="bk-champ"><div class="bk-champ-lbl">◆ TITLE FAVORITE</div>' +
-      '<div class="bk-champ-name"><span class="bk-stripe" style="background:' + c + '"></span>' + esc(abbrName(ch.name)) + '</div>' +
+      '<div class="bk-champ-name">' +
+        teamLink(ch.name, '<span class="bk-stripe" style="background:' + c + '"></span>' + esc(abbrName(ch.name)), ch.team_id) +
+      '</div>' +
       '<div class="bk-champ-full">' + esc(ch.name) + '</div>' +
       '<div class="bk-champ-sub">No. ' + ch.seed + ' SEED · ' + esc(TeamVisuals.confLabel(ch.conference_name)) + '</div>' +
       '<div class="bk-champ-win"><span>TITLE-GAME WIN</span><span class="v">' + Math.round(ch.title_game_win_prob) + '%</span></div></div>';
@@ -868,8 +890,8 @@
     var c = stripeName(t.name);
     return '<div class="bk-odds-row' + (inField ? '' : ' out') + '">' +
       '<span class="bk-odds-seed">' + (inField ? t.seed : '—') + '</span>' +
-      '<span class="bk-stripe" style="background:' + c + '"></span>' +
-      '<span class="bk-odds-name">' + esc(abbrName(t.name)) + '</span>' +
+      teamLink(t.name, '<span class="bk-stripe" style="background:' + c + '"></span>' +
+        '<span class="bk-odds-name">' + esc(abbrName(t.name)) + '</span>', t.team_id) +
       '<span class="bk-odds-bar"><i style="width:' + Math.max(1, Math.round(t.bid_pct)) + '%;background:' + c + '"></i></span>' +
       '<span class="bk-odds-pct">' + fmtPct(t.bid_pct) + '</span>' +
       '<span class="bk-odds-sub">' + fmtPct(t.conf_title_pct) + '</span>' +
@@ -957,6 +979,7 @@
 
   function renderAll(data) {
     ENTRIES = data.rankings || [];
+    IDS = null;
     boardExpanded = false;
     window.__tkrSeason = data.season;
     CURRENT_WEEK = data.week;
