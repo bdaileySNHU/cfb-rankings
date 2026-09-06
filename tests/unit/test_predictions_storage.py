@@ -172,3 +172,72 @@ class TestPredictionStorage:
         # Test __repr__
         repr_str = repr(prediction)
         assert "Test Home Team" in repr_str or "?" in repr_str
+
+
+@pytest.mark.unit
+class TestSlatePredictionStorage:
+    """The step utilities/weekly_update.sh runs before each slate.
+
+    Nothing stored predictions on a schedule, so the 2026 season reached week 1
+    with an empty predictions table and an accuracy page reading 0%.
+    """
+
+    def _slate(self, test_db, home_team, away_team, season=2026):
+        from src.models.models import Season
+
+        test_db.add(Season(year=season, current_week=1, is_active=True))
+        game = Game(
+            home_team_id=home_team.id,
+            away_team_id=away_team.id,
+            home_score=0,
+            away_score=0,
+            week=2,
+            season=season,
+            game_date=datetime(season, 9, 12, 19, 0),
+            is_processed=False,
+        )
+        test_db.add(game)
+        test_db.commit()
+        test_db.refresh(game)
+        return game
+
+    def _store_slate(self, test_db, season=2026):
+        """Mirror of the loop in weekly_update.sh step 3."""
+        from src.core.ranking_service import generate_predictions
+
+        slate = generate_predictions(test_db, season_year=season)
+        stored = 0
+        for entry in slate:
+            game = test_db.get(Game, entry["game_id"])
+            if game is not None and create_and_store_prediction(test_db, game):
+                stored += 1
+        return stored, len(slate)
+
+    def test_stores_a_prediction_for_each_slate_game(self, test_db, test_teams):
+        home_team, away_team = test_teams
+        game = self._slate(test_db, home_team, away_team)
+
+        stored, slate_size = self._store_slate(test_db)
+
+        assert slate_size == 1
+        assert stored == 1
+        prediction = test_db.query(Prediction).filter(Prediction.game_id == game.id).first()
+        assert prediction is not None
+        assert prediction.home_elo_at_prediction == home_team.elo_rating
+        assert prediction.was_correct is None
+
+    def test_rerunning_does_not_double_store(self, test_db, test_teams):
+        """The cron runs daily; a second pass must not re-price the slate."""
+        home_team, away_team = test_teams
+        self._slate(test_db, home_team, away_team)
+        self._store_slate(test_db)
+        first = test_db.query(Prediction).one()
+        original_elo = first.home_elo_at_prediction
+
+        home_team.elo_rating += 40.0
+        test_db.commit()
+        self._store_slate(test_db)
+
+        assert test_db.query(Prediction).count() == 1
+        test_db.refresh(first)
+        assert first.home_elo_at_prediction == original_elo

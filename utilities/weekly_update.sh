@@ -6,9 +6,10 @@
 #   2. Import completed game results (3 attempts, exponential backoff)
 #   3. Process results through the ELO algorithm
 #   4. Save ranking_history snapshots for completed weeks
-#   5. Compute rank diff report (teams that moved ≥5 spots)
-#   6. Restart the API service
-#   7. Send Slack / email notification with result summary
+#   5. Store predictions for the next slate (at today's ratings)
+#   6. Compute rank diff report (teams that moved ≥5 spots)
+#   7. Restart the API service
+#   8. Send Slack / email notification with result summary
 #
 # Cron entry (run as the user that owns the deployment, 6am daily):
 #   0 6 * * * /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
@@ -226,9 +227,54 @@ done <<< "$ELO_RESULT"
 
 echo "✓ ELO processing complete ($GAMES_PROCESSED games, $SNAPSHOTS_SAVED snapshots)"
 
-# ── Step 3: Rank diff report (teams that moved ≥5 spots) ─────────────────────
+# ── Step 3: Store predictions for the next slate ─────────────────────────────
+# The board renders fine without these — /api/predictions falls back to
+# generating on the fly — but accuracy tracking needs the prediction frozen at
+# the ELO it was actually made from. Nothing else stores them, so the 2026
+# season ran to week 1 with an empty predictions table and a 0% accuracy page.
 echo ""
-echo "[3/4] Computing rank movement report..."
+echo "[3/5] Storing predictions for the next slate..."
+PREDICTION_RESULT=$("$PYTHON" - <<EOF
+from src.models.database import SessionLocal
+from src.models.models import Game
+from src.core.ranking_service import create_and_store_prediction, generate_predictions
+
+db = SessionLocal()
+season = $SEASON
+
+slate = generate_predictions(db, season_year=season)
+if not slate:
+    print("NO_SLATE")
+else:
+    stored = 0
+    for entry in slate:
+        game = db.get(Game, entry["game_id"])
+        # Returns the existing row when one is already stored, so a re-run is a
+        # no-op rather than a second prediction at today's ratings.
+        if game is not None and create_and_store_prediction(db, game):
+            stored += 1
+    print(f"STORED:{stored}/{len(slate)}")
+
+db.close()
+EOF
+)
+
+PREDICTIONS_STORED=0
+while IFS= read -r line; do
+    case "$line" in
+        NO_SLATE)   echo "  No upcoming slate to predict" ;;
+        STORED:*)
+            PREDICTIONS_STORED="${line#STORED:}"
+            echo "  ✓ Predictions on file for $PREDICTIONS_STORED slate games" ;;
+        *)          echo "  $line" ;;
+    esac
+done <<< "$PREDICTION_RESULT"
+
+echo "✓ Prediction storage complete"
+
+# ── Step 4: Rank diff report (teams that moved ≥5 spots) ─────────────────────
+echo ""
+echo "[4/5] Computing rank movement report..."
 DIFF_REPORT=$("$PYTHON" - <<EOF
 import sys, json
 from src.models.database import SessionLocal
@@ -340,9 +386,9 @@ done <<< "$DIFF_REPORT"
 
 echo "✓ Rank diff report complete"
 
-# ── Step 4: Restart the API service ──────────────────────────────────────────
+# ── Step 5: Restart the API service ──────────────────────────────────────────
 echo ""
-echo "[4/4] Restarting cfb-rankings service..."
+echo "[5/5] Restarting cfb-rankings service..."
 if [ "${SKIP_SERVICE_RESTART:-0}" = "1" ]; then
     echo "⚠ Skipping service restart (called via API — restart not needed)"
 elif sudo -n systemctl restart cfb-rankings 2>/dev/null; then
