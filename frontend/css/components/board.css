@@ -256,9 +256,39 @@
 .bk-odds-bar i { display: block; height: 100%; border-radius: 3px; }
 .bk-odds-pct { width: 52px; text-align: right; font-weight: 700; flex: none; }
 .bk-odds-sub { width: 46px; text-align: right; color: var(--fg3); flex: none; }
+.bk-odds-rec { width: 34px; text-align: right; color: var(--fg2); flex: none;
+  font-family: var(--font-mono); font-size: 10px; }
+.bk-odds-head .bk-odds-rec { color: inherit; }
 .bk-odds-aq { width: 20px; flex: none; font-family: var(--font-mono); font-size: 8.5px;
   letter-spacing: 0.04em; color: var(--fg3); text-align: center; }
 .bk-odds-note { margin-top: 10px; font-size: 10px; line-height: 1.5; color: var(--fg3); }
+
+/* "How this is projected" — a native disclosure, closed by default. */
+.bk-work { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.bk-work > summary { cursor: pointer; font-family: var(--font-mono); font-size: 9.5px;
+  letter-spacing: 0.05em; text-transform: uppercase; color: var(--fg3); }
+.bk-work > summary:hover { color: var(--fg); }
+.bk-work-body { margin-top: 10px; font-size: 11px; line-height: 1.6; color: var(--fg2); }
+.bk-work-lede { margin: 0 0 8px; font-family: var(--font-mono); font-size: 10px;
+  color: var(--fg3); }
+.bk-work-steps { margin: 0 0 12px; padding-left: 18px; }
+.bk-work-steps li { margin-bottom: 5px; }
+.bk-work-h { font-size: 11px; font-weight: 700; color: var(--fg); margin: 0 0 4px; }
+.bk-work-p { margin: 0 0 10px; }
+.bk-work-p.dim { color: var(--fg3); font-size: 10px; }
+.bk-work-races { display: grid; gap: 12px; margin-bottom: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.bk-work-conf-t { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--fg3); margin-bottom: 3px; }
+.bk-work-row { display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 11px; padding: 2px 0; }
+.bk-work-row.head { font-size: 8.5px; letter-spacing: 0.04em; color: var(--fg3);
+  border-bottom: 1px solid var(--line); padding-bottom: 3px; }
+.bk-work-name { flex: 1 1 auto; min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+.bk-work-n { width: 52px; text-align: right; flex: none; color: var(--fg3); }
+.bk-work-n.strong { color: var(--fg); font-weight: 700; }
+.bk-work-row.head .bk-work-n { color: inherit; }
 .bk-odds-split { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em;
   text-transform: uppercase; color: var(--fg3); margin: 10px 0 4px;
   border-top: 1px dashed var(--line); padding-top: 8px; }

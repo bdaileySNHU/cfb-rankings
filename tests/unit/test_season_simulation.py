@@ -408,18 +408,23 @@ class TestBuildProjection:
         for t in teams:
             # The internal loop index and the rating swap must not leak out.
             assert set(t) == {
-                "team_id", "name", "bid_pct", "conf_title_pct", "title_pct", "proj_wins"
+                "team_id", "name", "conference_name", "bid_pct", "conf_title_pct",
+                "ccg_pct", "title_pct", "proj_wins", "proj_losses",
             }
             assert 0.0 <= t["bid_pct"] <= 100.0
             assert 0.0 <= t["conf_title_pct"] <= 100.0
             assert 0.0 <= t["title_pct"] <= 100.0
             assert t["proj_wins"] >= 0.0
+            assert t["proj_losses"] >= 0.0
+            # Winning a conference means first reaching its title game.
+            assert t["conf_title_pct"] <= t["ccg_pct"]
 
         # One source of truth: a team in both lists reports the same odds.
         by_id = {t["team_id"]: t for t in teams}
         for f in projection["field"]:
             assert by_id[f["team_id"]]["bid_pct"] == f["bid_pct"]
             assert by_id[f["team_id"]]["proj_wins"] == f["proj_wins"]
+            assert by_id[f["team_id"]]["proj_losses"] == f["proj_losses"]
 
     def test_short_field_payload_has_teams_key(self, db_session):
         """Too few teams to simulate still returns the key, just empty."""

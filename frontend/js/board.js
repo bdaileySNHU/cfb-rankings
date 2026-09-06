@@ -886,18 +886,142 @@
     return (Math.round(v * 10) / 10).toFixed(v < 10 ? 1 : 0) + '%';
   }
 
+  // Mean simulated wins and losses. Both are averages, so they are rounded to a
+  // whole record for display — the exact fractions live on the board rows.
+  function fmtRec(t) {
+    if (t.proj_wins == null || t.proj_losses == null) return '—';
+    return Math.round(t.proj_wins) + '-' + Math.round(t.proj_losses);
+  }
+
+  // Four of the five auto-bids are champions; the fifth is the top Group of Six
+  // team whether or not it won its league, so the tag cannot claim "champion"
+  // for all of them.
+  function aqHint(t) {
+    if (!t.auto_bid) return '';
+    return t.is_champ
+      ? 'Automatic bid as a projected conference champion.'
+      : 'Automatic bid as the highest-ranked Group of Six team — the fifth bid ' +
+        'does not require winning the conference.';
+  }
+
+  // Conference odds read as too low without their two halves spelled out.
+  function confHint(t) {
+    if (t.ccg_pct == null) return '';
+    if (!t.ccg_pct) return 'No conference title game (independent).';
+    return 'Reaches the conference title game ' + fmtPct(t.ccg_pct) + ' of seasons, ' +
+      'wins it ' + fmtPct(100 * t.conf_title_pct / t.ccg_pct) + ' of those.';
+  }
+
   function oddsRow(t, inField) {
     var c = stripeName(t.name);
     return '<div class="bk-odds-row' + (inField ? '' : ' out') + '">' +
       '<span class="bk-odds-seed">' + (inField ? t.seed : '—') + '</span>' +
       teamLink(t.name, '<span class="bk-stripe" style="background:' + c + '"></span>' +
         '<span class="bk-odds-name">' + esc(abbrName(t.name)) + '</span>', t.team_id) +
-      '<span class="bk-odds-aq" title="' + (t.auto_bid ? 'Automatic bid as a projected conference champion' : '') + '">' +
+      '<span class="bk-odds-aq" title="' + aqHint(t) + '">' +
         (t.auto_bid ? 'AQ' : '') + '</span>' +
+      '<span class="bk-odds-rec" title="Mean projected record across the simulated seasons">' +
+        fmtRec(t) + '</span>' +
       '<span class="bk-odds-bar"><i style="width:' + Math.max(1, Math.round(t.bid_pct)) + '%;background:' + c + '"></i></span>' +
       '<span class="bk-odds-pct">' + fmtPct(t.bid_pct) + '</span>' +
-      '<span class="bk-odds-sub">' + fmtPct(t.conf_title_pct) + '</span>' +
+      '<span class="bk-odds-sub" title="' + confHint(t) + '">' + fmtPct(t.conf_title_pct) + '</span>' +
       '<span class="bk-odds-sub">' + fmtPct(t.title_pct) + '</span></div>';
+  }
+
+  // ── "Show our work": how the projection was built ───────────────────────────
+  // A native <details> rather than a modal — the page has no overlay layer, and
+  // a disclosure costs no JS and stays readable when printed.
+
+  // Conference title odds are the product of two very different things: getting
+  // to the title game at all (a top-two conference record, hard in a 16-team
+  // league) and then winning it. Splitting them is what explains a top-seeded
+  // team showing single-digit conference odds.
+  function confRaceRows(teams) {
+    return teams.map(function (t) {
+      var conv = t.ccg_pct ? (100 * t.conf_title_pct / t.ccg_pct) : null;
+      return '<div class="bk-work-row">' +
+        teamLink(t.name, '<span class="bk-work-name">' + esc(abbrName(t.name)) + '</span>', t.team_id) +
+        '<span class="bk-work-n">' + fmtPct(t.ccg_pct) + '</span>' +
+        '<span class="bk-work-n">' + fmtPct(conv) + '</span>' +
+        '<span class="bk-work-n strong">' + fmtPct(t.conf_title_pct) + '</span></div>';
+    }).join('');
+  }
+
+  var RACE_CONTENDERS = 4;
+
+  function confRaces(data) {
+    var teams = data.teams || [];
+    if (!teams.length || teams[0].ccg_pct == null) return '';
+    // Only the leagues actually represented in the projection, so the panel
+    // stays a footnote rather than a second full table. The field is seed-ordered
+    // and the bubble follows it, so first appearance is already the order a
+    // reader cares about — a small league where reaching the title game is easy
+    // should not lead the panel.
+    var order = [], shown = {};
+    (data.field || []).concat(data.bubble || []).forEach(function (t) {
+      if (t.conference_name && !shown[t.conference_name]) {
+        shown[t.conference_name] = true;
+        order.push(t.conference_name);
+      }
+    });
+    var byConf = {};
+    teams.forEach(function (t) {
+      if (!shown[t.conference_name]) return;
+      (byConf[t.conference_name] = byConf[t.conference_name] || []).push(t);
+    });
+    // Independents play no title game at all, so their race is all zeroes.
+    var names = order.filter(function (c) {
+      return (byConf[c] || []).length >= 2 &&
+        byConf[c].some(function (t) { return t.ccg_pct > 0; });
+    });
+    if (!names.length) return '';
+    var head = '<div class="bk-work-row head"><span class="bk-work-name">TEAM</span>' +
+      '<span class="bk-work-n">REACH CCG</span><span class="bk-work-n">WIN IT</span>' +
+      '<span class="bk-work-n strong">TITLE</span></div>';
+    return '<div class="bk-work-races">' + names.map(function (c) {
+      var top = byConf[c].slice().sort(function (a, b) { return b.ccg_pct - a.ccg_pct; })
+        .slice(0, RACE_CONTENDERS);
+      return '<div class="bk-work-conf"><div class="bk-work-conf-t">' +
+        esc(TeamVisuals.confLabel(c)) + '</div>' + head + confRaceRows(top) + '</div>';
+    }).join('') + '</div>';
+  }
+
+  function methodPanel(data) {
+    var runs = data.runs ? Number(data.runs).toLocaleString() : '—';
+    var when = data.generated_at ? String(data.generated_at).slice(0, 10) : null;
+    var steps = [
+      'Every game left on the schedule is sampled from the same win probability ' +
+        'the matchup page publishes, so an 80% favourite loses one season in five.',
+      'Each simulated result feeds back through the Elo update — margin included — ' +
+        'so ratings drift across the simulated year instead of being frozen at today’s.',
+      'A conference championship game is synthesized for every league, between the ' +
+        'top two by conference record. It counts toward Elo and toward the projected record.',
+      'The field is picked by the 2026 rule: the four power-conference champions are in ' +
+        'on their titles wherever they rank, the fifth bid goes to the highest-ranked ' +
+        'Group of Six team whether or not it won its league, Notre Dame is in if it lands ' +
+        'in the top twelve, and the rest fills by rating. Seeding is straight by rating.',
+      'Counting across all ' + runs + ' seasons turns that into every percentage above. ' +
+        'The bracket shown is the consensus field — the twelve highest bid probabilities, ' +
+        'run through that same selection rule — not any single simulated season.',
+    ];
+    var caveats = 'Games are independent: no injuries, weather or rivalry effects. ' +
+      'FCS opponents are skipped entirely, so they touch neither the rating nor the ' +
+      'projected record. Title-game participants are the top two by conference record, ' +
+      'with rating breaking ties — no head-to-head or divisional tiebreakers.';
+    return '<details class="bk-work"><summary>How this is projected</summary>' +
+      '<div class="bk-work-body">' +
+      '<p class="bk-work-lede">' + runs + ' simulated seasons, replayed from the games ' +
+        'already banked through week ' + (data.through_week == null ? '—' : data.through_week) +
+        (when ? ' · last run ' + esc(when) : '') + '.</p>' +
+      '<ol class="bk-work-steps">' + steps.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ol>' +
+      '<h4 class="bk-work-h">Why a top seed can show long conference odds</h4>' +
+      '<p class="bk-work-p">Winning a league means first finishing top two in it. In a ' +
+        '16-team conference playing nine league games that is the hard half, and it is ' +
+        'decided by record, not by rating — so the best team in a conference misses its ' +
+        'title game most years. REACH CCG × WIN IT is the TITLE number.</p>' +
+      confRaces(data) +
+      '<p class="bk-work-p dim">' + caveats + '</p>' +
+      '</div></details>';
   }
 
   // Per-team probabilities only exist for a simulated season; the deterministic
@@ -913,6 +1037,7 @@
     var head = '<div class="bk-odds-head"><span class="bk-odds-seed">SD</span>' +
       '<span class="bk-stripe"></span><span class="bk-odds-name">TEAM</span>' +
       '<span class="bk-odds-aq"></span>' +
+      '<span class="bk-odds-rec">REC</span>' +
       '<span class="bk-odds-bar"></span><span class="bk-odds-pct">PLAYOFF</span>' +
       '<span class="bk-odds-sub">CONF</span><span class="bk-odds-sub">TITLE</span></div>';
     // The bar measures playoff odds, so the rows are ordered by playoff odds too
@@ -927,10 +1052,14 @@
     }
     // Five of the twelve bids are reserved for conference champions, so a bubble
     // team can carry longer playoff odds than a seeded AQ team and still be out.
-    var note = '<div class="bk-odds-note">AQ = projected conference champion. ' +
-      'Five bids are reserved for champions, so a bubble team can show longer ' +
-      'odds than a seeded AQ team.</div>';
-    host.innerHTML = '<h3 class="bk-odds-title">Playoff odds</h3>' + head + rows + note;
+    var note = '<div class="bk-odds-note">AQ = holds one of the five automatic bids: ' +
+      'the four power-conference champions, plus the highest-ranked Group of Six ' +
+      'team, champion or not. Those five are spoken for, so a bubble team can show ' +
+      'longer odds than a seeded AQ team. Seeds are straight by rating, so an ' +
+      'at-large team can seed above every AQ. REC = mean projected record, ' +
+      'conference title game included, FCS games excluded.</div>';
+    host.innerHTML = '<h3 class="bk-odds-title">Playoff odds</h3>' + head + rows + note +
+      methodPanel(data);
     host.classList.remove('hidden');
   }
 
