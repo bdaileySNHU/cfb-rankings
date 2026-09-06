@@ -78,6 +78,7 @@ const preamble = `
 `;
 
 const { renderPredictions } = new Function(
+  'var ENTRIES = [], IDS = null;' + extract('idOf') + extract('teamLink') +
   preamble + extract('predRow') + extract('renderPredictions') +
   'return { renderPredictions: renderPredictions };'
 )();

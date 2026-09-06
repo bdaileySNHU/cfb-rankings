@@ -42,6 +42,7 @@ const preamble = `
 `;
 
 const sandbox = new Function(
+  'var ENTRIES = [], IDS = null;' + extract('idOf') + extract('teamLink') +
   preamble + extract('fmtPct') + extract('oddsRow') + extract('renderOdds') +
   'return { fmtPct: fmtPct, renderOdds: renderOdds, host: host };'
 )();

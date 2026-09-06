@@ -13,7 +13,8 @@
 .tkr-wrap { max-width: 1240px; margin: 0 auto; padding: 0 26px; }
 
 /* ── Header bar (60px) ── */
-.tkr-header { background: var(--bg); border-bottom: 1px solid var(--line); }
+.tkr-header { background: var(--bg); border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 50; }
 .tkr-header-inner {
   max-width: 1240px; margin: 0 auto; padding: 0 26px;
   height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
@@ -60,7 +61,9 @@
 /* ── Ticker tape (40px) ── */
 .tkr-tape {
   background: var(--bg); border-bottom: 1px solid var(--line);
-  height: 40px; display: flex; align-items: stretch; overflow: hidden; position: relative;
+  height: 40px; display: flex; align-items: stretch; overflow: hidden;
+  /* Sits directly under the header bar (60px + its 1px border), sticky at 0. */
+  position: sticky; top: 61px; z-index: 49;
 }
 .tkr-tape-inner { max-width: 1240px; margin: 0 auto; width: 100%; display: flex; align-items: stretch; }
 .tkr-live {
@@ -831,3 +834,13 @@
   font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
   text-transform: uppercase; }
 .tkr-preds-more:hover { color: var(--fg); border-color: var(--fg3); }
+
+/* ── Team-page links on abbreviations below the board ──
+   display: inline-flex + inherited gap so wrapping a stripe and an
+   abbreviation in an <a> leaves the surrounding flex rows unchanged. */
+.tkr-tlink {
+  display: inline-flex; align-items: center; gap: inherit;
+  color: inherit; text-decoration: none; min-width: 0;
+}
+.tkr-tlink:hover { color: var(--accent); }
+.bk-team .tkr-tlink, .bk-odds-row .tkr-tlink { flex: 1 1 auto; }
