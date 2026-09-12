@@ -15,7 +15,9 @@ import pytest
 from src.core.ap_poll_service import (
     calculate_comparison_stats,
     get_ap_prediction_for_game,
+    get_sp_prediction_for_game,
     get_team_ap_rank,
+    get_team_sp_rank,
 )
 from src.models.models import APPollRanking, ConferenceType, Game, Prediction, Season, Team
 
@@ -376,7 +378,11 @@ class TestComparisonStatistics:
 
         db.query = mock_query
 
-        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank):
+        # No SP+ snapshot for these weeks, which is the real state for any
+        # week recorded before SP+ import existed.
+        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank), patch(
+            "src.core.ap_poll_service.get_team_sp_rank", return_value=None
+        ):
             stats = calculate_comparison_stats(db, 2024)
 
         # EPIC-COMPARISON-BOWL-PLAYOFF: Verify postseason game was included
@@ -439,7 +445,11 @@ class TestComparisonStatistics:
 
         db.query = mock_query
 
-        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank):
+        # No SP+ snapshot for these weeks, which is the real state for any
+        # week recorded before SP+ import existed.
+        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank), patch(
+            "src.core.ap_poll_service.get_team_sp_rank", return_value=None
+        ):
             stats = calculate_comparison_stats(db, 2024)
 
         # EPIC-COMPARISON-BOWL-PLAYOFF: Verify game_type and postseason_name in by_week
@@ -543,7 +553,11 @@ class TestComparisonStatistics:
 
         db.query = mock_query
 
-        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank):
+        # No SP+ snapshot for these weeks, which is the real state for any
+        # week recorded before SP+ import existed.
+        with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank), patch(
+            "src.core.ap_poll_service.get_team_sp_rank", return_value=None
+        ):
             stats = calculate_comparison_stats(db, 2024)
 
         # EPIC-COMPARISON-BOWL-PLAYOFF: Verify separate tracking
@@ -557,3 +571,83 @@ class TestComparisonStatistics:
         # Overall: 2 games, 1 ELO correct, 1 AP correct
         assert stats["elo_correct"] == 1
         assert stats["ap_correct"] == 1
+
+
+@pytest.mark.unit
+class TestGetTeamSPRank:
+    """Tests for get_team_sp_rank() function"""
+
+    def test_returns_ranking_from_snapshot(self):
+        """A snapshotted week returns that week's SP+ rank"""
+        db = Mock()
+        row = Mock()
+        row.ranking = 12
+        db.query.return_value.filter.return_value.first.return_value = row
+
+        assert get_team_sp_rank(db, team_id=1, season=2026, week=3) == 12
+
+    def test_unsnapshotted_week_returns_none(self):
+        """Weeks recorded before SP+ import existed have no snapshot to read"""
+        db = Mock()
+        db.query.return_value.filter.return_value.first.return_value = None
+
+        assert get_team_sp_rank(db, team_id=1, season=2026, week=3) is None
+
+
+@pytest.mark.unit
+class TestSPPredictionLogic:
+    """Tests for get_sp_prediction_for_game() function"""
+
+    @pytest.fixture
+    def sample_game(self):
+        game = Mock(spec=Game)
+        game.id = 1
+        game.home_team_id = 10
+        game.away_team_id = 20
+        game.season = 2026
+        game.week = 3
+        return game
+
+    def test_better_sp_rank_predicted_to_win(self, sample_game):
+        """Lower SP+ rank number wins, same rule as the AP prediction"""
+
+        def mock_sp_rank(db, team_id, season, week):
+            return 8 if team_id == 10 else 44
+
+        with patch("src.core.ap_poll_service.get_team_sp_rank", side_effect=mock_sp_rank):
+            assert get_sp_prediction_for_game(Mock(), sample_game) == 10
+
+    def test_away_team_better_rank_wins(self, sample_game):
+        """Away team predicted when it holds the better SP+ rank"""
+
+        def mock_sp_rank(db, team_id, season, week):
+            return 60 if team_id == 10 else 3
+
+        with patch("src.core.ap_poll_service.get_team_sp_rank", side_effect=mock_sp_rank):
+            assert get_sp_prediction_for_game(Mock(), sample_game) == 20
+
+    def test_covers_matchups_ap_cannot(self, sample_game):
+        """The point of SP+: two unranked teams still get a prediction.
+
+        AP is silent when neither team is in the top 25, which was 32 of 51
+        FBS-vs-FBS games in 2026 week 1. SP+ rates every FBS team, so the same
+        matchup resolves.
+        """
+        with patch("src.core.ap_poll_service.get_team_ap_rank", return_value=None):
+            assert get_ap_prediction_for_game(Mock(), sample_game) is None
+
+        def mock_sp_rank(db, team_id, season, week):
+            return 61 if team_id == 10 else 88
+
+        with patch("src.core.ap_poll_service.get_team_sp_rank", side_effect=mock_sp_rank):
+            assert get_sp_prediction_for_game(Mock(), sample_game) == 10
+
+    def test_no_snapshot_means_no_prediction(self, sample_game):
+        """An unsnapshotted week yields no SP+ prediction rather than a guess"""
+        with patch("src.core.ap_poll_service.get_team_sp_rank", return_value=None):
+            assert get_sp_prediction_for_game(Mock(), sample_game) is None
+
+    def test_equal_ranks_no_prediction(self, sample_game):
+        """Identical ranks cannot separate the teams"""
+        with patch("src.core.ap_poll_service.get_team_sp_rank", return_value=17):
+            assert get_sp_prediction_for_game(Mock(), sample_game) is None

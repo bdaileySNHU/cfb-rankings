@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
-from src.models.models import APPollRanking, Game, Prediction, Team
+from src.models.models import APPollRanking, Game, Prediction, SPPlusRating, Team
 
 
 def get_team_ap_rank(db: Session, team_id: int, season: int, week: int) -> Optional[int]:
@@ -35,6 +35,10 @@ def get_team_ap_rank(db: Session, team_id: int, season: int, week: int) -> Optio
             APPollRanking.team_id == team_id,
             APPollRanking.season == season,
             APPollRanking.week == week,
+            # The table has a poll_type column and no poll_type in its unique
+            # constraint, so it can hold more than one poll per team-week.
+            # Without this filter .first() would return an arbitrary source.
+            APPollRanking.poll_type == "AP Top 25",
         )
         .first()
     )
@@ -79,13 +83,80 @@ def get_ap_prediction_for_game(db: Session, game: Game) -> Optional[int]:
         return game.home_team_id
 
     # Both ranked - lower number = higher rank = predicted winner
+    return _pick_by_rank(game, home_rank, away_rank)
+
+
+def _pick_by_rank(game: Game, home_rank: Optional[int], away_rank: Optional[int]) -> Optional[int]:
+    """
+    Winner implied by two ranks, where a lower number is the better team.
+
+    Shared by the AP and SP+ predictions: they differ in where the ranks come
+    from, not in how a matchup is called.
+    """
+    if home_rank is None and away_rank is None:
+        return None
+    if home_rank is None:
+        return game.away_team_id
+    if away_rank is None:
+        return game.home_team_id
     if home_rank < away_rank:
         return game.home_team_id
-    elif away_rank < home_rank:
+    if away_rank < home_rank:
         return game.away_team_id
-    else:
-        # Equal rankings (very rare) - no prediction
-        return None
+    # Equal ranks (very rare) - no prediction
+    return None
+
+
+def get_team_sp_rank(db: Session, team_id: int, season: int, week: int) -> Optional[int]:
+    """
+    Get a team's SP+ rank for a week, from the snapshot taken that week.
+
+    Returns None when the week was never snapshotted -- which is every week
+    before SP+ import was switched on, since CFBD cannot serve a past week's
+    ratings and those snapshots can never be recovered.
+
+    Args:
+        db: Database session
+        team_id: Team ID
+        season: Season year
+        week: Week number
+
+    Returns:
+        int: Team's SP+ rank (1 = best), or None if not snapshotted
+    """
+    rating = (
+        db.query(SPPlusRating)
+        .filter(
+            SPPlusRating.team_id == team_id,
+            SPPlusRating.season == season,
+            SPPlusRating.week == week,
+        )
+        .first()
+    )
+
+    return rating.ranking if rating else None
+
+
+def get_sp_prediction_for_game(db: Session, game: Game) -> Optional[int]:
+    """
+    Determine the SP+ implied prediction for a game.
+
+    Same rule as the AP prediction -- better rank wins -- but SP+ rates every
+    FBS team, so this returns a pick for essentially any FBS-vs-FBS game in a
+    snapshotted week, where the AP version is silent whenever both teams are
+    outside the top 25.
+
+    Args:
+        db: Database session
+        game: Game object
+
+    Returns:
+        int: team_id of predicted winner, or None if no SP+ prediction possible
+    """
+    home_rank = get_team_sp_rank(db, game.home_team_id, game.season, game.week)
+    away_rank = get_team_sp_rank(db, game.away_team_id, game.season, game.week)
+
+    return _pick_by_rank(game, home_rank, away_rank)
 
 
 def calculate_comparison_stats(db: Session, season: int) -> Dict:
@@ -327,6 +398,36 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
     )
     postseason_ap_accuracy = postseason_ap_correct / postseason_games if postseason_games > 0 else 0.0
 
+    # SP+ comparison, computed as its own pass. SP+ reaches games the AP Top 25
+    # is silent on, so it has a different (much larger) denominator and cannot
+    # share the counters above. elo_*_vs_sp re-measures ELO over exactly the SP+
+    # subset, which is the only fair way to read the two against each other.
+    sp_games_compared = 0
+    sp_correct_count = 0
+    elo_correct_vs_sp = 0
+
+    for game in games:
+        elo_prediction = db.query(Prediction).filter(Prediction.game_id == game.id).first()
+        if not elo_prediction:
+            continue
+
+        sp_predicted_winner_id = get_sp_prediction_for_game(db, game)
+        if sp_predicted_winner_id is None:
+            continue
+
+        actual_winner_id = (
+            game.home_team_id if game.home_score > game.away_score else game.away_team_id
+        )
+
+        sp_games_compared += 1
+        if sp_predicted_winner_id == actual_winner_id:
+            sp_correct_count += 1
+        if elo_prediction.predicted_winner_id == actual_winner_id:
+            elo_correct_vs_sp += 1
+
+    sp_accuracy = sp_correct_count / sp_games_compared if sp_games_compared > 0 else 0.0
+    elo_accuracy_vs_sp = elo_correct_vs_sp / sp_games_compared if sp_games_compared > 0 else 0.0
+
     return {
         "season": season,
         "elo_accuracy": round(elo_accuracy, 4),  # Accuracy when compared to AP Poll
@@ -350,4 +451,11 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
         "regular_season_ap_accuracy": round(regular_season_ap_accuracy, 4),
         "postseason_elo_accuracy": round(postseason_elo_accuracy, 4),
         "postseason_ap_accuracy": round(postseason_ap_accuracy, 4),
+        # SP+ comparison (own denominator -- see the pass above)
+        "sp_games_compared": sp_games_compared,
+        "sp_correct": sp_correct_count,
+        "sp_accuracy": round(sp_accuracy, 4),
+        "elo_correct_vs_sp": elo_correct_vs_sp,
+        "elo_accuracy_vs_sp": round(elo_accuracy_vs_sp, 4),
+        "elo_advantage_vs_sp": round(elo_accuracy_vs_sp - sp_accuracy, 4),
     }

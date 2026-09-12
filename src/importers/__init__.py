@@ -18,7 +18,7 @@ from src.importers.common import (
 from src.importers.efficiency import import_team_efficiency
 from src.importers.games import import_games
 from src.importers.pipeline import main
-from src.importers.polls import import_ap_poll_rankings
+from src.importers.polls import import_ap_poll_rankings, import_sp_plus_ratings
 from src.importers.postseason import (
     import_bowl_games,
     import_conference_championships,
@@ -45,6 +45,7 @@ __all__ = [
     "import_conference_championships",
     "import_games",
     "import_playoff_games",
+    "import_sp_plus_ratings",
     "import_team_efficiency",
     "import_teams",
     "main",

@@ -1046,6 +1046,34 @@ class CFBDClient:
 
         return ap_rankings
 
+    def get_sp_ratings(self, year: int) -> List[Dict]:
+        """
+        Get SP+ ratings for every FBS team in a season.
+
+        SP+ rates all ~136 FBS teams, where the AP Top 25 reaches only 25, so it
+        can grade predictions on the unranked-vs-unranked games that make up
+        most of the schedule.
+
+        Note there is no week parameter. CFBD serves a single season-level
+        rating that is revised in place as the season goes on; asking for
+        ?week=N returns the same current values. Callers that need a weekly
+        series have to snapshot this themselves (see import_sp_plus_ratings),
+        and cannot reconstruct a past week after the fact.
+
+        Args:
+            year: Season year
+
+        Returns:
+            List of rating dicts with 'team', 'rating' and 'ranking' keys.
+            Preseason rows carry rating/ranking but leave the derived fields
+            (secondOrderWins, sos) null.
+
+        Example:
+            >>> client.get_sp_ratings(2026)[0]
+            {'year': 2026, 'team': 'Ohio State', 'rating': 30, 'ranking': 1, ...}
+        """
+        return self._get("/ratings/sp", params={"year": year}) or []
+
     def get_game_line_scores(
         self, game_id: int, year: int, week: int, home_team: str, away_team: str
     ) -> Optional[Dict[str, List[int]]]:
