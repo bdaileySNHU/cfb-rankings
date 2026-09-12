@@ -177,6 +177,14 @@ class TestTeamImportWithMock:
 
 
 @pytest.mark.integration
+def _mock_line_scores(game_id, year, week, home_team, away_team):
+    """Quarter splits matching the mock fixture's final scores (27-24 and 30-24)."""
+    return {
+        "Alabama": {"home": [7, 7, 6, 7], "away": [3, 7, 7, 7]},
+        "Ohio State": {"home": [10, 7, 6, 7], "away": [3, 7, 7, 7]},
+    }.get(home_team)
+
+
 class TestGameImportWithMock:
     """Tests for game import functionality using mocked CFBD client"""
 
@@ -201,6 +209,52 @@ class TestGameImportWithMock:
         game = games_in_db[0]
         assert game.is_processed is True
         assert game.home_rating_change != 0.0 or game.away_rating_change != 0.0
+
+    def test_reimport_backfills_quarter_scores_published_late(
+        self, test_db: Session, mock_cfbd_client
+    ):
+        """A game processed before CFBD published line scores picks them up on the next run."""
+        from import_real_data import import_games, import_teams
+
+        team_objects = import_teams(mock_cfbd_client, test_db, year=2025)
+
+        # First run: CFBD has the final score but no line scores yet (fixture default).
+        mock_cfbd_client.get_game_line_scores.return_value = None
+        import_games(mock_cfbd_client, test_db, team_objects, year=2025, max_week=1)
+
+        game = test_db.query(Game).filter(Game.home_score == 27).one()
+        assert game.is_processed is True
+        assert game.q1_home is None
+        banked_home = game.home_rating_change
+        banked_away = game.away_rating_change
+
+        # Second run: line scores are now available.
+        mock_cfbd_client.get_game_line_scores.side_effect = _mock_line_scores
+        import_games(mock_cfbd_client, test_db, team_objects, year=2025, max_week=1)
+
+        test_db.refresh(game)
+        assert game.q1_home == 7
+        assert game.q4_away == 7
+
+        # ELO stays put -- backfilling data must not rewrite settled standings.
+        assert game.home_rating_change == banked_home
+        assert game.away_rating_change == banked_away
+
+    def test_reimport_leaves_quarter_scores_alone_when_already_present(
+        self, test_db: Session, mock_cfbd_client
+    ):
+        """Games that already have quarters cost no extra line-score call."""
+        from import_real_data import import_games, import_teams
+
+        team_objects = import_teams(mock_cfbd_client, test_db, year=2025)
+
+        mock_cfbd_client.get_game_line_scores.side_effect = _mock_line_scores
+        import_games(mock_cfbd_client, test_db, team_objects, year=2025, max_week=1)
+        calls_after_first_run = mock_cfbd_client.get_game_line_scores.call_count
+
+        import_games(mock_cfbd_client, test_db, team_objects, year=2025, max_week=1)
+
+        assert mock_cfbd_client.get_game_line_scores.call_count == calls_after_first_run
 
     def test_import_games_updates_team_records(self, test_db: Session, mock_cfbd_client):
         """Test that game import updates team win/loss records"""

@@ -7,6 +7,7 @@ from src.importers.common import (
     apply_quarter_scores,
     find_existing_game,
     get_or_create_fcs_team,
+    missing_quarter_scores,
     parse_game_date,
 )
 from src.importers.polls import import_ap_poll_rankings
@@ -196,6 +197,34 @@ def import_games(
                         )
                         existing_game.game_date = new_game_date
                         db.commit()
+
+                    # EPIC-021: line scores are fetched once, when a future game
+                    # first picks up a final score. CFBD often publishes them
+                    # hours later, so a game imported on game night was processed
+                    # on whole-game margin and had no way back - this branch used
+                    # to touch game_date and nothing else. Backfill the quarters
+                    # once they exist so the board and later analysis see them.
+                    #
+                    # ELO is deliberately NOT recomputed. The rating change is
+                    # already banked and mirrored into ranking_history; replaying
+                    # it here would rewrite settled standings mid-season.
+                    #
+                    # ponytail: a game CFBD never publishes line scores for costs
+                    # one API call on every subsequent run. Bounded in practice by
+                    # the 90% usage check in scripts/weekly_update.py; if that
+                    # starts tripping, stop retrying games older than ~2 weeks.
+                    if not is_fcs_game and missing_quarter_scores(existing_game):
+                        line_scores = cfbd.get_game_line_scores(
+                            game_id=game_data.get("id", 0),
+                            year=year,
+                            week=week,
+                            home_team=home_team_name,
+                            away_team=away_team_name,
+                        )
+                        if line_scores:
+                            apply_quarter_scores(existing_game, line_scores)
+                            db.commit()
+                            print(f"    Backfilled quarter scores: {game_desc}")
                     continue
                 else:
                     # Has scores but not processed yet - process it

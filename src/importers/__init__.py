@@ -11,6 +11,7 @@ from src.importers.common import (
     apply_quarter_scores,
     find_existing_game,
     get_or_create_fcs_team,
+    missing_quarter_scores,
     parse_game_date,
     resolve_final_week,
 )
@@ -47,6 +48,7 @@ __all__ = [
     "import_team_efficiency",
     "import_teams",
     "main",
+    "missing_quarter_scores",
     "parse_game_date",
     "print_duplicate_report",
     "resolve_final_week",
