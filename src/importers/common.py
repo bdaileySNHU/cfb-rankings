@@ -185,6 +185,29 @@ def find_existing_game(db, home_team_id: int, away_team_id: int, week: int, seas
     return game
 
 
+def missing_quarter_scores(game: Game) -> bool:
+    """
+    True when any of the eight quarter-score fields is unset (EPIC-021).
+
+    CFBD publishes line scores some time after the final score, so a game
+    imported on game night can land with no quarters at all. The ELO pass
+    falls back to whole-game margin when that happens.
+    """
+    return any(
+        q is None
+        for q in (
+            game.q1_home,
+            game.q1_away,
+            game.q2_home,
+            game.q2_away,
+            game.q3_home,
+            game.q3_away,
+            game.q4_home,
+            game.q4_away,
+        )
+    )
+
+
 def apply_quarter_scores(game: Game, line_scores) -> None:
     """
     Apply fetched quarter scores to a game and validate them (EPIC-021).
