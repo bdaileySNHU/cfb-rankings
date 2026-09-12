@@ -437,3 +437,102 @@ class TestResolveFinalWeek:
         from src.importers import resolve_final_week
 
         assert resolve_final_week(0, 5) == 0
+
+
+@pytest.mark.integration
+class TestSPPlusSnapshotImport:
+    """Tests for import_sp_plus_ratings() -- the write-once snapshot"""
+
+    def _teams(self, test_db, mock_cfbd_client):
+        from import_real_data import import_teams
+
+        return import_teams(mock_cfbd_client, test_db, year=2025)
+
+    def test_stores_ratings_for_the_week(self, test_db: Session, mock_cfbd_client):
+        """A fresh week records one row per matched FBS team"""
+        from src.importers.polls import import_sp_plus_ratings
+        from src.models.models import SPPlusRating
+
+        team_objects = self._teams(test_db, mock_cfbd_client)
+        mock_cfbd_client.get_sp_ratings.return_value = [
+            {"team": "Alabama", "rating": 25.0, "ranking": 1},
+            {"team": "Georgia", "rating": 22.0, "ranking": 2},
+        ]
+
+        assert import_sp_plus_ratings(mock_cfbd_client, test_db, team_objects, 2025, 1) == 2
+        assert test_db.query(SPPlusRating).filter_by(season=2025, week=1).count() == 2
+
+    def test_snapshot_is_write_once(self, test_db: Session, mock_cfbd_client):
+        """A later run must not restamp a recorded week with revised ratings.
+
+        CFBD revises SP+ in place as results come in. If a re-run overwrote
+        week 1, the comparison would grade a week-1 prediction against ratings
+        that had already seen week 1's games.
+        """
+        from src.importers.polls import import_sp_plus_ratings
+        from src.models.models import SPPlusRating
+
+        team_objects = self._teams(test_db, mock_cfbd_client)
+        mock_cfbd_client.get_sp_ratings.return_value = [
+            {"team": "Alabama", "rating": 25.0, "ranking": 1},
+        ]
+        import_sp_plus_ratings(mock_cfbd_client, test_db, team_objects, 2025, 1)
+
+        # Upstream revises Alabama sharply downward after the results land.
+        mock_cfbd_client.get_sp_ratings.return_value = [
+            {"team": "Alabama", "rating": 4.0, "ranking": 40},
+        ]
+        calls_before = mock_cfbd_client.get_sp_ratings.call_count
+
+        assert import_sp_plus_ratings(mock_cfbd_client, test_db, team_objects, 2025, 1) == 0
+        # Recorded weeks are detected before the fetch, so no API call is spent.
+        assert mock_cfbd_client.get_sp_ratings.call_count == calls_before
+
+        row = test_db.query(SPPlusRating).filter_by(season=2025, week=1).one()
+        assert row.ranking == 1
+        assert row.rating == 25.0
+
+    def test_later_week_records_revised_ratings(self, test_db: Session, mock_cfbd_client):
+        """Write-once is per week -- a new week takes the current values"""
+        from src.importers.polls import import_sp_plus_ratings
+        from src.models.models import SPPlusRating
+
+        team_objects = self._teams(test_db, mock_cfbd_client)
+        mock_cfbd_client.get_sp_ratings.return_value = [
+            {"team": "Alabama", "rating": 25.0, "ranking": 1},
+        ]
+        import_sp_plus_ratings(mock_cfbd_client, test_db, team_objects, 2025, 1)
+
+        mock_cfbd_client.get_sp_ratings.return_value = [
+            {"team": "Alabama", "rating": 4.0, "ranking": 40},
+        ]
+        assert import_sp_plus_ratings(mock_cfbd_client, test_db, team_objects, 2025, 2) == 1
+
+        wk1 = test_db.query(SPPlusRating).filter_by(season=2025, week=1).one()
+        wk2 = test_db.query(SPPlusRating).filter_by(season=2025, week=2).one()
+        assert (wk1.ranking, wk2.ranking) == (1, 40)
+
+    def test_skips_unknown_teams_and_incomplete_rows(self, test_db: Session, mock_cfbd_client):
+        """Non-FBS entries and rows missing rank or rating are dropped quietly"""
+        from src.importers.polls import import_sp_plus_ratings
+        from src.models.models import SPPlusRating
+
+        team_objects = self._teams(test_db, mock_cfbd_client)
+        mock_cfbd_client.get_sp_ratings.return_value = [
+            {"team": "Alabama", "rating": 25.0, "ranking": 1},
+            {"team": "Not A Real Team", "rating": 9.0, "ranking": 5},
+            {"team": "Georgia", "rating": None, "ranking": 2},
+            {"team": "Ohio State", "rating": 18.0, "ranking": None},
+        ]
+
+        assert import_sp_plus_ratings(mock_cfbd_client, test_db, team_objects, 2025, 1) == 1
+        assert test_db.query(SPPlusRating).filter_by(season=2025, week=1).count() == 1
+
+    def test_no_ratings_available_is_not_an_error(self, test_db: Session, mock_cfbd_client):
+        """An empty upstream response records nothing and does not raise"""
+        from src.importers.polls import import_sp_plus_ratings
+
+        team_objects = self._teams(test_db, mock_cfbd_client)
+        mock_cfbd_client.get_sp_ratings.return_value = []
+
+        assert import_sp_plus_ratings(mock_cfbd_client, test_db, team_objects, 2025, 1) == 0

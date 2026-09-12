@@ -311,6 +311,11 @@ def mock_cfbd_client(monkeypatch):
     # This prevents TypeError when import_games tries to subscript the return value
     mock_client.get_game_line_scores.return_value = None
 
+    # Mock get_sp_ratings() - Returns [] (SP+ snapshots are optional; tests that
+    # exercise them set their own return_value). Must be stubbed: import_games
+    # calls it once per week, and a bare Mock is truthy and not iterable.
+    mock_client.get_sp_ratings.return_value = []
+
     return mock_client
 
 

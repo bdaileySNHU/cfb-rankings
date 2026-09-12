@@ -10,7 +10,7 @@ from src.importers.common import (
     missing_quarter_scores,
     parse_game_date,
 )
-from src.importers.polls import import_ap_poll_rankings
+from src.importers.polls import import_ap_poll_rankings, import_sp_plus_ratings
 from src.importers.validation import get_week_statistics
 from src.integrations.cfbd_client import CFBDClient
 from src.models.models import Game
@@ -339,6 +339,14 @@ def import_games(
             if ap_rankings_count > 0:
                 print(f"    AP Poll: {ap_rankings_count} rankings imported")
                 ap_poll_rankings_imported += ap_rankings_count
+
+            # Snapshot SP+ alongside the poll. Write-once per week: a week
+            # already recorded is skipped without an API call, because CFBD
+            # only ever serves current SP+ and restamping an old week would
+            # backdate ratings that have already seen its results.
+            sp_ratings_count = import_sp_plus_ratings(cfbd, db, team_objects, year, week)
+            if sp_ratings_count > 0:
+                print(f"    SP+: {sp_ratings_count} ratings snapshotted")
 
     # Print final import summary
     print("\n" + "=" * 80)

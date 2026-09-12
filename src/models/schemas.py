@@ -877,6 +877,24 @@ class ComparisonStats(BaseModel):
     postseason_ap_accuracy: float = Field(
         ..., description="AP Poll accuracy for postseason games (weeks 16-20)", ge=0, le=1.0
     )
+    # SP+ comparison. Reported on its own denominator: SP+ rates every FBS team,
+    # so it speaks to far more games than the AP Top 25 and the two accuracies
+    # are not comparable to each other. elo_*_vs_sp is ELO over the SP+ subset,
+    # which is the only fair head-to-head.
+    sp_games_compared: int = Field(
+        0, description="Games with both an ELO prediction and an SP+ snapshot", ge=0
+    )
+    sp_correct: int = Field(0, description="Games SP+ predicted correctly", ge=0)
+    sp_accuracy: float = Field(0.0, description="SP+ prediction accuracy (0-1)", ge=0, le=1.0)
+    elo_correct_vs_sp: int = Field(
+        0, description="Games ELO predicted correctly over the SP+ subset", ge=0
+    )
+    elo_accuracy_vs_sp: float = Field(
+        0.0, description="ELO accuracy over the SP+ subset (0-1)", ge=0, le=1.0
+    )
+    elo_advantage_vs_sp: float = Field(
+        0.0, description="ELO accuracy minus SP+ accuracy (can be negative)"
+    )
     message: Optional[str] = Field(
         None, description="Optional message for empty state or error conditions"
     )

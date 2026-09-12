@@ -753,6 +753,48 @@ class APPollRanking(Base):
         return f"<APPollRanking(season={self.season}, week={self.week}, rank=#{self.rank}, team={self.team.name if self.team else 'Unknown'})>"
 
 
+
+class SPPlusRating(Base):
+    """
+    Weekly snapshot of SP+ ratings, for comparison against ELO predictions.
+
+    A separate table rather than a `poll_type` row on ap_poll_rankings: that
+    table carries UNIQUE (season, week, team_id), so an SP+ row would collide
+    with the AP row for every ranked team, and widening the constraint means a
+    SQLite table rebuild on live poll data.
+
+    SP+ is also a different shape from a poll. CFBD's /ratings/sp has no week
+    dimension -- it serves one season-level rating that is revised in place as
+    games are played. Rows here are therefore snapshots WE take, one per week,
+    and they are written once and never updated (see import_sp_plus_ratings).
+    Re-deriving week 1 from today's SP+ would compare a prediction frozen in
+    week 1 against a rating that has already seen the result.
+
+    Unlike the AP Top 25, SP+ rates every FBS team, so it can speak to the
+    unranked-vs-unranked games that make up most of the schedule.
+    """
+
+    __tablename__ = "sp_plus_ratings"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    season = Column(Integer, nullable=False, index=True)
+    week = Column(Integer, nullable=False, index=True)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False, index=True)
+
+    # 1 = best. Mirrors AP rank semantics so the prediction logic is shared.
+    ranking = Column(Integer, nullable=False)
+    # SP+ point rating (positive is good, roughly predicted margin vs average).
+    rating = Column(Float, nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("season", "week", "team_id", name="uq_sp_season_week_team"),
+        Index("idx_sp_season_week", "season", "week"),
+    )
+
+
 class PlayoffSimulation(Base):
     """Cached output of a Monte Carlo season simulation.
 
