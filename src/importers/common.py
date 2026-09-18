@@ -1,6 +1,6 @@
 """Shared helpers for the CFBD import pipeline."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from src.integrations.cfbd_client import CFBDClient
 from sqlalchemy import and_, or_
@@ -55,13 +55,22 @@ def parse_game_date(game_data: dict) -> datetime:
         Returns None instead of datetime.now() when date is unavailable.
         This prevents showing incorrect import timestamps as game dates.
         Frontend will display "TBD" for games without scheduled dates.
+
+        The returned datetime is naive UTC. Game.game_date is a plain DateTime
+        column, so SQLite hands rows back naive; returning an aware datetime
+        here made every "has the kickoff moved?" check (games.py, postseason.py)
+        compare naive to aware, which is always unequal. Each daily run then
+        rewrote and committed every game date in the season unchanged, printing
+        a screenful of "Updating game date" for games already played.
+        schemas.iso_utc stamps the offset back on at the API boundary.
     """
     # BUGFIX: CFBD API uses camelCase "startDate", not snake_case "start_date"
     date_str = game_data.get("startDate")
     if date_str:
         try:
             # CFBD uses ISO 8601 format with Z suffix (UTC)
-            return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            parsed = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            return parsed.astimezone(timezone.utc).replace(tzinfo=None)
         except (ValueError, AttributeError):
             pass
     # Return None for unscheduled games instead of showing wrong date
