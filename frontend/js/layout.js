@@ -60,6 +60,7 @@
           '<span class="tkr-countdown" id="tkr-countdown"></span>' +
         '</div>' +
         '<div class="tkr-header-right">' +
+          '<button class="tkr-burger" id="tkr-burger" aria-label="Menu" aria-expanded="false">&#9776;</button>' +
           '<nav class="tkr-nav">' + navLinks + '</nav>' +
           seasonWrap +
           '<div class="theme-pill" id="theme-toggle" role="button" tabindex="0" aria-label="Toggle theme">' +
@@ -69,11 +70,24 @@
       '</div>' +
     '</header>' + tape;
 
+  // Mobile menu. The nav is hidden under 720px in CSS; this button is the only
+  // way back to it. No close handler needed - every link is a full page load.
+  function wireBurger() {
+    var b = document.getElementById('tkr-burger');
+    if (!b) return;
+    b.addEventListener('click', function () {
+      var open = b.closest('.tkr-header').classList.toggle('nav-open');
+      b.setAttribute('aria-expanded', open);
+    });
+  }
+
   if (script) {
     script.insertAdjacentHTML('afterend', html);
+    wireBurger();
   } else {
     document.addEventListener('DOMContentLoaded', function () {
       document.body.insertAdjacentHTML('afterbegin', html);
+      wireBurger();
     });
   }
 })();

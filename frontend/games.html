@@ -46,15 +46,9 @@
       }
     }
 
-    /* Ticker-style table overrides */
-    .tkr-table {
-      border: 1px solid var(--line);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      background: var(--panel);
-      margin: 1.5rem 0;
-    }
-
+    /* Ticker-style table overrides. .tkr-table itself comes from board.css -
+       redefining it here reintroduced overflow:hidden and clipped the right-hand
+       columns on mobile. */
     .schedule-table {
       width: 100%;
       border-collapse: collapse;
@@ -122,7 +116,7 @@
     </div>
 
     <div id="games-container" class="hidden">
-      <div class="tkr-table">
+      <div class="tkr-table" style="margin: 1.5rem 0;">
         <table class="schedule-table">
           <thead>
             <tr>
