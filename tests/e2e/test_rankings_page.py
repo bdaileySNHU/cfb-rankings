@@ -34,7 +34,7 @@ class TestRankingsPageLoad:
         page.goto(f"{base_url}/frontend/index.html")
 
         # Assert - Page loads with correct title
-        expect(page).to_have_title("Stat·urday — Power Ratings")
+        expect(page).to_have_title("College Football Elo Rankings & Playoff Odds — Stat·urday")
 
     def test_page_has_header(self, browser_page):
         """Test that page displays correct header"""
@@ -60,8 +60,12 @@ class TestRankingsPageLoad:
         # Assert - The main navigation destinations are present. Asserting the
         # link names rather than a count means adding a page to layout.js does
         # not fail this test, but dropping one of these does.
+        #
+        # Scoped to .tkr-nav: the page heading carries a second <nav> of
+        # start-here links, and "This week's games" would otherwise make a bare
+        # "nav a" match two elements.
         for name in ("Rankings", "Games", "Compare"):
-            expect(page.locator("nav a", has_text=name)).to_be_visible()
+            expect(page.locator(".tkr-nav a", has_text=name)).to_be_visible()
 
 
 @pytest.mark.e2e
