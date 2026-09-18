@@ -106,7 +106,7 @@
   width: 220px;
   transition: border-color var(--transition-fast);
 }
-.teams-search:focus { outline: none; border-color: var(--accent); }
+.teams-search:focus { border-color: var(--accent); }
 .teams-search::placeholder { color: var(--text-muted); }
 
 /* No results */

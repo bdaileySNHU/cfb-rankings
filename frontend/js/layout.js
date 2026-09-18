@@ -63,9 +63,9 @@
           '<button class="tkr-burger" id="tkr-burger" aria-label="Menu" aria-expanded="false">&#9776;</button>' +
           '<nav class="tkr-nav">' + navLinks + '</nav>' +
           seasonWrap +
-          '<div class="theme-pill" id="theme-toggle" role="button" tabindex="0" aria-label="Toggle theme">' +
-            '<span class="seg seg-sun">☀</span><span class="seg seg-moon">☾</span>' +
-          '</div>' +
+          '<button type="button" class="theme-pill" id="theme-toggle" aria-label="Toggle theme" aria-pressed="false">' +
+            '<span class="seg seg-sun" aria-hidden="true">☀</span><span class="seg seg-moon" aria-hidden="true">☾</span>' +
+          '</button>' +
         '</div>' +
       '</div>' +
     '</header>' + tape;

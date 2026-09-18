@@ -1,0 +1,14 @@
+# https://cfb.bdailey.com/robots.txt
+#
+# Everything under /api/ is JSON the pages already render, so indexing it only
+# splits ranking signal across duplicate content. /docs, /redoc and
+# /openapi.json are the FastAPI schema UIs, and admin.html is the dashboard.
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /api/
+Disallow: /docs
+Disallow: /redoc
+Disallow: /openapi.json
+
+Sitemap: https://cfb.bdailey.com/sitemap.xml

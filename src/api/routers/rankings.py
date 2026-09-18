@@ -4,10 +4,11 @@ Auto-extracted from the former monolithic main.py during the EPIC-043
 backend modularization. Route paths and handler logic are unchanged.
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from src.core.ranking_service import RankingService, project_playoff_bracket
@@ -177,11 +178,27 @@ async def get_rankings(
         entry["title_pct"] = o["title_pct"] if o else None
         entry["proj_wins"] = o["proj_wins"] if o else None
 
+    # When this week's snapshot was written. /api/stats reports utcnow() at
+    # request time, which always reads "just now" and tells a visitor nothing,
+    # so the freshness stamp on the board comes from the rows themselves.
+    # created_at is stored naive UTC; tag it so clients can localise it.
+    last_updated = (
+        db.query(func.max(RankingHistory.created_at))
+        .filter(
+            RankingHistory.season == season,
+            RankingHistory.week == target_week,
+        )
+        .scalar()
+    )
+    if last_updated is not None and last_updated.tzinfo is None:
+        last_updated = last_updated.replace(tzinfo=timezone.utc)
+
     return {
         "week": current_week,
         "season": season,
         "rankings": rankings,
         "total_teams": len(rankings),
+        "last_updated": last_updated,
     }
 
 

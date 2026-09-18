@@ -1,0 +1,11 @@
+<!-- Source for favicon.ico and apple-touch-icon.png. Mirrors the .tkr-badge in
+     the site header: gold rounded square, dark "S". Re-rasterize with:
+       rsvg-convert -w 180 -h 180 frontend/images/icon.svg -o frontend/images/apple-touch-icon.png
+       magick -background none frontend/images/icon.svg -define icon:auto-resize=16,32,48 frontend/images/favicon.ico
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
+  <rect width="180" height="180" rx="38" fill="#f5a623"/>
+  <text x="90" y="128" text-anchor="middle"
+        font-family="'IBM Plex Sans', system-ui, -apple-system, sans-serif"
+        font-size="120" font-weight="700" fill="#0a0b0d">S</text>
+</svg>

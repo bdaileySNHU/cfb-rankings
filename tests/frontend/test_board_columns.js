@@ -4,14 +4,19 @@
 // Each of these tables commits most of its width to fixed tracks and leaves one
 // or two `fr` columns to absorb the remainder. Below the fixed total, the `fr`
 // columns are the only ones that can give — so the *most* important column
-// (team name, matchup, opponent) is the first to vanish while fixed decoration
-// survives. The fix is to drop columns as the viewport narrows.
+// (matchup, opponent) is the first to vanish while fixed decoration survives.
+// The fix is to drop columns as the viewport narrows.
 //
 // The invariant checked here: at every breakpoint the number of visible columns
 // must equal the number of tracks in grid-template-columns. Too many tracks
 // leaves phantom empty columns; too few makes cells wrap onto a second row.
 // Media queries are cumulative, so each narrower breakpoint inherits everything
 // hidden above it.
+//
+// .tkr-grid (the ratings board) is NOT checked here any more. Its columns moved
+// into the COLUMNS array in board.js, which renders only the visible ones and
+// sets --tkr-cols to match, so there are no nth-child rules left to verify.
+// test_board_column_model.js checks the same invariant against that array.
 
 const assert = require('assert');
 const fs = require('fs');
@@ -24,12 +29,6 @@ const css = fs.readFileSync(
 /** Grids to verify: selector, total column count, and the 1-based columns that
  *  must never be hidden at any width. */
 const GRIDS = [
-  {
-    selector: '.tkr-grid',
-    total: 14, // RK TEAM CONF W-L ELO Δ1W OFF DEF SOS BID% CONF% NAT% PROJ W 10WK
-    mustKeep: { 1: 'RK', 2: 'TEAM', 5: 'ELO' },
-    narrowestVisible: 3,
-  },
   {
     selector: '.tkr-pgrid',
     total: 5, // MATCHUP PROJ WIN-PROB SPREAD CONF
@@ -158,3 +157,42 @@ for (const grid of GRIDS) {
 }
 
 console.log(`grid column self-check passed (${GRIDS.length} grids, ${totalChecked} breakpoints)`);
+
+// ── Sticky ratings-board heading ─────────────────────────────────────────────
+// position:sticky resolves against the nearest scrollport, not the viewport. The
+// two rules that give .tkr-table `overflow-x: auto` (narrow screens, and any
+// explicit column preset) therefore turn the sticky heading into a block parked
+// on top of the first row. The sticky rule must stay scoped out of both, and its
+// offset must clear the sticky chrome above it: the 60px header and its border,
+// then the 40px ticker tape and its own.
+{
+  const stickyRule = /@media \(min-width:\s*769px\)\s*\{\s*#tkr-board\[data-view="all"\]\s+\.tkr-head\s*\{([^}]*)\}/
+    .exec(css);
+  assert.ok(stickyRule,
+    '.tkr-head sticky rule must be scoped to min-width:769px and the "all" column view');
+  assert.ok(/position:\s*sticky/.test(stickyRule[1]), 'the scoped rule should be the sticky one');
+
+  const top = /top:\s*(\d+)px/.exec(stickyRule[1]);
+  assert.ok(top, 'the sticky heading needs an explicit top offset');
+
+  const heightOf = (selector) => {
+    const rule = new RegExp(`${esc(selector)}\\s*\\{[^}]*?height:\\s*(\\d+)px`, 's').exec(css);
+    assert.ok(rule, `could not read the height of ${selector}`);
+    return Number(rule[1]);
+  };
+  // Each contributes its height plus a 1px bottom border.
+  const expected = heightOf('.tkr-header-inner') + 1 + heightOf('.tkr-tape') + 1;
+  assert.strictEqual(
+    Number(top[1]), expected,
+    `sticky heading offset should be ${expected}px (header + tape + their borders), ` +
+    `found ${top[1]}px — it would sit behind the ticker tape`
+  );
+
+  // The base rule must not re-introduce stickiness outside that media query.
+  const baseHead = /\.tkr-head\s*\{([^}]*)\}/.exec(withoutMediaBlocks(css));
+  assert.ok(baseHead, 'no base .tkr-head rule found');
+  assert.ok(!/position:\s*sticky/.test(baseHead[1]),
+    '.tkr-head must not be sticky unconditionally — it breaks inside a scrolling table');
+}
+
+console.log('sticky heading self-check passed');

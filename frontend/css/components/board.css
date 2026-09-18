@@ -48,7 +48,7 @@
 
 /* Mobile menu button. Hidden above 720px, where .tkr-nav shows inline. */
 .tkr-burger {
-  display: none; background: none; border: 1px solid var(--line);
+  display: none; background: none; border: 1px solid var(--line-strong);
   border-radius: 7px; color: var(--fg2); font-size: 15px; line-height: 1;
   padding: 4px 9px; cursor: pointer; flex-shrink: 0;
 }
@@ -56,7 +56,10 @@
 
 /* Theme pill (sun | moon) */
 .theme-pill {
-  display: flex; border: 1px solid var(--line); border-radius: 20px; padding: 3px; cursor: pointer;
+  display: flex; border: 1px solid var(--line-strong); border-radius: 20px; padding: 3px; cursor: pointer;
+  /* Reset the UA button styles - this is a <button> for the keyboard and for
+     assistive tech, not for its default chrome. */
+  background: none; font: inherit; color: inherit;
 }
 .theme-pill .seg {
   width: 24px; height: 22px; border-radius: 16px;
@@ -101,6 +104,28 @@
 }
 .tkr-title { font-family: var(--font-sans); font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
 .tkr-subtitle { font-size: 13.5px; color: var(--fg2); margin: 6px 0 0; }
+.tkr-lede { font-size: 15px; color: var(--fg); margin: 8px 0 0; max-width: 54ch; line-height: 1.45; }
+.tkr-stamp {
+  font-family: var(--font-mono); font-size: 11px; color: var(--fg3);
+  margin: 6px 0 0;
+}
+.tkr-stamp a { color: var(--fg2); }
+.tkr-stamp a:hover { color: var(--accent); }
+
+/* Start-here links. Same pill geometry as .tkr-filter-pill so the page has one
+   button shape, but sentence-case and a touch larger - these are the first
+   thing a new visitor reads, not a dense control. */
+.tkr-cta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.tkr-cta-link {
+  display: inline-flex; align-items: center; height: 32px; padding: 0 14px;
+  border: 1px solid var(--line-strong); border-radius: 6px;
+  background: transparent; color: var(--fg2);
+  font-size: 12.5px; font-weight: 600; text-decoration: none;
+  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+}
+.tkr-cta-link:hover { border-color: var(--fg3); color: var(--fg); }
+.tkr-cta-link.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.tkr-cta-link.primary:hover { color: var(--bg); filter: brightness(1.08); }
 .tkr-ribbon { display: flex; gap: 10px; }
 .tkr-tile {
   border: 1px solid var(--line); border-radius: 11px; background: var(--panel);
@@ -116,7 +141,12 @@
 .tkr-tile.top-mover .val { color: var(--pos); }
 
 /* ── Ratings table (CSS grid) ── */
-.tkr-table { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--panel); }
+.tkr-table { border: 1px solid var(--line); border-radius: 9px; background: var(--panel); }
+/* No overflow:hidden here - it would make this a scroll container, which stops
+   the sticky header sticking and clips the column help popover. The rounded
+   corners are clipped on the first and last children instead. */
+.tkr-head { border-radius: 8px 8px 0 0; }
+.tkr-row:last-child, .tkr-expand { border-radius: 0 0 8px 8px; }
 /* Below the last column-shedding breakpoint, real <table> children scroll
    rather than clip. .tkr-grid never exceeds its box, so the ratings board is
    unaffected and grows no scrollbar. min-width stops the 7-column schedule
@@ -125,21 +155,85 @@
   .tkr-table { overflow-x: auto; }
   .tkr-table > table { min-width: 620px; }
 }
+/* An explicit column preset shows its group at any width, so the board may be
+   wider than the viewport and has to scroll sideways. Both this and the rule
+   above trade the sticky header away on the screens where they apply: a
+   horizontal scroll container cannot also stick its header to the viewport. */
+#tkr-board[data-view]:not([data-view="all"]) .tkr-table { overflow-x: auto; }
+/* The track list comes from board.js, which renders only the columns currently
+   visible and sets --tkr-cols to match. One source of truth for column order;
+   the fallback keeps the header sane if the script has not run yet. */
 .tkr-grid {
   display: grid;
-  grid-template-columns: 44px 1fr 88px 62px 78px 64px 70px 70px 60px 58px 62px 58px 64px 84px;
+  grid-template-columns: var(--tkr-cols, 44px minmax(140px, 1fr) 78px);
   align-items: center;
 }
 .tkr-head {
   font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
   text-transform: uppercase; color: var(--fg3); border-bottom: 1px solid var(--line);
+  background: var(--panel);
 }
-.tkr-head > div { padding: 9px 11px; }
+
+/* Sticky column headings, so the column a number belongs to stays on screen
+   while scrolling a 130-row board. Offset clears the sticky chrome above it:
+   the 60px header plus its 1px border, then the 40px ticker tape plus its own.
+   Scoped deliberately - see the note on .tkr-table's overflow below. Both
+   conditions that turn .tkr-table into a horizontal scroll container are
+   excluded, because sticky inside one resolves against the table's own
+   scrollport rather than the viewport, which parks the heading on top of the
+   first row instead of pinning it to the top of the screen. */
+@media (min-width: 769px) {
+  #tkr-board[data-view="all"] .tkr-head {
+    position: sticky; top: 102px; z-index: 5;
+  }
+}
+.tkr-head > div { padding: 9px 11px; position: relative; }
 .tkr-row { border-bottom: 1px solid var(--line); cursor: pointer; transition: background 0.12s ease; }
 .tkr-row:last-child { border-bottom: none; }
 .tkr-row:hover { background: var(--panel2); }
 .tkr-grid > div { padding: 9px 11px; min-width: 0; }
 .tkr-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Column help. The definition lives in aria-label for assistive tech and in
+   data-help for the visual popover, so both read the same words. No JS: the
+   popover is a pseudo-element on :hover and :focus-visible. */
+/* The heading text is the button. Inheriting every font property keeps it
+   looking like the plain headings beside it; the dotted underline is the only
+   thing marking it as askable. */
+.th-help {
+  background: none; border: 0; padding: 0;
+  font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit;
+  border-bottom: 1px dotted var(--fg3);
+  cursor: help; white-space: nowrap;
+}
+.th-help:hover { color: var(--fg); border-bottom-color: var(--fg); }
+.th-help::after {
+  content: attr(data-help);
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 20;
+  width: max-content; max-width: 260px;
+  padding: 9px 11px;
+  border: 1px solid var(--line-strong); border-radius: 7px;
+  background: var(--panel2); color: var(--fg);
+  font-family: var(--font-sans); font-size: 11.5px; font-weight: 400;
+  letter-spacing: 0; line-height: 1.45; text-transform: none; text-align: left;
+  white-space: normal;
+  box-shadow: var(--shadow-card);
+  opacity: 0; visibility: hidden;
+  transition: opacity var(--transition-fast);
+}
+.th-help:hover::after, .th-help:focus-visible::after { opacity: 1; visibility: visible; }
+/* Right-aligned columns sit near the edge; anchor their popover to the right so
+   it does not run off the table, which clips its overflow. */
+.ta-r .th-help::after, .ta-c .th-help::after { left: auto; right: 0; }
+
+.tkr-empty {
+  padding: 28px 16px; text-align: center; color: var(--fg2);
+  font-family: var(--font-mono); font-size: 12px;
+}
+.tkr-table-note {
+  margin: 10px 2px 0; color: var(--fg2); font-size: 12px;
+}
+.tkr-table-note a { color: var(--accent); }
 .ta-r { text-align: right; }
 .ta-c { text-align: center; }
 
@@ -347,9 +441,72 @@
 /* ── Ratings Table Filter Bar ── */
 .tkr-filter-bar {
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 14px;
+}
+.tkr-filter-tools { display: flex; align-items: center; gap: 8px; }
+.tkr-filter-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Search and the column preset. type="search" gives the clear affordance and
+   the right mobile keyboard for free; the preset is a native <select> so the
+   platform supplies the popup, keyboard handling and screen-reader wiring. */
+.tkr-search, .tkr-view {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  box-sizing: border-box;
+}
+.tkr-search { width: 180px; }
+.tkr-search::placeholder { color: var(--fg3); }
+.tkr-search:focus, .tkr-view:focus { border-color: var(--accent); }
+.tkr-view { cursor: pointer; }
+
+/* ── "What changed this week?" card ── */
+.tkr-changed {
+  border: 1px solid var(--line); border-radius: 11px; background: var(--panel);
+  padding: 16px 18px; margin-bottom: 18px;
+}
+.tkr-changed-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin-bottom: 12px;
+}
+.tkr-changed-title { font-size: 15px; font-weight: 700; margin: 0; }
+.tkr-changed-meta {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--fg3);
+}
+.tkr-changed-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.tkr-changed-h {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--fg3); margin: 0 0 8px;
+}
+.tkr-changed-list { list-style: none; margin: 0; padding: 0; }
+.tkr-changed-item {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  padding: 3px 0; font-family: var(--font-mono); font-size: 12px;
+}
+.tkr-changed-team { color: var(--fg); font-weight: 600; }
+.tkr-changed-item a { text-decoration: none; }
+.tkr-changed-val { font-weight: 600; font-variant-numeric: tabular-nums; }
+.tkr-changed-none, .tkr-changed-note {
+  color: var(--fg3); font-size: 11px; margin: 6px 0 0;
+}
+
+@media (max-width: 900px) {
+  .tkr-changed-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 720px) {
+  .tkr-filter-bar { justify-content: flex-start; }
+  .tkr-filter-tools { width: 100%; }
+  .tkr-search { flex: 1 1 auto; width: auto; }
 }
 .tkr-filter-pill {
   height: 30px;
@@ -374,7 +531,7 @@
 .tkr-filter-pill.inactive {
   background: transparent;
   color: var(--fg2);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
 }
 .tkr-filter-pill.inactive:hover {
   border-color: var(--fg3);
@@ -780,6 +937,8 @@
     padding: 11px 0; font-size: 12.5px; border-top: 1px solid var(--line);
   }
   .tkr-ribbon { display: none; }
+  .tkr-pagehead { flex-direction: column; align-items: stretch; }
+  .tkr-cta-link { flex: 1 1 auto; justify-content: center; }
   .tkr-detail-grid { grid-template-columns: 1fr; }
   .tkr-tiles { grid-template-columns: repeat(2, 1fr); }
   .tkr-tiles-6 { grid-template-columns: repeat(2, 1fr); }
@@ -787,65 +946,25 @@
   .tkr-path-arrow { display: none; }
 }
 
-/* ── Ratings table: shed columns as the viewport narrows ──────────────────────
-   Every column except TEAM has a fixed track (~862px of them), so on a narrow
-   screen the fixed tracks hold their width and the 1fr TEAM column is the one
-   crushed to nothing — the team name disappears while SOS and the sparkline
-   survive. Dropping columns least-informative-first keeps RK / TEAM / ELO
-   readable all the way down.
+/* ── Ratings table: the viewport rules live in board.js ──────────────────────
+   Each column in the COLUMNS array carries a `minWidth`, the narrowest viewport
+   that still shows it in the default "All columns" view, and renderGrid() emits
+   only the columns that pass. This used to be six media queries of
+   `nth-child(n) { display: none }` plus a re-stated grid-template-columns for
+   every combination, keyed to column positions that had to be renumbered by
+   hand whenever a column moved.
 
-   Column order: 1 RK · 2 TEAM · 3 CONF · 4 W-L · 5 ELO · 6 Δ1W · 7 OFF ·
-                 8 DEF · 9 SOS · 10 BID% · 11 CONF% · 12 NAT% · 13 PROJ W ·
-                 14 10WK
-   Projection columns shed in reverse order of interest: PROJ W is derivable
-   from the record, then the two secondary probabilities, leaving BID% as the
-   last projection number standing.
-   Head and body rows share .tkr-grid, so one nth-child rule hides both. */
-
-@media (max-width: 1280px) {
-  /* 10WK sparkline — decorative next to the ELO number it summarizes */
-  .tkr-grid > div:nth-child(14) { display: none; }
-  .tkr-grid { grid-template-columns: 44px 1fr 88px 62px 78px 64px 70px 70px 60px 58px 62px 58px 64px; }
-}
-
-@media (max-width: 1100px) {
-  /* PROJ W — record plus games remaining says most of it */
-  .tkr-grid > div:nth-child(13) { display: none; }
-  .tkr-grid { grid-template-columns: 44px 1fr 88px 62px 78px 64px 70px 70px 60px 58px 62px 58px; }
-}
-
-@media (max-width: 980px) {
-  /* OFF / DEF — available on the team detail view */
-  .tkr-grid > div:nth-child(7),
-  .tkr-grid > div:nth-child(8) { display: none; }
-  .tkr-grid { grid-template-columns: 44px 1fr 88px 62px 78px 64px 60px 58px 62px 58px; }
-}
-
-@media (max-width: 860px) {
-  /* SOS, plus the secondary probabilities — BID% is the headline number */
-  .tkr-grid > div:nth-child(9),
-  .tkr-grid > div:nth-child(11),
-  .tkr-grid > div:nth-child(12) { display: none; }
-  .tkr-grid { grid-template-columns: 44px 1fr 88px 62px 78px 64px 58px; }
-}
+   What survives here is the narrow-screen padding, which is about the page
+   rather than the columns. */
 
 @media (max-width: 640px) {
   /* 26px gutters spend 52px of a 390px viewport; the table needs it more. */
   .tkr-wrap, .tkr-header-inner { padding-left: 14px; padding-right: 14px; }
   .tkr-header.nav-open .tkr-nav { padding-left: 14px; padding-right: 14px; }
-
-  /* CONF and Δ1W — the conference stripe still carries the affiliation */
-  .tkr-grid > div:nth-child(3),
-  .tkr-grid > div:nth-child(6) { display: none; }
-  .tkr-grid { grid-template-columns: 40px 1fr 58px 72px 58px; }
   .tkr-grid > div { padding: 9px 8px; }
 }
 
 @media (max-width: 420px) {
-  /* Down to the irreducible three: rank, team, rating */
-  .tkr-grid > div:nth-child(4),
-  .tkr-grid > div:nth-child(10) { display: none; }
-  .tkr-grid { grid-template-columns: 34px 1fr 68px; }
   .tkr-grid > div { padding: 9px 6px; }
   .c-name { font-size: 12.5px; }
 }

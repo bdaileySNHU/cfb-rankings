@@ -16,12 +16,16 @@
   --line: #232730;     /* borders, dividers, gridlines */
   --fg: #e8ebf0;       /* primary text & numerals */
   --fg2: #9aa1ab;      /* secondary text, conference */
-  --fg3: #5c636e;      /* labels, rank, muted captions */
+  --fg3: #828a95;      /* labels, rank, muted captions (4.9:1 on --panel2) */
   --accent: #f5a623;   /* ELO, brand mark, LIVE tab, links */
   --pos: #3fb37f;      /* positive delta, wins */
   --neg: #e8635a;      /* negative delta, losses */
   --warn: #f5a623;     /* elevated SOS (mirrors accent) */
   --grid: rgba(255, 255, 255, 0.05); /* chart gridlines */
+  /* Borders on things you can click. --line is a divider and stays quiet;
+     this one has to clear 3:1 against every surface (WCAG 1.4.11) so a
+     control's edge is findable. */
+  --line-strong: #626a75;
 
   /* Per-theme heat-cell alpha ceiling (§07) */
   --heat-max: 0.28;
@@ -80,22 +84,23 @@
   --bg: #f7f8fa;
   --panel: #ffffff;
   --panel2: #eef1f5;
-  --line: #e2e6ec;
+  --line: #d5dae1;   /* dividers: darkened so rows stay separable */
   --fg: #1a1c20;
-  --fg2: #6a6f78;
-  --fg3: #9aa0a8;
-  --accent: #b56f0e;
-  --pos: #1f8a5b;
-  --neg: #c4453a;
-  --warn: #b56f0e;
-  --grid: rgba(0, 0, 0, 0.07);
+  --fg2: #5c616a;   /* was #6a6f78 — 4.46:1 on --panel2 */
+  --fg3: #676c74;   /* was #9aa0a8 — 2.64:1 on --panel */
+  --accent: #9a5c05; /* was #b56f0e — 4.00:1 on --panel */
+  --pos: #16724a;    /* was #1f8a5b — 4.33:1 on --panel */
+  --neg: #b03a30;    /* was #c4453a — 4.35:1 on --panel2 */
+  --warn: #9a5c05;
+  --grid: rgba(0, 0, 0, 0.12);
+  --line-strong: #868b94;
 
   --heat-max: 0.18;
   --chart-fill: 0.10;
 
-  --accent-dim: rgba(181, 111, 14, 0.12);
-  --success-bg: rgba(31, 138, 91, 0.1);
-  --warning-bg: rgba(181, 111, 14, 0.1);
+  --accent-dim: rgba(154, 92, 5, 0.12);
+  --success-bg: rgba(22, 114, 74, 0.1);
+  --warning-bg: rgba(154, 92, 5, 0.1);
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);

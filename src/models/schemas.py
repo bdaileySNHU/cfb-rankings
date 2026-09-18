@@ -301,6 +301,11 @@ class RankingsResponse(BaseModel):
     season: int
     rankings: List[RankingEntry]
     total_teams: int
+    # When this week's snapshot was actually written, so the page can show a
+    # real freshness stamp. Deliberately not datetime.utcnow() at request time
+    # like /api/stats does - that only ever says "now". None when the week has
+    # no snapshot rows.
+    last_updated: Optional[datetime] = None
 
 
 class RankingHistory(BaseModel):

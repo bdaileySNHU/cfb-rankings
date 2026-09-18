@@ -7,17 +7,24 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Stat-urday">
   <meta property="og:title" content="Stat-urday — College Football ELO Rankings">
-  <meta property="og:description" content="ELO-based college football power ratings updated weekly.">
+  <meta property="og:description" content="Live Elo ratings, win probabilities and playoff odds for every FBS team.">
   <meta property="og:url" content="https://cfb.bdailey.com/">
-  <meta property="og:image" content="https://cfb.bdailey.com/images/og-default.svg">
+  <meta property="og:image" content="https://cfb.bdailey.com/images/og-default.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:alt" content="Stat-urday — college football Elo rankings">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Stat-urday — College Football ELO Rankings">
-  <meta name="twitter:description" content="ELO-based college football power ratings updated weekly.">
-  <meta name="twitter:image" content="https://cfb.bdailey.com/images/og-default.svg">
+  <meta name="twitter:description" content="Live Elo ratings, win probabilities and playoff odds for every FBS team.">
+  <meta name="twitter:image" content="https://cfb.bdailey.com/images/og-default.png">
+  <meta name="description" content="Live Elo ratings, win probabilities and playoff odds for every FBS team. Rankings update after every final, with strength of schedule and projected wins.">
   <link rel="canonical" href="https://cfb.bdailey.com/">
-  <title>Stat·urday — Power Ratings</title>
+  <!-- Search Console ownership. Inert until the real token from
+       Search Console > Settings > Ownership verification replaces the
+       placeholder; verification fails silently until then. -->
+  <meta name="google-site-verification" content="REPLACE_WITH_GSC_TOKEN">
+  <title>College Football Elo Rankings &amp; Playoff Odds — Stat·urday</title>
   <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/components/board.css">
@@ -28,9 +35,20 @@
 
   <div class="tkr-wrap">
     <div class="tkr-pagehead">
-      <div>
+      <div class="tkr-pagehead-main">
         <h1 class="tkr-title">Power Ratings</h1>
+        <!-- The lede is static. #tkr-subtitle below it is overwritten at runtime
+             by board.js renderHeader(), so it cannot carry this copy. -->
+        <p class="tkr-lede">Live Elo ratings, win probabilities and playoff odds for every FBS team.</p>
         <p class="tkr-subtitle" id="tkr-subtitle">Elo model · updated after every final · FCS games excluded from metrics</p>
+        <!-- Freshness stamp; filled by board.js renderHeader() from the
+             last_updated field on /api/rankings. -->
+        <p class="tkr-stamp hidden" id="tkr-stamp"></p>
+        <nav class="tkr-cta" aria-label="Start here">
+          <a class="tkr-cta-link primary" href="comparison.html">Compare teams</a>
+          <a class="tkr-cta-link" href="games.html">This week's games</a>
+          <a class="tkr-cta-link" href="elo-formula.html">How the model works</a>
+        </nav>
       </div>
       <div class="tkr-ribbon">
         <div class="tkr-tile top-elo"><div class="val" id="rib-topelo">—</div><div class="lbl">Top Elo</div></div>
@@ -39,11 +57,22 @@
       </div>
     </div>
 
+    <!-- Populated by board.js renderWhatChanged(); stays hidden in the preseason,
+         when there is no previous week to compare against. -->
+    <section class="tkr-changed hidden" id="tkr-changed" aria-label="What changed this week"></section>
+
     <div id="tkr-board">
-      <div class="tkr-filter-bar" id="tkr-filters"></div>
-      <div class="tkr-table" id="tkr-table">
+      <div class="tkr-filter-bar" id="tkr-filters" role="group" aria-label="Filter and search rankings"></div>
+      <!-- The row count, not the table, is the live region: announcing 130
+           re-rendered rows on every keystroke would be unusable. -->
+      <p class="sr-only" id="tkr-table-status" role="status"></p>
+      <section class="tkr-table" id="tkr-table" aria-label="Team power ratings">
         <div style="padding:24px;color:var(--fg2);font-family:var(--font-mono);font-size:12px;">Loading rankings…</div>
-      </div>
+      </section>
+      <p class="tkr-table-note">
+        Hover or focus a column heading for what it measures, or read the
+        <a href="elo-formula.html">full methodology</a>.
+      </p>
 
       <!-- Game predictions (rendered by board.js; hidden until loaded) -->
       <details class="tkr-preds-card hidden" id="tkr-preds" open>
