@@ -46,6 +46,14 @@
 }
 .tkr-nav a:hover, .tkr-nav a.active { color: var(--accent); }
 
+/* Mobile menu button. Hidden above 720px, where .tkr-nav shows inline. */
+.tkr-burger {
+  display: none; background: none; border: 1px solid var(--line);
+  border-radius: 7px; color: var(--fg2); font-size: 15px; line-height: 1;
+  padding: 4px 9px; cursor: pointer; flex-shrink: 0;
+}
+.tkr-burger:hover { color: var(--fg); }
+
 /* Theme pill (sun | moon) */
 .theme-pill {
   display: flex; border: 1px solid var(--line); border-radius: 20px; padding: 3px; cursor: pointer;
@@ -109,6 +117,14 @@
 
 /* ── Ratings table (CSS grid) ── */
 .tkr-table { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--panel); }
+/* Below the last column-shedding breakpoint, real <table> children scroll
+   rather than clip. .tkr-grid never exceeds its box, so the ratings board is
+   unaffected and grows no scrollbar. min-width stops the 7-column schedule
+   table crushing every cell into an unreadable sliver instead. */
+@media (max-width: 768px) {
+  .tkr-table { overflow-x: auto; }
+  .tkr-table > table { min-width: 620px; }
+}
 .tkr-grid {
   display: grid;
   grid-template-columns: 44px 1fr 88px 62px 78px 64px 70px 70px 60px 58px 62px 58px 64px 84px;
@@ -749,7 +765,20 @@
 .hidden { display: none !important; }
 
 @media (max-width: 720px) {
+  .tkr-burger { display: block; }
   .tkr-nav { display: none; }
+  /* .tkr-header is sticky, so it is the containing block for this panel and the
+     nav can escape .tkr-header-right's flex row to span the full width.
+     overflow must be reset - .tkr-nav clips by default. */
+  .tkr-header.nav-open .tkr-nav {
+    display: flex; flex-direction: column; overflow: visible;
+    position: absolute; top: 60px; left: 0; right: 0;
+    background: var(--bg); border-bottom: 1px solid var(--line);
+    padding: 0 26px 10px; gap: 0; z-index: 60;
+  }
+  .tkr-header.nav-open .tkr-nav a {
+    padding: 11px 0; font-size: 12.5px; border-top: 1px solid var(--line);
+  }
   .tkr-ribbon { display: none; }
   .tkr-detail-grid { grid-template-columns: 1fr; }
   .tkr-tiles { grid-template-columns: repeat(2, 1fr); }
@@ -801,6 +830,10 @@
 }
 
 @media (max-width: 640px) {
+  /* 26px gutters spend 52px of a 390px viewport; the table needs it more. */
+  .tkr-wrap, .tkr-header-inner { padding-left: 14px; padding-right: 14px; }
+  .tkr-header.nav-open .tkr-nav { padding-left: 14px; padding-right: 14px; }
+
   /* CONF and Δ1W — the conference stripe still carries the affiliation */
   .tkr-grid > div:nth-child(3),
   .tkr-grid > div:nth-child(6) { display: none; }
