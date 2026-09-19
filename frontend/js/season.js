@@ -52,7 +52,11 @@
         seasons.forEach(s => {
           const opt = document.createElement('option');
           opt.value = s.year;
-          opt.textContent = s.is_active ? `${s.year} Season (Current)` : `${s.year} Season`;
+          // Bare years: this select sits in the header next to the menu and
+          // theme buttons, where "2026 Season (Current)" is wide enough to push
+          // them off a phone screen. The aria-label supplies the word "Season",
+          // and the active season is the one selected by default.
+          opt.textContent = `${s.year}`;
           if (s.year === _selectedSeason) opt.selected = true;
           el.appendChild(opt);
         });
