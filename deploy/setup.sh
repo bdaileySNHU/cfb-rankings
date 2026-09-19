@@ -10,7 +10,7 @@ echo "=========================================="
 echo ""
 
 # Configuration - CHANGE THESE
-DOMAIN="cfb.yourdomain.com"  # Change to your subdomain
+DOMAIN="cfb.bdailey.com"  # Change to your subdomain
 APP_DIR="/var/www/cfb-rankings"
 REPO_URL="https://github.com/yourusername/cfb-rankings.git"  # Change if using git
 
@@ -112,7 +112,9 @@ logrotate -d /etc/logrotate.d/cfb-rankings >/dev/null && echo "  ✓ logrotate c
 # Install Nginx configuration
 echo "🌐 Installing Nginx configuration..."
 # Update domain in config
-sed "s/cfb.yourdomain.com/$DOMAIN/g" deploy/nginx.conf > /etc/nginx/sites-available/cfb-rankings
+# nginx.conf now carries the real domain, so this only rewrites it when
+# $DOMAIN was changed above for a different deployment.
+sed "s/cfb\.bdailey\.com/$DOMAIN/g" deploy/nginx.conf > /etc/nginx/sites-available/cfb-rankings
 ln -sf /etc/nginx/sites-available/cfb-rankings /etc/nginx/sites-enabled/
 
 # Test Nginx config

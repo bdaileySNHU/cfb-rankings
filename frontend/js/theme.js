@@ -10,7 +10,11 @@
   function current() { return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
 
   function syncPill(pill) {
-    if (pill) pill.setAttribute('data-active', current() === 'light' ? 'sun' : 'moon');
+    if (!pill) return;
+    var light = current() === 'light';
+    pill.setAttribute('data-active', light ? 'sun' : 'moon');
+    // Pressed = light, because dark is the default the button toggles away from.
+    pill.setAttribute('aria-pressed', light ? 'true' : 'false');
   }
 
   function setTheme(next) {
@@ -24,10 +28,10 @@
     var pill = document.getElementById('theme-toggle');
     if (!pill) return;
     syncPill(pill);
-    function toggle() { setTheme(current() === 'light' ? 'dark' : 'light'); }
-    pill.addEventListener('click', toggle);
-    pill.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    // No keydown handler: #theme-toggle is a real <button>, so Enter and Space
+    // already fire click. A manual one would double-toggle on Enter.
+    pill.addEventListener('click', function () {
+      setTheme(current() === 'light' ? 'dark' : 'light');
     });
   });
 })();

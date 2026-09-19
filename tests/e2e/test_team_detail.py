@@ -33,7 +33,7 @@ class TestTeamDetailPageLoad:
         page.wait_for_timeout(1000)
 
         # Assert - Page loads
-        expect(page).to_have_title("Stat·urday — Power Ratings")
+        expect(page).to_have_title("College Football Elo Rankings & Playoff Odds — Stat·urday")
 
     def test_team_name_displayed(self, browser_page, seed_board):
         """Test that team name is displayed on page"""
@@ -230,7 +230,7 @@ class TestTeamDetailNavigation:
 
         # Assert - Page doesn't crash (shows error or empty state)
         # Page should still load, even if team not found
-        expect(page).to_have_title("Stat·urday — Power Ratings")
+        expect(page).to_have_title("College Football Elo Rankings & Playoff Odds — Stat·urday")
 
 
 @pytest.mark.e2e

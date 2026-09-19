@@ -23,7 +23,9 @@
   var ENTRIES = [];    // current rankings entries (meta merged)
   var COLLAPSE_AT = 25;
   var boardExpanded = false;
-  var activeFilter = 'All'; // active filter state
+  var activeFilter = 'All'; // active conference filter
+  var activeView = 'all';   // active column preset (see VIEWS)
+  var searchQuery = '';     // team-name search box
   var PLAYOFF_DATA = null;  // playoff projection data
   var CURRENT_WEEK = 0;     // current week number
 
@@ -125,51 +127,188 @@
     });
   }
 
+  // ── Column model ────────────────────────────────────────────────────────────
+  // One entry per column, carrying everything about it: the grid track, the
+  // header label, the cell, the plain-language definition behind the header's
+  // "?" button, and when it is allowed to show.
+  //
+  // This used to live in three places that drifted apart - a header string, a
+  // row template, and a stack of nth-child media queries in board.css keyed to
+  // column positions. Adding a column meant renumbering the CSS.
+  //
+  //   group     'id' columns are never dropped; the rest can be
+  //   minWidth  narrowest viewport that still shows the column in the "all" view
+  //   help      omitted where the header already says it (RK, TEAM, CONF, W-L)
+  var COLUMNS = [
+    {
+      key: 'rk', label: 'RK', width: '44px', group: 'id', minWidth: 0,
+      cell: function (e) { return '<div class="c-rk">' + String(e.rank).padStart(2, '0') + '</div>'; },
+    },
+    {
+      key: 'team', label: 'TEAM', width: 'minmax(140px, 1fr)', group: 'id', minWidth: 0,
+      cell: function (e) {
+        return '<div class="c-team">' +
+          (logoImgFor(e.team_name, 24) ||
+            '<span class="c-stripe" style="background:' + stripeOf(e) + '"></span>') +
+          '<span class="c-name">' + esc(e.team_name) + '</span></div>';
+      },
+    },
+    {
+      key: 'conf', label: 'CONF', width: '88px', group: 'core', minWidth: 641,
+      cell: function (e) {
+        return '<div class="c-conf">' +
+          esc(TeamVisuals.confLabel(e.conference_name) || e.conference || '') + '</div>';
+      },
+    },
+    {
+      key: 'wl', label: 'W-L', width: '62px', align: 'ta-r', group: 'core', minWidth: 421,
+      cell: function (e) { return '<div class="c-wl ta-r">' + e.wins + '-' + e.losses + '</div>'; },
+    },
+    {
+      key: 'elo', label: 'ELO', width: '78px', align: 'ta-r', group: 'id', minWidth: 0,
+      headStyle: 'color:var(--accent)',
+      help: 'Every team starts a season near 1500 and trades points after each game — ' +
+        'beating a stronger opponent wins more of them. Results move ratings fastest early: ' +
+        'the K-factor is 64 in weeks 1–4, 48 in weeks 5–8 and 32 from week 9 on.',
+      cell: function (e) { return '<div class="c-elo ta-r">' + fmtElo(e.elo_rating) + '</div>'; },
+    },
+    {
+      key: 'delta', label: 'Δ1W', width: '64px', align: 'ta-r', group: 'core', minWidth: 641,
+      help: 'Places gained or lost since last week’s rankings. A team can gain Elo and still ' +
+        'slide a spot if the teams around it gained more.',
+      cell: function (e) {
+        var d = e.rank_change;
+        return '<div class="c-delta ta-r ' + trendClass(d) + '">' + deltaText(d) + '</div>';
+      },
+    },
+    {
+      key: 'off', label: 'OFF', width: '70px', align: 'ta-r', group: 'eff', minWidth: 981,
+      help: 'Points scored per game this season. Games against FCS opponents are left out, ' +
+        'so a 70-point tune-up does not flatter the number.',
+      cell: function (e) {
+        var v = e.off;
+        return '<div class="heat ta-r" data-kind="off" data-v="' + (v == null ? '' : v) + '">' +
+          (v == null ? '—' : v) + '</div>';
+      },
+    },
+    {
+      key: 'def', label: 'DEF', width: '70px', align: 'ta-r', group: 'eff', minWidth: 981,
+      help: 'Points allowed per game this season, FCS games excluded. Lower is better, and the ' +
+        'shading runs the same direction as OFF — green is good in both columns.',
+      cell: function (e) {
+        var v = e.def;
+        return '<div class="heat ta-r" data-kind="def" data-v="' + (v == null ? '' : v) + '">' +
+          (v == null ? '—' : v) + '</div>';
+      },
+    },
+    {
+      key: 'sos', label: 'SOS', width: '60px', align: 'ta-r', group: 'eff', minWidth: 861,
+      help: 'Strength of schedule: the average Elo rating of the opponents faced so far. ' +
+        'Highlighted above 0.620, where the schedule has been unusually hard.',
+      cell: function (e) {
+        var warn = e.sos != null && e.sos > 0.62;
+        return '<div class="c-sos ta-r' + (warn ? ' warn' : '') + '">' +
+          (e.sos == null ? '—' : e.sos.toFixed(3)) + '</div>';
+      },
+    },
+    {
+      key: 'bid', label: 'BID%', width: '58px', align: 'ta-r', group: 'odds', minWidth: 421,
+      help: 'Share of simulated seasons in which the team reaches the 12-team playoff field.',
+      cell: function (e) { return '<div class="c-odds ta-r">' + fmtPct(e.bid_pct) + '</div>'; },
+    },
+    {
+      key: 'confpct', label: 'CONF%', width: '62px', align: 'ta-r', group: 'odds', minWidth: 861,
+      help: 'Share of simulated seasons in which the team wins its conference title.',
+      cell: function (e) { return '<div class="c-odds ta-r">' + fmtPct(e.conf_title_pct) + '</div>'; },
+    },
+    {
+      key: 'natpct', label: 'NAT%', width: '58px', align: 'ta-r', group: 'odds', minWidth: 861,
+      help: 'Share of simulated seasons in which the team wins the national championship.',
+      cell: function (e) { return '<div class="c-odds ta-r">' + fmtPct(e.title_pct) + '</div>'; },
+    },
+    {
+      key: 'projw', label: 'PROJ W', width: '64px', align: 'ta-r', group: 'odds', minWidth: 1101,
+      help: 'Mean wins across the simulated seasons, counting games already played.',
+      cell: function (e) {
+        return '<div class="c-projw ta-r">' + (e.proj_wins == null ? '—' : e.proj_wins.toFixed(1)) + '</div>';
+      },
+    },
+    {
+      key: 'spark', label: '10WK', width: '84px', align: 'ta-c', group: 'trend', minWidth: 1281,
+      help: 'Elo across the last ten weeks. The line is coloured by the rating it draws, not by ' +
+        'rank: green if the rating rose over the window, red if it fell.',
+      cell: function (e) { return '<div class="ta-c">' + sparkline(e.elo_history) + '</div>'; },
+    },
+  ];
+
+  // Column presets. null = follow the responsive minWidth defaults; a group list
+  // means the visitor asked for those columns, so they show at any width and the
+  // table scrolls sideways if it must.
+  var VIEWS = {
+    all: { label: 'All columns', groups: null },
+    core: { label: 'Ratings only', groups: ['id', 'core'] },
+    eff: { label: 'Efficiency', groups: ['id', 'eff'] },
+    odds: { label: 'Playoff odds', groups: ['id', 'odds'] },
+  };
+
+  function visibleColumns() {
+    var groups = (VIEWS[activeView] || VIEWS.all).groups;
+    var w = window.innerWidth;
+    return COLUMNS.filter(function (c) {
+      return groups ? groups.indexOf(c.group) >= 0 : w >= c.minWidth;
+    });
+  }
+
   // ── Rows ──
-  function rowHTML(e) {
-    var d = e.rank_change;
-    var sosWarn = e.sos != null && e.sos > 0.62;
-    var off = e.off, def = e.def;
+  function rowHTML(e, cols) {
     return '<div class="tkr-grid tkr-row" data-id="' + e.team_id + '">' +
-      '<div class="c-rk">' + String(e.rank).padStart(2, '0') + '</div>' +
-      '<div class="c-team">' +
-        (logoImgFor(e.team_name, 24) ||
-          '<span class="c-stripe" style="background:' + stripeOf(e) + '"></span>') +
-        '<span class="c-name">' + esc(e.team_name) + '</span></div>' +
-      '<div class="c-conf">' + esc(TeamVisuals.confLabel(e.conference_name) || e.conference || '') + '</div>' +
-      '<div class="c-wl ta-r">' + e.wins + '-' + e.losses + '</div>' +
-      '<div class="c-elo ta-r">' + fmtElo(e.elo_rating) + '</div>' +
-      '<div class="c-delta ta-r ' + trendClass(d) + '">' + deltaText(d) + '</div>' +
-      '<div class="heat ta-r" data-kind="off" data-v="' + (off == null ? '' : off) + '">' + (off == null ? '—' : off) + '</div>' +
-      '<div class="heat ta-r" data-kind="def" data-v="' + (def == null ? '' : def) + '">' + (def == null ? '—' : def) + '</div>' +
-      '<div class="c-sos ta-r' + (sosWarn ? ' warn' : '') + '">' + (e.sos == null ? '—' : e.sos.toFixed(3)) + '</div>' +
-      '<div class="c-odds ta-r">' + fmtPct(e.bid_pct) + '</div>' +
-      '<div class="c-odds ta-r">' + fmtPct(e.conf_title_pct) + '</div>' +
-      '<div class="c-odds ta-r">' + fmtPct(e.title_pct) + '</div>' +
-      '<div class="c-projw ta-r">' + (e.proj_wins == null ? '—' : e.proj_wins.toFixed(1)) + '</div>' +
-      '<div class="ta-c">' + sparkline(e.elo_history) + '</div>' +
+      cols.map(function (c) { return c.cell(e); }).join('') +
     '</div>';
   }
 
+  function headHTML(cols) {
+    return '<div class="tkr-grid tkr-head">' + cols.map(function (c) {
+      // The label itself is the help affordance. A separate "?" glyph needs
+      // ~19px the narrow numeric columns do not have, and wrapped their
+      // headings onto a second line.
+      var label = c.help
+        ? '<button type="button" class="th-help" data-help="' + esc(c.help) + '" ' +
+          'aria-label="' + esc(c.label + ': ' + c.help) + '">' + esc(c.label) + '</button>'
+        : '<span class="th-label">' + esc(c.label) + '</span>';
+      return '<div' + (c.align ? ' class="' + c.align + '"' : '') +
+        (c.headStyle ? ' style="' + c.headStyle + '"' : '') + '>' + label + '</div>';
+    }).join('') + '</div>';
+  }
+
+  // Conference pills and the search box are independent; a team has to clear
+  // both to make the board.
+  function filteredEntries() {
+    var q = searchQuery.trim().toLowerCase();
+    return ENTRIES.filter(function (e) {
+      if (activeFilter === 'Power 4') {
+        if (["Big Ten", "SEC", "Big 12", "ACC"].indexOf(e.conference_name) < 0) return false;
+      } else if (activeFilter !== 'All' && e.conference_name !== activeFilter) {
+        return false;
+      }
+      return !q || String(e.team_name).toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
   function renderGrid() {
-    var head = '<div class="tkr-grid tkr-head">' +
-      '<div>RK</div><div>TEAM</div><div>CONF</div><div class="ta-r">W-L</div>' +
-      '<div class="ta-r" style="color:var(--accent)">ELO</div><div class="ta-r">Δ1W</div>' +
-      '<div class="ta-r">OFF</div><div class="ta-r">DEF</div><div class="ta-r">SOS</div>' +
-      '<div class="ta-r">BID%</div><div class="ta-r">CONF%</div>' +
-      '<div class="ta-r">NAT%</div><div class="ta-r">PROJ W</div>' +
-      '<div class="ta-c">10WK</div></div>';
-    
-    // Apply filters
-    var filtered = ENTRIES;
-    if (activeFilter === 'Power 4') {
-      filtered = ENTRIES.filter(function (e) {
-        return ["Big Ten", "SEC", "Big 12", "ACC"].indexOf(e.conference_name) >= 0;
-      });
-    } else if (activeFilter !== 'All') {
-      filtered = ENTRIES.filter(function (e) {
-        return e.conference_name === activeFilter;
-      });
+    var cols = visibleColumns();
+    var filtered = filteredEntries();
+    var board = document.getElementById('tkr-board');
+    if (board) board.setAttribute('data-view', activeView);
+
+    var table = document.getElementById('tkr-table');
+    // The grid track list is derived from the columns actually rendered, so the
+    // header and every row stay in step without a media query per combination.
+    table.style.setProperty('--tkr-cols', cols.map(function (c) { return c.width; }).join(' '));
+
+    if (!filtered.length) {
+      table.innerHTML = '<p class="tkr-empty">No teams match that search.</p>';
+      announce(0);
+      return;
     }
 
     var shown = boardExpanded ? filtered : filtered.slice(0, COLLAPSE_AT);
@@ -178,37 +317,110 @@
       footer = '<button class="tkr-expand" id="tkr-expand">' +
         (boardExpanded ? '▴ Show top ' + COLLAPSE_AT : '▾ Show all ' + filtered.length + ' teams') + '</button>';
     }
-    document.getElementById('tkr-table').innerHTML = head + shown.map(rowHTML).join('') + footer;
+    table.innerHTML = headHTML(cols) + shown.map(function (e) { return rowHTML(e, cols); }).join('') + footer;
     var btn = document.getElementById('tkr-expand');
     if (btn) btn.addEventListener('click', function () { boardExpanded = !boardExpanded; renderGrid(); });
     paintHeat();
+    announce(shown.length);
   }
 
-  // ── Ratings Table Filter Bar (client-side) ──
+  // The row count is the live region, not the table: announcing 130 re-rendered
+  // rows on every keystroke would be unusable.
+  function announce(shown) {
+    var el = document.getElementById('tkr-table-status');
+    if (!el) return;
+    el.textContent = shown
+      ? 'Showing ' + shown + ' of ' + ENTRIES.length + ' teams.'
+      : 'No teams match the current filter and search.';
+  }
+
+  // ── Filter bar: search, column preset, conference pills (all client-side) ──
   function renderFilters() {
     var container = document.getElementById('tkr-filters');
     if (!container) return;
     var pills = ['All', 'Power 4', 'Big Ten', 'SEC', 'Big 12', 'ACC'];
-    container.innerHTML = pills.map(function (p) {
-      var activeClass = p === activeFilter ? 'active' : 'inactive';
-      return '<button class="tkr-filter-pill ' + activeClass + '" data-filter="' + p + '">' + p + '</button>';
+    var views = Object.keys(VIEWS).map(function (k) {
+      return '<option value="' + k + '"' + (k === activeView ? ' selected' : '') + '>' +
+        esc(VIEWS[k].label) + '</option>';
     }).join('');
-    
+
+    container.innerHTML =
+      '<div class="tkr-filter-tools">' +
+        '<label class="sr-only" for="tkr-search">Search teams</label>' +
+        '<input type="search" id="tkr-search" class="tkr-search" placeholder="Search teams…" ' +
+          'autocomplete="off" value="' + esc(searchQuery) + '">' +
+        '<label class="sr-only" for="tkr-view">Columns shown</label>' +
+        '<select id="tkr-view" class="tkr-view">' + views + '</select>' +
+      '</div>' +
+      '<div class="tkr-filter-pills">' + pills.map(function (p) {
+        var on = p === activeFilter;
+        return '<button type="button" class="tkr-filter-pill ' + (on ? 'active' : 'inactive') + '" ' +
+          'aria-pressed="' + on + '" data-filter="' + esc(p) + '">' + esc(p) + '</button>';
+      }).join('') + '</div>';
+
+    var search = document.getElementById('tkr-search');
+    search.addEventListener('input', function () {
+      searchQuery = search.value;
+      boardExpanded = false;
+      renderGrid();
+      syncUrl();
+    });
+
+    document.getElementById('tkr-view').addEventListener('change', function (ev) {
+      activeView = VIEWS[ev.target.value] ? ev.target.value : 'all';
+      renderGrid();
+      syncUrl();
+    });
+
     var buttons = container.querySelectorAll('.tkr-filter-pill');
     for (var i = 0; i < buttons.length; i++) {
       (function (btn) {
         btn.addEventListener('click', function () {
-          var nextFilter = btn.getAttribute('data-filter');
-          if (nextFilter === activeFilter) {
-            activeFilter = 'All'; // click active resets to All
-          } else {
-            activeFilter = nextFilter;
-          }
+          var next = btn.getAttribute('data-filter');
+          // Clicking the active pill resets to All.
+          activeFilter = next === activeFilter ? 'All' : next;
+          boardExpanded = false;
           renderFilters();
           renderGrid();
+          syncUrl();
         });
       })(buttons[i]);
     }
+  }
+
+  // Re-render on resize so the "all" view can shed and regain columns. Debounced
+  // because the render rebuilds every row.
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      if (ENTRIES.length) renderGrid();
+    }, 150);
+  });
+
+  // ── Shareable URL state ─────────────────────────────────────────────────────
+  // replaceState, not pushState: these are view controls, and a Back button that
+  // walks through every keystroke is worse than useless.
+  function syncUrl() {
+    if (!window.history || !history.replaceState) return;
+    var params = new URLSearchParams(window.location.search);
+    function put(key, value, empty) {
+      if (value && value !== empty) params.set(key, value); else params.delete(key);
+    }
+    put('conf', activeFilter, 'All');
+    put('view', activeView, 'all');
+    put('q', searchQuery.trim(), '');
+    var qs = params.toString();
+    history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+  }
+
+  function readUrlState() {
+    var params = new URLSearchParams(window.location.search);
+    var conf = params.get('conf');
+    if (conf) activeFilter = conf;
+    var view = params.get('view');
+    if (view && VIEWS[view]) activeView = view;
+    searchQuery = params.get('q') || '';
   }
 
   // ── Auto-open team detail via URL parameter ──
@@ -257,11 +469,117 @@
 
   function set(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; }
 
+  // ── "What changed this week?" ───────────────────────────────────────────────
+  // Built entirely from the rankings payload the page already loaded:
+  // rank_change for movement, elo_history for the rating swing, and the cached
+  // Monte Carlo columns for where the playoff picture stands.
+  //
+  // Week-over-week *odds movement* is deliberately missing. The simulation is
+  // cached per (season, week) and nothing serves two weeks at once, so the
+  // playoff line reports a standing and is labelled as one rather than implying
+  // a delta it cannot compute.
+  function eloSwing(e) {
+    var h = (e.elo_history || []).filter(function (x) { return typeof x === 'number'; });
+    return h.length < 2 ? null : h[h.length - 1] - h[h.length - 2];
+  }
+
+  function changedItem(e, value, cls) {
+    return '<li class="tkr-changed-item">' +
+      teamLink(e.team_name, '<span class="tkr-changed-team">' + esc(abbrOf(e)) + '</span>', e.team_id) +
+      '<span class="tkr-changed-val ' + cls + '">' + value + '</span></li>';
+  }
+
+  function changedCol(title, note, items) {
+    return '<div class="tkr-changed-col">' +
+      '<h3 class="tkr-changed-h">' + esc(title) + '</h3>' +
+      (items.length ? '<ul class="tkr-changed-list">' + items.join('') + '</ul>'
+                    : '<p class="tkr-changed-none">Nothing yet.</p>') +
+      (note ? '<p class="tkr-changed-note">' + esc(note) + '</p>' : '') +
+      '</div>';
+  }
+
+  function renderWhatChanged() {
+    var card = document.getElementById('tkr-changed');
+    if (!card) return;
+
+    var moved = ENTRIES.filter(function (e) {
+      return typeof e.rank_change === 'number' && e.rank_change !== 0;
+    });
+    // Week 0 is the preseason snapshot: every rank_change is null because there
+    // is no previous week to diff against, so the card has nothing to say.
+    if (!CURRENT_WEEK || !moved.length) { card.classList.add('hidden'); return; }
+
+    var byRise = moved.slice().sort(function (a, b) { return b.rank_change - a.rank_change; });
+    var risers = byRise.filter(function (e) { return e.rank_change > 0; }).slice(0, 3);
+    var fallers = byRise.filter(function (e) { return e.rank_change < 0; }).slice(-3).reverse();
+
+    var swings = ENTRIES.map(function (e) { return { e: e, d: eloSwing(e) }; })
+      .filter(function (s) { return s.d != null; })
+      .sort(function (a, b) { return Math.abs(b.d) - Math.abs(a.d); })
+      .slice(0, 3);
+
+    var odds = ENTRIES.filter(function (e) { return e.bid_pct != null; })
+      .sort(function (a, b) { return b.bid_pct - a.bid_pct; })
+      .slice(0, 3);
+
+    var cols = [
+      changedCol('Biggest risers', '', risers.map(function (e) {
+        return changedItem(e, deltaText(e.rank_change), 'trend-pos');
+      })),
+      changedCol('Biggest fallers', '', fallers.map(function (e) {
+        return changedItem(e, deltaText(e.rank_change), 'trend-neg');
+      })),
+      changedCol('Largest Elo swings', 'Change since last week’s rating.', swings.map(function (s) {
+        var sign = s.d > 0 ? '+' : '';
+        return changedItem(s.e, sign + Math.round(s.d), s.d >= 0 ? 'trend-pos' : 'trend-neg');
+      })),
+      changedCol('Best playoff odds', 'Current standing, not a weekly change.', odds.map(function (e) {
+        return changedItem(e, fmtPct(e.bid_pct), '');
+      })),
+    ];
+
+    card.classList.remove('hidden');
+    card.innerHTML =
+      '<div class="tkr-changed-head">' +
+        '<h2 class="tkr-changed-title">What changed this week</h2>' +
+        '<span class="tkr-changed-meta">Week ' + CURRENT_WEEK + '</span>' +
+      '</div>' +
+      '<div class="tkr-changed-grid">' + cols.join('') + '</div>';
+  }
+
   // ── Header week/season ──
+  // Rendered in the visitor's own timezone. A UTC stamp on a page about
+  // Saturday kickoffs invites the wrong reading of "updated today", and
+  // Intl does the conversion without pulling in date-utils.js for one line.
+  function fmtStamp(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    try {
+      return new Intl.DateTimeFormat(undefined, {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+        timeZoneName: 'short',
+      }).format(d);
+    } catch (e) {
+      return d.toLocaleString();
+    }
+  }
+
   function renderHeader(data) {
     var wk = document.getElementById('tkr-week');
     if (wk) wk.textContent = 'WK' + data.week + ' · ' + data.season;
     set('tkr-subtitle', 'Elo model · ' + data.total_teams + ' FBS teams · updated after every final · FCS games excluded from metrics');
+
+    var stamp = document.getElementById('tkr-stamp');
+    if (!stamp) return;
+    var when = fmtStamp(data.last_updated);
+    var what = data.week
+      ? 'Model updated after Week ' + data.week + ' finals'
+      : 'Preseason ratings · no games played yet';
+    stamp.innerHTML = esc(what) +
+      (when ? ' · <time datetime="' + esc(data.last_updated) + '">' + esc(when) + '</time>' : '') +
+      ' · <a href="elo-formula.html">how it works</a>';
+    stamp.classList.remove('hidden');
   }
 
   // ── Detail view ──
@@ -1127,6 +1445,10 @@
     renderHeader(data);
     renderTape();
     renderRibbon();
+    renderWhatChanged();
+    // Read ?conf / ?view / ?q before the first paint so a shared link opens on
+    // the view it was shared from rather than flashing the default one.
+    readUrlState();
     renderFilters();
     renderGrid();
     checkUrlParams();

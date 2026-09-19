@@ -12,6 +12,7 @@ Tests cover:
 """
 
 import sys
+from datetime import datetime
 
 import pytest
 from factories import (
@@ -606,3 +607,84 @@ class TestGetActiveSeason:
         data = response.json()
         assert data["year"] == 2025
         assert data["current_week"] == 5
+
+
+@pytest.mark.integration
+class TestRankingsLastUpdated:
+    """Tests for the `last_updated` freshness stamp on GET /api/rankings.
+
+    The homepage prints this next to "Model updated after Week N finals", so it
+    has to be when the snapshot rows were actually written. /api/stats reports
+    ``datetime.utcnow()`` at request time instead, which always reads "just now"
+    and tells a visitor nothing - the whole reason this field exists.
+    """
+
+    def test_last_updated_is_the_newest_snapshot_row(
+        self, test_client: TestClient, test_db: Session
+    ):
+        """last_updated is max(created_at) over the week being shown."""
+        # Arrange
+        configure_factories(test_db)
+        SeasonFactory(year=2024, is_active=True, current_week=5)
+
+        older = datetime(2024, 10, 1, 12, 0, 0)
+        newest = datetime(2024, 10, 1, 12, 30, 0)
+        for name, elo, created in [
+            ("Alabama", 1850.0, older),
+            ("Georgia", 1840.0, newest),
+        ]:
+            team = TeamFactory(name=name, elo_rating=elo)
+            RankingHistoryFactory(
+                team=team, week=5, season=2024, elo_rating=elo, created_at=created
+            )
+        test_db.commit()
+
+        # Act
+        response = test_client.get("/api/rankings")
+
+        # Assert
+        assert response.status_code == 200
+        stamp = response.json()["last_updated"]
+        assert stamp is not None
+        parsed = datetime.fromisoformat(stamp)
+        # Stored naive UTC, served tagged, so a browser can localise it.
+        assert parsed.tzinfo is not None
+        assert parsed.replace(tzinfo=None) == newest
+
+    def test_last_updated_follows_the_requested_week(
+        self, test_client: TestClient, test_db: Session
+    ):
+        """Asking for an older week gets that week's stamp, not the newest one."""
+        # Arrange
+        configure_factories(test_db)
+        SeasonFactory(year=2024, is_active=True, current_week=6)
+        team = TeamFactory(name="Alabama", elo_rating=1850.0)
+        week5 = datetime(2024, 10, 1, 12, 0, 0)
+        week6 = datetime(2024, 10, 8, 12, 0, 0)
+        RankingHistoryFactory(team=team, week=5, season=2024, created_at=week5)
+        RankingHistoryFactory(team=team, week=6, season=2024, created_at=week6)
+        test_db.commit()
+
+        # Act
+        response = test_client.get("/api/rankings?week=5")
+
+        # Assert
+        assert response.status_code == 200
+        parsed = datetime.fromisoformat(response.json()["last_updated"])
+        assert parsed.replace(tzinfo=None) == week5
+
+    def test_last_updated_is_null_without_a_snapshot(
+        self, test_client: TestClient, test_db: Session
+    ):
+        """A week with no history rows reports no stamp rather than inventing one."""
+        # Arrange
+        configure_factories(test_db)
+        SeasonFactory(year=2024, is_active=True, current_week=3)
+        test_db.commit()
+
+        # Act
+        response = test_client.get("/api/rankings")
+
+        # Assert
+        assert response.status_code == 200
+        assert response.json()["last_updated"] is None

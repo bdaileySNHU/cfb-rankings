@@ -62,3 +62,28 @@ a:hover {
 .hidden {
   display: none !important;
 }
+
+/* ── Screen-reader-only ──────────────────────────────────────────────────────
+   For text that must reach assistive tech without appearing on screen: the
+   rankings-table status line, and labels on controls whose meaning is carried
+   visually by an icon. Clip rather than display:none, which would remove it
+   from the accessibility tree too. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Keyboard focus ─────────────────────────────────────────────────────────
+   :focus-visible only, so a mouse click does not leave a ring behind. Declared
+   here rather than per component: several components had already reset the UA
+   outline (see .teams-search), which left Tab with no visible position at all. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
