@@ -94,7 +94,7 @@ def import_conference_championships(
             # Get scores to check if game has been played
             home_score = game_data.get("homePoints", 0) or 0
             away_score = game_data.get("awayPoints", 0) or 0
-            is_future_game = home_score == 0 and away_score == 0
+            is_future_game = (home_score == 0 and away_score == 0) or game_data.get("completed") is False
 
             # Update game_type if not set
             if not existing_game.game_type:
@@ -155,7 +155,7 @@ def import_conference_championships(
         away_score = game_data.get("awayPoints", 0) or 0
 
         # Check if game is completed (has actual scores)
-        is_future_game = home_score == 0 and away_score == 0
+        is_future_game = (home_score == 0 and away_score == 0) or game_data.get("completed") is False
 
         # EPIC-021: Fetch quarter scores if game is completed
         line_scores = None
@@ -334,7 +334,7 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
             # Get scores to check if game has been played
             home_score = game_data.get("homePoints", 0) or 0
             away_score = game_data.get("awayPoints", 0) or 0
-            is_future_game = home_score == 0 and away_score == 0
+            is_future_game = (home_score == 0 and away_score == 0) or game_data.get("completed") is False
 
             # Update game_type and postseason_name if not set
             if not existing_game.game_type or not existing_game.postseason_name:
@@ -397,7 +397,7 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
         away_score = game_data.get("awayPoints", 0) or 0
 
         # Check if game is completed
-        is_future_game = home_score == 0 and away_score == 0
+        is_future_game = (home_score == 0 and away_score == 0) or game_data.get("completed") is False
 
         # EPIC-021: Fetch quarter scores if game is completed
         line_scores = None
@@ -582,7 +582,7 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
             # Get scores to check if game has been played
             home_score = game_data.get("homePoints", 0) or 0
             away_score = game_data.get("awayPoints", 0) or 0
-            is_future_game = home_score == 0 and away_score == 0
+            is_future_game = (home_score == 0 and away_score == 0) or game_data.get("completed") is False
 
             # Update game_type and postseason_name if not set
             if not existing_game.game_type or existing_game.game_type != "playoff":
@@ -645,7 +645,7 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
         away_score = game_data.get("awayPoints", 0) or 0
 
         # Check if game is completed
-        is_future_game = home_score == 0 and away_score == 0
+        is_future_game = (home_score == 0 and away_score == 0) or game_data.get("completed") is False
 
         # EPIC-021: Fetch quarter scores if game is completed
         line_scores = None

@@ -11,8 +11,14 @@
 #   7. Restart the API service
 #   8. Send Slack / email notification with result summary
 #
-# Cron entry (run as the user that owns the deployment, 6am daily):
-#   0 6 * * * /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+# Cron entries (www-data's crontab; times Eastern — see SEASON-RUNBOOK.md §3):
+#   0 6 * * *       daily sweep, catches late Pacific/Hawaii finals
+#   0 16,20 * * 6   after the noon and 3:30 Saturday windows
+#   45 23 * * *     after any night games (Tue/Wed MACtion, Thu/Fri/Sat)
+# each as:
+#   flock -n /tmp/cfb-weekly-update.lock /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+# Games still in progress are held back (CFBD completed=false) and picked up
+# by the next run, so a slot that lands mid-overtime loses nothing.
 #
 # Re-running is safe: the import updates games in place, the ELO step only picks
 # up is_processed=0, and save_weekly_rankings() rewrites the week's snapshot.
