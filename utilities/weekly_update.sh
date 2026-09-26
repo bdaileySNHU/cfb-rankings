@@ -11,12 +11,15 @@
 #   7. Restart the API service
 #   8. Send Slack / email notification with result summary
 #
-# Cron entries (www-data's crontab; times Eastern — see SEASON-RUNBOOK.md §3):
-#   0 6 * * *       daily sweep, catches late Pacific/Hawaii finals
-#   0 16,20 * * 6   after the noon and 3:30 Saturday windows
-#   45 23 * * *     after any night games (Tue/Wed MACtion, Thu/Fri/Sat)
+# Cron entries (www-data's crontab ONLY; server clock is UTC, times chosen to
+# be right in both EDT and EST — see SEASON-RUNBOOK.md §3):
+#   0 10 * * *   daily sweep, catches late Pacific/Hawaii finals
+#   0 21 * * 6   after the Saturday noon window
+#   0 1 * * 0    after the Saturday 3:30 window
+#   45 4 * * *   after any night games
 # each as:
-#   flock -n /tmp/cfb-weekly-update.lock /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+#   flock -n /tmp/cfb-weekly-update.lock bash /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+# weekly.log must be owned by www-data, or cron silently never runs the job.
 # Games still in progress are held back (CFBD completed=false) and picked up
 # by the next run, so a slot that lands mid-overtime loses nothing.
 #

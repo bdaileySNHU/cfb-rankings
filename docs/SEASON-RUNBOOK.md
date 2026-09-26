@@ -209,28 +209,34 @@ If predictions return an empty list, confirm games are in the DB and the season 
 
 ## 3. Weekly Update (daily during the season)
 
-### Automated cron (daily 6 AM, plus after each game-day window)
+### Automated cron (daily, plus after each game-day window)
 
-**Cron is the one scheduler.** Install under www-data's crontab
-(`sudo crontab -u www-data -e`):
+**Cron is the one scheduler, and it lives only in www-data's crontab**
+(`sudo crontab -u www-data -e`). The server clock is **UTC**:
 
 ```
-0 6 * * *      flock -n /tmp/cfb-weekly-update.lock /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
-0 16,20 * * 6  flock -n /tmp/cfb-weekly-update.lock /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
-45 23 * * *    flock -n /tmp/cfb-weekly-update.lock /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+0 10 * * *   flock -n /tmp/cfb-weekly-update.lock bash /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+0 21 * * 6   flock -n /tmp/cfb-weekly-update.lock bash /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+0 1 * * 0    flock -n /tmp/cfb-weekly-update.lock bash /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+45 4 * * *   flock -n /tmp/cfb-weekly-update.lock bash /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
 ```
 
-| Slot | Catches |
-|---|---|
-| Sat 4:00 PM | noon kickoffs |
-| Sat 8:00 PM | 3:30 kickoffs |
-| Nightly 11:45 PM | any night games — Thu/Fri/Sat primetime, Tue/Wed MACtion, Labor Day, rare Sundays (no-op otherwise) |
-| Daily 6:00 AM | late Pacific/Hawaii finals, stragglers, stat corrections |
+| UTC | Eastern (EDT) | Eastern (EST, after Nov 1) | Catches |
+|---|---|---|---|
+| `0 10` daily | 6 AM | 5 AM | late Pacific/Hawaii finals, stragglers |
+| `0 21` Sat | 5 PM | 4 PM | noon kickoffs |
+| `0 1` Sun | 9 PM Sat | 8 PM Sat | 3:30 kickoffs |
+| `45 4` daily | 12:45 AM | 11:45 PM | any night games: Thu/Fri/Sat primetime, weeknight MACtion, Labor Day (no-op otherwise) |
 
-Times are **Eastern**. Cron uses **server local time** — check with
-`timedatectl`. On a UTC box (EDT, +4h) the schedule fields become
-`0 10 * * *`, `0 20 * * 6`, `0 0 * * 0`, `45 3 * * *` — the Saturday 8 PM slot
-crosses midnight UTC, so its day-of-week moves to Sunday.
+The times are chosen to be right on both sides of the daylight-saving switch —
+Debian cron has no `CRON_TZ`, so nothing needs editing in November.
+
+**`weekly.log` must be owned by www-data.** If the shell cannot open the file
+the `>>` names, cron never runs the command, and nothing is logged to say so.
+From 2026-09-21 to 09-26 every scheduled run was lost this way (the file was
+owned by `bdailey`). Check with `ls -l /var/log/cfb-rankings/weekly.log`; fix
+with `sudo chown www-data:www-data /var/log/cfb-rankings/weekly.log`.
+logrotate's `create` copies the current owner, so the fix survives rotation.
 
 A slot that lands while a game is still on is fine: the importer skips any game
 CFBD reports as `completed: false`, even if it has points, and the next run
@@ -262,30 +268,33 @@ The script:
 
 `deploy/cfb-weekly-update.{service,timer}` run `scripts/weekly_update.py`, an
 earlier and less capable implementation: no retries, no movement report, no
-notifications. For a period both it and cron ran weekly, each doing overlapping
-import and snapshot work. The timer is now disabled:
+notifications, and none of the importer guards added since. This section said
+the timer was disabled well before it was: it was still firing every Sunday
+until 2026-09-26, likely re-enabled by the one-off EPIC-004 deploy script
+(since deleted). Check it stays off:
 
 ```bash
+systemctl list-timers --all | grep cfb     # should print nothing
 sudo systemctl disable --now cfb-weekly-update.timer
 ```
 
 The unit files are kept because `weekly_update.py` still holds the pre-flight
-checks (quota guard, week detection) and is useful to run by hand. Running it on
-a schedule alongside cron is what caused the duplication.
+checks (quota guard, week detection) and is useful to run by hand.
 
-#### Caveat: cron runs as your user, not www-data
+#### Only www-data's crontab — nobody else's
 
 The job writes to `/var/www/cfb-rankings` — including the database — as whoever
-owns the crontab. If that is not `www-data`, files gradually change owner and a
-later `sudo -u www-data git pull` fails with `unable to unlink old <file>:
-Permission denied`. Recover with:
+owns the crontab, and only www-data can read `.env` (mode 600). A copy in
+another user's crontab fails with `CFBD_API_KEY not set` and, over time, leaves
+files owned by the wrong user, so a later `sudo -u www-data git pull` fails
+with `unable to unlink old <file>: Permission denied`. Recover with:
 
 ```bash
 sudo bash deploy/fix-permissions.sh
 ```
 
-To stop it recurring, move the entry to www-data's crontab
-(`sudo crontab -u www-data -e`) so the job runs as the user that owns the files.
+Audit for strays: `crontab -l`, `sudo crontab -l` and
+`sudo crontab -u www-data -l` — only the last should mention `weekly_update.sh`.
 
 ### Run the weekly update manually (if cron fails or needs re-running)
 
