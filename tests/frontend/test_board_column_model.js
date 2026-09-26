@@ -176,7 +176,7 @@ for (const key of NEEDS_HELP) {
 // The help text reaches assistive tech, not just the hover popover.
 const head = api.headHTML(api.COLUMNS);
 const elo = api.COLUMNS.find((c) => c.key === 'elo');
-assert.ok(head.includes('aria-label="ELO: ' + elo.help.slice(0, 20)),
+assert.ok(head.includes('aria-label="RATING: ' + elo.help.slice(0, 20)),
   'header help buttons should carry their definition in aria-label');
 assert.strictEqual(
   (head.match(/<button type="button" class="th-help"/g) || []).length, NEEDS_HELP.length,
