@@ -209,19 +209,36 @@ If predictions return an empty list, confirm games are in the DB and the season 
 
 ## 3. Weekly Update (daily during the season)
 
-### Automated cron (runs at 6 AM daily)
+### Automated cron (daily 6 AM, plus after each game-day window)
 
-**Cron is the one scheduler.** Install under the crontab of the user that owns
-the deployment:
+**Cron is the one scheduler.** Install under www-data's crontab
+(`sudo crontab -u www-data -e`):
 
 ```
-0 6 * * * /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+0 6 * * *      flock -n /tmp/cfb-weekly-update.lock /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+0 16,20 * * 6  flock -n /tmp/cfb-weekly-update.lock /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
+45 23 * * *    flock -n /tmp/cfb-weekly-update.lock /var/www/cfb-rankings/utilities/weekly_update.sh >> /var/log/cfb-rankings/weekly.log 2>&1
 ```
 
-6 AM clears the late Pacific kickoffs that finish around 1–2 AM Eastern, so
-Saturday's scores are on the site by Sunday breakfast rather than Monday
-morning. The times above are **server local time** — check with `timedatectl`
-and shift to `0 10 * * *` if the box runs UTC.
+| Slot | Catches |
+|---|---|
+| Sat 4:00 PM | noon kickoffs |
+| Sat 8:00 PM | 3:30 kickoffs |
+| Nightly 11:45 PM | any night games — Thu/Fri/Sat primetime, Tue/Wed MACtion, Labor Day, rare Sundays (no-op otherwise) |
+| Daily 6:00 AM | late Pacific/Hawaii finals, stragglers, stat corrections |
+
+Times are **Eastern**. Cron uses **server local time** — check with
+`timedatectl`. On a UTC box (EDT, +4h) the schedule fields become
+`0 10 * * *`, `0 20 * * 6`, `0 0 * * 0`, `45 3 * * *` — the Saturday 8 PM slot
+crosses midnight UTC, so its day-of-week moves to Sunday.
+
+A slot that lands while a game is still on is fine: the importer skips any game
+CFBD reports as `completed: false`, even if it has points, and the next run
+picks it up final. That guard is what makes mid-day runs safe — before it,
+live scores were banked into ELO permanently. `flock -n` drops a run that would
+overlap one still going.
+
+Each run restarts `cfb-rankings` (a few seconds of 502s at `TimeoutStopSec=5`).
 
 Daily is safe and cheap. The import updates games in place rather than
 duplicating them, the ELO step only picks up `is_processed = 0`, and

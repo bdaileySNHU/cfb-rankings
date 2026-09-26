@@ -85,8 +85,14 @@ def import_games(
 
             game_desc = f"{away_team_name} @ {home_team_name}"
 
-            # EPIC-008: Detect future games (no scores yet) and import them
-            is_future_game = home_score is None or away_score is None
+            # EPIC-008: Detect future games (no scores yet) and import them.
+            # CFBD fills homePoints live while a game is on, so points alone do
+            # not mean final: a mid-Saturday run would bank a halftime score into
+            # ELO for good. `completed` is absent on some older payloads, hence
+            # `is False` rather than `not`.
+            is_future_game = (
+                home_score is None or away_score is None or game_data.get("completed") is False
+            )
 
             if is_future_game:
                 # Future game - use placeholder scores and don't process for ELO

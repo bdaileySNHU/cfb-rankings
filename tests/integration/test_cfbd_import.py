@@ -302,6 +302,37 @@ class TestGameImportWithMock:
         assert import_stats["imported"] == 0
         assert import_stats["future_imported"] == 1
 
+    def test_import_games_holds_in_progress_games(self, test_db: Session, mock_cfbd_client):
+        """A live score (completed=False) must not be processed into ELO."""
+        from import_real_data import import_games, import_teams
+
+        mock_cfbd_client.get_games.return_value = [
+            {
+                "homeTeam": "Alabama",
+                "awayTeam": "Georgia",
+                "homePoints": 14,
+                "awayPoints": 7,
+                "completed": False,
+                "week": 1,
+                "neutralSite": False,
+            }
+        ]
+        team_objects = import_teams(mock_cfbd_client, test_db, year=2025)
+
+        import_stats = import_games(mock_cfbd_client, test_db, team_objects, year=2025, max_week=1)
+
+        assert import_stats["imported"] == 0
+        game = test_db.query(Game).one()
+        assert (game.home_score, game.away_score, game.is_processed) == (0, 0, False)
+
+        # Next run the game is final: it picks up the real score and gets processed.
+        mock_cfbd_client.get_games.return_value[0].update(
+            homePoints=31, awayPoints=24, completed=True
+        )
+        import_games(mock_cfbd_client, test_db, team_objects, year=2025, max_week=1)
+        test_db.refresh(game)
+        assert (game.home_score, game.away_score, game.is_processed) == (31, 24, True)
+
     def test_import_games_skips_fcs_opponents(self, test_db: Session, mock_cfbd_client):
         """Test that import creates FCS games with excluded_from_rankings flag"""
         # Arrange
