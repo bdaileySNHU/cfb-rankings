@@ -3,7 +3,9 @@
 from src.core.ranking_service import RankingService
 from src.importers.common import CONFERENCE_MAP
 from src.integrations.cfbd_client import CFBDClient
-from src.models.models import ConferenceType, Team
+from sqlalchemy import or_
+
+from src.models.models import ConferenceType, Game, Team, has_been_played
 
 
 def conference_tier(team_name: str, conference_name: str) -> ConferenceType:
@@ -70,6 +72,7 @@ def import_teams(cfbd: CFBDClient, db, year: int):
     ranking_service = RankingService(db)
     teams_created = 0
     teams_reused = 0
+    promoted = []
 
     for team_data in teams_data:
         team_name = team_data["school"]
@@ -103,6 +106,17 @@ def import_teams(cfbd: CFBDClient, db, year: int):
             existing_team.transfer_portal_rank = transfer_portal_rank
             existing_team.transfer_portal_points = transfer_portal_points
             existing_team.transfer_count = transfer_portal_count
+
+            # A school moving up from FCS is already here as the placeholder the
+            # game importer creates for FCS opponents: is_fcs set, rating 0.
+            # Reused as-is, it stays out of the rankings and every game it plays
+            # is excluded — North Dakota State and Sacramento State in 2026.
+            # No season passed: its previous-season history is that FCS 0.
+            if existing_team.is_fcs:
+                print(f"  Promoted to FBS: {team_name}")
+                existing_team.is_fcs = False
+                ranking_service.initialize_team_rating(existing_team)
+                promoted.append(existing_team)
 
             team_objects[team_name] = existing_team
             teams_reused += 1
@@ -140,6 +154,29 @@ def import_teams(cfbd: CFBDClient, db, year: int):
                 f"  Added: {team_name} - {conference_name} ({tier.value}) - Recruiting: #{recruiting_rank}, Returning: {returning_prod*100:.0f}%, Portal: #{transfer_portal_rank}"
             )
 
+    db.commit()
+
+    # Games already played this season against FBS opponents were imported as
+    # FCS games: excluded, and marked processed without touching ELO. Reopen
+    # them so the next ELO pass counts them. Played out of date order, but only
+    # the promoted teams and their opponents are affected.
+    for team in promoted:
+        played = (
+            db.query(Game)
+            .filter(
+                Game.season == year,
+                Game.excluded_from_rankings == True,  # noqa: E712
+                or_(Game.home_team_id == team.id, Game.away_team_id == team.id),
+                has_been_played(),
+            )
+            .all()
+        )
+        for game in played:
+            opponent_id = game.away_team_id if game.home_team_id == team.id else game.home_team_id
+            if not db.get(Team, opponent_id).is_fcs:
+                game.excluded_from_rankings = False
+                game.is_processed = False
+                print(f"  Reopened for ELO: week {game.week} game {game.id}")
     db.commit()
 
     if teams_reused > 0:

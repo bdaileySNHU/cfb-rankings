@@ -153,6 +153,38 @@ class TestTeamImportWithMock:
         assert boise.conference_name == "SEC"
         assert boise.conference == ConferenceType.POWER_5
 
+    def test_reimport_promotes_fcs_placeholder_to_fbs(self, test_db: Session, mock_cfbd_client):
+        """A school moving up from FCS is rated and its FBS games reopened."""
+        from import_real_data import import_teams
+
+        # Last season: North Dakota State only existed as an FCS placeholder,
+        # and its win over Boise State was imported as an FCS game.
+        from src.importers.common import get_or_create_fcs_team
+
+        team_objects = import_teams(mock_cfbd_client, test_db, year=2026)
+        boise = team_objects["Boise State"]
+        ndsu = get_or_create_fcs_team(test_db, "North Dakota State", team_objects)
+        fcs = get_or_create_fcs_team(test_db, "Montana", team_objects)
+        vs_fbs = Game(home_team_id=ndsu.id, away_team_id=boise.id, home_score=38, away_score=32,
+                      week=2, season=2026, excluded_from_rankings=True, is_processed=True)
+        vs_fcs = Game(home_team_id=ndsu.id, away_team_id=fcs.id, home_score=30, away_score=10,
+                      week=1, season=2026, excluded_from_rankings=True, is_processed=True)
+        test_db.add_all([vs_fbs, vs_fcs])
+        test_db.commit()
+
+        # CFBD now lists it as FBS.
+        mock_cfbd_client.get_teams.return_value = list(mock_cfbd_client.get_teams(2026)) + [
+            {"school": "North Dakota State", "conference": "Mountain West"}
+        ]
+        import_teams(mock_cfbd_client, test_db, year=2026)
+
+        test_db.refresh(ndsu)
+        assert ndsu.is_fcs is False
+        assert ndsu.elo_rating > 1000
+        assert (vs_fbs.excluded_from_rankings, vs_fbs.is_processed) == (False, False)
+        # A game against a team still in FCS stays out.
+        assert (vs_fcs.excluded_from_rankings, vs_fcs.is_processed) == (True, True)
+
     def test_import_teams_calculates_preseason_ratings(self, test_db: Session, mock_cfbd_client):
         """Test that preseason ratings are calculated during import"""
         # Arrange
