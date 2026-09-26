@@ -104,6 +104,11 @@ Examples:
         help=f"Maximum week to import (default: all available, currently {max_week_available})",
     )
     parser.add_argument(
+        "--recent-weeks",
+        type=int,
+        help="Only re-import the last N weeks up to max week (default: all weeks)",
+    )
+    parser.add_argument(
         "--validate-only",
         action="store_true",
         help="Validate import without making changes (dry-run mode)",
@@ -119,6 +124,7 @@ Examples:
     # Use overrides or detected values
     season = args.season or current_season
     max_week = args.max_week or max_week_available
+    min_week = max(1, max_week - args.recent_weeks + 1) if args.recent_weeks else 1
 
     # Validate API connection
     if not validate_api_connection(cfbd, season):
@@ -183,13 +189,14 @@ Examples:
         return
 
     # Import games (using detected/overridden max_week)
-    print(f"\nImporting games through Week {max_week}...")
+    print(f"\nImporting games for Weeks {min_week}-{max_week}...")
     import_stats = import_games(
         cfbd,
         db,
         team_objects,
         year=season,
         max_week=max_week,
+        min_week=min_week,
         validate_only=args.validate_only,
         strict=args.strict,
     )

@@ -22,6 +22,7 @@ def import_games(
     team_objects: dict,
     year: int,
     max_week: int = None,
+    min_week: int = 1,
     validate_only: bool = False,
     strict: bool = False,
 ):
@@ -34,6 +35,7 @@ def import_games(
         team_objects: Dictionary mapping team names to Team objects
         year: Season year
         max_week: Maximum week to import
+        min_week: First week to import (cron passes a recent window; settled weeks cost CFBD calls for nothing)
         validate_only: If True, don't actually import (dry-run)
         strict: If True, fail on validation warnings
 
@@ -47,7 +49,7 @@ def import_games(
     ranking_service = RankingService(db)
 
     # Determine which weeks to import
-    weeks = range(1, (max_week or 15) + 1)
+    weeks = range(min_week, (max_week or 15) + 1)
 
     # Track statistics
     total_imported = 0
@@ -71,7 +73,7 @@ def import_games(
             continue
 
         # Get week statistics for validation
-        week_stats = get_week_statistics(cfbd, year, week)
+        week_stats = get_week_statistics(cfbd, year, week, games=games_data)
         week_imported = 0
         week_skipped = 0
         week_updated = 0  # EPIC-008 Story 002: Track updated games per week

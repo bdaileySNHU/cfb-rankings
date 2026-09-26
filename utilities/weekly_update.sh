@@ -125,7 +125,7 @@ while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
     ATTEMPT=$((ATTEMPT + 1))
     echo "  Attempt $ATTEMPT / $MAX_ATTEMPTS..."
 
-    if "$PYTHON" import_real_data.py --season "$SEASON" 2>&1; then
+    if "$PYTHON" import_real_data.py --season "$SEASON" --recent-weeks 2 2>&1; then
         IMPORT_SUCCESS=true
         echo "✓ Schedule/results import complete (attempt $ATTEMPT)"
         break

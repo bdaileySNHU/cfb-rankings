@@ -29,7 +29,7 @@ def validate_api_connection(cfbd: CFBDClient, year: int) -> bool:
         return False
 
 
-def get_week_statistics(cfbd: CFBDClient, year: int, week: int) -> dict:
+def get_week_statistics(cfbd: CFBDClient, year: int, week: int, games=None) -> dict:
     """
     Get statistics about games available for a given week.
 
@@ -37,11 +37,13 @@ def get_week_statistics(cfbd: CFBDClient, year: int, week: int) -> dict:
         cfbd: CFBD client instance
         year: Season year
         week: Week number
+        games: The week's games if the caller already fetched them (saves a CFBD call)
 
     Returns:
         dict: Statistics including total games, completed games
     """
-    games = cfbd.get_games(year, week=week)
+    if games is None:
+        games = cfbd.get_games(year, week=week)
     if not games:
         return {"total": 0, "completed": 0, "scheduled": 0}
 

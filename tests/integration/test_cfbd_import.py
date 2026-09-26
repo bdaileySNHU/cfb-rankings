@@ -333,6 +333,20 @@ class TestGameImportWithMock:
         test_db.refresh(game)
         assert (game.home_score, game.away_score, game.is_processed) == (31, 24, True)
 
+    def test_import_games_fetches_only_the_week_window_once(
+        self, test_db: Session, mock_cfbd_client
+    ):
+        """Cron imports a recent window; each week costs one CFBD call, not two."""
+        from import_real_data import import_games, import_teams
+
+        team_objects = import_teams(mock_cfbd_client, test_db, year=2025)
+        mock_cfbd_client.get_games.reset_mock()
+
+        import_games(mock_cfbd_client, test_db, team_objects, year=2025, min_week=3, max_week=4)
+
+        weeks = [c.kwargs["week"] for c in mock_cfbd_client.get_games.call_args_list]
+        assert weeks == [3, 4]
+
     def test_import_games_skips_fcs_opponents(self, test_db: Session, mock_cfbd_client):
         """Test that import creates FCS games with excluded_from_rankings flag"""
         # Arrange
