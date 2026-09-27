@@ -66,7 +66,13 @@ EFFICIENCY_WEIGHT = float(os.getenv("EFFICIENCY_WEIGHT", "0.25"))
 
 # Adjusted PPA is unstable on a handful of games, and CFBD's opponent adjustment
 # has little schedule network to work with early. Below this week, pure ELO.
-EFFICIENCY_MIN_WEEK = 4
+EFFICIENCY_MIN_WEEK = 3
+
+# Phase-in: share of EFFICIENCY_WEIGHT applied in the first blend weeks, full
+# weight after (10% -> 20% -> 25% at the default 0.25). Switching straight to
+# full weight moved teams that had not played (Alabama -32 on a 2026 bye).
+# Backtested 2022-25: every ramp within noise of the step; smoothness decides.
+EFFICIENCY_RAMP = {3: 0.4, 4: 0.8}
 
 # Standardizing needs enough teams for the mean/stdev to mean anything.
 EFFICIENCY_MIN_TEAMS = 20
@@ -151,14 +157,17 @@ def blend_rating(
     Args:
         elo: Pure ELO rating
         eff: Efficiency rating on the ELO scale, or None if unavailable
-        weight: Efficiency share; defaults to EFFICIENCY_WEIGHT
+        weight: Efficiency share; defaults to EFFICIENCY_WEIGHT, phased in
+            over the first weeks per EFFICIENCY_RAMP. An explicit weight is
+            applied as-is.
         week: Season week, or None to skip the early-season gate
         min_week: Earliest week the blend applies; defaults to EFFICIENCY_MIN_WEEK
 
     Returns:
         Blended rating, or ``elo`` unchanged whenever the blend does not apply
     """
-    weight = EFFICIENCY_WEIGHT if weight is None else weight
+    if weight is None:
+        weight = EFFICIENCY_WEIGHT * (EFFICIENCY_RAMP.get(week, 1.0) if week is not None else 1.0)
     min_week = EFFICIENCY_MIN_WEEK if min_week is None else min_week
 
     if weight <= 0 or eff is None:

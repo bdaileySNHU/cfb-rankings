@@ -170,7 +170,7 @@
       help: 'Elo at heart: every team starts a season near 1500 and trades points after each game — ' +
         'beating a stronger opponent wins more of them. Results move ratings fastest early: ' +
         'the K-factor is 64 in weeks 1–4, 48 in weeks 5–8 and 32 from week 9 on. ' +
-        'From week 4 it is blended 75/25 with opponent-adjusted efficiency.',
+        'From week 3 opponent-adjusted efficiency is phased in, reaching a quarter of the rating by week 5.',
       cell: function (e) { return '<div class="c-elo ta-r">' + fmtElo(e.elo_rating) + '</div>'; },
     },
     {
