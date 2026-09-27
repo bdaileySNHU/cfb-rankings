@@ -1096,9 +1096,11 @@ class RankingService:
         # EPIC-045: the snapshot stores the blended rating, so rankings and their
         # history reflect efficiency without any read-path change. Sorting happens
         # in Python because the blend is not expressible in SQL.
+        # FCS teams are placeholder opponents at rating 0, never ranked. Left in,
+        # they pad the board to 200 rows and drag the field average down.
         scale = efficiency_scale(self.db)
         teams = sorted(
-            self.db.query(Team).all(),
+            self.db.query(Team).filter(Team.is_fcs == False).all(),  # noqa: E712
             key=lambda t: effective_rating(t, week, scale),
             reverse=True,
         )

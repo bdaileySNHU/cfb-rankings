@@ -108,3 +108,18 @@ def test_snapshot_is_idempotent_within_a_week(test_db, teams):
         RankingHistory.season == 2026, RankingHistory.week == 3
     ).all()
     assert len(rows) == len(teams)
+
+
+def test_snapshot_leaves_out_fcs_teams(test_db, teams):
+    """FCS placeholders (rating 0) are opponents, not ranked teams."""
+    fcs = Team(name="Delta", conference=ConferenceType.FCS, conference_name="FCS",
+               is_fcs=True, elo_rating=0.0)
+    test_db.add(fcs)
+    test_db.commit()
+
+    RankingService(test_db).save_weekly_rankings(season=2026, week=1)
+    test_db.commit()
+
+    recorded = _ratings_for(test_db, 2026, 1)
+    assert fcs.id not in recorded
+    assert len(recorded) == 3
