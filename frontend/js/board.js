@@ -165,16 +165,17 @@
       cell: function (e) { return '<div class="c-wl ta-r">' + e.wins + '-' + e.losses + '</div>'; },
     },
     {
-      key: 'elo', label: 'ELO', width: '78px', align: 'ta-r', group: 'id', minWidth: 0,
+      key: 'elo', label: 'RATING', width: '78px', align: 'ta-r', group: 'id', minWidth: 0,
       headStyle: 'color:var(--accent)',
-      help: 'Every team starts a season near 1500 and trades points after each game — ' +
+      help: 'Elo at heart: every team starts a season near 1500 and trades points after each game — ' +
         'beating a stronger opponent wins more of them. Results move ratings fastest early: ' +
-        'the K-factor is 64 in weeks 1–4, 48 in weeks 5–8 and 32 from week 9 on.',
+        'the K-factor is 64 in weeks 1–4, 48 in weeks 5–8 and 32 from week 9 on. ' +
+        'From week 4 it is blended 75/25 with opponent-adjusted efficiency.',
       cell: function (e) { return '<div class="c-elo ta-r">' + fmtElo(e.elo_rating) + '</div>'; },
     },
     {
       key: 'delta', label: 'Δ1W', width: '64px', align: 'ta-r', group: 'core', minWidth: 641,
-      help: 'Places gained or lost since last week’s rankings. A team can gain Elo and still ' +
+      help: 'Places gained or lost since last week’s rankings. A team can gain rating and still ' +
         'slide a spot if the teams around it gained more.',
       cell: function (e) {
         var d = e.rank_change;
@@ -235,7 +236,7 @@
     },
     {
       key: 'spark', label: '10WK', width: '84px', align: 'ta-c', group: 'trend', minWidth: 1281,
-      help: 'Elo across the last ten weeks. The line is coloured by the rating it draws, not by ' +
+      help: 'Rating across the last ten weeks. The line is coloured by the rating it draws, not by ' +
         'rank: green if the rating rose over the window, red if it fell.',
       cell: function (e) { return '<div class="ta-c">' + sparkline(e.elo_history) + '</div>'; },
     },
@@ -529,7 +530,7 @@
       changedCol('Biggest fallers', '', fallers.map(function (e) {
         return changedItem(e, deltaText(e.rank_change), 'trend-neg');
       })),
-      changedCol('Largest Elo swings', 'Change since last week’s rating.', swings.map(function (s) {
+      changedCol('Largest rating swings', 'Change since last week’s rating.', swings.map(function (s) {
         var sign = s.d > 0 ? '+' : '';
         return changedItem(s.e, sign + Math.round(s.d), s.d >= 0 ? 'trend-pos' : 'trend-neg');
       })),
@@ -568,7 +569,7 @@
   function renderHeader(data) {
     var wk = document.getElementById('tkr-week');
     if (wk) wk.textContent = 'WK' + data.week + ' · ' + data.season;
-    set('tkr-subtitle', 'Elo model · ' + data.total_teams + ' FBS teams · updated after every final · FCS games excluded from metrics');
+    set('tkr-subtitle', 'Elo + efficiency model · ' + data.total_teams + ' FBS teams · updated after every final · FCS games excluded from metrics');
 
     var stamp = document.getElementById('tkr-stamp');
     if (!stamp) return;
@@ -678,7 +679,7 @@
           '<div class="mascot">' + esc(m.mascot || '') + '</div>' +
         '</div>' +
         '<div class="elo-sidebar">' +
-          '<div class="elo-label">ELO RATING</div>' +
+          '<div class="elo-label">RATING</div>' +
           '<div class="elo-value">' + fmtElo(e.elo_rating) + '</div>' +
           '<div class="delta-row ' + trendClass(d) + '">' + deltaText(d) + ' WK</div>' +
         '</div>' +
@@ -686,7 +687,7 @@
       
       // 6 Metric Tiles (P2)
       '<div class="tkr-tiles-6">' +
-        tile('ELO', fmtElo(e.elo_rating)) +
+        tile('RATING', fmtElo(e.elo_rating)) +
         tile('OFF P/G', e.off == null ? '—' : e.off) +
         tile('DEF P/G', e.def == null ? '—' : e.def) +
         tile('SOS', e.sos == null ? '—' : e.sos.toFixed(3)) +
@@ -698,7 +699,7 @@
 
       '<div class="tkr-detail-grid">' +
         '<div>' +
-          '<div class="tkr-chartcard" style="margin-bottom:14px;"><h3>Elo history</h3>' + detailChart(e.elo_history) + '</div>' +
+          '<div class="tkr-chartcard" style="margin-bottom:14px;"><h3>Rating history</h3>' + detailChart(e.elo_history) + '</div>' +
           // CFP Path (P6)
           '<div id="tkr-path-container" class="hidden"></div>' +
           // Season Schedule (P4)

@@ -7,7 +7,7 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Stat-urday">
   <meta property="og:title" content="Stat-urday — College Football ELO Rankings">
-  <meta property="og:description" content="Live Elo ratings, win probabilities and playoff odds for every FBS team.">
+  <meta property="og:description" content="Live power ratings, win probabilities and playoff odds for every FBS team.">
   <meta property="og:url" content="https://cfb.bdailey.com/">
   <meta property="og:image" content="https://cfb.bdailey.com/images/og-default.png">
   <meta property="og:image:width" content="1200">
@@ -16,9 +16,9 @@
   <meta property="og:image:alt" content="Stat-urday — college football Elo rankings">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Stat-urday — College Football ELO Rankings">
-  <meta name="twitter:description" content="Live Elo ratings, win probabilities and playoff odds for every FBS team.">
+  <meta name="twitter:description" content="Live power ratings, win probabilities and playoff odds for every FBS team.">
   <meta name="twitter:image" content="https://cfb.bdailey.com/images/og-default.png">
-  <meta name="description" content="Live Elo ratings, win probabilities and playoff odds for every FBS team. Rankings update after every final, with strength of schedule and projected wins.">
+  <meta name="description" content="Live power ratings, win probabilities and playoff odds for every FBS team. Rankings update after every final, with strength of schedule and projected wins.">
   <link rel="canonical" href="https://cfb.bdailey.com/">
   <!-- Search Console ownership. Inert until the real token from
        Search Console > Settings > Ownership verification replaces the
@@ -39,8 +39,8 @@
         <h1 class="tkr-title">Power Ratings</h1>
         <!-- The lede is static. #tkr-subtitle below it is overwritten at runtime
              by board.js renderHeader(), so it cannot carry this copy. -->
-        <p class="tkr-lede">Live Elo ratings, win probabilities and playoff odds for every FBS team.</p>
-        <p class="tkr-subtitle" id="tkr-subtitle">Elo model · updated after every final · FCS games excluded from metrics</p>
+        <p class="tkr-lede">Live power ratings, win probabilities and playoff odds for every FBS team.</p>
+        <p class="tkr-subtitle" id="tkr-subtitle">Elo + efficiency model · updated after every final · FCS games excluded from metrics</p>
         <!-- Freshness stamp; filled by board.js renderHeader() from the
              last_updated field on /api/rankings. -->
         <p class="tkr-stamp hidden" id="tkr-stamp"></p>
@@ -51,7 +51,7 @@
         </nav>
       </div>
       <div class="tkr-ribbon">
-        <div class="tkr-tile top-elo"><div class="val" id="rib-topelo">—</div><div class="lbl">Top Elo</div></div>
+        <div class="tkr-tile top-elo"><div class="val" id="rib-topelo">—</div><div class="lbl">Top rating</div></div>
         <div class="tkr-tile field-avg"><div class="val" id="rib-fieldavg">—</div><div class="lbl">Field Avg</div></div>
         <div class="tkr-tile top-mover"><div class="val" id="rib-mover">—</div><div class="lbl">Top Mover</div></div>
       </div>

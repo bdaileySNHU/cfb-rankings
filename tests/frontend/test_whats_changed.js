@@ -111,7 +111,7 @@ assert.deepStrictEqual(section('Biggest risers'), ['BRA', 'FOX', 'ALP'],
 assert.deepStrictEqual(section('Biggest fallers'), ['DEL', 'ECH', 'GOL'],
   'fallers should be the most negative rank_change first');
 // Elo swing is |last - previous|, regardless of which direction rank went.
-assert.deepStrictEqual(section('Largest Elo swings')[0], 'BRA',
+assert.deepStrictEqual(section('Largest rating swings')[0], 'BRA',
   'Bravo gained 80 Elo, the largest absolute swing');
 assert.deepStrictEqual(section('Best playoff odds'), ['ALP', 'FOX', 'BRA'],
   'playoff odds should be the highest bid_pct first');
@@ -122,7 +122,7 @@ assert.ok(/Current standing, not a weekly change/.test(html),
   'the playoff column must not imply it shows weekly movement');
 
 // Only three entries per column, even with more candidates.
-for (const heading of ['Biggest risers', 'Biggest fallers', 'Largest Elo swings']) {
+for (const heading of ['Biggest risers', 'Biggest fallers', 'Largest rating swings']) {
   assert.ok(section(heading).length <= 3, `${heading} should show at most 3 teams`);
 }
 
