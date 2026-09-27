@@ -30,7 +30,7 @@ Example:
 """
 
 import enum
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import (
     Boolean,
@@ -848,3 +848,24 @@ def has_been_played():
         >>> db.query(Game).filter(Game.season == 2026, has_been_played()).all()
     """
     return or_(Game.home_score != 0, Game.away_score != 0)
+
+
+def week_is_complete(db, season: int, week: int, now: datetime) -> bool:
+    """True once no game in the week is still waiting for a result.
+
+    A game still waits if it is unprocessed and kicks off in the future or
+    kicked off in the last 24 hours. Older unprocessed games are postponed or
+    cancelled; waiting on them would hold the week open indefinitely.
+    ``now`` is naive UTC, like ``game_date``.
+    """
+    waiting = (
+        db.query(Game)
+        .filter(
+            Game.season == season,
+            Game.week == week,
+            Game.is_processed == False,  # noqa: E712
+            Game.game_date > now - timedelta(hours=24),
+        )
+        .count()
+    )
+    return waiting == 0

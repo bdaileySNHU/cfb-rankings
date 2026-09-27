@@ -212,12 +212,20 @@ if processed_count:
         except Exception as e:
             print(f"ERROR_SNAPSHOT:{latest_week}:{e}")
 
+        # Game day has five cron slots that can each process finals. Only the
+        # run that closes the week reports it, so there is one message a week.
+        from datetime import datetime, UTC
+        from src.models.models import week_is_complete
+        if week_is_complete(db, season, latest_week, datetime.now(UTC).replace(tzinfo=None)):
+            print(f"WEEK_DONE:{latest_week}")
+
 db.close()
 EOF
 )
 
 GAMES_PROCESSED=0
 SNAPSHOTS_SAVED=0
+WEEK_DONE=""
 while IFS= read -r line; do
     case "$line" in
         NO_NEW_GAMES)       echo "  No new games to process" ;;
@@ -230,6 +238,9 @@ while IFS= read -r line; do
             echo "  ✓ Saved ranking snapshot for Week ${line#SNAPSHOT:}" ;;
         ERROR_GAME:*)       echo "  ✗ ${line}" ;;
         ERROR_SNAPSHOT:*)   echo "  ✗ ${line}" ;;
+        WEEK_DONE:*)
+            WEEK_DONE="${line#WEEK_DONE:}"
+            echo "  ✓ Week $WEEK_DONE complete" ;;
         *)                  echo "  $line" ;;
     esac
 done <<< "$ELO_RESULT"
@@ -407,16 +418,19 @@ else
 fi
 
 # ── Send success notification ─────────────────────────────────────────────────
-NOTIFY_BODY="Season $SEASON | Processed: $GAMES_PROCESSED games | Snapshots: $SNAPSHOTS_SAVED"
+NOTIFY_BODY="Season $SEASON | Week $WEEK_DONE final"
 if [ -n "$DIFF_TEXT" ]; then
     NOTIFY_BODY="$NOTIFY_BODY\n\nBig movers (5+ spots):\n$DIFF_TEXT"
 fi
-# ponytail: on a daily cron most runs process nothing — notifying every time
-# trains people to ignore the channel. Failures notify unconditionally above.
-if [ "$GAMES_PROCESSED" -gt 0 ]; then
-    _send_notification "✅ Weekly update complete ($SEASON)" "$NOTIFY_BODY"
+# One success message per week, from the run that processes its last game.
+# Earlier game-day runs sent the same growing movers list up to five times.
+# Failures notify unconditionally above.
+# ponytail: a stat correction reopening a finished week sends it again; track
+# the last notified week in import_log.json if that ever happens in practice.
+if [ -n "$WEEK_DONE" ]; then
+    _send_notification "✅ Week $WEEK_DONE complete ($SEASON)" "$NOTIFY_BODY"
 else
-    echo "No new games — skipping success notification"
+    echo "Week still in progress — skipping success notification"
 fi
 
 # ── Write final import log ─────────────────────────────────────────────────────
