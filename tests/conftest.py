@@ -315,6 +315,7 @@ def mock_cfbd_client(monkeypatch):
     # exercise them set their own return_value). Must be stubbed: import_games
     # calls it once per week, and a bare Mock is truthy and not iterable.
     mock_client.get_sp_ratings.return_value = []
+    mock_client.get_betting_lines.return_value = []
 
     return mock_client
 

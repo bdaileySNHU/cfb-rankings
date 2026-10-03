@@ -17,6 +17,7 @@ from src.core.ranking_service import RankingService
 from src.importers.common import resolve_final_week
 from src.importers.efficiency import import_team_efficiency
 from src.importers.games import import_games
+from src.importers.polls import import_betting_lines
 from src.importers.postseason import (
     import_bowl_games,
     import_conference_championships,
@@ -225,6 +226,10 @@ Examples:
         print("\n✓ Validation complete - no changes made to database")
         db.close()
         return
+
+    # Closing spreads for the ELO-vs-Vegas comparison. One API call per season.
+    lines_count = import_betting_lines(cfbd, db, team_objects, season)
+    print(f"Betting lines: {lines_count} games stored/updated")
 
     # EPIC-008 Story 003: Validate import results
     validate_import_results(db, import_stats, season)

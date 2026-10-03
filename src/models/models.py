@@ -795,6 +795,26 @@ class SPPlusRating(Base):
     )
 
 
+class BettingLine(Base):
+    """
+    Consensus closing point spread for a game, for comparison against ELO.
+
+    One row per game: the median of CFBD's /lines providers (DraftKings, ESPN
+    Bet, Bovada, ...). Spread is from the HOME team's perspective, as CFBD
+    serves it: negative = home favored, so ``-7`` means home by 7.
+
+    Unlike SP+, a closing line never changes after kickoff, so rows are
+    upserted freely and past seasons can be backfilled.
+    """
+
+    __tablename__ = "betting_lines"
+
+    id = Column(Integer, primary_key=True, index=True)
+    game_id = Column(Integer, ForeignKey("games.id"), nullable=False, unique=True, index=True)
+    spread = Column(Float, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
 class PlayoffSimulation(Base):
     """Cached output of a Monte Carlo season simulation.
 

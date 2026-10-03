@@ -35,7 +35,7 @@
     <div class="tkr-pagehead">
       <div>
         <h1 class="tkr-title">Prediction Accuracy</h1>
-        <p class="tkr-subtitle">How does ELO compare to the AP Poll at predicting outcomes?</p>
+        <p class="tkr-subtitle">How does ELO compare to the AP Poll, SP+ and Vegas at predicting outcomes?</p>
       </div>
     </div>
 
@@ -80,6 +80,50 @@
             <div class="comp-value" id="ap-accuracy-pct">--</div>
             <div class="comp-sub">AP Poll</div>
             <div class="comp-detail" id="ap-correct-count">--</div>
+          </div>
+        </div>
+
+        <!-- SP+ head-to-head: own denominator, not comparable to the AP row above -->
+        <div id="sp-comparison" class="hidden">
+          <div class="comparison-separator-line"></div>
+          <div class="comparison-grid-3">
+            <div class="comp-col col-elo">
+              <div class="comp-value" id="sp-elo-pct">--</div>
+              <div class="comp-sub">ELO System</div>
+              <div class="comp-detail" id="sp-elo-count">--</div>
+            </div>
+            <div class="comp-col col-delta">
+              <div class="comp-value" id="sp-adv">--</div>
+              <div class="comp-sub" id="sp-adv-sub">ELO vs SP+</div>
+              <div class="comp-detail" id="sp-games">--</div>
+            </div>
+            <div class="comp-col col-ap">
+              <div class="comp-value" id="sp-pct">--</div>
+              <div class="comp-sub">SP+</div>
+              <div class="comp-detail" id="sp-count">--</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vegas closing-spread favorite: own denominator, like SP+ -->
+        <div id="spread-comparison" class="hidden">
+          <div class="comparison-separator-line"></div>
+          <div class="comparison-grid-3">
+            <div class="comp-col col-elo">
+              <div class="comp-value" id="spread-elo-pct">--</div>
+              <div class="comp-sub">ELO System</div>
+              <div class="comp-detail" id="spread-elo-count">--</div>
+            </div>
+            <div class="comp-col col-delta">
+              <div class="comp-value" id="spread-adv">--</div>
+              <div class="comp-sub" id="spread-adv-sub">ELO vs Vegas</div>
+              <div class="comp-detail" id="spread-games">--</div>
+            </div>
+            <div class="comp-col col-ap">
+              <div class="comp-value" id="spread-pct">--</div>
+              <div class="comp-sub">Vegas</div>
+              <div class="comp-detail" id="spread-count">--</div>
+            </div>
           </div>
         </div>
       </div>
@@ -236,6 +280,30 @@
               <li>Higher rank = predicted winner</li>
               <li>Unranked teams not compared</li>
               <li>Updated weekly</li>
+            </ul>
+          </div>
+          <div>
+            <h3 style="color: var(--primary-color); margin-bottom: 1rem;">SP+ "Predictions"</h3>
+            <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem;">
+              SP+ is an efficiency-based rating of every FBS team. Same rule as the AP Poll:
+              the better-ranked team, from that week's snapshot, is the pick.
+            </p>
+            <ul style="color: var(--text-secondary); line-height: 1.8;">
+              <li>Covers all FBS teams, ranked or not</li>
+              <li>Graded on its own set of games</li>
+              <li>Not directly comparable to the AP row</li>
+            </ul>
+          </div>
+          <div>
+            <h3 style="color: var(--primary-color); margin-bottom: 1rem;">Vegas Spread</h3>
+            <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem;">
+              The favorite by consensus closing spread (median across sportsbooks) is the pick.
+              The closing line is the market's last word before kickoff, and the toughest benchmark here.
+            </p>
+            <ul style="color: var(--text-secondary); line-height: 1.8;">
+              <li>Covers nearly every FBS game</li>
+              <li>Pick'em lines (0) are skipped</li>
+              <li>Graded on its own set of games</li>
             </ul>
           </div>
         </div>

@@ -1,7 +1,9 @@
-"""Poll and rating imports from the CFBD API (EPIC-010, SP+ comparison)."""
+"""Poll, rating and betting-line imports from the CFBD API (EPIC-010, SP+/spread comparison)."""
+
+from statistics import median
 
 from src.integrations.cfbd_client import CFBDClient
-from src.models.models import APPollRanking, SPPlusRating
+from src.models.models import APPollRanking, BettingLine, Game, SPPlusRating
 
 
 def import_ap_poll_rankings(cfbd: CFBDClient, db, team_objects: dict, year: int, week: int) -> int:
@@ -139,6 +141,63 @@ def import_sp_plus_ratings(cfbd: CFBDClient, db, team_objects: dict, year: int, 
                 rating=float(rating),
             )
         )
+        stored += 1
+
+    db.commit()
+    return stored
+
+
+def import_betting_lines(cfbd: CFBDClient, db, team_objects: dict, year: int) -> int:
+    """
+    Store the consensus (median across providers) closing spread for each game.
+
+    Upserts: a line keeps moving until kickoff, and re-running after the game
+    settles it on the closing number. Safe to run for past seasons.
+
+    Lines are matched to games on (home, away) team. CFBD numbers postseason
+    weeks from 1 while ours run 16+, so week is only a tie-breaker for the rare
+    pairing that meets twice in a season (e.g. a conference title rematch).
+
+    Returns:
+        int: Number of games with a line stored or updated
+    """
+    entries = cfbd.get_betting_lines(year)
+    if not entries:
+        return 0
+
+    by_matchup = {}
+    for entry in entries:
+        home = team_objects.get(entry.get("homeTeam"))
+        away = team_objects.get(entry.get("awayTeam"))
+        spreads = [l["spread"] for l in entry.get("lines") or [] if l.get("spread") is not None]
+        if home and away and spreads:
+            by_matchup.setdefault((home.id, away.id), []).append((entry, median(spreads)))
+
+    existing = {
+        bl.game_id: bl
+        for bl in db.query(BettingLine).join(Game).filter(Game.season == year).all()
+    }
+
+    stored = 0
+    for game in db.query(Game).filter(Game.season == year).all():
+        candidates = by_matchup.get((game.home_team_id, game.away_team_id))
+        if not candidates:
+            continue
+        # ponytail: same-week regular-season match, else the latest meeting.
+        # Breaks only if a pairing meets twice in the postseason.
+        same_week = [
+            c for c in candidates
+            if c[0].get("seasonType") == "regular" and c[0].get("week") == game.week
+        ]
+        _, spread = same_week[0] if same_week else max(candidates, key=lambda c: c[0].get("startDate") or "")
+
+        line = existing.get(game.id)
+        if line is None:
+            db.add(BettingLine(game_id=game.id, spread=spread))
+        elif line.spread != spread:
+            line.spread = spread
+        else:
+            continue
         stored += 1
 
     db.commit()

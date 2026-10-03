@@ -613,3 +613,70 @@ class TestSPPlusSnapshotImport:
         mock_cfbd_client.get_sp_ratings.return_value = []
 
         assert import_sp_plus_ratings(mock_cfbd_client, test_db, team_objects, 2025, 1) == 0
+
+
+@pytest.mark.integration
+class TestBettingLineImport:
+    """import_betting_lines() + the ELO-vs-Vegas head-to-head"""
+
+    def _setup(self, test_db, mock_cfbd_client):
+        from import_real_data import import_teams
+        from src.models.models import Game, Prediction
+
+        teams = import_teams(mock_cfbd_client, test_db, year=2025)
+        bama, uga = teams["Alabama"], teams["Georgia"]
+        # Same pairing twice: regular season week 5, then a postseason rematch
+        # (our week 19, CFBD postseason week 1).
+        reg = Game(home_team_id=bama.id, away_team_id=uga.id, home_score=20, away_score=24,
+                   week=5, season=2025, is_processed=True)
+        post = Game(home_team_id=bama.id, away_team_id=uga.id, home_score=30, away_score=10,
+                    week=19, season=2025, is_processed=True)
+        test_db.add_all([reg, post])
+        test_db.flush()
+        for g in (reg, post):  # ELO picks Alabama both times
+            test_db.add(Prediction(game_id=g.id, predicted_winner_id=bama.id,
+                                   predicted_home_score=28, predicted_away_score=21,
+                                   win_probability=0.6, home_elo_at_prediction=1700,
+                                   away_elo_at_prediction=1650))
+        test_db.commit()
+
+        def entry(season_type, week, date, spreads):
+            return {"homeTeam": "Alabama", "awayTeam": "Georgia", "seasonType": season_type,
+                    "week": week, "startDate": date,
+                    "lines": [{"provider": f"p{i}", "spread": s} for i, s in enumerate(spreads)]}
+
+        mock_cfbd_client.get_betting_lines.return_value = [
+            entry("regular", 5, "2025-09-27", [3.0, 2.5, None, 3.5]),  # Georgia fav, median 3.0
+            entry("postseason", 1, "2025-12-31", [-6.5, -7.0, -7.5]),  # Alabama fav, median -7.0
+        ]
+        return teams, reg, post
+
+    def test_median_spread_matched_to_right_meeting_and_upserted(self, test_db, mock_cfbd_client):
+        from src.importers.polls import import_betting_lines
+        from src.models.models import BettingLine
+
+        teams, reg, post = self._setup(test_db, mock_cfbd_client)
+
+        assert import_betting_lines(mock_cfbd_client, test_db, teams, 2025) == 2
+        spreads = {bl.game_id: bl.spread for bl in test_db.query(BettingLine)}
+        assert spreads == {reg.id: 3.0, post.id: -7.0}
+
+        # Unchanged re-run writes nothing; a moved line is updated in place.
+        assert import_betting_lines(mock_cfbd_client, test_db, teams, 2025) == 0
+        mock_cfbd_client.get_betting_lines.return_value[1]["lines"] = [{"spread": -9.0}]
+        assert import_betting_lines(mock_cfbd_client, test_db, teams, 2025) == 1
+        assert test_db.query(BettingLine).filter_by(game_id=post.id).one().spread == -9.0
+
+    def test_comparison_grades_vegas_favorite(self, test_db, mock_cfbd_client):
+        from src.core.ap_poll_service import calculate_comparison_stats
+        from src.importers.polls import import_betting_lines
+
+        teams, _, _ = self._setup(test_db, mock_cfbd_client)
+        import_betting_lines(mock_cfbd_client, test_db, teams, 2025)
+
+        stats = calculate_comparison_stats(test_db, 2025)
+        # Vegas: Georgia (won) then Alabama (won) -> 2/2. ELO: Alabama twice -> 1/2.
+        assert stats["spread_games_compared"] == 2
+        assert stats["spread_correct"] == 2
+        assert stats["elo_correct_vs_spread"] == 1
+        assert stats["elo_advantage_vs_spread"] == -0.5

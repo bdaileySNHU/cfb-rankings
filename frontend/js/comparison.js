@@ -71,6 +71,8 @@ async function loadComparisonData(season = null) {
 
     // Display all sections
     displayHeroStats(comparison);
+    displayHeadToHead(comparison, 'sp', 'SP+');
+    displayHeadToHead(comparison, 'spread', 'Vegas');
     displayBreakdownStats(comparison);
     displayPostseasonStats(comparison);  // EPIC-COMPARISON-BOWL-PLAYOFF
     displayAccuracyChart(comparison);
@@ -136,6 +138,30 @@ function displayHeroStats(comparison) {
     fillEl.style.width = `${eloAccuracy}%`;
     markerEl.style.left = `${apAccuracy}%`;
   }
+}
+
+/**
+ * Display an ELO head-to-head row (SP+, Vegas). Each source is graded on its
+ * own game subset, so it gets its own row rather than being merged with AP.
+ * `key` is both the element-id prefix and the API field suffix (sp_*, spread_*).
+ */
+function displayHeadToHead(comparison, key, label) {
+  const section = document.getElementById(`${key}-comparison`);
+  const n = comparison[`${key}_games_compared`];
+  section.classList.toggle('hidden', !n);
+  if (!n) return;
+
+  const set = (id, text) => { document.getElementById(`${key}-${id}`).textContent = text; };
+  set('elo-pct', `${(comparison[`elo_accuracy_vs_${key}`] * 100).toFixed(1)}%`);
+  set('elo-count', `${comparison[`elo_correct_vs_${key}`]} of ${n} correct`);
+  set('pct', `${(comparison[`${key}_accuracy`] * 100).toFixed(1)}%`);
+  set('count', `${comparison[`${key}_correct`]} of ${n} correct`);
+  set('games', `${n} games compared`);
+
+  const advantage = comparison[`elo_advantage_vs_${key}`] * 100;
+  set('adv', `${advantage >= 0 ? '+' : ''}${advantage.toFixed(1)}%`);
+  document.getElementById(`${key}-adv`).className = 'comp-value ' + (advantage >= 0 ? 'delta-pos' : 'delta-neg');
+  set('adv-sub', advantage >= 0 ? `ELO leads ${label}` : `ELO trails ${label}`);
 }
 
 /**
