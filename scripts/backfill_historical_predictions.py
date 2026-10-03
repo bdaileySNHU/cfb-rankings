@@ -52,11 +52,13 @@ def get_historical_rating(db, team_id: int, season: int, week: int) -> float:
         week: Week to get rating for
 
     Returns:
-        float: Historical ELO rating, or 1500 (default) if not found
+        float: Historical ELO rating, the team's current rating if it has no
+        snapshot, or 1500 (default) if the team itself is missing
 
     Notes:
         - For Week 1 games, uses week 0 (preseason) ratings from RankingHistory
-        - If no historical rating found, logs warning and returns 1500
+        - FCS teams get no snapshots; their games are excluded from rankings so
+          their rating never moves in-season, and the current one is exact
     """
     # For week N game, get week N-1 rating
     # For week 1, use week 0 (preseason)
@@ -73,12 +75,12 @@ def get_historical_rating(db, team_id: int, season: int, week: int) -> float:
     )
 
     if rating is None:
-        # Get team name for better logging
         team = db.query(Team).filter(Team.id == team_id).first()
-        team_name = team.name if team else f"Team {team_id}"
+        if team and team.elo_rating is not None:
+            return team.elo_rating
 
         logger.warning(
-            f"No historical rating for {team_name} (season {season}, week {lookup_week}), "
+            f"No rating for team {team_id} (season {season}, week {lookup_week}), "
             f"using default 1500"
         )
         return 1500.0

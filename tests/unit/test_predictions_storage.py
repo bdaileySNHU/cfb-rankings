@@ -289,3 +289,21 @@ def test_backfill_refresh_reprices_stale_row_from_prior_week(test_db, test_teams
     assert pred.predicted_winner_id == away_team.id
     assert (pred.home_elo_at_prediction, pred.away_elo_at_prediction) == (1770.0, 1875.0)
     assert pred.was_correct is True
+
+
+def test_backfill_uses_current_rating_for_team_without_snapshots(test_db, test_teams):
+    """FCS teams have no ranking_history; fall back to their (static) rating, not 1500."""
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).parents[2] / "scripts" / "backfill_historical_predictions.py"
+    spec = importlib.util.spec_from_file_location("backfill_historical_predictions", path)
+    backfill = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(backfill)
+
+    home_team, _ = test_teams
+    home_team.elo_rating = 1210.0
+    test_db.commit()
+
+    assert backfill.get_historical_rating(test_db, home_team.id, 2026, 4) == 1210.0
+    assert backfill.get_historical_rating(test_db, 999999, 2026, 4) == 1500.0
