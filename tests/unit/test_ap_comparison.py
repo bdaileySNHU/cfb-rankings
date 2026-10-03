@@ -382,7 +382,7 @@ class TestComparisonStatistics:
         # week recorded before SP+ import existed.
         with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank), patch(
             "src.core.ap_poll_service.get_team_sp_rank", return_value=None
-        ):
+        ), patch("src.core.ap_poll_service.get_spread_prediction_for_game", return_value=None):
             stats = calculate_comparison_stats(db, 2024)
 
         # EPIC-COMPARISON-BOWL-PLAYOFF: Verify postseason game was included
@@ -449,7 +449,7 @@ class TestComparisonStatistics:
         # week recorded before SP+ import existed.
         with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank), patch(
             "src.core.ap_poll_service.get_team_sp_rank", return_value=None
-        ):
+        ), patch("src.core.ap_poll_service.get_spread_prediction_for_game", return_value=None):
             stats = calculate_comparison_stats(db, 2024)
 
         # EPIC-COMPARISON-BOWL-PLAYOFF: Verify game_type and postseason_name in by_week
@@ -557,7 +557,7 @@ class TestComparisonStatistics:
         # week recorded before SP+ import existed.
         with patch("src.core.ap_poll_service.get_team_ap_rank", side_effect=mock_ap_rank), patch(
             "src.core.ap_poll_service.get_team_sp_rank", return_value=None
-        ):
+        ), patch("src.core.ap_poll_service.get_spread_prediction_for_game", return_value=None):
             stats = calculate_comparison_stats(db, 2024)
 
         # EPIC-COMPARISON-BOWL-PLAYOFF: Verify separate tracking

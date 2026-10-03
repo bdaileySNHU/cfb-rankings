@@ -1074,6 +1074,20 @@ class CFBDClient:
         """
         return self._get("/ratings/sp", params={"year": year}) or []
 
+    def get_betting_lines(self, year: int) -> List[Dict]:
+        """
+        Get sportsbook lines for every game in a season, regular and postseason.
+
+        One call covers the whole season (~1,600 games). Each game carries a
+        ``lines`` list, one entry per provider, with ``spread`` from the home
+        team's perspective (negative = home favored).
+
+        Example:
+            >>> client.get_betting_lines(2025)[0]['lines'][0]
+            {'provider': 'DraftKings', 'spread': 9.5, 'spreadOpen': 13.5, ...}
+        """
+        return self._get("/lines", params={"year": year, "seasonType": "both"}) or []
+
     def get_game_line_scores(
         self, game_id: int, year: int, week: int, home_team: str, away_team: str
     ) -> Optional[Dict[str, List[int]]]:

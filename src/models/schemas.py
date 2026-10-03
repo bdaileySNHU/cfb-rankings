@@ -900,6 +900,21 @@ class ComparisonStats(BaseModel):
     elo_advantage_vs_sp: float = Field(
         0.0, description="ELO accuracy minus SP+ accuracy (can be negative)"
     )
+    # Vegas comparison: favorite by consensus closing spread. Own denominator, like SP+.
+    spread_games_compared: int = Field(
+        0, description="Games with both an ELO prediction and a non-pick'em closing spread", ge=0
+    )
+    spread_correct: int = Field(0, description="Games the spread favorite won", ge=0)
+    spread_accuracy: float = Field(0.0, description="Vegas favorite accuracy (0-1)", ge=0, le=1.0)
+    elo_correct_vs_spread: int = Field(
+        0, description="Games ELO predicted correctly over the spread subset", ge=0
+    )
+    elo_accuracy_vs_spread: float = Field(
+        0.0, description="ELO accuracy over the spread subset (0-1)", ge=0, le=1.0
+    )
+    elo_advantage_vs_spread: float = Field(
+        0.0, description="ELO accuracy minus Vegas accuracy (can be negative)"
+    )
     message: Optional[str] = Field(
         None, description="Optional message for empty state or error conditions"
     )

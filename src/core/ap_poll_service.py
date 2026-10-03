@@ -5,11 +5,11 @@ Handles AP Poll prediction logic and comparison with ELO predictions.
 Part of EPIC-010: AP Poll Prediction Comparison.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from src.models.models import APPollRanking, Game, Prediction, SPPlusRating, Team
+from src.models.models import APPollRanking, BettingLine, Game, Prediction, SPPlusRating, Team
 
 
 def get_team_ap_rank(db: Session, team_id: int, season: int, week: int) -> Optional[int]:
@@ -157,6 +157,42 @@ def get_sp_prediction_for_game(db: Session, game: Game) -> Optional[int]:
     away_rank = get_team_sp_rank(db, game.away_team_id, game.season, game.week)
 
     return _pick_by_rank(game, home_rank, away_rank)
+
+
+def get_spread_prediction_for_game(db: Session, game: Game) -> Optional[int]:
+    """
+    Vegas pick for a game: the favorite by consensus closing spread.
+
+    Spread is home-perspective (negative = home favored). A pick'em (0) or a
+    game with no stored line has no prediction.
+    """
+    line = db.query(BettingLine).filter(BettingLine.game_id == game.id).first()
+    if line is None or line.spread == 0:
+        return None
+    return game.home_team_id if line.spread < 0 else game.away_team_id
+
+
+def _head_to_head(db: Session, games, predict) -> Tuple[int, int, int]:
+    """
+    Grade ELO and another source over exactly the games the source has a pick for.
+
+    Returns (games_compared, source_correct, elo_correct).
+    """
+    compared = source_correct = elo_correct = 0
+    for game in games:
+        elo_prediction = db.query(Prediction).filter(Prediction.game_id == game.id).first()
+        if not elo_prediction:
+            continue
+        source_pick = predict(db, game)
+        if source_pick is None:
+            continue
+        actual_winner_id = (
+            game.home_team_id if game.home_score > game.away_score else game.away_team_id
+        )
+        compared += 1
+        source_correct += source_pick == actual_winner_id
+        elo_correct += elo_prediction.predicted_winner_id == actual_winner_id
+    return compared, source_correct, elo_correct
 
 
 def calculate_comparison_stats(db: Session, season: int) -> Dict:
@@ -402,28 +438,15 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
     # is silent on, so it has a different (much larger) denominator and cannot
     # share the counters above. elo_*_vs_sp re-measures ELO over exactly the SP+
     # subset, which is the only fair way to read the two against each other.
-    sp_games_compared = 0
-    sp_correct_count = 0
-    elo_correct_vs_sp = 0
-
-    for game in games:
-        elo_prediction = db.query(Prediction).filter(Prediction.game_id == game.id).first()
-        if not elo_prediction:
-            continue
-
-        sp_predicted_winner_id = get_sp_prediction_for_game(db, game)
-        if sp_predicted_winner_id is None:
-            continue
-
-        actual_winner_id = (
-            game.home_team_id if game.home_score > game.away_score else game.away_team_id
-        )
-
-        sp_games_compared += 1
-        if sp_predicted_winner_id == actual_winner_id:
-            sp_correct_count += 1
-        if elo_prediction.predicted_winner_id == actual_winner_id:
-            elo_correct_vs_sp += 1
+    sp_games_compared, sp_correct_count, elo_correct_vs_sp = _head_to_head(
+        db, games, get_sp_prediction_for_game
+    )
+    # Vegas, same treatment: own denominator, ELO re-measured over that subset.
+    spread_games, spread_correct, elo_correct_vs_spread = _head_to_head(
+        db, games, get_spread_prediction_for_game
+    )
+    spread_accuracy = spread_correct / spread_games if spread_games else 0.0
+    elo_accuracy_vs_spread = elo_correct_vs_spread / spread_games if spread_games else 0.0
 
     sp_accuracy = sp_correct_count / sp_games_compared if sp_games_compared > 0 else 0.0
     elo_accuracy_vs_sp = elo_correct_vs_sp / sp_games_compared if sp_games_compared > 0 else 0.0
@@ -458,4 +481,11 @@ def calculate_comparison_stats(db: Session, season: int) -> Dict:
         "elo_correct_vs_sp": elo_correct_vs_sp,
         "elo_accuracy_vs_sp": round(elo_accuracy_vs_sp, 4),
         "elo_advantage_vs_sp": round(elo_accuracy_vs_sp - sp_accuracy, 4),
+        # Vegas closing-spread comparison (own denominator, like SP+)
+        "spread_games_compared": spread_games,
+        "spread_correct": spread_correct,
+        "spread_accuracy": round(spread_accuracy, 4),
+        "elo_correct_vs_spread": elo_correct_vs_spread,
+        "elo_accuracy_vs_spread": round(elo_accuracy_vs_spread, 4),
+        "elo_advantage_vs_spread": round(elo_accuracy_vs_spread - spread_accuracy, 4),
     }
