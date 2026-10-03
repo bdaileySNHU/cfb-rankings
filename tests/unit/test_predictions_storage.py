@@ -107,6 +107,13 @@ class TestPredictionStorage:
         assert pred2 is not None
         assert pred2.id == pred1.id
 
+        # A rating change before kickoff refreshes the stored row in place
+        home_team.elo_rating += 200
+        test_db.commit()
+        pred3 = create_and_store_prediction(test_db, game)
+        assert pred3.id == pred1.id
+        assert pred3.home_elo_at_prediction == home_team.elo_rating
+
         # Verify only one prediction exists
         count = test_db.query(Prediction).filter(Prediction.game_id == game.id).count()
         assert count == 1
@@ -226,8 +233,8 @@ class TestSlatePredictionStorage:
         assert prediction.home_elo_at_prediction == home_team.elo_rating
         assert prediction.was_correct is None
 
-    def test_rerunning_does_not_double_store(self, test_db, test_teams):
-        """The cron runs daily; a second pass must not re-price the slate."""
+    def test_rerunning_reprices_without_double_storing(self, test_db, test_teams):
+        """The cron runs daily; a second pass re-prices the slate in place."""
         home_team, away_team = test_teams
         self._slate(test_db, home_team, away_team)
         self._store_slate(test_db)
@@ -240,4 +247,45 @@ class TestSlatePredictionStorage:
 
         assert test_db.query(Prediction).count() == 1
         test_db.refresh(first)
-        assert first.home_elo_at_prediction == original_elo
+        assert first.home_elo_at_prediction == original_elo + 40.0
+
+
+def test_backfill_refresh_reprices_stale_row_from_prior_week(test_db, test_teams):
+    """--refresh overwrites a row frozen at preseason ratings with week N-1's."""
+    import importlib.util
+    from pathlib import Path
+
+    from src.models.models import RankingHistory
+
+    path = Path(__file__).parents[2] / "scripts" / "backfill_historical_predictions.py"
+    spec = importlib.util.spec_from_file_location("backfill_historical_predictions", path)
+    backfill = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(backfill)
+
+    home_team, away_team = test_teams
+    game = Game(
+        home_team_id=home_team.id, away_team_id=away_team.id,
+        home_score=17, away_score=20, week=4, season=2026, is_processed=True,
+    )
+    test_db.add(game)
+    test_db.commit()
+    # Stale preseason pick: home favored, which was wrong
+    test_db.add(Prediction(
+        game_id=game.id, predicted_winner_id=home_team.id,
+        predicted_home_score=28, predicted_away_score=27, win_probability=0.505,
+        home_elo_at_prediction=1687.0, away_elo_at_prediction=1749.0,
+    ))
+    # Week 3 snapshot (ratings going into week 4) has the away team well ahead;
+    # week 4's snapshot is post-game and must not be used
+    for week, home_elo, away_elo in [(3, 1770.0, 1875.0), (4, 1900.0, 1500.0)]:
+        test_db.add(RankingHistory(team_id=home_team.id, season=2026, week=week, rank=16, elo_rating=home_elo))
+        test_db.add(RankingHistory(team_id=away_team.id, season=2026, week=week, rank=3, elo_rating=away_elo))
+    test_db.commit()
+
+    assert backfill.backfill_predictions_for_season(test_db, 2026)["total_games"] == 0
+    backfill.backfill_predictions_for_season(test_db, 2026, refresh=True)
+
+    pred = test_db.query(Prediction).one()
+    assert pred.predicted_winner_id == away_team.id
+    assert (pred.home_elo_at_prediction, pred.away_elo_at_prediction) == (1770.0, 1875.0)
+    assert pred.was_correct is True

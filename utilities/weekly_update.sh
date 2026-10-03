@@ -269,8 +269,8 @@ else:
     stored = 0
     for entry in slate:
         game = db.get(Game, entry["game_id"])
-        # Returns the existing row when one is already stored, so a re-run is a
-        # no-op rather than a second prediction at today's ratings.
+        # Refreshes an already-stored row in place at today's ratings, so the
+        # prediction kept for each game is the last one made before kickoff.
         if game is not None and create_and_store_prediction(db, game):
             stored += 1
     print(f"STORED:{stored}/{len(slate)}")
