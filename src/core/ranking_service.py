@@ -1710,11 +1710,6 @@ def create_and_store_prediction(db: Session, game: Game) -> Optional[Prediction]
     if game.is_processed:
         return None
 
-    # Check if prediction already exists
-    existing = db.query(Prediction).filter(Prediction.game_id == game.id).first()
-    if existing:
-        return existing  # Don't create duplicate
-
     # Get teams
     home_team = db.query(Team).filter(Team.id == game.home_team_id).first()
     away_team = db.query(Team).filter(Team.id == game.away_team_id).first()
@@ -1726,9 +1721,7 @@ def create_and_store_prediction(db: Session, game: Game) -> Optional[Prediction]
     # Generate prediction data
     prediction_data = _calculate_game_prediction(game, home_team, away_team)
 
-    # Create Prediction object
-    prediction = Prediction(
-        game_id=game.id,
+    fields = dict(
         predicted_winner_id=prediction_data["predicted_winner_id"],
         predicted_home_score=prediction_data["predicted_home_score"],
         predicted_away_score=prediction_data["predicted_away_score"],
@@ -1740,8 +1733,16 @@ def create_and_store_prediction(db: Session, game: Game) -> Optional[Prediction]
         # EPIC-045: record the rating the prediction was actually made from
         home_elo_at_prediction=prediction_data["home_team_rating"],
         away_elo_at_prediction=prediction_data["away_team_rating"],
-        was_correct=None,  # Will be set when game completes
     )
+
+    # An unplayed game's stored prediction is refreshed at today's ratings, so
+    # the row that survives to kickoff is the last pre-game one. Returning the
+    # existing row froze the whole schedule at the preseason import's ratings.
+    prediction = db.query(Prediction).filter(Prediction.game_id == game.id).first()
+    if prediction is None:
+        prediction = Prediction(game_id=game.id, was_correct=None)
+    for name, value in fields.items():
+        setattr(prediction, name, value)
 
     # Store in database
     try:

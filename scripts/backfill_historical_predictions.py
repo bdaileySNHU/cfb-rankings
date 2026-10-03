@@ -244,6 +244,9 @@ Examples:
   # Backfill only 2025 season
   python3 scripts/backfill_historical_predictions.py --season 2025
 
+  # Re-price 2026's existing rows too (e.g. ones frozen at preseason ratings)
+  python3 scripts/backfill_historical_predictions.py --season 2026 --refresh
+
   # Rollback predictions created between specific times
   python3 scripts/backfill_historical_predictions.py --delete-backfilled \\
     --start-time "2025-10-27 10:00:00" --end-time "2025-10-27 10:05:00"
@@ -265,6 +268,11 @@ Examples:
         "--end-time", type=str, help='End time for rollback (format: "YYYY-MM-DD HH:MM:SS")'
     )
     parser.add_argument("--season", type=int, help="Process only specific season")
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Also overwrite existing predictions for processed games",
+    )
 
     args = parser.parse_args()
 
@@ -276,7 +284,9 @@ Examples:
     return args
 
 
-def backfill_predictions_for_season(db, season_year: int, dry_run: bool = False) -> dict:
+def backfill_predictions_for_season(
+    db, season_year: int, dry_run: bool = False, refresh: bool = False
+) -> dict:
     """
     Backfill predictions for all processed games in a season.
 
@@ -284,6 +294,7 @@ def backfill_predictions_for_season(db, season_year: int, dry_run: bool = False)
         db: Database session
         season_year: Year of the season to process
         dry_run: If True, only preview changes without writing to database
+        refresh: If True, also re-price games that already have a prediction
 
     Returns:
         dict: Statistics about the backfill operation
@@ -297,17 +308,14 @@ def backfill_predictions_for_season(db, season_year: int, dry_run: bool = False)
     }
 
     # Query all processed games without predictions (using outerjoin)
-    games = (
+    query = (
         db.query(Game)
         .outerjoin(Prediction, Game.id == Prediction.game_id)
-        .filter(
-            Game.season == season_year,
-            Game.is_processed == True,
-            Prediction.id == None,  # No prediction exists
-        )
-        .order_by(Game.week, Game.id)
-        .all()
+        .filter(Game.season == season_year, Game.is_processed == True)
     )
+    if not refresh:
+        query = query.filter(Prediction.id == None)  # No prediction exists
+    games = query.order_by(Game.week, Game.id).all()
 
     stats["total_games"] = len(games)
 
@@ -381,18 +389,18 @@ def backfill_predictions_for_season(db, season_year: int, dry_run: bool = False)
                 # Calculate timestamp (2 days before game)
                 prediction_timestamp = calculate_prediction_timestamp(game)
 
-                # Create Prediction object
-                prediction = Prediction(
-                    game_id=game.id,
-                    predicted_winner_id=predicted_winner_id,
-                    predicted_home_score=predicted_home_score,
-                    predicted_away_score=predicted_away_score,
-                    win_probability=win_probability,
-                    home_elo_at_prediction=home_rating,
-                    away_elo_at_prediction=away_rating,
-                    was_correct=None,  # Will be calculated later
-                    created_at=prediction_timestamp,
-                )
+                # Create the Prediction, or re-price the stored one in --refresh mode
+                prediction = db.query(Prediction).filter(
+                    Prediction.game_id == game.id
+                ).first() or Prediction(game_id=game.id)
+                prediction.predicted_winner_id = predicted_winner_id
+                prediction.predicted_home_score = predicted_home_score
+                prediction.predicted_away_score = predicted_away_score
+                prediction.win_probability = win_probability
+                prediction.home_elo_at_prediction = home_rating
+                prediction.away_elo_at_prediction = away_rating
+                prediction.was_correct = predicted_winner_id == game.winner_id
+                prediction.created_at = prediction_timestamp
 
                 db.add(prediction)
                 week_created += 1
@@ -509,7 +517,9 @@ def main():
         # Process each season
         for (season_year,) in seasons:
             logger.info(f"\nSeason: {season_year}")
-            season_stats = backfill_predictions_for_season(db, season_year, args.dry_run)
+            season_stats = backfill_predictions_for_season(
+                db, season_year, args.dry_run, args.refresh
+            )
 
             # Aggregate stats
             all_stats["total_games"] += season_stats["total_games"]
