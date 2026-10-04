@@ -115,6 +115,19 @@ def import_sp_plus_ratings(cfbd: CFBDClient, db, team_objects: dict, year: int, 
     if already_snapshotted:
         return 0
 
+    # A week with nothing left to play is over, and today's SP+ has already
+    # seen it. Snapshotting it anyway is how 2026 week 1 got recorded on
+    # Sep 12, five days after its last game, by the run that deployed SP+.
+    # Unplayed games are stored with is_processed False, so "none left" is the
+    # signal. Mid-week runs are fine: CFBD revises SP+ after the weekend.
+    week_has_unplayed = (
+        db.query(Game)
+        .filter(Game.season == year, Game.week == week, Game.is_processed == False)  # noqa: E712
+        .first()
+    )
+    if not week_has_unplayed:
+        return 0
+
     ratings = cfbd.get_sp_ratings(year)
     if not ratings:
         return 0
