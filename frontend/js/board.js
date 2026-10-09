@@ -869,7 +869,8 @@
           }
           var teamAdj = e.elo_rating + (game.is_home ? 65 : 0);
           var oppAdj = oppElo + (game.is_home ? 0 : 65);
-          pWin = 100 / (1 + Math.pow(10, (oppAdj - teamAdj) / 400));
+          // 333 mirrors PREDICTION_SCALE in src/core/ranking_service.py
+          pWin = 100 / (1 + Math.pow(10, (oppAdj - teamAdj) / 333));
         }
 
         var cls = pWin >= 50 ? 'fav' : 'dog';
