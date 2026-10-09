@@ -96,7 +96,7 @@
 .tkr-tape-viewport { overflow: hidden; position: relative; flex: 1; }
 .tkr-tape-track {
   display: inline-flex; white-space: nowrap; will-change: transform;
-  animation: tkr-marquee 38s linear infinite;
+  animation: tkr-marquee 80s linear infinite;
 }
 .tkr-tape-track:hover { animation-play-state: paused; }
 @keyframes tkr-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
@@ -108,11 +108,16 @@
 .tkr-tick .ab { color: var(--fg2); }
 .tkr-tick .el { color: var(--fg); font-weight: 600; }
 
-/* Second tape: what changed this week. Scrolls away with the page rather than
-   stacking a third sticky bar under the header. */
-.tkr-tape-changed { position: static; }
-.tkr-tape-changed .tkr-live { background: var(--panel); color: var(--fg2); border-right: 1px solid var(--line); }
-.tkr-tape-changed .tkr-tape-track { animation-duration: 45s; }
+/* Lower tapes (Elo, what changed) scroll away with the page rather than
+   stacking more sticky bars under the header. Durations are tuned so each
+   tape moves at a slightly different speed (~3.2s, ~2.8s, ~3.4s per tick):
+   in lockstep, the stacked tapes read as one block. */
+.tkr-tape-elo, .tkr-tape-changed { position: static; }
+.tkr-tape-elo .tkr-live, .tkr-tape-changed .tkr-live {
+  background: var(--panel); color: var(--fg2); border-right: 1px solid var(--line);
+}
+.tkr-tape-elo .tkr-tape-track { animation-duration: 70s; }
+.tkr-tape-changed .tkr-tape-track { animation-duration: 55s; }
 .tkr-tape-changed a { text-decoration: none; }
 .tkr-tick-group {
   color: var(--fg3); font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
