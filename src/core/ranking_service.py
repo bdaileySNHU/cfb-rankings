@@ -71,6 +71,14 @@ EFFICIENCY_MIN_WEEK = 4
 # Standardizing needs enough teams for the mean/stdev to mean anything.
 EFFICIENCY_MIN_TEAMS = 20
 
+# Logistic scale for *predicted* win probability. Deliberately separate from
+# RankingService.RATING_SCALE (400), which drives ELO updates. A point-in-time
+# replay of 2022-25 against closing lines found 400 underconfident: 333 improves
+# Brier from 0.1903 to 0.1884 and wins in every season. Cutting home field from
+# 65 did nothing, and widening the points-per-ELO margin made margin error worse,
+# so both stay as they are.
+PREDICTION_SCALE = 333
+
 
 def net_ppa(team: Team) -> Optional[float]:
     """Net opponent-adjusted PPA per play (offense minus defense allowed)."""
@@ -1427,7 +1435,7 @@ def _calculate_game_prediction(
 
     # Calculate win probability (standard ELO formula)
     rating_diff = home_rating - away_rating
-    home_win_prob = 1 / (1 + 10 ** ((away_rating - home_rating) / 400))
+    home_win_prob = 1 / (1 + 10 ** ((away_rating - home_rating) / PREDICTION_SCALE))
     away_win_prob = 1 - home_win_prob
 
     # Estimate scores based on ELO difference
@@ -1508,7 +1516,7 @@ def _project_matchup(high: dict, low: dict, neutral: bool, label: str, rng=None)
     """Simulate one playoff game. `high` is the higher seed (hosts unless neutral).
 
     Mirrors _calculate_game_prediction exactly: +65 home-field unless neutral,
-    400-scale logistic win prob, scores = 30 ± (rating_diff / 100) * 3.5.
+    PREDICTION_SCALE logistic win prob, scores = 30 ± (rating_diff / 100) * 3.5.
 
     Args:
         rng: When given, the winner is *sampled* from the win probability instead
@@ -1517,7 +1525,7 @@ def _project_matchup(high: dict, low: dict, neutral: bool, label: str, rng=None)
     """
     home_elo = high["elo"] + (0 if neutral else 65)
     away_elo = low["elo"]
-    home_wp = 1 / (1 + 10 ** ((away_elo - home_elo) / 400))
+    home_wp = 1 / (1 + 10 ** ((away_elo - home_elo) / PREDICTION_SCALE))
     adj = ((home_elo - away_elo) / 100) * 3.5
     hs = max(0, min(round(30 + adj), 150))
     ls = max(0, min(round(30 - adj), 150))

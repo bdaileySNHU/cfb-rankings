@@ -88,8 +88,8 @@ class TestWinProbabilityCalculation:
         # Home team should have > 50% win probability due to HFA
         assert prediction["home_win_probability"] > 50.0
         assert prediction["away_win_probability"] < 50.0
-        # Should be approximately 59.6% for +65 rating advantage
-        assert 59.0 < prediction["home_win_probability"] < 61.0
+        # ~61.1% for +65 on the 333 prediction scale (it was 59.6% on 400)
+        assert prediction["home_win_probability"] == 61.1
 
     def test_rating_difference_affects_probability(self):
         """Test that higher rating leads to higher win probability"""

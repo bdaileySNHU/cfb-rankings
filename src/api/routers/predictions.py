@@ -11,6 +11,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from src.core.ranking_service import (
+    PREDICTION_SCALE,
     generate_predictions,
     get_overall_prediction_accuracy,
     get_team_prediction_accuracy,
@@ -203,7 +204,7 @@ async def get_historical_predictions(
 
             # Win probability (home field advantage: +65 unless neutral)
             home_adj = home_elo + (0 if game.is_neutral_site else 65)
-            home_win_prob = 1 / (1 + 10 ** ((away_elo - home_adj) / 400))
+            home_win_prob = 1 / (1 + 10 ** ((away_elo - home_adj) / PREDICTION_SCALE))
             away_win_prob = 1 - home_win_prob
 
             # Score estimate

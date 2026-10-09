@@ -47,6 +47,7 @@ from sqlalchemy.orm import Session
 from src.core.ranking_service import (
     FIELD_SIZE,
     MIN_CONFERENCE_SIZE,
+    PREDICTION_SCALE,
     RankingService,
     _INDEPENDENT_CONFS,
     blend_rating,
@@ -209,11 +210,14 @@ def _play(sim, h: int, a: int, week: int, neutral: bool, is_conf: bool, rng) -> 
     elo = sim["elo"]
     home_rating = elo[h] + (0 if neutral else RankingService.HOME_FIELD_ADVANTAGE)
     away_rating = elo[a]
-    home_wp = 1.0 / (1.0 + 10 ** ((away_rating - home_rating) / RankingService.RATING_SCALE))
+    # Outcomes are sampled from the calibrated prediction curve, but the ELO
+    # update uses RATING_SCALE's expectation, exactly as process_game does.
+    home_wp = 1.0 / (1.0 + 10 ** ((away_rating - home_rating) / PREDICTION_SCALE))
+    home_expected = 1.0 / (1.0 + 10 ** ((away_rating - home_rating) / RankingService.RATING_SCALE))
 
     home_won = rng.random() < home_wp
     winner, loser = (h, a) if home_won else (a, h)
-    winner_expected = home_wp if home_won else 1.0 - home_wp
+    winner_expected = home_expected if home_won else 1.0 - home_expected
 
     # Margin is sampled conditional on who actually won: when the favorite wins
     # it is centered on the rating-implied margin, when the underdog wins it is
