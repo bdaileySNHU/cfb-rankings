@@ -306,6 +306,10 @@ class RankingsResponse(BaseModel):
     # like /api/stats does - that only ever says "now". None when the week has
     # no snapshot rows.
     last_updated: Optional[datetime] = None
+    # This week's games (excluding ones kept out of the rankings), and how many
+    # are final. The board uses them to say a week is still in progress.
+    games_total: int = 0
+    games_final: int = 0
 
 
 class RankingHistory(BaseModel):

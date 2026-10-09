@@ -688,3 +688,28 @@ class TestRankingsLastUpdated:
         # Assert
         assert response.status_code == 200
         assert response.json()["last_updated"] is None
+
+    def test_game_counts_show_a_week_in_progress(
+        self, test_client: TestClient, test_db: Session
+    ):
+        """games_final < games_total while the week is still being played.
+
+        The week rolls over before Saturday, so without these counts the board
+        claimed "after Week N finals" with only the midweek games in.
+        """
+        # Arrange
+        configure_factories(test_db)
+        SeasonFactory(year=2024, is_active=True, current_week=6)
+        GameFactory(season=2024, week=6, is_processed=True)
+        GameFactory(season=2024, week=6, is_processed=False)
+        GameFactory(season=2024, week=6, is_processed=False)
+        GameFactory(season=2024, week=6, is_processed=False, excluded_from_rankings=True)
+        GameFactory(season=2024, week=5, is_processed=True)
+        test_db.commit()
+
+        # Act
+        data = test_client.get("/api/rankings").json()
+
+        # Assert: excluded games and other weeks don't count
+        assert data["games_total"] == 3
+        assert data["games_final"] == 1
