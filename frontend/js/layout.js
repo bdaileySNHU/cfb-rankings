@@ -43,8 +43,13 @@
 
   var tape = isBoard
     ? '<div class="tkr-tape"><div class="tkr-tape-inner">' +
-      '<div class="tkr-live">LIVE</div>' +
+      '<div class="tkr-live">RANK</div>' +
       '<div class="tkr-tape-viewport"><div class="tkr-tape-track" id="tkr-tape-track"></div></div>' +
+      '</div></div>' +
+      // Raw Elo order can differ from the ranking, which is the efficiency blend.
+      '<div class="tkr-tape tkr-tape-elo"><div class="tkr-tape-inner">' +
+      '<div class="tkr-live">ELO</div>' +
+      '<div class="tkr-tape-viewport"><div class="tkr-tape-track" id="tkr-elo-track"></div></div>' +
       '</div></div>' +
       // "What changed this week" tape; board.js renderWhatChanged() fills it and
       // leaves it hidden in the preseason, when there is nothing to compare.

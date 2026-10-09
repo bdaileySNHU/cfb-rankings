@@ -442,17 +442,29 @@
     }
   }
 
-  // ── Ticker tape (top 12) ──
-  function renderTape() {
-    var top = ENTRIES.slice(0, 12);
-    var ticks = top.map(function (e) {
-      var d = e.rank_change;
-      return '<span class="tkr-tick"><span class="ab">' + esc(abbrOf(e)) + '</span>' +
-        '<span class="el">' + fmtElo(e.elo_rating) + '</span>' +
-        '<span class="' + trendClass(d) + '">' + deltaText(d) + '</span></span>';
-    }).join('');
-    var track = document.getElementById('tkr-tape-track');
+  // ── Ticker tapes: top 25 by ranking, and top 25 by raw Elo ──
+  function fillTape(id, ticks) {
+    var track = document.getElementById(id);
     if (track) track.innerHTML = ticks + ticks; // duplicate → seamless -50% loop
+  }
+
+  function renderTape() {
+    fillTape('tkr-tape-track', ENTRIES.slice(0, 25).map(function (e) {
+      var d = e.rank_change;
+      return '<span class="tkr-tick"><span class="el">' + e.rank + '</span>' +
+        '<span class="ab">' + esc(abbrOf(e)) + '</span>' +
+        '<span class="' + trendClass(d) + '">' + deltaText(d) + '</span></span>';
+    }).join(''));
+
+    fillTape('tkr-elo-track', ENTRIES.slice()
+      .sort(function (a, b) { return b.elo_rating - a.elo_rating; })
+      .slice(0, 25).map(function (e) {
+        var d = eloSwing(e);
+        d = d == null ? null : Math.round(d);
+        return '<span class="tkr-tick"><span class="ab">' + esc(abbrOf(e)) + '</span>' +
+          '<span class="el">' + fmtElo(e.elo_rating) + '</span>' +
+          '<span class="' + trendClass(d) + '">' + deltaText(d) + '</span></span>';
+      }).join(''));
   }
 
   // ── Stat ribbon ──
