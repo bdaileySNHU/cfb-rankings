@@ -45,7 +45,10 @@
     ? '<div class="tkr-tape"><div class="tkr-tape-inner">' +
       '<div class="tkr-live">LIVE</div>' +
       '<div class="tkr-tape-viewport"><div class="tkr-tape-track" id="tkr-tape-track"></div></div>' +
-      '</div></div>'
+      '</div></div>' +
+      // "What changed this week" tape; board.js renderWhatChanged() fills it and
+      // leaves it hidden in the preseason, when there is nothing to compare.
+      '<section class="tkr-tape tkr-tape-changed hidden" id="tkr-changed" aria-label="What changed this week"></section>'
     : '';
 
   var html =

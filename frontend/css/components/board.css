@@ -108,6 +108,16 @@
 .tkr-tick .ab { color: var(--fg2); }
 .tkr-tick .el { color: var(--fg); font-weight: 600; }
 
+/* Second tape: what changed this week. Scrolls away with the page rather than
+   stacking a third sticky bar under the header. */
+.tkr-tape-changed { position: static; }
+.tkr-tape-changed .tkr-live { background: var(--panel); color: var(--fg2); border-right: 1px solid var(--line); }
+.tkr-tape-changed .tkr-tape-track { animation-duration: 45s; }
+.tkr-tape-changed a { text-decoration: none; }
+.tkr-tick-group {
+  color: var(--fg3); font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+}
+
 /* ── Page heading + stat ribbon ── */
 .tkr-pagehead {
   display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;
@@ -123,20 +133,6 @@
 .tkr-stamp a { color: var(--fg2); }
 .tkr-stamp a:hover { color: var(--accent); }
 
-/* Start-here links. Same pill geometry as .tkr-filter-pill so the page has one
-   button shape, but sentence-case and a touch larger - these are the first
-   thing a new visitor reads, not a dense control. */
-.tkr-cta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.tkr-cta-link {
-  display: inline-flex; align-items: center; height: 32px; padding: 0 14px;
-  border: 1px solid var(--line-strong); border-radius: 6px;
-  background: transparent; color: var(--fg2);
-  font-size: 12.5px; font-weight: 600; text-decoration: none;
-  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
-}
-.tkr-cta-link:hover { border-color: var(--fg3); color: var(--fg); }
-.tkr-cta-link.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
-.tkr-cta-link.primary:hover { color: var(--bg); filter: brightness(1.08); }
 .tkr-ribbon { display: flex; gap: 10px; }
 .tkr-tile {
   border: 1px solid var(--line); border-radius: 11px; background: var(--panel);
@@ -480,40 +476,6 @@
 .tkr-search:focus, .tkr-view:focus { border-color: var(--accent); }
 .tkr-view { cursor: pointer; }
 
-/* ── "What changed this week?" card ── */
-.tkr-changed {
-  border: 1px solid var(--line); border-radius: 11px; background: var(--panel);
-  padding: 16px 18px; margin-bottom: 18px;
-}
-.tkr-changed-head {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-  margin-bottom: 12px;
-}
-.tkr-changed-title { font-size: 15px; font-weight: 700; margin: 0; }
-.tkr-changed-meta {
-  font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
-  text-transform: uppercase; color: var(--fg3);
-}
-.tkr-changed-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-.tkr-changed-h {
-  font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
-  text-transform: uppercase; color: var(--fg3); margin: 0 0 8px;
-}
-.tkr-changed-list { list-style: none; margin: 0; padding: 0; }
-.tkr-changed-item {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-  padding: 3px 0; font-family: var(--font-mono); font-size: 12px;
-}
-.tkr-changed-team { color: var(--fg); font-weight: 600; }
-.tkr-changed-item a { text-decoration: none; }
-.tkr-changed-val { font-weight: 600; font-variant-numeric: tabular-nums; }
-.tkr-changed-none, .tkr-changed-note {
-  color: var(--fg3); font-size: 11px; margin: 6px 0 0;
-}
-
-@media (max-width: 900px) {
-  .tkr-changed-grid { grid-template-columns: repeat(2, 1fr); }
-}
 @media (max-width: 720px) {
   .tkr-filter-bar { justify-content: flex-start; }
   .tkr-filter-tools { width: 100%; }
@@ -953,7 +915,6 @@
   .tkr-season { max-width: 92px; }
   .tkr-ribbon { display: none; }
   .tkr-pagehead { flex-direction: column; align-items: stretch; }
-  .tkr-cta-link { flex: 1 1 auto; justify-content: center; }
   .tkr-detail-grid { grid-template-columns: 1fr; }
   .tkr-tiles { grid-template-columns: repeat(2, 1fr); }
   .tkr-tiles-6 { grid-template-columns: repeat(2, 1fr); }
@@ -970,11 +931,7 @@
    stranded on a row of its own. */
 @media (max-width: 560px) {
   .tkr-pagehead { padding: 20px 0 14px; gap: 14px; }
-  .tkr-cta { flex-direction: column; gap: 8px; }
-  .tkr-cta-link { width: 100%; height: 38px; }
 
-  .tkr-changed { padding: 14px 15px; }
-  .tkr-changed-grid { grid-template-columns: 1fr; gap: 16px; }
 
   .tkr-filter-bar { gap: 12px; }
   .tkr-filter-tools { flex-direction: column; align-items: stretch; gap: 8px; }

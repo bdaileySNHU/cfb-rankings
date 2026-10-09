@@ -1,4 +1,4 @@
-// Self-check for the "What changed this week?" panel.
+// Self-check for the "What changed this week?" ticker tape.
 //   node tests/frontend/test_whats_changed.js
 //
 // The panel reads rank_change, which is null for every team in week 0 - there
@@ -56,7 +56,7 @@ function render(entries, week) {
   `;
   new Function('CARD',
     preamble +
-    extract('eloSwing') + extract('changedItem') + extract('changedCol') +
+    extract('eloSwing') + extract('changedItem') + extract('changedGroup') +
     extract('renderWhatChanged') +
     'renderWhatChanged();'
   )(card);
@@ -74,7 +74,7 @@ const preseason = [
   team('Bravo', null, [1500], null),
 ];
 assert.ok(render(preseason, 0).hidden,
-  'the panel must stay hidden in the preseason, when no team has moved');
+  'the tape must stay hidden in the preseason, when no team has moved');
 
 // Mid-season but no movement recorded yet - same story, no card.
 assert.ok(render(preseason, 4).hidden,
@@ -93,42 +93,44 @@ const card = render(entries, 6);
 assert.ok(!card.hidden, 'the panel should render once teams have moved');
 
 const html = card.innerHTML;
-assert.ok(html.includes('Week 6'), 'the card should name the week it describes');
+assert.ok(html.includes('WK 6'), 'the tape should name the week it describes');
 
 /** Team abbreviations in the order they appear under a given heading. */
 function section(heading) {
   const start = html.indexOf(heading);
   assert.notStrictEqual(start, -1, `no "${heading}" section`);
-  const end = html.indexOf('tkr-changed-col', start + heading.length);
-  const body = html.slice(start, end === -1 ? undefined : end);
+  // The track repeats its ticks for a seamless loop; read the first copy only.
+  const ends = ['tkr-tick-group', 'aria-hidden']
+    .map((m) => html.indexOf(m, start + heading.length)).filter((i) => i !== -1);
+  const body = html.slice(start, ends.length ? Math.min(...ends) : undefined);
   return [...body.matchAll(/tkr-changed-team">([A-Z]+)</g)].map((m) => m[1]);
 }
 
 // rank_change > 0 means the team moved up, so risers sort descending.
-assert.deepStrictEqual(section('Biggest risers'), ['BRA', 'FOX', 'ALP'],
+assert.deepStrictEqual(section('Rank risers'), ['BRA', 'FOX', 'ALP'],
   'risers should be the largest positive rank_change first');
 // Fallers are the most negative first - the easy bug is listing them backwards.
-assert.deepStrictEqual(section('Biggest fallers'), ['DEL', 'ECH', 'GOL'],
+assert.deepStrictEqual(section('Rank fallers'), ['DEL', 'ECH', 'GOL'],
   'fallers should be the most negative rank_change first');
 // Elo swing is |last - previous|, regardless of which direction rank went.
-assert.deepStrictEqual(section('Largest rating swings')[0], 'BRA',
+assert.deepStrictEqual(section('Rating swing vs last week')[0], 'BRA',
   'Bravo gained 80 Elo, the largest absolute swing');
-assert.deepStrictEqual(section('Best playoff odds'), ['ALP', 'FOX', 'BRA'],
+assert.deepStrictEqual(section('Playoff odds now'), ['ALP', 'FOX', 'BRA'],
   'playoff odds should be the highest bid_pct first');
 
-// The odds column is a standing, not a delta, and has to say so - there is no
-// cached previous-week simulation to diff against.
-assert.ok(/Current standing, not a weekly change/.test(html),
-  'the playoff column must not imply it shows weekly movement');
+// The odds group is a standing, not a delta, and its label has to say so -
+// there is no cached previous-week simulation to diff against.
+assert.ok(/Playoff odds now/.test(html),
+  'the playoff group must not imply it shows weekly movement');
 
 // Only three entries per column, even with more candidates.
-for (const heading of ['Biggest risers', 'Biggest fallers', 'Largest rating swings']) {
+for (const heading of ['Rank risers', 'Rank fallers', 'Rating swing vs last week']) {
   assert.ok(section(heading).length <= 3, `${heading} should show at most 3 teams`);
 }
 
 // A team with too little history must not crash the swing calculation.
 const thin = render([team('Alpha', 3, [1700], 50.0), team('Bravo', -2, [], 10.0)], 3);
-assert.ok(!thin.hidden && /Nothing yet\./.test(thin.innerHTML),
-  'a column with no qualifying teams should say so rather than render empty');
+assert.ok(!thin.hidden && !/Rating swing/.test(thin.innerHTML),
+  'a group with no qualifying teams should be left off the tape, not shown empty');
 
 console.log('what-changed self-check passed');
