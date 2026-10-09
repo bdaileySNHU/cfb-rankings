@@ -44,11 +44,6 @@
         <!-- Freshness stamp; filled by board.js renderHeader() from the
              last_updated field on /api/rankings. -->
         <p class="tkr-stamp hidden" id="tkr-stamp"></p>
-        <nav class="tkr-cta" aria-label="Start here">
-          <a class="tkr-cta-link primary" href="comparison.html">Compare teams</a>
-          <a class="tkr-cta-link" href="games.html">This week's games</a>
-          <a class="tkr-cta-link" href="elo-formula.html">How the model works</a>
-        </nav>
       </div>
       <div class="tkr-ribbon">
         <div class="tkr-tile top-elo"><div class="val" id="rib-topelo">—</div><div class="lbl">Top rating</div></div>
@@ -56,10 +51,6 @@
         <div class="tkr-tile top-mover"><div class="val" id="rib-mover">—</div><div class="lbl">Top Mover</div></div>
       </div>
     </div>
-
-    <!-- Populated by board.js renderWhatChanged(); stays hidden in the preseason,
-         when there is no previous week to compare against. -->
-    <section class="tkr-changed hidden" id="tkr-changed" aria-label="What changed this week"></section>
 
     <div id="tkr-board">
       <div class="tkr-filter-bar" id="tkr-filters" role="group" aria-label="Filter and search rankings"></div>

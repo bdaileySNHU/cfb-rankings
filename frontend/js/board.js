@@ -485,18 +485,14 @@
   }
 
   function changedItem(e, value, cls) {
-    return '<li class="tkr-changed-item">' +
-      teamLink(e.team_name, '<span class="tkr-changed-team">' + esc(abbrOf(e)) + '</span>', e.team_id) +
-      '<span class="tkr-changed-val ' + cls + '">' + value + '</span></li>';
+    return '<span class="tkr-tick">' +
+      teamLink(e.team_name, '<span class="ab tkr-changed-team">' + esc(abbrOf(e)) + '</span>', e.team_id) +
+      '<span class="' + cls + '">' + value + '</span></span>';
   }
 
-  function changedCol(title, note, items) {
-    return '<div class="tkr-changed-col">' +
-      '<h3 class="tkr-changed-h">' + esc(title) + '</h3>' +
-      (items.length ? '<ul class="tkr-changed-list">' + items.join('') + '</ul>'
-                    : '<p class="tkr-changed-none">Nothing yet.</p>') +
-      (note ? '<p class="tkr-changed-note">' + esc(note) + '</p>' : '') +
-      '</div>';
+  function changedGroup(title, items) {
+    if (!items.length) return '';
+    return '<span class="tkr-tick tkr-tick-group">' + esc(title) + '</span>' + items.join('');
   }
 
   function renderWhatChanged() {
@@ -507,7 +503,7 @@
       return typeof e.rank_change === 'number' && e.rank_change !== 0;
     });
     // Week 0 is the preseason snapshot: every rank_change is null because there
-    // is no previous week to diff against, so the card has nothing to say.
+    // is no previous week to diff against, so the tape has nothing to say.
     if (!CURRENT_WEEK || !moved.length) { card.classList.add('hidden'); return; }
 
     var byRise = moved.slice().sort(function (a, b) { return b.rank_change - a.rank_change; });
@@ -523,29 +519,32 @@
       .sort(function (a, b) { return b.bid_pct - a.bid_pct; })
       .slice(0, 3);
 
-    var cols = [
-      changedCol('Biggest risers', '', risers.map(function (e) {
+    // Labels carry what the old card's footnotes said: swings are rating points
+    // since last week, and playoff odds are a standing, not a weekly change.
+    var ticks = [
+      changedGroup('Rank risers', risers.map(function (e) {
         return changedItem(e, deltaText(e.rank_change), 'trend-pos');
       })),
-      changedCol('Biggest fallers', '', fallers.map(function (e) {
+      changedGroup('Rank fallers', fallers.map(function (e) {
         return changedItem(e, deltaText(e.rank_change), 'trend-neg');
       })),
-      changedCol('Largest rating swings', 'Change since last week’s rating.', swings.map(function (s) {
+      changedGroup('Rating swing vs last week', swings.map(function (s) {
         var sign = s.d > 0 ? '+' : '';
         return changedItem(s.e, sign + Math.round(s.d), s.d >= 0 ? 'trend-pos' : 'trend-neg');
       })),
-      changedCol('Best playoff odds', 'Current standing, not a weekly change.', odds.map(function (e) {
-        return changedItem(e, fmtPct(e.bid_pct), '');
+      changedGroup('Playoff odds now', odds.map(function (e) {
+        return changedItem(e, fmtPct(e.bid_pct), 'el');
       })),
-    ];
+    ].join('');
 
     card.classList.remove('hidden');
     card.innerHTML =
-      '<div class="tkr-changed-head">' +
-        '<h2 class="tkr-changed-title">What changed this week</h2>' +
-        '<span class="tkr-changed-meta">Week ' + CURRENT_WEEK + '</span>' +
-      '</div>' +
-      '<div class="tkr-changed-grid">' + cols.join('') + '</div>';
+      '<div class="tkr-tape-inner">' +
+        '<div class="tkr-live">WK ' + CURRENT_WEEK + '</div>' +
+        '<div class="tkr-tape-viewport"><div class="tkr-tape-track">' +
+          ticks + '<span aria-hidden="true" style="display:contents">' + ticks + '</span>' +
+        '</div></div>' +
+      '</div>';
   }
 
   // ── Header week/season ──
