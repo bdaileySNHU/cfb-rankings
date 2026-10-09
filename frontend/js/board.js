@@ -585,9 +585,12 @@
     var stamp = document.getElementById('tkr-stamp');
     if (!stamp) return;
     var when = fmtStamp(data.last_updated);
-    var what = data.week
-      ? 'Model updated after Week ' + data.week + ' finals'
-      : 'Preseason ratings · no games played yet';
+    var what = !data.week
+      ? 'Preseason ratings · no games played yet'
+      : data.games_final < data.games_total
+        ? 'Week ' + data.week + ' in progress · ' + data.games_final + ' of ' +
+          data.games_total + ' games final'
+        : 'Model updated after Week ' + data.week + ' finals';
     stamp.innerHTML = esc(what) +
       (when ? ' · <time datetime="' + esc(data.last_updated) + '">' + esc(when) + '</time>' : '') +
       ' · <a href="elo-formula.html">how it works</a>';

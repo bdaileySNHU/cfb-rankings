@@ -193,12 +193,29 @@ async def get_rankings(
     if last_updated is not None and last_updated.tzinfo is None:
         last_updated = last_updated.replace(tzinfo=timezone.utc)
 
+    # The week rolls over before most of its games kick off, so the stamp needs
+    # to know how many are final to avoid claiming "after Week N finals" on a
+    # Friday with only the midweek games in.
+    # ponytail: a cancelled game never processes, so its week reads "in progress"
+    # until the week rolls over; filter on a status column if that ever matters.
+    games_total, games_final = (
+        db.query(func.count(Game.id), func.sum(Game.is_processed))
+        .filter(
+            Game.season == season,
+            Game.week == target_week,
+            Game.excluded_from_rankings == False,  # noqa: E712
+        )
+        .one()
+    )
+
     return {
         "week": current_week,
         "season": season,
         "rankings": rankings,
         "total_teams": len(rankings),
         "last_updated": last_updated,
+        "games_total": games_total or 0,
+        "games_final": int(games_final or 0),
     }
 
 
