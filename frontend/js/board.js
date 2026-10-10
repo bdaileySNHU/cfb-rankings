@@ -1135,7 +1135,55 @@
         '<div class="tkr-prob-pct"><span>' + awP + '%</span><span>' + hmP + '%</span></div></div>' +
       '<div class="tkr-spread"><span class="fav">' + esc(favAbbr) + '</span> -' + margin.toFixed(1) + '</div>' +
       '<div class="tkr-conf"><span class="tkr-chip2">' + (CONF[p.confidence] || '—') + '</span></div>' +
+      liveLine(p) +
     '</div>';
+  }
+
+  // ── Live sub-line (live.js / CFBD scoreboard) ──
+  function isLive(p) {
+    var g = window.live && live.find(p.home_team, p.away_team);
+    return g && g.status === 'in_progress' ? 1 : 0;
+  }
+
+  function periodLabel(n) { return n > 4 ? (n === 5 ? 'OT' : (n - 4) + 'OT') : 'Q' + n; }
+
+  // Vegas line from CFBD's home-perspective spread: negative = home favored.
+  function vegasLine(g) {
+    if (g.spread == null) return '';
+    if (g.spread === 0) return 'Vegas PK';
+    return 'Vegas ' + abbrName(g.spread < 0 ? g.home : g.away) + ' -' + Math.abs(g.spread);
+  }
+
+  function weatherText(w) {
+    if (!w || w.temperature == null) return '';
+    return Math.round(w.temperature) + '°' + (w.description ? ' ' + w.description.toLowerCase() : '');
+  }
+
+  function liveLine(p) {
+    var g = window.live && live.find(p.home_team, p.away_team);
+    if (!g) return '';
+    var aw = abbrName(g.away), hm = abbrName(g.home), bits;
+    var score = aw + ' ' + g.away_points + '–' + g.home_points + ' ' + hm;
+    if (g.status === 'in_progress') {
+      var poss = g.possession === 'home' ? hm : g.possession === 'away' ? aw : null;
+      var wp = g.home_win_prob;
+      bits = [
+        '<span class="tkr-live-dot"></span>' + periodLabel(g.period) + ' ' + esc(g.clock || ''),
+        esc(score),
+        poss ? '● ' + esc(poss) + (g.situation ? ' · ' + esc(g.situation) : '') : '',
+        wp != null ? 'CFBD ' + esc(wp >= 0.5 ? hm : aw) + ' ' + (Math.max(wp, 1 - wp) * 100).toFixed(1) + '%' : '',
+      ];
+      return '<div class="tkr-plive is-live">' + bits.filter(Boolean).join(' · ') + '</div>';
+    }
+    if (g.status === 'completed') {
+      var winner = g.home_points > g.away_points ? g.home : g.away;
+      var hit = winner === p.predicted_winner;
+      return '<div class="tkr-plive">FINAL · ' + esc(score) + ' <span class="' + (hit ? 'tkr-hit">✓' : 'tkr-miss">✗') +
+        '</span></div>';
+    }
+    bits = [g.tv, vegasLine(g), g.over_under != null ? 'O/U ' + g.over_under : '', weatherText(g.weather)];
+    var text = bits.filter(Boolean).map(esc).join(' · ');
+    return text ? '<div class="tkr-plive">' + text + '</div>' : '';
   }
 
   // Rows shown before the "show more" cut. A full week runs 60+ games, which
@@ -1147,6 +1195,9 @@
     if (!card) return;
     if (!list || !list.length) { card.classList.add('hidden'); return; }
     set('tkr-preds-meta', 'WK' + list[0].week + ' · ' + list.length + ' GAMES');
+    // Live games float to the top; everything else keeps the API's kickoff
+    // order (Array#sort is stable).
+    list = list.slice().sort(function (a, b) { return isLive(b) - isLive(a); });
     var head = '<div class="tkr-pgrid tkr-phead"><div>MATCHUP</div><div>PROJ</div>' +
       '<div>WIN PROB</div><div>SPREAD</div><div>CONF</div></div>';
     var rows = list.map(predRow);
@@ -1157,7 +1208,11 @@
         '<button type="button" class="tkr-preds-more" id="tkr-preds-more">' +
         'Show ' + rest.length + ' more</button>';
     }
+    // Live refreshes re-render the slate; keep "show more" open if it was.
+    var wasOpen = document.getElementById('tkr-preds-rest');
+    wasOpen = wasOpen && !wasOpen.classList.contains('hidden');
     document.getElementById('tkr-preds-body').innerHTML = body;
+    if (wasOpen) document.getElementById('tkr-preds-rest').classList.remove('hidden');
     var more = document.getElementById('tkr-preds-more');
     if (more) {
       more.addEventListener('click', function () {
@@ -1165,12 +1220,16 @@
         var hidden = restEl.classList.toggle('hidden');
         more.textContent = hidden ? 'Show ' + rest.length + ' more' : 'Show fewer';
       });
+      if (wasOpen) more.textContent = 'Show fewer';
     }
     card.classList.remove('hidden');
   }
 
   function loadPredictions() {
-    api.getPredictions({ nextWeek: true }).then(renderPredictions).catch(function () {});
+    api.getPredictions({ nextWeek: true }).then(function (list) {
+      renderPredictions(list);
+      if (window.live) live.poll(function () { renderPredictions(list); });
+    }).catch(function () {});
   }
 
   // ── Projected playoff bracket ──

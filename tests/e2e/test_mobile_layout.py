@@ -1,10 +1,9 @@
 """
 Phone-width layout checks.
 
-The header carries the brand plus the menu button, the season select and the
-theme pill. The select shipped unstyled, so it rendered at the width of its
-longest option and pushed the theme pill past the right edge of a 390px
-screen. Anything that widens those controls again shows up here as a page
+The header carries the brand plus the menu button and the season select. The
+select shipped unstyled, so it rendered at the width of its longest option and
+pushed the header controls past the right edge of a 390px screen. Anything that widens those controls again shows up here as a page
 that scrolls sideways.
 """
 
@@ -41,6 +40,6 @@ def test_no_horizontal_overflow_on_a_phone(test_db, browser_page, page_file):
     page.evaluate("window.scrollTo(300, 0)")
     assert page.evaluate("window.scrollX") == 0
 
-    pill = page.locator("#theme-toggle")
-    expect(pill).to_be_visible()
-    assert pill.bounding_box()["x"] + pill.bounding_box()["width"] <= PHONE["width"]
+    right = page.locator(".tkr-header-right")
+    expect(right).to_be_visible()
+    assert right.bounding_box()["x"] + right.bounding_box()["width"] <= PHONE["width"]

@@ -75,11 +75,18 @@ const preamble = `
   var CONF = { High: 'HIGH' };
   var set = function (id, txt) { document.getElementById(id).textContent = txt; };
   var PRED_VISIBLE = ${PRED_VISIBLE};
+  var window = global.window;
+  var live = global.live;
 `;
+// live.js stand-in: tests flip LIVE to mark games in progress.
+const LIVE = {};
+global.live = { find: (home) => LIVE[home] || null };
+global.window = { live: global.live };
 
 const { renderPredictions } = new Function(
   'var ENTRIES = [], IDS = null;' + extract('idOf') + extract('teamLink') +
-  preamble + extract('predRow') + extract('renderPredictions') +
+  preamble + extract('predRow') + extract('renderPredictions') + extract('isLive') +
+  extract('liveLine') + extract('periodLabel') + extract('vegasLine') + extract('weatherText') +
   'return { renderPredictions: renderPredictions };'
 )();
 
@@ -130,5 +137,17 @@ assert.strictEqual(more.textContent, 'Show ' + (total - PRED_VISIBLE) + ' more')
 // ── An empty week hides the card entirely ──
 renderPredictions([]);
 assert.ok(els['tkr-preds'].classList.contains('hidden'), 'no games means no card');
+
+// ── Live games float to the top; the rest keep kickoff order ──
+LIVE['Home7'] = { status: 'in_progress', home: 'Home7', away: 'Away7', period: 2, clock: '5:00',
+                  home_points: 7, away_points: 3, home_line_scores: [], away_line_scores: [] };
+LIVE['Home3'] = { status: 'completed', home: 'Home3', away: 'Away3', home_points: 28, away_points: 21 };
+// Names render abbreviated, so tag each row by its projected away score.
+renderPredictions(games(8).map((g, i) => Object.assign(g, { predicted_away_score: i })));
+body = els['tkr-preds-body'].innerHTML;
+const order = (body.match(/tkr-proj">(\d+)-/g) || []).map((m) => Number(m.match(/(\d+)-/)[1]));
+assert.deepStrictEqual(order, [7, 0, 1, 2, 3, 4, 5, 6], 'the live game leads, then kickoff order resumes');
+assert.ok(body.indexOf('is-live') !== -1, 'live row carries its sub-line');
+assert.ok(/FINAL[^<]*AWA 21–28 HOM/.test(body), 'finished games show the final score');
 
 console.log('prediction table truncation self-check passed (' + PRED_VISIBLE + ' visible)');
