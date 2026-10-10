@@ -1,6 +1,5 @@
 // Shared Ticker chrome (header bar + ticker tape) injected on every page so the
-// markup lives in one place. Runs synchronously via document.currentScript so
-// #theme-toggle exists before theme.js attaches.
+// markup lives in one place. Runs synchronously via document.currentScript.
 //
 // Per-page config via data-attributes on the <script> tag:
 //   data-active="teams.html"   override highlighted nav link
@@ -74,9 +73,6 @@
           '<button class="tkr-burger" id="tkr-burger" aria-label="Menu" aria-expanded="false">&#9776;</button>' +
           '<nav class="tkr-nav">' + navLinks + '</nav>' +
           seasonWrap +
-          '<button type="button" class="theme-pill" id="theme-toggle" aria-label="Toggle theme" aria-pressed="false">' +
-            '<span class="seg seg-sun" aria-hidden="true">☀</span><span class="seg seg-moon" aria-hidden="true">☾</span>' +
-          '</button>' +
         '</div>' +
       '</div>' +
     '</header>' + tape;

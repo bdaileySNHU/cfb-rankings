@@ -38,8 +38,6 @@
 @media (max-width: 700px) { .tkr-countdown { display: none; } }
 .tkr-header-right { display: flex; align-items: center; gap: 18px; min-width: 0; }
 .tkr-nav { display: flex; gap: 14px; min-width: 0; overflow: hidden; }
-/* Theme pill must always stay reachable — never let the nav squeeze it off-screen */
-.theme-pill { flex-shrink: 0; }
 /* Season selector (layout.js). Same pill geometry as the column preset in the
    filter bar, so the page has one control shape. Left unstyled it renders at
    the width of its longest option — "2026 Season (Current)" — which on a phone
@@ -65,20 +63,6 @@
 }
 .tkr-burger:hover { color: var(--fg); }
 
-/* Theme pill (sun | moon) */
-.theme-pill {
-  display: flex; border: 1px solid var(--line-strong); border-radius: 20px; padding: 3px; cursor: pointer;
-  /* Reset the UA button styles - this is a <button> for the keyboard and for
-     assistive tech, not for its default chrome. */
-  background: none; font: inherit; color: inherit;
-}
-.theme-pill .seg {
-  width: 24px; height: 22px; border-radius: 16px;
-  display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--fg3);
-}
-.theme-pill[data-active="sun"] .seg-sun,
-.theme-pill[data-active="moon"] .seg-moon { background: var(--accent); color: var(--bg); }
-[data-theme="light"] .theme-pill[data-active="sun"] .seg-sun { color: #fff; }
 
 /* ── Ticker tape (40px) ── */
 .tkr-tape {
@@ -343,6 +327,16 @@
 .tkr-match .stripe { width: 4px; height: 14px; border-radius: 2px; flex-shrink: 0; }
 .tkr-match .at { color: var(--fg3); margin: 0 1px; }
 .tkr-proj { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg); }
+.tkr-pgrid > .tkr-plive { grid-column: 1 / -1; padding: 0 10px 10px; margin-top: -4px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--fg3); overflow-wrap: anywhere; }
+.tkr-plive.is-live { color: var(--fg); }
+.tkr-prow:has(.is-live) { background: var(--accent-dim); }
+.tkr-live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px;
+  background: var(--neg); vertical-align: 1px; animation: tkr-pulse 1.6s ease-in-out infinite; }
+@keyframes tkr-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .tkr-live-dot { animation: none; } }
+.tkr-hit { color: var(--pos); }
+.tkr-miss { color: var(--neg); }
 .tkr-bar { height: 5px; border-radius: 3px; overflow: hidden; display: flex; background: var(--line); }
 .tkr-bar span { display: block; height: 100%; }
 .tkr-prob-pct { display: flex; justify-content: space-between; margin-top: 5px;

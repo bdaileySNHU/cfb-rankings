@@ -667,6 +667,29 @@ class TestBettingLineImport:
         assert import_betting_lines(mock_cfbd_client, test_db, teams, 2025) == 1
         assert test_db.query(BettingLine).filter_by(game_id=post.id).one().spread == -9.0
 
+    def test_over_under_and_moneylines_stored_as_medians(self, test_db, mock_cfbd_client):
+        from src.importers.polls import import_betting_lines
+        from src.models.models import BettingLine
+
+        teams, reg, post = self._setup(test_db, mock_cfbd_client)
+        mock_cfbd_client.get_betting_lines.return_value[0]["lines"] = [
+            {"spread": 3.0, "overUnder": 48.5, "homeMoneyline": 130, "awayMoneyline": -150},
+            {"spread": 3.0, "overUnder": 49.5, "homeMoneyline": 135, "awayMoneyline": -155},
+            {"spread": 3.0, "overUnder": None},
+        ]
+        import_betting_lines(mock_cfbd_client, test_db, teams, 2025)
+
+        r = test_db.query(BettingLine).filter_by(game_id=reg.id).one()
+        assert (r.over_under, r.home_moneyline, r.away_moneyline) == (49.0, 132, -152)
+        # Spread-only providers leave the extras null rather than skipping the game.
+        p = test_db.query(BettingLine).filter_by(game_id=post.id).one()
+        assert (p.spread, p.over_under, p.home_moneyline) == (-7.0, None, None)
+
+        # A moved total alone still counts as an update.
+        mock_cfbd_client.get_betting_lines.return_value[0]["lines"][0]["overUnder"] = 50.5
+        assert import_betting_lines(mock_cfbd_client, test_db, teams, 2025) == 1
+        assert test_db.query(BettingLine).filter_by(game_id=reg.id).one().over_under == 50.0
+
     def test_comparison_grades_vegas_favorite(self, test_db, mock_cfbd_client):
         from src.core.ap_poll_service import calculate_comparison_stats
         from src.importers.polls import import_betting_lines

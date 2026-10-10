@@ -401,7 +401,7 @@ class CFBDClient:
         url = f"{self.BASE_URL}{endpoint}"
         for attempt in range(4):
             try:
-                response = requests.get(url, headers=self.headers, params=params)
+                response = requests.get(url, headers=self.headers, params=params, timeout=(5, 30))
                 # Record before any early exit — a 429 still carries the header,
                 # and that is exactly when the real number matters most.
                 record_calllimit_remaining(response)
@@ -600,6 +600,22 @@ class CFBDClient:
             List of team dictionaries
         """
         return self._get("/teams/fbs", params={"year": year})
+
+    def get_all_teams(self) -> List[Dict]:
+        """Every team CFBD knows, all divisions: ``id`` and ``school`` among others.
+
+        The scoreboard names teams with mascots ("Florida Gators"); this maps
+        its team ids back to the school names our Team rows use.
+        """
+        return self._get("/teams") or []
+
+    def get_scoreboard(self) -> List[Dict]:
+        """Live FBS scoreboard: status, clock, situation, scores, lines, weather.
+
+        One call covers the whole slate. CFBD refreshes it about once a minute
+        (measured 2026-10-10), so polling faster gains nothing.
+        """
+        return self._get("/scoreboard", params={"classification": "fbs"}) or []
 
     def get_games(
         self,

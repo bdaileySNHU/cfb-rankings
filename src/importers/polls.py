@@ -147,9 +147,16 @@ def import_sp_plus_ratings(cfbd: CFBDClient, db, team_objects: dict, year: int, 
     return stored
 
 
+def _median_of(lines: list, key: str):
+    """Median of one field across providers, or None if nobody posted it."""
+    values = [l[key] for l in lines if l.get(key) is not None]
+    return median(values) if values else None
+
+
 def import_betting_lines(cfbd: CFBDClient, db, team_objects: dict, year: int) -> int:
     """
-    Store the consensus (median across providers) closing spread for each game.
+    Store the consensus (median across providers) closing spread for each game,
+    plus over/under and moneylines when providers post them.
 
     Upserts: a line keeps moving until kickoff, and re-running after the game
     settles it on the closing number. Safe to run for past seasons.
@@ -169,9 +176,14 @@ def import_betting_lines(cfbd: CFBDClient, db, team_objects: dict, year: int) ->
     for entry in entries:
         home = team_objects.get(entry.get("homeTeam"))
         away = team_objects.get(entry.get("awayTeam"))
-        spreads = [l["spread"] for l in entry.get("lines") or [] if l.get("spread") is not None]
-        if home and away and spreads:
-            by_matchup.setdefault((home.id, away.id), []).append((entry, median(spreads)))
+        lines = entry.get("lines") or []
+        consensus = {
+            field: _median_of(lines, key)
+            for field, key in (("spread", "spread"), ("over_under", "overUnder"),
+                               ("home_moneyline", "homeMoneyline"), ("away_moneyline", "awayMoneyline"))
+        }
+        if home and away and consensus["spread"] is not None:
+            by_matchup.setdefault((home.id, away.id), []).append((entry, consensus))
 
     existing = {
         bl.game_id: bl
@@ -189,13 +201,17 @@ def import_betting_lines(cfbd: CFBDClient, db, team_objects: dict, year: int) ->
             c for c in candidates
             if c[0].get("seasonType") == "regular" and c[0].get("week") == game.week
         ]
-        _, spread = same_week[0] if same_week else max(candidates, key=lambda c: c[0].get("startDate") or "")
+        _, consensus = same_week[0] if same_week else max(candidates, key=lambda c: c[0].get("startDate") or "")
+        for ml in ("home_moneyline", "away_moneyline"):
+            if consensus[ml] is not None:
+                consensus[ml] = round(consensus[ml])
 
         line = existing.get(game.id)
         if line is None:
-            db.add(BettingLine(game_id=game.id, spread=spread))
-        elif line.spread != spread:
-            line.spread = spread
+            db.add(BettingLine(game_id=game.id, **consensus))
+        elif any(getattr(line, k) != v for k, v in consensus.items()):
+            for k, v in consensus.items():
+                setattr(line, k, v)
         else:
             continue
         stored += 1

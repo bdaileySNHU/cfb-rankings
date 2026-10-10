@@ -36,7 +36,7 @@
 
     /* Responsive: Hide date column on small mobile devices */
     @media (max-width: 480px) {
-      th:nth-child(2),
+      .schedule-table > thead th:nth-child(2),
       td.game-date {
         display: none;
       }
@@ -89,6 +89,31 @@
     .schedule-table tbody tr:last-child td {
       border-bottom: none;
     }
+
+    /* Live games (live.js) expand into a full card across the row. */
+    .schedule-table tr.game-live,
+    .schedule-table tr.game-live:hover { background: var(--accent-dim); cursor: default; }
+    .live-card { display: grid; gap: 10px; font-size: 13px; }
+    .live-head { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline;
+      font-family: var(--font-mono); font-size: 11px; color: var(--fg3); text-transform: uppercase; }
+    .live-head .live-clock { color: var(--fg); font-weight: 700; font-size: 12px; }
+    /* justify-self: grid items stretch by default, which spread the quarters across the row. */
+    .live-lines { border-collapse: collapse; font-family: var(--font-mono); justify-self: start; }
+    /* The schedule table scrolls sideways on phones; keep the card inside the
+       visible width instead of spilling into the scroll area. */
+    @media (max-width: 768px) { .live-card { max-width: calc(100vw - 120px); } }
+    .live-lines th, .live-lines td { padding: 3px 10px 3px 0; border: none; text-align: right;
+      background: transparent; font-size: 12px; }
+    .live-lines th { color: var(--fg3); font-size: 10.5px; font-weight: 600; }
+    .live-lines th:first-child, .live-lines td:first-child { text-align: left; padding-right: 18px; }
+    .live-lines td.live-total { font-weight: 700; color: var(--fg); }
+    .live-poss { color: var(--accent); }
+    .live-sit { color: var(--fg); }
+    .live-play { color: var(--fg2); overflow-wrap: anywhere; }
+    .live-wp { max-width: 420px; }
+    .live-meta, .live-chips { font-family: var(--font-mono); font-size: 11px; color: var(--fg3); }
+    .live-chips { display: block; margin-top: 3px; font-style: normal; }
+    .live-final { color: var(--fg); font-weight: 700; font-family: var(--font-mono); font-style: normal; }
   </style>
 </head>
 <body class="tkr">
@@ -150,6 +175,7 @@
   <script src="js/date-utils.js"></script>
   <script src="js/season.js"></script>
   <script src="js/countdown.js"></script>
+  <script src="js/live.js"></script>
   <script>
     let allGames = [];
     let teams = {};
@@ -179,6 +205,7 @@
 
         populateWeekFilter(allGames);
         displayGames(allGames);
+        live.poll(refreshLiveRows);
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('games-container').classList.remove('hidden');
       } catch (err) {
@@ -220,7 +247,85 @@
         (a.game_date || '').localeCompare(b.game_date || '') ||
         a.id - b.id
       ).forEach(game => {
+        const row = renderRow(game);
+        if (row) tbody.appendChild(row);
+      });
+    }
+
+    // Each live tick swaps only the rows of games CFBD knows about, so the
+    // week filter and scroll position survive.
+    function refreshLiveRows() {
+      document.querySelectorAll('#games-tbody tr[data-game-id]').forEach(old => {
+        const game = allGames.find(g => g.id === Number(old.dataset.gameId));
+        const home = teams[game.home_team_id], away = teams[game.away_team_id];
+        if (isPlayed(game) || !home || !away || !live.find(home.name, away.name)) return;
+        old.replaceWith(renderRow(game));
+      });
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"]/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    }
+
+    function periodLabel(n) { return n > 4 ? (n === 5 ? 'OT' : (n - 4) + 'OT') : 'Q' + n; }
+
+    // CFBD spreads are home-perspective: negative = home favored.
+    function vegasLine(g) {
+      if (g.spread == null) return '';
+      if (g.spread === 0) return 'Vegas PK';
+      return `Vegas ${g.spread < 0 ? g.home : g.away} -${Math.abs(g.spread)}`;
+    }
+
+    function weatherText(w) {
+      if (!w || w.temperature == null) return '';
+      let t = `${Math.round(w.temperature)}°`;
+      if (w.description) t += ` ${w.description.toLowerCase()}`;
+      if (w.wind_speed) t += `, wind ${Math.round(w.wind_speed)} mph`;
+      return t;
+    }
+
+    function mlText(n) { return n == null ? '' : (n > 0 ? '+' : '') + n; }
+
+    function liveCard(g, away, home) {
+      const periods = Math.max(4, g.home_line_scores.length, g.away_line_scores.length);
+      const heads = Array.from({ length: periods }, (_, i) => `<th>${periodLabel(i + 1)}</th>`).join('');
+      const line = (team, scores, pts, side) => `
+        <tr>
+          <td><a href="team.html?id=${team.id}" style="color: var(--fg); text-decoration: none; font-weight: 600;">${esc(team.name)}</a>
+            ${g.possession === side ? '<span class="live-poss" title="Possession">●</span>' : ''}</td>
+          ${Array.from({ length: periods }, (_, i) => `<td>${scores[i] != null ? scores[i] : ''}</td>`).join('')}
+          <td class="live-total">${pts}</td>
+        </tr>`;
+      const wp = g.home_win_prob;
+      const wpBar = wp == null ? '' : `
+        <div class="live-wp">
+          <div class="tkr-bar"><span style="width:${(1 - wp) * 100}%;background:var(--fg2)"></span><span style="width:${wp * 100}%;background:var(--accent)"></span></div>
+          <div class="tkr-prob-pct"><span>${esc(away.name)} ${((1 - wp) * 100).toFixed(1)}%</span><span>CFBD win prob</span><span>${(wp * 100).toFixed(1)}% ${esc(home.name)}</span></div>
+        </div>`;
+      const ml = g.away_ml != null || g.home_ml != null ? `ML ${esc(away.name)} ${mlText(g.away_ml)} / ${esc(home.name)} ${mlText(g.home_ml)}` : '';
+      const meta = [vegasLine(g), g.over_under != null ? `O/U ${g.over_under}` : '', ml,
+                    weatherText(g.weather), g.venue].filter(Boolean).map(esc).join(' · ');
+      return `
+        <div class="live-card">
+          <div class="live-head">
+            <span class="live-clock"><span class="tkr-live-dot"></span>${periodLabel(g.period)} ${esc(g.clock || '')}</span>
+            ${g.tv ? `<span>${esc(g.tv)}</span>` : ''}
+            ${g.situation ? `<span class="live-sit">${esc(g.situation)}</span>` : ''}
+          </div>
+          <table class="live-lines">
+            <thead><tr><th></th>${heads}<th>T</th></tr></thead>
+            <tbody>${line(away, g.away_line_scores, g.away_points, 'away')}${line(home, g.home_line_scores, g.home_points, 'home')}</tbody>
+          </table>
+          ${g.last_play ? `<div class="live-play">Last play: ${esc(g.last_play)}</div>` : ''}
+          ${wpBar}
+          ${meta ? `<div class="live-meta">${meta}</div>` : ''}
+        </div>`;
+    }
+
+    function renderRow(game) {
         const row = document.createElement('tr');
+        row.dataset.gameId = game.id;
 
         // Check if game has been played (see isPlayed in date-utils.js —
         // scheduled games carry placeholder 0-0 scores, not nulls).
@@ -232,7 +337,7 @@
           const loser = game.home_score > game.away_score ? teams[game.away_team_id] : teams[game.home_team_id];
 
           // Skip if teams not found
-          if (!winner || !loser) return;
+          if (!winner || !loser) return null;
 
           const winnerScore = Math.max(game.home_score, game.away_score);
           const loserScore = Math.min(game.home_score, game.away_score);
@@ -259,9 +364,26 @@
           const awayTeam = teams[game.away_team_id];
 
           // Skip if teams not found
-          if (!homeTeam || !awayTeam) return;
+          if (!homeTeam || !awayTeam) return null;
+
+          const lv = live.find(homeTeam.name, awayTeam.name);
+          if (lv && lv.status === 'in_progress') {
+            row.classList.add('game-live');
+            row.innerHTML = `
+              <td style="font-weight: 600; font-family: var(--font-mono); vertical-align: top;">Week ${game.week}</td>
+              <td colspan="6">${liveCard(lv, awayTeam, homeTeam)}</td>`;
+            return row;
+          }
 
           const location = game.is_neutral_site ? 'Neutral Site' : homeTeam.name;
+          // CFBD final that our nightly import has not picked up yet.
+          const middle = lv && lv.status === 'completed'
+            ? `<span class="live-final">FINAL ${lv.away_points}-${lv.home_points}</span>`
+            : 'vs';
+          const chips = lv && lv.status === 'scheduled'
+            ? [lv.tv, vegasLine(lv), lv.over_under != null ? `O/U ${lv.over_under}` : '', weatherText(lv.weather)]
+                .filter(Boolean).map(esc).join(' · ')
+            : '';
 
           // Format game date
           const formattedDate = formatGameDate(game.game_date);
@@ -272,15 +394,14 @@
             <td style="font-weight: 600; font-family: var(--font-mono);">Week ${game.week}</td>
             <td class="game-date" title="${fullDateTime}" style="color: var(--fg2); white-space: nowrap; font-size: 0.9em; font-style: italic;">${formattedDate}</td>
             <td><a href="team.html?id=${awayTeam.id}" style="color: var(--fg2); text-decoration: none;">${awayTeam.name}</a></td>
-            <td style="font-style: italic; color: var(--fg3);">vs</td>
+            <td style="font-style: italic; color: var(--fg3);">${middle}</td>
             <td><a href="team.html?id=${homeTeam.id}" style="color: var(--fg2); text-decoration: none;">${homeTeam.name}</a></td>
-            <td style="color: var(--fg3); font-style: italic;">${location}</td>
+            <td style="color: var(--fg3); font-style: italic;">${location}${chips ? `<span class="live-chips">${chips}</span>` : ''}</td>
             <td style="color: var(--fg3); font-style: italic; font-family: var(--font-mono);">TBD</td>
           `;
         }
 
-        tbody.appendChild(row);
-      });
+        return row;
     }
   </script>
 </body>

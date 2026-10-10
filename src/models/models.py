@@ -805,6 +805,9 @@ class BettingLine(Base):
 
     Unlike SP+, a closing line never changes after kickoff, so rows are
     upserted freely and past seasons can be backfilled.
+
+    ``over_under`` and the moneylines are medians the same way, kept for future
+    model comparisons. Nullable: not every provider posts them.
     """
 
     __tablename__ = "betting_lines"
@@ -812,6 +815,9 @@ class BettingLine(Base):
     id = Column(Integer, primary_key=True, index=True)
     game_id = Column(Integer, ForeignKey("games.id"), nullable=False, unique=True, index=True)
     spread = Column(Float, nullable=False)
+    over_under = Column(Float, nullable=True)
+    home_moneyline = Column(Integer, nullable=True)
+    away_moneyline = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
