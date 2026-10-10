@@ -43,6 +43,7 @@ load_dotenv()
 from src.api.routers import (
     admin,
     games,
+    live,
     meta,
     predictions,
     rankings,
@@ -101,6 +102,7 @@ async def startup_event():
 app.include_router(meta.router)
 app.include_router(teams.router)
 app.include_router(games.router)
+app.include_router(live.router)
 app.include_router(predictions.router)
 app.include_router(rankings.router)
 app.include_router(seasons.router)

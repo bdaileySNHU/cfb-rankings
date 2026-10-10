@@ -343,6 +343,16 @@
 .tkr-match .stripe { width: 4px; height: 14px; border-radius: 2px; flex-shrink: 0; }
 .tkr-match .at { color: var(--fg3); margin: 0 1px; }
 .tkr-proj { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg); }
+.tkr-pgrid > .tkr-plive { grid-column: 1 / -1; padding: 0 10px 10px; margin-top: -4px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--fg3); overflow-wrap: anywhere; }
+.tkr-plive.is-live { color: var(--fg); }
+.tkr-prow:has(.is-live) { background: var(--accent-dim); }
+.tkr-live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px;
+  background: var(--neg); vertical-align: 1px; animation: tkr-pulse 1.6s ease-in-out infinite; }
+@keyframes tkr-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .tkr-live-dot { animation: none; } }
+.tkr-hit { color: var(--pos); }
+.tkr-miss { color: var(--neg); }
 .tkr-bar { height: 5px; border-radius: 3px; overflow: hidden; display: flex; background: var(--line); }
 .tkr-bar span { display: block; height: 100%; }
 .tkr-prob-pct { display: flex; justify-content: space-between; margin-top: 5px;
