@@ -162,7 +162,7 @@
   function distinguish(awayMeta, homeColor, opts) {
     opts = opts || {};
     var lightTheme = opts.light !== undefined ? opts.light : isLightTheme();
-    var o = { light: lightTheme };
+    var o = { light: lightTheme, surface: opts.surface };
     var home = readable(homeColor, o);
 
     var away = readable((awayMeta && awayMeta.primary) || '', o);
@@ -176,7 +176,7 @@
     }
 
     // 3. Shift lightness, keeping hue so it still reads as the team's colour.
-    var surface = parseHex(lightTheme ? LIGHT_SURFACE : DARK_SURFACE);
+    var surface = parseHex(opts.surface || (lightTheme ? LIGHT_SURFACE : DARK_SURFACE));
     var hsl = rgbToHsl(parseHex(away));
     for (var dir = 0; dir < 2; dir++) {
       var step = dir === 0 ? (lightTheme ? 0.03 : -0.03) : (lightTheme ? -0.03 : 0.03);

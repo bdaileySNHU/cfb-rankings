@@ -1186,6 +1186,34 @@
     return text ? '<div class="tkr-plive">' + text + '</div>' : '';
   }
 
+  // ── Live game cards above the slate (game-card.js) ──
+  // Ranked games first, then the closest by live win probability. Capped so a
+  // full Saturday doesn't push the board off the page; the rest are on Games.
+  var LIVE_CARDS = 3;
+
+  function renderLiveCards(list) {
+    var box = document.getElementById('tkr-live');
+    if (!box || !window.GameCard || !window.live) return;
+    var rankOf = function (name) {
+      var e = ENTRIES.filter(function (x) { return x.team_name === name; })[0];
+      return e && e.rank <= 25 ? e.rank : null;
+    };
+    var best = function (p) { return Math.min(rankOf(p.home_team) || 99, rankOf(p.away_team) || 99); };
+    var closeness = function (g) { return g.home_win_prob == null ? 1 : Math.abs(g.home_win_prob - 0.5); };
+    var games = list.filter(isLive).map(function (p) { return { p: p, g: live.find(p.home_team, p.away_team) }; })
+      .sort(function (a, b) { return best(a.p) - best(b.p) || closeness(a.g) - closeness(b.g); });
+    if (!games.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+    var age = live.age();
+    var html = games.slice(0, LIVE_CARDS).map(function (x) {
+      return GameCard.front(x.g, { meta: metaOf, rank: rankOf, pred: x.p, age: age,
+                                   href: 'games.html#game-' + x.p.game_id });
+    }).join('');
+    var more = games.length - LIVE_CARDS;
+    if (more > 0) html += '<p class="gc-more"><a href="games.html">' + more + ' more live game' + (more > 1 ? 's' : '') + ' on the Games page →</a></p>';
+    box.innerHTML = html;
+    box.classList.remove('hidden');
+  }
+
   // Rows shown before the "show more" cut. A full week runs 60+ games, which
   // buries the bracket below it.
   var PRED_VISIBLE = 15;
@@ -1228,7 +1256,7 @@
   function loadPredictions() {
     api.getPredictions({ nextWeek: true }).then(function (list) {
       renderPredictions(list);
-      if (window.live) live.poll(function () { renderPredictions(list); });
+      if (window.live) live.poll(function () { renderPredictions(list); renderLiveCards(list || []); });
     }).catch(function () {});
   }
 

@@ -1,6 +1,6 @@
 // Live game data from /api/live (CFBD scoreboard behind a 60s server cache).
-// Reuses the global `api` (api.js). Exposes `live.find(home, away)` and
-// `live.poll(onUpdate)`.
+// Reuses the global `api` (api.js). Exposes `live.find(home, away)`,
+// `live.poll(onUpdate)` and `live.age()` (ms since the last good fetch).
 (function () {
   'use strict';
   var REFRESH_MS = 60000;           // CFBD refreshes the scoreboard about once a minute
@@ -8,6 +8,7 @@
   var games = [];
   var listeners = [];
   var timer = null;
+  var lastOk = Date.now();
 
   function key(home, away) { return home + '|' + away; }
   var byKey = {};
@@ -41,8 +42,10 @@
       games = list || [];
       byKey = {};
       games.forEach(function (g) { byKey[key(g.home, g.away)] = g; });
-      listeners.forEach(function (fn) { fn(); });
+      lastOk = Date.now();
     }).catch(function () {}).then(function () {
+      // Failures notify too, so cards can say how stale they are.
+      listeners.forEach(function (fn) { fn(); });
       var d = nextDelay();
       if (d != null) timer = setTimeout(load, d);
     });
@@ -53,5 +56,7 @@
     if (listeners.length === 1) load(); else onUpdate();
   }
 
-  window.live = { find: find, poll: poll };
+  function age() { return Date.now() - lastOk; }
+
+  window.live = { find: find, poll: poll, age: age };
 })();

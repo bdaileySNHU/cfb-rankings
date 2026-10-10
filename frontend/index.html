@@ -28,6 +28,7 @@
   <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/components/board.css">
+  <link rel="stylesheet" href="css/components/game-card.css">
 </head>
 <body class="tkr">
   <!-- Ticker header + tape injected by layout.js -->
@@ -65,6 +66,9 @@
         <a href="elo-formula.html">full methodology</a>.
       </p>
 
+      <!-- Live game cards (board.js + game-card.js; hidden when nothing is live) -->
+      <section class="gc-stack hidden" id="tkr-live" aria-label="Live games"></section>
+
       <!-- Game predictions (rendered by board.js; hidden until loaded) -->
       <details class="tkr-preds-card hidden" id="tkr-preds" open>
         <summary>
@@ -98,6 +102,7 @@
   <script src="js/api.js"></script>
   <script src="js/team-visuals.js"></script>
   <script src="js/live.js"></script>
+  <script src="js/game-card.js"></script>
   <script src="js/board.js"></script>
   <script src="js/countdown.js"></script>
 </body>
