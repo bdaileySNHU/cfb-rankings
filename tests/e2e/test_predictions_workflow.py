@@ -388,3 +388,38 @@ class TestPredictionsUserWorkflow:
 
             # Assert - Back at rankings
             expect(page).to_have_url(f"{base_url}/frontend/index.html")
+
+
+@pytest.mark.e2e
+@pytest.mark.slow
+def test_games_page_defaults_to_current_week_with_live_games_first(test_db, browser_page):
+    """Opens on the week being played, not the whole season, and floats the
+    in-progress game above earlier kickoffs."""
+    import json
+    from datetime import datetime
+
+    from factories import GameFactory, SeasonFactory, TeamFactory, configure_factories
+
+    configure_factories(test_db)
+    SeasonFactory(year=2026, current_week=6, is_active=True)
+    t = [TeamFactory(name=n) for n in ("Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot")]
+    GameFactory(home_team=t[0], away_team=t[1], season=2026, week=5, home_score=24, away_score=10,
+                is_processed=True, game_date=datetime(2026, 10, 3, 16))
+    GameFactory(home_team=t[2], away_team=t[3], season=2026, week=6, home_score=0, away_score=0,
+                is_processed=False, game_date=datetime(2026, 10, 10, 16))
+    GameFactory(home_team=t[4], away_team=t[5], season=2026, week=6, home_score=0, away_score=0,
+                is_processed=False, game_date=datetime(2026, 10, 10, 20))
+    test_db.commit()
+
+    page, base_url = browser_page
+    live = [{"home": "Echo", "away": "Foxtrot", "status": "in_progress", "period": 1, "clock": "9:00",
+             "home_points": 7, "away_points": 0, "home_line_scores": [7], "away_line_scores": [0]}]
+    page.route("**/api/live", lambda r: r.fulfill(content_type="application/json", body=json.dumps(live)))
+    page.goto(f"{base_url}/frontend/games.html")
+    page.wait_for_selector("tr.game-live")
+
+    assert page.locator("#week-filter").input_value() == "6"
+    rows = page.locator("#games-tbody > tr")
+    assert rows.count() == 2, "week 5's final should be filtered out"
+    expect(rows.first).to_have_class("game-live")
+    expect(rows.nth(1)).to_contain_text("Charlie")

@@ -187,8 +187,10 @@
 
     async function loadGames() {
       try {
-        // Fetch active season from API
-        const activeSeason = await api.getActiveSeason();
+        // Year and current week; the week picks the default filter below.
+        const season = await api.fetch('/seasons/active')
+          .catch(() => ({ year: new Date().getFullYear(), current_week: null }));
+        const activeSeason = season.year;
 
         const [gamesData, teamsData] = await Promise.all([
           fetchAllGames(activeSeason),
@@ -204,8 +206,11 @@
         teamsData.forEach(t => teams[t.id] = t);
 
         populateWeekFilter(allGames);
-        displayGames(allGames);
-        live.poll(refreshLiveRows);
+        document.getElementById('week-filter').value = defaultWeek(allGames, season.current_week);
+        filterGames();
+        // One week is ~60 rows, so each live tick just redraws it; that also
+        // moves games that just kicked off to the top.
+        live.poll(filterGames);
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('games-container').classList.remove('hidden');
       } catch (err) {
@@ -229,6 +234,17 @@
         weeks.map(w => `<option value="${w}">Week ${w}</option>`).join('');
     }
 
+    // The week being played or up next: the earliest week, from the season's
+    // current week on, that still has unplayed games. current_week keeps a
+    // stray never-processed game from an old week from pinning the default.
+    function defaultWeek(games, currentWeek) {
+      const pending = games
+        .filter(g => !isPlayed(g) && (currentWeek == null || g.week >= currentWeek))
+        .map(g => g.week);
+      if (pending.length) return String(Math.min(...pending));
+      return currentWeek != null ? String(currentWeek) : '';
+    }
+
     function filterGames() {
       const week = document.getElementById('week-filter').value;
       const filtered = week ? allGames.filter(g => g.week === parseInt(week)) : allGames;
@@ -243,6 +259,7 @@
       // but this is mostly a forward schedule now. game_date breaks ties within a
       // week; the few rows CFBD has not timed yet fall back to id.
       games.sort((a, b) =>
+        isLive(b) - isLive(a) ||
         a.week - b.week ||
         (a.game_date || '').localeCompare(b.game_date || '') ||
         a.id - b.id
@@ -252,15 +269,11 @@
       });
     }
 
-    // Each live tick swaps only the rows of games CFBD knows about, so the
-    // week filter and scroll position survive.
-    function refreshLiveRows() {
-      document.querySelectorAll('#games-tbody tr[data-game-id]').forEach(old => {
-        const game = allGames.find(g => g.id === Number(old.dataset.gameId));
-        const home = teams[game.home_team_id], away = teams[game.away_team_id];
-        if (isPlayed(game) || !home || !away || !live.find(home.name, away.name)) return;
-        old.replaceWith(renderRow(game));
-      });
+    // In progress per CFBD and not yet final in our data.
+    function isLive(game) {
+      const home = teams[game.home_team_id], away = teams[game.away_team_id];
+      const lv = home && away && !isPlayed(game) && live.find(home.name, away.name);
+      return lv && lv.status === 'in_progress' ? 1 : 0;
     }
 
     function esc(s) {
