@@ -41,8 +41,10 @@
   var seasonWrap = showSeason
     ? '<select id="nav-season-select" class="tkr-season" aria-label="Season"></select>' : '';
 
+  // All tapes pin together as one block under the header.
   var tape = isBoard
-    ? '<div class="tkr-tape"><div class="tkr-tape-inner">' +
+    ? '<div class="tkr-tapes">' +
+      '<div class="tkr-tape"><div class="tkr-tape-inner">' +
       '<div class="tkr-live">RANK</div>' +
       '<div class="tkr-tape-viewport"><div class="tkr-tape-track" id="tkr-tape-track"></div></div>' +
       '</div></div>' +
@@ -53,7 +55,8 @@
       '</div></div>' +
       // "What changed this week" tape; board.js renderWhatChanged() fills it and
       // leaves it hidden in the preseason, when there is nothing to compare.
-      '<section class="tkr-tape tkr-tape-changed hidden" id="tkr-changed" aria-label="What changed this week"></section>'
+      '<section class="tkr-tape tkr-tape-changed hidden" id="tkr-changed" aria-label="What changed this week"></section>' +
+      '</div>'
     : '';
 
   var html =

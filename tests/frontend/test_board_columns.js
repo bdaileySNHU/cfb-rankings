@@ -164,7 +164,8 @@ console.log(`grid column self-check passed (${GRIDS.length} grids, ${totalChecke
 // explicit column preset) therefore turn the sticky heading into a block parked
 // on top of the first row. The sticky rule must stay scoped out of both, and its
 // offset must clear the sticky chrome above it: the 60px header and its border,
-// then the 40px ticker tape and its own.
+// then the three pinned 40px tapes (border-box, so the border is inside the 40),
+// or two in the preseason while the what-changed tape is hidden.
 {
   const stickyRule = /@media \(min-width:\s*769px\)\s*\{\s*#tkr-board\[data-view="all"\]\s+\.tkr-head\s*\{([^}]*)\}/
     .exec(css);
@@ -180,13 +181,18 @@ console.log(`grid column self-check passed (${GRIDS.length} grids, ${totalChecke
     assert.ok(rule, `could not read the height of ${selector}`);
     return Number(rule[1]);
   };
-  // Each contributes its height plus a 1px bottom border.
-  const expected = heightOf('.tkr-header-inner') + 1 + heightOf('.tkr-tape') + 1;
+  // Measured in Chromium: tapes block ends at 181px, or 141px in the preseason.
+  const header = heightOf('.tkr-header-inner') + 1;
+  const expected = header + 3 * heightOf('.tkr-tape');
   assert.strictEqual(
     Number(top[1]), expected,
-    `sticky heading offset should be ${expected}px (header + tape + their borders), ` +
-    `found ${top[1]}px — it would sit behind the ticker tape`
+    `sticky heading offset should be ${expected}px (header + three tapes), ` +
+    `found ${top[1]}px — it would sit behind the ticker tapes`
   );
+  const preseason = /body:has\(#tkr-changed\.hidden\)[^{]*\.tkr-head\s*\{[^}]*top:\s*(\d+)px/.exec(css);
+  assert.ok(preseason, 'need a preseason offset for when the what-changed tape is hidden');
+  assert.strictEqual(Number(preseason[1]), header + 2 * heightOf('.tkr-tape'),
+    'preseason sticky offset should clear the header and two tapes');
 
   // The base rule must not re-introduce stickiness outside that media query.
   const baseHead = /\.tkr-head\s*\{([^}]*)\}/.exec(withoutMediaBlocks(css));
