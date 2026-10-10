@@ -393,8 +393,8 @@ class TestPredictionsUserWorkflow:
 @pytest.mark.e2e
 @pytest.mark.slow
 def test_games_page_defaults_to_current_week_with_live_games_first(test_db, browser_page):
-    """Opens on the week being played, not the whole season, and floats the
-    in-progress game above earlier kickoffs."""
+    """Opens on the week being played, not the whole season, and lifts the
+    in-progress game out of the table into a card above it."""
     import json
     from datetime import datetime
 
@@ -416,10 +416,10 @@ def test_games_page_defaults_to_current_week_with_live_games_first(test_db, brow
              "home_points": 7, "away_points": 0, "home_line_scores": [7], "away_line_scores": [0]}]
     page.route("**/api/live", lambda r: r.fulfill(content_type="application/json", body=json.dumps(live)))
     page.goto(f"{base_url}/frontend/games.html")
-    page.wait_for_selector("tr.game-live")
+    page.wait_for_selector("#live-cards .gc-games")
 
     assert page.locator("#week-filter").input_value() == "6"
+    expect(page.locator("#live-cards .gc-games")).to_contain_text("Echo")
     rows = page.locator("#games-tbody > tr")
-    assert rows.count() == 2, "week 5's final should be filtered out"
-    expect(rows.first).to_have_class("game-live")
-    expect(rows.nth(1)).to_contain_text("Charlie")
+    assert rows.count() == 1, "week 5's final is filtered out; the live game is a card"
+    expect(rows.first).to_contain_text("Charlie")
