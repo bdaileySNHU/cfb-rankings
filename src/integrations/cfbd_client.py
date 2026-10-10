@@ -401,7 +401,7 @@ class CFBDClient:
         url = f"{self.BASE_URL}{endpoint}"
         for attempt in range(4):
             try:
-                response = requests.get(url, headers=self.headers, params=params)
+                response = requests.get(url, headers=self.headers, params=params, timeout=(5, 30))
                 # Record before any early exit — a 429 still carries the header,
                 # and that is exactly when the real number matters most.
                 record_calllimit_remaining(response)
