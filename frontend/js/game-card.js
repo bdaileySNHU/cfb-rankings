@@ -313,7 +313,10 @@
           (poss && spot ? '<span class="gc-dir">' + (spot.dir > 0 ? esc(poss.abbr) + ' DRIVING →' : '← ' + esc(poss.abbr) + ' DRIVING') + '</span>' : '');
       } else {
         var st = specialTeams(g);
-        if (st) sitLine = '<span class="gc-dd">' + st + '</span>';
+        // CFBD drops situation and possession for some games, sometimes for
+        // whole quarters. Say so rather than leave a gap that looks broken.
+        sitLine = st ? '<span class="gc-dd">' + st + '</span>'
+                     : '<span class="gc-na">Field position unavailable</span>';
       }
       if (sitLine && changed('sit|' + g.home + '|' + g.away, g.situation || '')) {
         announce(t.away.abbr + ' at ' + t.home.abbr + ': ' + (g.situation || ''));
