@@ -114,6 +114,7 @@ a.gc:focus-visible { outline: 3px solid var(--gc-accent); outline-offset: 3px; }
 .gc-sit { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .gc-dd { font-family: var(--font-mono); font-size: 30px; font-weight: 700; color: var(--gc-accent); }
 .gc-spot { font-size: 16px; color: var(--gc-text-2); }
+.gc-na { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gc-label); }
 .gc-dir { margin-left: auto; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; color: var(--gc-label); }
 
 .gc-field { position: relative; display: grid; grid-template-columns: repeat(12, 1fr); height: 96px;

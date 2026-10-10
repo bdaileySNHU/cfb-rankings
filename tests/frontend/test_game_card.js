@@ -94,4 +94,7 @@ assert.ok(liveHtml.includes('Houston ball, 4th and 1 at the Kansas State 20, dri
 assert.ok(!GC.games(Object.assign({}, base, { status: 'in_progress', clock: '00:00', period: 2 }), ctx).includes('gc-field'),
   'no field at halftime');
 
+const blank = GC.games(Object.assign({}, base, { status: 'in_progress', situation: null, possession: null, last_play: 'Timeout Texas' }), ctx);
+assert.ok(blank.includes('Field position unavailable') && !blank.includes('gc-field'), 'missing situation says so');
+
 console.log('game card: ok');
