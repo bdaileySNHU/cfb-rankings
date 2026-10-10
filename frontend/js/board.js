@@ -1140,6 +1140,11 @@
   }
 
   // ── Live sub-line (live.js / CFBD scoreboard) ──
+  function isLive(p) {
+    var g = window.live && live.find(p.home_team, p.away_team);
+    return g && g.status === 'in_progress' ? 1 : 0;
+  }
+
   function periodLabel(n) { return n > 4 ? (n === 5 ? 'OT' : (n - 4) + 'OT') : 'Q' + n; }
 
   // Vegas line from CFBD's home-perspective spread: negative = home favored.
@@ -1190,6 +1195,9 @@
     if (!card) return;
     if (!list || !list.length) { card.classList.add('hidden'); return; }
     set('tkr-preds-meta', 'WK' + list[0].week + ' · ' + list.length + ' GAMES');
+    // Live games float to the top; everything else keeps the API's kickoff
+    // order (Array#sort is stable).
+    list = list.slice().sort(function (a, b) { return isLive(b) - isLive(a); });
     var head = '<div class="tkr-pgrid tkr-phead"><div>MATCHUP</div><div>PROJ</div>' +
       '<div>WIN PROB</div><div>SPREAD</div><div>CONF</div></div>';
     var rows = list.map(predRow);
