@@ -84,9 +84,9 @@
 .tkr-tape {
   background: var(--bg); border-bottom: 1px solid var(--line);
   height: 40px; display: flex; align-items: stretch; overflow: hidden;
-  /* Sits directly under the header bar (60px + its 1px border), sticky at 0. */
-  position: sticky; top: 61px; z-index: 49;
 }
+/* The tapes pin as one block directly under the header bar (60px + its 1px border). */
+.tkr-tapes { position: sticky; top: 61px; z-index: 49; }
 .tkr-tape-inner { max-width: 1240px; margin: 0 auto; width: 100%; display: flex; align-items: stretch; }
 .tkr-live {
   width: 54px; flex-shrink: 0; background: var(--accent); color: var(--bg);
@@ -108,11 +108,9 @@
 .tkr-tick .ab { color: var(--fg2); }
 .tkr-tick .el { color: var(--fg); font-weight: 600; }
 
-/* Lower tapes (Elo, what changed) scroll away with the page rather than
-   stacking more sticky bars under the header. Durations are tuned so each
-   tape moves at a slightly different speed (~3.2s, ~2.8s, ~3.4s per tick):
-   in lockstep, the stacked tapes read as one block. */
-.tkr-tape-elo, .tkr-tape-changed { position: static; }
+/* Lower tapes (Elo, what changed) get a muted badge. Durations are tuned so
+   each tape moves at a slightly different speed (~3.2s, ~2.8s, ~3.4s per
+   tick): in lockstep, the stacked tapes read as one block. */
 .tkr-tape-elo .tkr-live, .tkr-tape-changed .tkr-live {
   background: var(--panel); color: var(--fg2); border-right: 1px solid var(--line);
 }
@@ -188,7 +186,8 @@
 
 /* Sticky column headings, so the column a number belongs to stays on screen
    while scrolling a 130-row board. Offset clears the sticky chrome above it:
-   the 60px header plus its 1px border, then the 40px ticker tape plus its own.
+   the 61px header, then three 40px tapes - two while the what-changed tape is
+   hidden in the preseason.
    Scoped deliberately - see the note on .tkr-table's overflow below. Both
    conditions that turn .tkr-table into a horizontal scroll container are
    excluded, because sticky inside one resolves against the table's own
@@ -196,8 +195,9 @@
    first row instead of pinning it to the top of the screen. */
 @media (min-width: 769px) {
   #tkr-board[data-view="all"] .tkr-head {
-    position: sticky; top: 102px; z-index: 5;
+    position: sticky; top: 181px; z-index: 5;
   }
+  body:has(#tkr-changed.hidden) #tkr-board[data-view="all"] .tkr-head { top: 141px; }
 }
 .tkr-head > div { padding: 9px 11px; position: relative; }
 .tkr-row { border-bottom: 1px solid var(--line); cursor: pointer; transition: background 0.12s ease; }
