@@ -77,8 +77,11 @@ effective_rating = (1 - w) * elo_rating + w * efficiency_rating
 
 - `EFFICIENCY_WEIGHT` is 0 — the kill switch
 - the team has no PPA data (preseason, FCS, uncovered team)
-- the week is below `EFFICIENCY_MIN_WEEK` (4) — adjusted PPA is unstable on a
+- the week is below `EFFICIENCY_MIN_WEEK` (3) — adjusted PPA is unstable on a
   handful of games and CFBD's opponent adjustment has little schedule network yet
+
+From week 3 the weight phases in per `EFFICIENCY_RAMP`: 40% of `w` in week 3, 80%
+in week 4, full `w` from week 5 (10% → 20% → 25% at the default).
 - fewer than 20 rated teams exist, or either signal has no spread to standardize
 - anything at all goes wrong reading the population — the blend is an enhancement,
   never a hard dependency of prediction
@@ -161,6 +164,13 @@ where it ends up, not reaching 0.9 until week 9. That argued for raising
 beats 6, 8 and 10 at every weight, and 10 is consistently the worst. Noisy early
 efficiency still carries more information than the preseason-dominated ELO it is
 being blended against. The gate stays at 4.
+
+**Phase-in (2026-09-27).** Switching straight to 25% at week 4 moved teams that had
+not played (Alabama −32 on a bye in 2026). A chained 2022–25 replay (2,980 games)
+compared 11 schedules: every ramp lands within noise of the step (about ±0.0001
+Brier on 0.19), and only pure ELO is clearly worse (+0.0016). Starting a week
+earlier helps a hair; reaching 25% at week 5 or week 6 makes no difference. With
+accuracy unable to choose, smoothness does: 10% week 3, 20% week 4, 25% from week 5.
 
 ---
 

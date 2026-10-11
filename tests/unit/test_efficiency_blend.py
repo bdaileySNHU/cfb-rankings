@@ -69,6 +69,18 @@ class TestBlendRating:
         assert blend_rating(1700.0, 1500.0, week=10) == pytest.approx(1600.0)
         assert blend_rating(1700.0, 1500.0, week=6) == 1700.0
 
+    def test_default_weight_phases_in(self):
+        """10% -> 20% -> 25% at weeks 3, 4, 5+ (default weight 0.25)."""
+        assert blend_rating(1700.0, 1500.0, week=2) == 1700.0
+        assert blend_rating(1700.0, 1500.0, week=3) == pytest.approx(1680.0)
+        assert blend_rating(1700.0, 1500.0, week=4) == pytest.approx(1660.0)
+        assert blend_rating(1700.0, 1500.0, week=5) == pytest.approx(1650.0)
+        assert blend_rating(1700.0, 1500.0) == pytest.approx(1650.0)  # season-end snapshot
+
+    def test_explicit_weight_skips_the_ramp(self):
+        """The backtest harness sweeps weights; it must get exactly what it asks for."""
+        assert blend_rating(1700.0, 1500.0, weight=0.25, week=3, min_week=3) == pytest.approx(1650.0)
+
     def test_effective_rating_agrees_with_blend_rating(self, blend_on):
         """effective_rating must be blend_rating plus data lookup, nothing more."""
         team = make_team(elo=1700.0, offense_ppa=0.1, defense_ppa=0.0)
