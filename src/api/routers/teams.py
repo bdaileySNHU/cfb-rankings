@@ -300,7 +300,9 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
                 result = "W" if game.away_score > game.home_score else "L"
                 score_str = f"{result} {game.away_score}-{game.home_score}"
 
-        opponent_rank = rank_lookup.get((opponent.id, game.week))
+        # Snapshot week N is taken after week N's games, so rank entering
+        # the game is week N-1 (week 0 = preseason).
+        opponent_rank = rank_lookup.get((opponent.id, game.week - 1))
 
         schedule_games.append(
             {
