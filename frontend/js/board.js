@@ -84,7 +84,8 @@
   // d = rank_change (prevRank - rank). >0 up, <0 down, 0 flat.
   function trendClass(d) { return d > 0 ? 'trend-pos' : d < 0 ? 'trend-neg' : 'trend-flat'; }
   function trendVar(d) { return d > 0 ? '--pos' : d < 0 ? '--neg' : '--fg3'; }
-  function deltaText(d) { if (d == null) return '—'; if (d === 0) return '0'; return d > 0 ? '+' + d : String(d); }
+  // Arrows, not +/-: sat next to a rating, "+3" reads as rating points.
+  function deltaText(d) { if (d == null || d === 0) return '–'; return (d > 0 ? '▲' : '▼') + Math.abs(d); }
   function fmtElo(v) { return Math.round(v).toString(); }
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {

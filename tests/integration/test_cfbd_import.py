@@ -522,8 +522,30 @@ class TestSPPlusSnapshotImport:
 
     def _teams(self, test_db, mock_cfbd_client):
         from import_real_data import import_teams
+        from src.models.models import Game
 
-        return import_teams(mock_cfbd_client, test_db, year=2025)
+        teams = import_teams(mock_cfbd_client, test_db, year=2025)
+        # Snapshots are only taken for weeks with games still to play.
+        for week in (1, 2, 3):
+            test_db.add(Game(home_team_id=teams["Alabama"].id, away_team_id=teams["Georgia"].id,
+                             home_score=0, away_score=0, week=week, season=2025, is_processed=False))
+        test_db.commit()
+        return teams
+
+    def test_finished_week_is_not_snapshotted(self, test_db: Session, mock_cfbd_client):
+        """Once every game in a week is played, today's SP+ has seen them all"""
+        from src.importers.polls import import_sp_plus_ratings
+        from src.models.models import Game
+
+        team_objects = self._teams(test_db, mock_cfbd_client)
+        test_db.query(Game).filter_by(season=2025, week=1).update({Game.is_processed: True})
+        test_db.commit()
+        mock_cfbd_client.get_sp_ratings.return_value = [
+            {"team": "Alabama", "rating": 25.0, "ranking": 1},
+        ]
+
+        assert import_sp_plus_ratings(mock_cfbd_client, test_db, team_objects, 2025, 1) == 0
+        mock_cfbd_client.get_sp_ratings.assert_not_called()
 
     def test_stores_ratings_for_the_week(self, test_db: Session, mock_cfbd_client):
         """A fresh week records one row per matched FBS team"""
