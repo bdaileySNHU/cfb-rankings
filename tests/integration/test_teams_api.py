@@ -640,6 +640,26 @@ class TestGetTeamSchedule:
         assert 1 in game_weeks
         assert 2 in game_weeks
 
+    def test_get_team_schedule_opponent_rank_is_pregame(
+        self, test_client: TestClient, test_db: Session
+    ):
+        """Opponent rank comes from the snapshot before the game, not after it"""
+        configure_factories(test_db)
+        SeasonFactory(year=2024, is_active=True)
+        team = TeamFactory(name="Oregon")
+        opponent = TeamFactory(name="Boise State")
+        GameFactory(
+            home_team=team, away_team=opponent, season=2024, week=1, home_score=34, away_score=27
+        )
+        RankingHistoryFactory(team=opponent, season=2024, week=0, rank=49)
+        RankingHistoryFactory(team=opponent, season=2024, week=1, rank=63)
+        test_db.commit()
+
+        response = test_client.get(f"/api/teams/{team.id}/schedule?season=2024")
+
+        assert response.status_code == 200
+        assert response.json()["games"][0]["opponent_rank"] == 49
+
     def test_get_team_schedule_empty(self, test_client: TestClient, test_db: Session):
         """Test getting schedule for team with no games"""
         # Arrange
