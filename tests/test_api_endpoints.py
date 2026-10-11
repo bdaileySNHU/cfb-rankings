@@ -659,3 +659,25 @@ class TestAPIDocumentation:
         # At least some of these tags should be present
         # (exact tags may vary based on implementation)
         assert "Predictions" in str(schema) or "Rankings" in str(schema)
+
+
+def test_rankings_compare_joins_elo_ap_sp(client, test_db):
+    from src.models.models import APPollRanking, RankingHistory, SPPlusRating
+
+    test_db.add(Season(year=2025, current_week=5, is_active=True))
+    a = Team(name="Alpha", conference="P5")
+    b = Team(name="Beta", conference="P5")
+    test_db.add_all([a, b])
+    test_db.flush()
+    for rank, (t, elo) in enumerate(((a, 1700), (b, 1600)), start=1):
+        test_db.add(RankingHistory(team_id=t.id, season=2025, week=5, rank=rank, elo_rating=elo, wins=0, losses=0, sos=0, sos_rank=1))
+    test_db.add(APPollRanking(season=2025, week=4, rank=3, team_id=b.id))
+    test_db.add(SPPlusRating(season=2025, week=5, team_id=a.id, ranking=2, rating=20.0))
+    test_db.add(SPPlusRating(season=2025, week=6, team_id=a.id, ranking=9, rating=1.0))  # future: ignored
+    test_db.commit()
+
+    data = client.get("/api/rankings/compare?season=2025").json()
+    assert (data["week"], data["ap_week"], data["sp_week"]) == (5, 4, 5)
+    rows = {r["team_name"]: r for r in data["teams"]}
+    assert rows["Alpha"]["elo_rank"] == 1 and rows["Alpha"]["sp_rank"] == 2 and rows["Alpha"]["ap_rank"] is None
+    assert rows["Beta"]["elo_rank"] == 2 and rows["Beta"]["ap_rank"] == 3 and rows["Beta"]["sp_rank"] is None

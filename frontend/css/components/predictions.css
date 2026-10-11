@@ -684,3 +684,16 @@
 }
 
 
+
+/* Rankings side by side (comparison page) */
+.rank-compare-wrap { overflow-x: auto; max-height: 640px; overflow-y: auto; }
+.rank-compare { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 13px; }
+.rank-compare th { position: sticky; top: 0; background: var(--panel); border-bottom: 1px solid var(--line); text-align: right; }
+.rank-compare th:first-child, .rank-compare td:first-child { text-align: left; font-family: var(--font-sans); }
+.rank-compare th button { all: unset; cursor: pointer; padding: 9px 11px; font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--fg3); }
+.rank-compare th[aria-sort="ascending"] button::after { content: " ▲"; }
+.rank-compare th[aria-sort="descending"] button::after { content: " ▼"; }
+.rank-compare th button:focus-visible { outline: 2px solid var(--fg2); }
+.rank-compare td { padding: 7px 11px; border-bottom: 1px solid var(--line); text-align: right; color: var(--fg); }
+.rank-compare td a { color: var(--fg); font-weight: 600; text-decoration: none; }
+.rank-compare tbody tr:hover { background: var(--panel2); }

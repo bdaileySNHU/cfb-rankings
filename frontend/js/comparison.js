@@ -77,6 +77,7 @@ async function loadComparisonData(season = null) {
     displayPostseasonStats(comparison);  // EPIC-COMPARISON-BOWL-PLAYOFF
     displayAccuracyChart(comparison);
     displayDisagreements(comparison);
+    loadRankCompare(selectedSeason).catch(err => console.error("Rank compare failed:", err));
 
   } catch (error) {
     console.error('Error in loadComparisonData:', error);
@@ -424,3 +425,63 @@ function showError(message) {
     </div>
   `;
 }
+
+/**
+ * Rankings side by side: ELO vs AP vs SP+, sortable by any column.
+ * Diff = other rank - ELO rank, so positive means we rate the team higher.
+ */
+let rankCompareRows = [];
+let rankCompareSort = { key: 'elo_rank', dir: 1 };
+
+async function loadRankCompare(season) {
+  const data = await api.getRankingsComparison(season);
+  rankCompareRows = data.teams.map(t => ({
+    ...t,
+    ap_diff: t.ap_rank && t.elo_rank ? t.ap_rank - t.elo_rank : null,
+    sp_diff: t.sp_rank && t.elo_rank ? t.sp_rank - t.elo_rank : null,
+  }));
+  const weeks = [`ELO wk ${data.week}`];
+  if (data.ap_week != null) weeks.push(`AP wk ${data.ap_week}`);
+  if (data.sp_week != null) weeks.push(`SP+ wk ${data.sp_week}`);
+  document.getElementById('rank-compare-note').textContent =
+    `Our rank next to the AP Poll and SP+ (${weeks.join(' · ')}). Click a column to sort.`;
+  renderRankCompare();
+}
+
+function renderRankCompare() {
+  const { key, dir } = rankCompareSort;
+  // Blanks (unranked) always sink to the bottom, whichever direction.
+  const rows = [...rankCompareRows].sort((a, b) => {
+    const x = a[key], y = b[key];
+    if (x == null) return y == null ? 0 : 1;
+    if (y == null) return -1;
+    return (typeof x === 'string' ? x.localeCompare(y) : x - y) * dir;
+  });
+  const cell = v => (v == null ? '<span style="color: var(--fg3)">—</span>' : v);
+  const diff = v => {
+    if (v == null) return cell(null);
+    const color = v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : 'var(--fg3)';
+    return `<span style="color: ${color}">${v > 0 ? '+' : ''}${v}</span>`;
+  };
+  document.getElementById('rank-compare-body').innerHTML = rows.map(r => `
+    <tr>
+      <td><a href="team.html?id=${r.team_id}">${r.team_name}</a></td>
+      <td>${cell(r.elo_rank)}</td>
+      <td>${cell(r.ap_rank)}</td>
+      <td>${diff(r.ap_diff)}</td>
+      <td>${cell(r.sp_rank)}</td>
+      <td>${diff(r.sp_diff)}</td>
+    </tr>`).join('');
+  document.querySelectorAll('.rank-compare th').forEach(th => {
+    const k = th.querySelector('button').dataset.sort;
+    th.setAttribute('aria-sort', k === key ? (dir > 0 ? 'ascending' : 'descending') : 'none');
+  });
+}
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.rank-compare th button');
+  if (!btn) return;
+  const key = btn.dataset.sort;
+  rankCompareSort = { key, dir: rankCompareSort.key === key ? -rankCompareSort.dir : 1 };
+  renderRankCompare();
+});
