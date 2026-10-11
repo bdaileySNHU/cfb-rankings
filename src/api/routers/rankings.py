@@ -15,7 +15,7 @@ from src.core.ranking_service import RankingService, project_playoff_bracket
 from src.core.season_simulation import load_cached_projection, refresh_projection
 from src.models import schemas
 from src.models.database import get_db
-from src.models.models import Game, RankingHistory, Season, Team
+from src.models.models import APPollRanking, Game, RankingHistory, Season, SPPlusRating, Team
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -217,6 +217,52 @@ async def get_rankings(
         "games_total": games_total or 0,
         "games_final": int(games_final or 0),
     }
+
+
+@router.get("/api/rankings/compare", tags=["Rankings"])
+async def compare_rankings(season: int, db: Session = Depends(get_db)):
+    """ELO rank beside the latest AP and SP+ ranks, one row per team.
+
+    Rows are our top 25 plus every team AP or SP+ ranks. Each source uses its
+    latest snapshot at or before the season's current week.
+    """
+    season_obj = db.query(Season).filter(Season.year == season).first()
+    week = season_obj.current_week if season_obj else 0
+
+    elo = RankingService(db).get_current_rankings(season, week=week)
+    elo_by_team = {r["team_id"]: r for r in elo}
+
+    def latest(model):
+        w = (
+            db.query(func.max(model.week))
+            .filter(model.season == season, model.week <= week)
+            .scalar()
+        )
+        rows = db.query(model).filter(model.season == season, model.week == w).all() if w is not None else []
+        return w, {r.team_id: r for r in rows}
+
+    ap_week, ap = latest(APPollRanking)
+    sp_week, sp = latest(SPPlusRating)
+
+    team_ids = {r["team_id"] for r in elo[:25]} | ap.keys() | sp.keys()
+    names = dict(db.query(Team.id, Team.name).filter(Team.id.in_(team_ids)).all()) if team_ids else {}
+
+    rows = []
+    for tid in team_ids:
+        e = elo_by_team.get(tid)
+        rows.append({
+            "team_id": tid,
+            "team_name": e["team_name"] if e else names.get(tid),
+            "conference_name": e["conference_name"] if e else None,
+            "elo_rank": e["rank"] if e else None,
+            "elo_rating": e["elo_rating"] if e else None,
+            "ap_rank": ap[tid].rank if tid in ap else None,
+            "sp_rank": sp[tid].ranking if tid in sp else None,
+            "sp_rating": sp[tid].rating if tid in sp else None,
+        })
+    rows.sort(key=lambda r: r["elo_rank"] or 999)
+
+    return {"season": season, "week": week, "ap_week": ap_week, "sp_week": sp_week, "teams": rows}
 
 
 @router.get("/api/rankings/history", response_model=List[schemas.RankingHistory], tags=["Rankings"])

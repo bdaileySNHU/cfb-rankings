@@ -212,6 +212,31 @@
         </div>
       </div>
 
+      <!-- Ranking Comparison Table -->
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+          <h2 class="card-title">Rankings Side by Side</h2>
+          <p id="rank-compare-note" style="color: var(--fg2); margin-top: 0.5rem; font-size: 0.9rem;">
+            Our rank next to the AP Poll and SP+. Click a column to sort.
+          </p>
+        </div>
+        <div class="rank-compare-wrap" style="padding: 0 1.5rem 1.5rem;">
+          <table class="rank-compare">
+            <thead>
+              <tr>
+                <th><button data-sort="team_name">Team</button></th>
+                <th><button data-sort="elo_rank">ELO</button></th>
+                <th><button data-sort="ap_rank">AP</button></th>
+                <th><button data-sort="ap_diff">ELO vs AP</button></th>
+                <th><button data-sort="sp_rank">SP+</button></th>
+                <th><button data-sort="sp_diff">ELO vs SP+</button></th>
+              </tr>
+            </thead>
+            <tbody id="rank-compare-body"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Accuracy Over Time Chart -->
       <div class="card" style="margin-bottom: 2rem;">
         <div class="card-header">
