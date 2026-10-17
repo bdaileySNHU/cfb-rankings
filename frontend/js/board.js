@@ -626,6 +626,8 @@
   function openDetail(e) {
     var m = metaOf(e.team_name);
     var d = e.rank_change;
+    var swing = eloSwing(e);
+    swing = swing == null ? null : Math.round(swing);
     var winpct = (e.wins + e.losses) ? Math.round((e.wins / (e.wins + e.losses)) * 100) + '%' : '—';
     
     // Find CFP seed in playoff projection
@@ -676,6 +678,7 @@
     var badgeRow = '';
     if (e.rank) {
       badgeRow += '<span class="badge-rank">No. ' + e.rank + '</span>';
+      if (d) badgeRow += '<span class="badge-rank-delta ' + trendClass(d) + '">' + deltaText(d) + '</span>';
     }
     if (e.conference_name) {
       badgeRow += '<span class="badge-conf">' + esc(TeamVisuals.confLabel(e.conference_name)) + '</span>';
@@ -696,7 +699,7 @@
         '<div class="elo-sidebar">' +
           '<div class="elo-label">RATING</div>' +
           '<div class="elo-value">' + fmtElo(e.elo_rating) + '</div>' +
-          '<div class="delta-row ' + trendClass(d) + '">' + deltaText(d) + ' WK</div>' +
+          '<div class="delta-row ' + trendClass(swing) + '">' + deltaText(swing) + ' WK</div>' +
         '</div>' +
       '</div>' +
       
