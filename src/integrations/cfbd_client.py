@@ -381,6 +381,13 @@ class CFBDClient:
 
     BASE_URL = "https://api.collegefootballdata.com"
 
+    # CFBD has outages where requests time out or return 5xx for minutes at a
+    # time. _get retries those with these waits. Once this many requests in a
+    # row have exhausted their retries the API is treated as down and later
+    # requests fail fast, so a long outage can't stall a run for hours.
+    TRANSIENT_RETRY_WAITS = (5, 15, 30)
+    MAX_CONSECUTIVE_FAILURES = 3
+
     def __init__(self, api_key: Optional[str] = None):
         """
         Initialize CFBD client
@@ -393,10 +400,11 @@ class CFBDClient:
         self.headers = {}
         if self.api_key:
             self.headers["Authorization"] = f"Bearer {self.api_key}"
+        self._consecutive_failures = 0
 
     @track_api_usage
     def _get(self, endpoint: str, params: dict = None) -> dict:
-        """Make GET request to CFBD API with retry on 429 rate limit."""
+        """Make GET request to CFBD API with retry on 429 and transient errors."""
         import time
         url = f"{self.BASE_URL}{endpoint}"
         for attempt in range(4):
@@ -411,8 +419,24 @@ class CFBDClient:
                     time.sleep(wait)
                     continue
                 response.raise_for_status()
+                self._consecutive_failures = 0
                 return response.json()
             except requests.exceptions.RequestException as e:
+                status = getattr(e.response, "status_code", None)
+                transient = isinstance(
+                    e, (requests.exceptions.Timeout, requests.exceptions.ConnectionError)
+                ) or (status is not None and status >= 500)
+                if (
+                    transient
+                    and attempt < len(self.TRANSIENT_RETRY_WAITS)
+                    and self._consecutive_failures < self.MAX_CONSECUTIVE_FAILURES
+                ):
+                    wait = self.TRANSIENT_RETRY_WAITS[attempt]
+                    print(f"API Error: {e}. Retrying in {wait}s ({attempt + 1}/3)...")
+                    time.sleep(wait)
+                    continue
+                if transient:
+                    self._consecutive_failures += 1
                 print(f"API Error: {e}")
                 return None
         print(f"API Error: 429 rate limit persists after retries for {endpoint}")
