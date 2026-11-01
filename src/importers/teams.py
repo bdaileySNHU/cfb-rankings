@@ -34,11 +34,6 @@ def import_teams(cfbd: CFBDClient, db, year: int):
     recruiting_data = cfbd.get_recruiting_rankings(year) or []
     recruiting_map = {r["team"]: r["rank"] for r in recruiting_data if "team" in r and "rank" in r}
 
-    # Fetch talent ratings
-    print("Fetching talent composite...")
-    talent_data = cfbd.get_team_talent(year) or []
-    talent_map = {t["school"]: t["talent"] for t in talent_data if "school" in t and "talent" in t}
-
     # Fetch returning production (EPIC-025)
     # API returns percentPPA (decimal 0.0-1.0) for overall returning production
     print("Fetching returning production...")
