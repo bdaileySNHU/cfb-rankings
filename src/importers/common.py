@@ -1,8 +1,7 @@
 """Shared helpers for the CFBD import pipeline."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from src.integrations.cfbd_client import CFBDClient
 from sqlalchemy import and_, or_
 
 from src.models.models import ConferenceType, Game, Prediction, Team
@@ -70,7 +69,7 @@ def parse_game_date(game_data: dict) -> datetime:
         try:
             # CFBD uses ISO 8601 format with Z suffix (UTC)
             parsed = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-            return parsed.astimezone(timezone.utc).replace(tzinfo=None)
+            return parsed.astimezone(UTC).replace(tzinfo=None)
         except (ValueError, AttributeError):
             pass
     # Return None for unscheduled games instead of showing wrong date

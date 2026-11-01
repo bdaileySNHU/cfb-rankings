@@ -52,7 +52,8 @@ from sqlalchemy.orm import relationship
 Base = declarative_base()
 
 
-class ConferenceType(str, enum.Enum):
+# ponytail: StrEnum would change str()/format() output (value, not "ConferenceType.X"); kept as-is.
+class ConferenceType(str, enum.Enum):  # noqa: UP042
     """Conference classification for college football teams.
 
     Defines the three major tiers of college football conferences used

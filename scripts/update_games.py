@@ -54,7 +54,7 @@ def update_games(db, cfbd: CFBDClient, season: int, start_week: int, end_week: i
         games_data = cfbd.get_games(season, week=week, season_type="regular")
 
         if not games_data:
-            print(f"  No games found")
+            print("  No games found")
             continue
 
         week_imported = 0
@@ -167,7 +167,7 @@ def main():
     start_week_input = input(f"Start week (default: {current_week + 1}): ").strip()
     start_week = int(start_week_input) if start_week_input else (current_week + 1)
 
-    end_week_input = input(f"End week (default: 15): ").strip()
+    end_week_input = input("End week (default: 15): ").strip()
     end_week = int(end_week_input) if end_week_input else 15
 
     season_input = input(f"Season (default: {season}): ").strip()

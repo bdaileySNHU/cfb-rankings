@@ -73,7 +73,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Import college football data from CFBD API",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=f"""
+        epilog="""
 Examples:
   # Incremental update (default) - import new data without resetting database
   python3 import_real_data.py
@@ -139,13 +139,13 @@ Examples:
     if args.max_week:
         print(f"  → Using max week override: {max_week}")
     if args.validate_only:
-        print(f"  → VALIDATE-ONLY MODE: No database changes will be made")
+        print("  → VALIDATE-ONLY MODE: No database changes will be made")
     if args.strict:
-        print(f"  → STRICT MODE: Will fail on validation warnings")
+        print("  → STRICT MODE: Will fail on validation warnings")
     if args.reset:
-        print(f"  → RESET MODE: Database will be wiped and rebuilt")
+        print("  → RESET MODE: Database will be wiped and rebuilt")
     else:
-        print(f"  → INCREMENTAL MODE: New data will be added to existing database")
+        print("  → INCREMENTAL MODE: New data will be added to existing database")
     print()
 
     # Initialize database
@@ -299,7 +299,7 @@ Examples:
 
     print()
     print("=" * 80)
-    print(f"✓ Import Complete!")
+    print("✓ Import Complete!")
     print(f"  - {len(team_objects)} teams imported")
     print(f"  - {import_stats['imported']} FBS games imported")
     if import_stats.get("fcs_imported", 0) > 0:

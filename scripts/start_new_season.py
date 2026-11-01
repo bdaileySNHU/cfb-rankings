@@ -15,14 +15,13 @@ Usage:
 
 import os
 import sys
-from datetime import datetime
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from src.core.ranking_service import RankingService
 from src.models.database import SessionLocal
 from src.models.models import Game, RankingHistory, Season, Team
-from src.core.ranking_service import RankingService
 
 
 def validate_new_season(db, season_year: int):
@@ -62,7 +61,7 @@ def archive_previous_season(db, season_year: int, dry_run: bool = True):
     previous_season = db.query(Season).filter(Season.year == previous_year).first()
 
     if not previous_season:
-        print(f"⚠️  No previous season to archive")
+        print("⚠️  No previous season to archive")
         return
 
     print(f"\nArchiving {previous_year} season:")
@@ -72,7 +71,7 @@ def archive_previous_season(db, season_year: int, dry_run: bool = True):
     if not dry_run:
         previous_season.is_active = False
         db.commit()
-        print(f"  ✅ Archived (set is_active=False)")
+        print("  ✅ Archived (set is_active=False)")
     else:
         print(f"  [DRY RUN] Would archive season {previous_year} (set is_active=False)")
 
@@ -93,8 +92,8 @@ def create_new_season(db, season_year: int, dry_run: bool = True):
     # current_week tracks the last week we *processed*, so a season with no
     # results yet is week 0. Seeding 1 made the site claim week 1 was already
     # in the books and pushed "next week" predictions past the opener.
-    print(f"  - Starting week: 0 (preseason)")
-    print(f"  - Active: True")
+    print("  - Starting week: 0 (preseason)")
+    print("  - Active: True")
 
     if not dry_run:
         new_season = Season(year=season_year, current_week=0, is_active=True)
@@ -147,8 +146,6 @@ def save_preseason_rankings(db, season_year: int, dry_run: bool = True):
     if dry_run:
         print(f"\n[DRY RUN] Would save preseason rankings for {season_year} (Week 0)")
         return
-
-    ranking_service = RankingService(db)
 
     print(f"\nSaving preseason rankings for {season_year} (Week 0):")
 
@@ -289,8 +286,8 @@ def main():
             print()
             print("Next steps:")
             print(f"  1. Import games for {args.season}")
-            print(f"  2. Process weekly results")
-            print(f"  3. Run weekly updates")
+            print("  2. Process weekly results")
+            print("  3. Run weekly updates")
         print("=" * 80)
 
     except Exception as e:

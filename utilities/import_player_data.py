@@ -65,7 +65,7 @@ def check_api_quota(force: bool = False) -> bool:
 
     if projected_percentage > 90:
         print(f"\n⚠ WARNING: Import would use {projected_percentage:.1f}% of monthly quota")
-        print(f"  This may impact other operations this month")
+        print("  This may impact other operations this month")
 
         if not force:
             print("\n  Run with --force to proceed anyway")
@@ -265,7 +265,7 @@ def verify_import(db, year: int):
     )
 
     if sample_players:
-        print(f"\n  Top 5 recruits (by ranking):")
+        print("\n  Top 5 recruits (by ranking):")
         for player in sample_players:
             stars = f"{player.stars}★" if player.stars else "N/A"
             rank = f"#{player.ranking}" if player.ranking else "Unranked"
@@ -377,8 +377,8 @@ def main():
             # Next steps
             print("\nNext steps:")
             print(f"  1. Verify data: sqlite3 cfb_rankings.db 'SELECT COUNT(*) FROM players WHERE recruiting_year={args.year};'")
-            print(f"  2. Check position strength: python utilities/calculate_position_strength.py --team Georgia")
-            print(f"  3. Enable feature: Edit src/core/position_weights.json, set enabled=true")
+            print("  2. Check position strength: python utilities/calculate_position_strength.py --team Georgia")
+            print("  3. Enable feature: Edit src/core/position_weights.json, set enabled=true")
 
         sys.exit(0)
 

@@ -4,7 +4,6 @@ Auto-extracted from the former monolithic main.py during the EPIC-043
 backend modularization. Route paths and handler logic are unchanged.
 """
 import logging
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -17,7 +16,7 @@ from src.models.models import Season
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.get("/api/seasons", response_model=List[schemas.SeasonResponse], tags=["Seasons"])
+@router.get("/api/seasons", response_model=list[schemas.SeasonResponse], tags=["Seasons"])
 async def get_seasons(db: Session = Depends(get_db)):
     """Get all seasons sorted by year (most recent first).
 

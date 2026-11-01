@@ -16,9 +16,7 @@ import argparse
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
-
-from sqlalchemy import func
+from typing import Any
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -28,7 +26,7 @@ sys.path.insert(0, str(project_root))
 from src.core.ap_poll_service import calculate_comparison_stats
 from src.core.ranking_service import RankingService
 from src.models.database import SessionLocal
-from src.models.models import APPollRanking, Game, Prediction, RankingHistory, Season, Team
+from src.models.models import Game, Prediction, RankingHistory, Season, Team
 
 
 class SeasonStatistics:
@@ -36,11 +34,11 @@ class SeasonStatistics:
 
     def __init__(self, season: int):
         self.season = season
-        self.final_rankings: List[Dict[str, Any]] = []
-        self.prediction_stats: Dict[str, Any] = {}
-        self.ap_comparison: Dict[str, Any] = {}
-        self.conference_stats: List[Dict[str, Any]] = []
-        self.top_performers: Dict[str, List[Dict[str, Any]]] = {}
+        self.final_rankings: list[dict[str, Any]] = []
+        self.prediction_stats: dict[str, Any] = {}
+        self.ap_comparison: dict[str, Any] = {}
+        self.conference_stats: list[dict[str, Any]] = []
+        self.top_performers: dict[str, list[dict[str, Any]]] = {}
 
     def to_markdown(self) -> str:
         """Generate comprehensive markdown summary."""
@@ -203,7 +201,7 @@ class SeasonStatistics:
         return "\n".join(lines)
 
 
-def calculate_final_rankings(db: Any, season: int) -> List[Dict[str, Any]]:
+def calculate_final_rankings(db: Any, season: int) -> list[dict[str, Any]]:
     """Calculate final frozen rankings for all teams."""
     print("Calculating final rankings...")
 
@@ -238,7 +236,7 @@ def calculate_final_rankings(db: Any, season: int) -> List[Dict[str, Any]]:
     return final_rankings
 
 
-def store_final_snapshot(db: Any, season: int, rankings: List[Dict[str, Any]]) -> None:
+def store_final_snapshot(db: Any, season: int, rankings: list[dict[str, Any]]) -> None:
     """Store final rankings snapshot in ranking_history table."""
     print("Storing final rankings snapshot...")
 
@@ -274,7 +272,7 @@ def store_final_snapshot(db: Any, season: int, rankings: List[Dict[str, Any]]) -
     print(f"✓ Stored final snapshot for week {final_week}")
 
 
-def calculate_prediction_accuracy(db: Any, season: int) -> Dict[str, Any]:
+def calculate_prediction_accuracy(db: Any, season: int) -> dict[str, Any]:
     """Calculate overall prediction accuracy statistics."""
     print("Calculating prediction accuracy...")
 
@@ -338,7 +336,7 @@ def calculate_prediction_accuracy(db: Any, season: int) -> Dict[str, Any]:
     }
 
 
-def calculate_ap_comparison(db: Any, season: int) -> Dict[str, Any]:
+def calculate_ap_comparison(db: Any, season: int) -> dict[str, Any]:
     """Calculate AP Poll comparison statistics."""
     print("Calculating AP Poll comparison...")
 
@@ -351,7 +349,7 @@ def calculate_ap_comparison(db: Any, season: int) -> Dict[str, Any]:
         return {}
 
 
-def calculate_conference_stats(db: Any, season: int, rankings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def calculate_conference_stats(db: Any, season: int, rankings: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Calculate conference-level performance metrics."""
     print("Calculating conference statistics...")
 
@@ -403,7 +401,7 @@ def calculate_conference_stats(db: Any, season: int, rankings: List[Dict[str, An
     return conference_stats
 
 
-def identify_top_performers(db: Any, season: int, rankings: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+def identify_top_performers(db: Any, season: int, rankings: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     """Identify top performers in various categories."""
     print("Identifying top performers...")
 

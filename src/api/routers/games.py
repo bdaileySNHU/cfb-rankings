@@ -4,7 +4,6 @@ Auto-extracted from the former monolithic main.py during the EPIC-043
 backend modularization. Route paths and handler logic are unchanged.
 """
 import logging
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -17,12 +16,12 @@ from src.models.models import Game, Team
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.get("/api/games", response_model=List[schemas.Game], tags=["Games"])
+@router.get("/api/games", response_model=list[schemas.Game], tags=["Games"])
 async def get_games(
-    season: Optional[int] = None,
-    week: Optional[int] = None,
-    team_id: Optional[int] = None,
-    processed: Optional[bool] = None,
+    season: int | None = None,
+    week: int | None = None,
+    team_id: int | None = None,
+    processed: bool | None = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),

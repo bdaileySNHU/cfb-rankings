@@ -17,7 +17,6 @@ Part of EPIC-017: Retrospective Prediction Generation
 
 import argparse
 import logging
-import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -466,7 +465,7 @@ def main():
 
         db = SessionLocal()
         try:
-            count = rollback_predictions(db, args.start_time, args.end_time, args.dry_run)
+            rollback_predictions(db, args.start_time, args.end_time, args.dry_run)
             logger.info("=" * 80)
             sys.exit(0)
         except Exception as e:

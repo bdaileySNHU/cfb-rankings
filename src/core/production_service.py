@@ -15,7 +15,6 @@ blend is "production where it exists, recruiting everywhere else".
 Part of: EPIC-040 (Production-Blended Position Strength)
 """
 
-from typing import Dict, List, Optional
 
 # Offensive skill groups whose production comes from PPA (Phase 1).
 PRODUCTION_GROUPS = {"QB", "RB", "WR", "TE"}
@@ -63,7 +62,7 @@ def defensive_impact(stats: dict) -> float:
     return total
 
 
-def compute_percentiles(values: List[float]) -> List[float]:
+def compute_percentiles(values: list[float]) -> list[float]:
     """Map a population of production values onto 0–100 percentile scores.
 
     Uses a rank-based percentile so the result is robust to PPA's arbitrary
@@ -94,7 +93,7 @@ def compute_percentiles(values: List[float]) -> List[float]:
 
 def blend_quality(
     recruiting_score: float,
-    production_score: Optional[float],
+    production_score: float | None,
     weight: float,
 ) -> float:
     """Blend a recruiting score with a production score (both 0–100).

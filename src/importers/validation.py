@@ -135,7 +135,7 @@ def print_duplicate_report(duplicates: list):
     for dup in duplicates:
         print(f"\n{dup['away_team']} @ {dup['home_team']} (Week {dup['week']}, {dup['season']})")
         print(f"  Found {dup['count']} duplicate records:")
-        for game_id, scores in zip(dup["game_ids"], dup["scores"]):
+        for game_id, scores in zip(dup["game_ids"], dup["scores"], strict=False):
             print(f"    - Game ID {game_id}: {scores[1]}-{scores[0]}")
 
     print("\nTo fix duplicates manually:")
@@ -176,7 +176,7 @@ def validate_import_results(db, import_stats: dict, year: int):
     print(f"  Future Games: {future_games}")
 
     # Verify against import stats
-    print(f"\nImport Stats:")
+    print("\nImport Stats:")
     print(f"  FBS Games Imported: {import_stats.get('imported', 0)}")
     print(f"  FCS Games Imported: {import_stats.get('fcs_imported', 0)}")
     print(f"  Future Games Imported: {import_stats.get('future_imported', 0)}")

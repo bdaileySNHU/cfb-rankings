@@ -3,45 +3,38 @@
 Auto-extracted from the former monolithic main.py during the EPIC-043
 backend modularization. Route paths and handler logic are unchanged.
 """
+import json
 import logging
 import os
 import secrets
+import subprocess
+import sys
 from datetime import datetime
-from typing import List, Optional
+from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from src.core.ranking_service import (
     RankingService,
-    generate_predictions,
-    get_overall_prediction_accuracy,
-    get_team_prediction_accuracy,
 )
 from src.models import schemas
 from src.models.database import get_db
 from src.models.models import (
     APIUsage,
-    ConferenceType,
     Game,
-    Prediction,
     RankingHistory,
     Season,
     Team,
     UpdateTask,
     has_been_played,
 )
-import json
-import subprocess
-import sys
-from pathlib import Path
-from fastapi import BackgroundTasks
 
 logger = logging.getLogger(__name__)
 
 
-def require_admin(x_admin_key: Optional[str] = Header(default=None, alias="X-Admin-Key")) -> None:
+def require_admin(x_admin_key: str | None = Header(default=None, alias="X-Admin-Key")) -> None:
     """Reject the request unless X-Admin-Key matches ADMIN_SECRET. Unset secret = all admin routes off."""
     secret = os.environ.get("ADMIN_SECRET", "")
     if not secret or not x_admin_key or not secrets.compare_digest(x_admin_key, secret):
@@ -54,7 +47,6 @@ router = APIRouter(dependencies=[Depends(require_admin)])
 async def replay_postseason_rankings(season: int, db: Session = Depends(get_db)):
     """Replay postseason ELO in-memory from the latest ranking_history snapshot
     and save weekly snapshots for subsequent weeks without touching live team ratings."""
-    from sqlalchemy import text as sa_text3
     from sqlalchemy import func as sa_func
 
     # Find the latest regular-season snapshot (week <= 15)
@@ -98,7 +90,6 @@ async def replay_postseason_rankings(season: int, db: Session = Depends(get_db))
     HOME_ADV = ranking_service.HOME_FIELD_ADVANTAGE
 
     weeks_processed = []
-    current_week = None
     games_by_week: dict = {}
     for g in postseason_games:
         games_by_week.setdefault(g.week, []).append(g)
@@ -248,7 +239,6 @@ async def backfill_season_snapshots(season: int, db: Session = Depends(get_db)):
         games_by_week.setdefault(g.week, []).append(g)
 
     # Pre-compute win/loss counts per team per week using a single bulk query
-    from sqlalchemy import case
     all_results = (
         db.query(
             Game.week,
@@ -269,7 +259,6 @@ async def backfill_season_snapshots(season: int, db: Session = Depends(get_db)):
     from collections import defaultdict
     wins_cumul: dict = defaultdict(lambda: defaultdict(int))
     losses_cumul: dict = defaultdict(lambda: defaultdict(int))
-    max_week = max((g.week for g in processed_games), default=latest_week)
 
     for row in all_results:
         if row.home_score > row.away_score:
@@ -346,7 +335,7 @@ async def backfill_season_snapshots(season: int, db: Session = Depends(get_db)):
 
 
 @router.get("/api/admin/api-usage", response_model=schemas.APIUsageResponse, tags=["Admin"])
-async def get_api_usage(month: Optional[str] = None):
+async def get_api_usage(month: str | None = None):
     """
     Get CFBD API usage statistics for a specific month.
 
@@ -375,7 +364,7 @@ async def get_api_usage(month: Optional[str] = None):
 
         return {**usage_stats, "last_updated": datetime.utcnow()}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve API usage stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve API usage stats: {str(e)}") from e
 
 
 # ============================================================================
@@ -653,7 +642,7 @@ async def update_current_week_manual(year: int, week: int, db: Session = Depends
 @router.get(
     "/api/admin/usage-dashboard", response_model=schemas.UsageDashboardResponse, tags=["Admin"]
 )
-async def get_usage_dashboard(month: Optional[str] = None, db: Session = Depends(get_db)):
+async def get_usage_dashboard(month: str | None = None, db: Session = Depends(get_db)):
     """
     Get comprehensive API usage dashboard data.
 
@@ -826,13 +815,14 @@ async def update_preseason_weights(
         HTTPException 500: If the config file cannot be read or written.
     """
     import json as _json
+
     from src.core.position_service import DEFAULT_CONFIG_PATH
 
     try:
-        with open(DEFAULT_CONFIG_PATH, "r") as f:
+        with open(DEFAULT_CONFIG_PATH) as f:
             config = _json.load(f)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read config: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to read config: {e}") from e
 
     config["previous_season_weight"] = weights.previous_season_weight
     config["mean_regression_factor"] = weights.mean_regression_factor
@@ -842,7 +832,7 @@ async def update_preseason_weights(
         with open(DEFAULT_CONFIG_PATH, "w") as f:
             _json.dump(config, f, indent=2)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to write config: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to write config: {e}") from e
 
     logger.info(
         f"Preseason weights updated: prev_weight={weights.previous_season_weight}, "
@@ -892,7 +882,7 @@ async def get_import_status():
         return schemas.ImportStatus(status="never_run", last_run=None)
 
     try:
-        with open(_IMPORT_LOG_PATH, "r") as f:
+        with open(_IMPORT_LOG_PATH) as f:
             data = json.load(f)
         return schemas.ImportStatus(**data)
     except Exception as e:
@@ -902,8 +892,8 @@ async def get_import_status():
 
 @router.post("/api/admin/import/results", tags=["Admin"])
 async def trigger_import(
-    season: Optional[int] = Query(None, description="Season year (defaults to active season)"),
-    week: Optional[int] = Query(None, description="Specific week to import (imports all weeks if omitted)"),
+    season: int | None = Query(None, description="Season year (defaults to active season)"),
+    week: int | None = Query(None, description="Specific week to import (imports all weeks if omitted)"),
     db: Session = Depends(get_db),
 ):
     """Trigger a live data import from the CFBD API.

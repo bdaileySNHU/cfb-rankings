@@ -4,7 +4,6 @@ Auto-extracted from the former monolithic main.py during the EPIC-043
 backend modularization. Route paths and handler logic are unchanged.
 """
 import logging
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
@@ -24,12 +23,12 @@ from src.models.models import Game, Prediction, RankingHistory, Season, Team
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.get("/api/predictions", response_model=List[schemas.GamePrediction], tags=["Predictions"])
+@router.get("/api/predictions", response_model=list[schemas.GamePrediction], tags=["Predictions"])
 async def get_predictions(
-    week: Optional[int] = Query(None, ge=0, le=20, description="Specific week number (0-20, includes playoffs)"),
-    team_id: Optional[int] = Query(None, ge=1, description="Filter by team ID"),
+    week: int | None = Query(None, ge=0, le=20, description="Specific week number (0-20, includes playoffs)"),
+    team_id: int | None = Query(None, ge=1, description="Filter by team ID"),
     next_week: bool = Query(True, description="Only show next week's games"),
-    season: Optional[int] = Query(None, ge=2020, description="Season year"),
+    season: int | None = Query(None, ge=2020, description="Season year"),
     db: Session = Depends(get_db),
 ):
     """
@@ -141,7 +140,7 @@ async def get_predictions(
         return result
     except Exception as e:
         logger.error(f"Error getting predictions: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error getting predictions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting predictions: {str(e)}") from e
 
 
 @router.get(
@@ -197,7 +196,8 @@ async def get_historical_predictions(
                 if row:
                     return row[0]
                 # No history — fall back to team's current rating
-                return home_team.elo_rating if team_id == home_team.id else away_team.elo_rating
+                # Called right away inside this iteration, so late binding is safe.
+                return home_team.elo_rating if team_id == home_team.id else away_team.elo_rating  # noqa: B023
 
             home_elo = get_elo_at_week(home_team.id)
             away_elo = get_elo_at_week(away_team.id)
@@ -273,7 +273,7 @@ async def get_historical_predictions(
 
     except Exception as e:
         logger.error(f"Error generating historical predictions: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generating historical predictions: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating historical predictions: {e}") from e
 
 
 @router.get(
@@ -282,7 +282,7 @@ async def get_historical_predictions(
     tags=["Predictions"],
 )
 async def get_prediction_accuracy(
-    season: Optional[int] = Query(None, description="Filter by season year"),
+    season: int | None = Query(None, description="Filter by season year"),
     db: Session = Depends(get_db),
 ):
     """
@@ -305,7 +305,7 @@ async def get_prediction_accuracy(
         logger.error(f"Error retrieving prediction accuracy: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Error retrieving prediction accuracy: {str(e)}"
-        )
+        ) from e
 
 
 @router.get(
@@ -315,7 +315,7 @@ async def get_prediction_accuracy(
 )
 async def get_team_prediction_accuracy_endpoint(
     team_id: int,
-    season: Optional[int] = Query(None, description="Filter by season year"),
+    season: int | None = Query(None, description="Filter by season year"),
     db: Session = Depends(get_db),
 ):
     """
@@ -341,16 +341,16 @@ async def get_team_prediction_accuracy_endpoint(
         logger.error(f"Error retrieving team prediction accuracy: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Error retrieving team prediction accuracy: {str(e)}"
-        )
+        ) from e
 
 
 @router.get(
-    "/api/predictions/stored", response_model=List[schemas.StoredPrediction], tags=["Predictions"]
+    "/api/predictions/stored", response_model=list[schemas.StoredPrediction], tags=["Predictions"]
 )
 async def get_stored_predictions(
-    season: Optional[int] = Query(None, description="Filter by season year"),
-    week: Optional[int] = Query(None, ge=0, le=20, description="Filter by week (includes playoffs)"),
-    team_id: Optional[int] = Query(None, description="Filter by team ID"),
+    season: int | None = Query(None, description="Filter by season year"),
+    week: int | None = Query(None, ge=0, le=20, description="Filter by week (includes playoffs)"),
+    team_id: int | None = Query(None, description="Filter by team ID"),
     evaluated_only: bool = Query(False, description="Only return evaluated predictions"),
     db: Session = Depends(get_db),
 ):
@@ -420,14 +420,14 @@ async def get_stored_predictions(
         logger.error(f"Error retrieving stored predictions: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Error retrieving stored predictions: {str(e)}"
-        )
+        ) from e
 
 
 @router.get(
     "/api/predictions/comparison", response_model=schemas.ComparisonStats, tags=["Predictions"]
 )
 async def get_prediction_comparison(
-    season: Optional[int] = Query(None, description="Season year (defaults to active season)"),
+    season: int | None = Query(None, description="Season year (defaults to active season)"),
     db: Session = Depends(get_db),
 ):
     """

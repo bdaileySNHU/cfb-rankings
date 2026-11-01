@@ -44,7 +44,6 @@ Configuration:
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -101,7 +100,7 @@ def _normalize_rating(avg_rating: float) -> float:
     return max(0.0, min(scaled, 100.0))
 
 
-def load_position_weights(config_path: Optional[str] = None) -> Dict:
+def load_position_weights(config_path: str | None = None) -> dict:
     """Load position weights configuration from JSON file.
 
     Reads the position weights configuration file which controls:
@@ -150,7 +149,7 @@ def load_position_weights(config_path: Optional[str] = None) -> Dict:
     if not config_path.exists():
         raise FileNotFoundError(f"Position weights config not found: {config_path}")
 
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         config = json.load(f)
 
     # Validate configuration
@@ -159,7 +158,7 @@ def load_position_weights(config_path: Optional[str] = None) -> Dict:
     return config
 
 
-def _validate_config(config: Dict) -> None:
+def _validate_config(config: dict) -> None:
     """Validate position weights configuration.
 
     Ensures configuration has required fields and valid values.
@@ -205,7 +204,7 @@ def _validate_config(config: Dict) -> None:
             )
 
 
-def resolve_roster_season(db: Session, team_id: int, season: Optional[int]) -> Optional[int]:
+def resolve_roster_season(db: Session, team_id: int, season: int | None) -> int | None:
     """Return the roster snapshot season to score from, or None if unavailable.
 
     If ``season`` is given and a snapshot exists for it, use it. Otherwise fall
@@ -234,9 +233,9 @@ def resolve_roster_season(db: Session, team_id: int, season: Optional[int]) -> O
 def get_position_group_scores(
     team_id: int,
     db: Session,
-    config: Optional[Dict] = None,
-    season: Optional[int] = None,
-) -> Dict[str, float]:
+    config: dict | None = None,
+    season: int | None = None,
+) -> dict[str, float]:
     """Calculate quality scores for each position group on a team.
 
     For each major position group (QB, OL, DL, etc.), calculates a quality score
@@ -334,7 +333,7 @@ def get_position_group_scores(
     return scores
 
 
-def aggregate_player_ratings(players: List[Player], position_group: str) -> float:
+def aggregate_player_ratings(players: list[Player], position_group: str) -> float:
     """Aggregate recruiting ratings for a list of players.
 
     Calculates the average recruiting rating for a group of players,
@@ -372,10 +371,10 @@ def aggregate_player_ratings(players: List[Player], position_group: str) -> floa
 
 def calculate_position_strength(
     team_id: int,
-    weights: Dict[str, float],
+    weights: dict[str, float],
     db: Session,
-    max_bonus: Optional[int] = None,
-    season: Optional[int] = None,
+    max_bonus: int | None = None,
+    season: int | None = None,
 ) -> float:
     """Calculate position strength bonus for a team's preseason rating.
 

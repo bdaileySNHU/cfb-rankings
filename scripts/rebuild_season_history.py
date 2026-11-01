@@ -39,12 +39,12 @@ project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "scripts"))
 
+from backtest_efficiency_blend import build_weekly_efficiency, load_ppa_games  # noqa: E402
 from sqlalchemy import create_engine  # noqa: E402
 from sqlalchemy.orm import sessionmaker  # noqa: E402
 
-from backtest_efficiency_blend import build_weekly_efficiency, load_ppa_games  # noqa: E402
 from src.core.ranking_service import RankingService  # noqa: E402
-from src.models.models import Game, RankingHistory, Team  # noqa: E402
+from src.models.models import Game, Team  # noqa: E402
 
 MAX_SNAPSHOT_WEEK = 20  # 999 is the final-season sentinel; never copied back
 

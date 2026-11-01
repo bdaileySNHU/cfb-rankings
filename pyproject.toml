@@ -24,3 +24,16 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 skip_glob = ["migrations/*", "archive/*", ".venv/*", "venv/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["migrations", "archive"]
+
+[tool.ruff.lint]
+select = ["F", "E9", "B", "UP", "I"]
+# B008: FastAPI Depends()/Query() defaults are the idiom.
+ignore = ["B008"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]

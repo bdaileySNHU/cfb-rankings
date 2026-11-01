@@ -5,14 +5,13 @@ Handles AP Poll prediction logic and comparison with ELO predictions.
 Part of EPIC-010: AP Poll Prediction Comparison.
 """
 
-from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
 from src.models.models import APPollRanking, BettingLine, Game, Prediction, SPPlusRating, Team
 
 
-def get_team_ap_rank(db: Session, team_id: int, season: int, week: int) -> Optional[int]:
+def get_team_ap_rank(db: Session, team_id: int, season: int, week: int) -> int | None:
     """
     Get team's AP Poll rank for a specific week.
 
@@ -46,7 +45,7 @@ def get_team_ap_rank(db: Session, team_id: int, season: int, week: int) -> Optio
     return ranking.rank if ranking else None
 
 
-def get_ap_prediction_for_game(db: Session, game: Game) -> Optional[int]:
+def get_ap_prediction_for_game(db: Session, game: Game) -> int | None:
     """
     Determine AP-implied prediction for a game.
 
@@ -86,7 +85,7 @@ def get_ap_prediction_for_game(db: Session, game: Game) -> Optional[int]:
     return _pick_by_rank(game, home_rank, away_rank)
 
 
-def _pick_by_rank(game: Game, home_rank: Optional[int], away_rank: Optional[int]) -> Optional[int]:
+def _pick_by_rank(game: Game, home_rank: int | None, away_rank: int | None) -> int | None:
     """
     Winner implied by two ranks, where a lower number is the better team.
 
@@ -107,7 +106,7 @@ def _pick_by_rank(game: Game, home_rank: Optional[int], away_rank: Optional[int]
     return None
 
 
-def get_team_sp_rank(db: Session, team_id: int, season: int, week: int) -> Optional[int]:
+def get_team_sp_rank(db: Session, team_id: int, season: int, week: int) -> int | None:
     """
     Get a team's SP+ rank for a week, from the snapshot taken that week.
 
@@ -137,7 +136,7 @@ def get_team_sp_rank(db: Session, team_id: int, season: int, week: int) -> Optio
     return rating.ranking if rating else None
 
 
-def get_sp_prediction_for_game(db: Session, game: Game) -> Optional[int]:
+def get_sp_prediction_for_game(db: Session, game: Game) -> int | None:
     """
     Determine the SP+ implied prediction for a game.
 
@@ -159,7 +158,7 @@ def get_sp_prediction_for_game(db: Session, game: Game) -> Optional[int]:
     return _pick_by_rank(game, home_rank, away_rank)
 
 
-def get_spread_prediction_for_game(db: Session, game: Game) -> Optional[int]:
+def get_spread_prediction_for_game(db: Session, game: Game) -> int | None:
     """
     Vegas pick for a game: the favorite by consensus closing spread.
 
@@ -172,7 +171,7 @@ def get_spread_prediction_for_game(db: Session, game: Game) -> Optional[int]:
     return game.home_team_id if line.spread < 0 else game.away_team_id
 
 
-def _head_to_head(db: Session, games, predict) -> Tuple[int, int, int]:
+def _head_to_head(db: Session, games, predict) -> tuple[int, int, int]:
     """
     Grade ELO and another source over exactly the games the source has a pick for.
 
@@ -195,7 +194,7 @@ def _head_to_head(db: Session, games, predict) -> Tuple[int, int, int]:
     return compared, source_correct, elo_correct
 
 
-def calculate_comparison_stats(db: Session, season: int) -> Dict:
+def calculate_comparison_stats(db: Session, season: int) -> dict:
     """
     Calculate comparison statistics between ELO and AP Poll predictions.
 

@@ -14,7 +14,6 @@ Date: 2025-12-02
 """
 
 from collections import defaultdict
-from typing import Dict, List, Tuple
 
 
 class TransferPortalService:
@@ -30,7 +29,7 @@ class TransferPortalService:
         None: 20,  # Unrated transfer (default to 1-star equivalent)
     }
 
-    def calculate_team_scores(self, transfers: List[Dict]) -> Dict[str, Dict]:
+    def calculate_team_scores(self, transfers: list[dict]) -> dict[str, dict]:
         """
         Calculate transfer portal scores for all teams
 
@@ -73,7 +72,7 @@ class TransferPortalService:
 
         return dict(team_data)
 
-    def rank_teams(self, team_scores: Dict[str, Dict]) -> Dict[str, int]:
+    def rank_teams(self, team_scores: dict[str, dict]) -> dict[str, int]:
         """
         Rank teams based on transfer portal points
 
@@ -101,7 +100,7 @@ class TransferPortalService:
 
         return rankings
 
-    def get_team_stats(self, transfers: List[Dict]) -> Tuple[Dict[str, Dict], Dict[str, int]]:
+    def get_team_stats(self, transfers: list[dict]) -> tuple[dict[str, dict], dict[str, int]]:
         """
         Convenience method to calculate both scores and rankings
 
@@ -116,8 +115,8 @@ class TransferPortalService:
         return team_scores, team_rankings
 
     def get_top_teams(
-        self, transfers: List[Dict], limit: int = 25
-    ) -> List[Tuple[str, int, int, int]]:
+        self, transfers: list[dict], limit: int = 25
+    ) -> list[tuple[str, int, int, int]]:
         """
         Get top N teams by transfer portal ranking
 
@@ -178,7 +177,7 @@ if __name__ == "__main__":
         colorado = team_scores["Colorado"]
         print(f"Total Points: {colorado['points']}")
         print(f"Total Transfers: {colorado['count']}")
-        print(f"Star Breakdown:")
+        print("Star Breakdown:")
         for stars in [5, 4, 3, 2, 1]:
             count = colorado["stars_breakdown"][stars]
             points = count * TransferPortalService.STAR_POINTS[stars]

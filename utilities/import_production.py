@@ -70,10 +70,10 @@ def build_production_percentiles(client: CFBDClient, production_year: int) -> di
             continue
 
     percentile_map = {}
-    for group, pairs in by_group.items():
+    for _group, pairs in by_group.items():
         values = [v for _, v in pairs]
         scores = compute_percentiles(values)
-        for (athlete_id, _), score in zip(pairs, scores):
+        for (athlete_id, _), score in zip(pairs, scores, strict=False):
             percentile_map[athlete_id] = score
     return percentile_map
 
@@ -109,9 +109,9 @@ def build_defensive_percentiles(client: CFBDClient, production_year: int) -> dic
         by_group[group].append((athlete_id, defensive_impact(info["stats"])))
 
     percentile_map = {}
-    for group, pairs in by_group.items():
+    for _group, pairs in by_group.items():
         scores = compute_percentiles([v for _, v in pairs])
-        for (athlete_id, _), score in zip(pairs, scores):
+        for (athlete_id, _), score in zip(pairs, scores, strict=False):
             percentile_map[athlete_id] = score
     return percentile_map
 

@@ -38,18 +38,18 @@ import json
 import logging
 import math
 import random
-from dataclasses import dataclass, field as dc_field
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from dataclasses import field as dc_field
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
 from src.core.ranking_service import (
+    _INDEPENDENT_CONFS,
     FIELD_SIZE,
     MIN_CONFERENCE_SIZE,
     PREDICTION_SCALE,
     RankingService,
-    _INDEPENDENT_CONFS,
     blend_rating,
     conference_sizes,
     efficiency_rating,
@@ -88,18 +88,18 @@ class SimInputs:
 
     season: int
     through_week: int
-    team_ids: List[int]
-    names: List[str]
-    tiers: List[str]  # "P5" / "G5"
-    conf_names: List[Optional[str]]
-    base_elo: List[float]  # pure ELO, as stored on teams.elo_rating
-    eff: List[Optional[float]]  # efficiency rating on the ELO scale, or None
-    wins: List[int]  # already banked this season
-    losses: List[int]
-    conf_wins: List[int]
-    conf_losses: List[int]
-    games: List[Tuple[int, int, int, bool, bool]]  # home, away, week, neutral, is_conference
-    conf_members: Dict[str, List[int]] = dc_field(default_factory=dict)
+    team_ids: list[int]
+    names: list[str]
+    tiers: list[str]  # "P5" / "G5"
+    conf_names: list[str | None]
+    base_elo: list[float]  # pure ELO, as stored on teams.elo_rating
+    eff: list[float | None]  # efficiency rating on the ELO scale, or None
+    wins: list[int]  # already banked this season
+    losses: list[int]
+    conf_wins: list[int]
+    conf_losses: list[int]
+    games: list[tuple[int, int, int, bool, bool]]  # home, away, week, neutral, is_conference
+    conf_members: dict[str, list[int]] = dc_field(default_factory=dict)
 
     @property
     def n_teams(self) -> int:
@@ -125,7 +125,7 @@ def load_sim_inputs(db: Session, season: int) -> SimInputs:
     season_obj = db.query(Season).filter(Season.year == season).first()
     through_week = season_obj.current_week if season_obj else 0
 
-    conf_members: Dict[str, List[int]] = {}
+    conf_members: dict[str, list[int]] = {}
     for i, t in enumerate(teams):
         if t.conference_name in _INDEPENDENT_CONFS:
             continue
@@ -141,7 +141,7 @@ def load_sim_inputs(db: Session, season: int) -> SimInputs:
     n = len(teams)
     wins, losses = [0] * n, [0] * n
     conf_wins, conf_losses = [0] * n, [0] * n
-    games: List[Tuple[int, int, int, bool, bool]] = []
+    games: list[tuple[int, int, int, bool, bool]] = []
 
     for g in db.query(Game).filter(Game.season == season).order_by(Game.week).all():
         h, a = idx.get(g.home_team_id), idx.get(g.away_team_id)
@@ -190,7 +190,7 @@ def _k_factor(week: int) -> float:
     return RankingService.K_FACTOR_LATE
 
 
-def _conf_multipliers(winner_tier: str, loser_tier: str) -> Tuple[float, float]:
+def _conf_multipliers(winner_tier: str, loser_tier: str) -> tuple[float, float]:
     """Cross-tier ELO multipliers. Mirrors RankingService.get_conference_multiplier.
 
     FCS branches are omitted because FCS games never reach the simulation.
@@ -256,7 +256,7 @@ def _new_run_state(inputs: SimInputs) -> dict:
     }
 
 
-def _conference_champions(inputs: SimInputs, sim: dict, rng) -> List[int]:
+def _conference_champions(inputs: SimInputs, sim: dict, rng) -> list[int]:
     """Synthesize a title game per eligible conference; return winners' indices.
 
     The two participants are the best two by conference winning percentage,
@@ -279,7 +279,7 @@ def _conference_champions(inputs: SimInputs, sim: dict, rng) -> List[int]:
     return champions
 
 
-def _final_ratings(inputs: SimInputs, sim: dict) -> List[float]:
+def _final_ratings(inputs: SimInputs, sim: dict) -> list[float]:
     """Blend each team's simulated ELO with its (fixed) efficiency rating.
 
     Efficiency is held at its current value: adjusted PPA cannot be re-measured
@@ -291,7 +291,7 @@ def _final_ratings(inputs: SimInputs, sim: dict) -> List[float]:
 
 
 def simulate_season(
-    inputs: SimInputs, runs: int = DEFAULT_RUNS, seed: Optional[int] = None
+    inputs: SimInputs, runs: int = DEFAULT_RUNS, seed: int | None = None
 ) -> dict:
     """Run the season `runs` times and aggregate per-team outcomes.
 
@@ -375,7 +375,7 @@ BUBBLE_SIZE = 13
 
 
 def build_projection(
-    db: Session, season: int, runs: int = DEFAULT_RUNS, seed: Optional[int] = None
+    db: Session, season: int, runs: int = DEFAULT_RUNS, seed: int | None = None
 ) -> dict:
     """Simulate the season and return a playoff projection payload.
 
@@ -396,7 +396,7 @@ def build_projection(
             "semifinals": [], "final": None, "champion": None, "bubble": [],
             "teams": [],
             "runs": 0, "method": "monte_carlo", "through_week": inputs.through_week,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
 
     agg = simulate_season(inputs, runs=runs, seed=seed)
@@ -506,7 +506,7 @@ def build_projection(
         "runs": agg["runs"],
         "method": "monte_carlo",
         "through_week": inputs.through_week,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         **run_bracket(seeded),
     }
 
@@ -515,7 +515,7 @@ def build_projection(
 
 
 def refresh_projection(
-    db: Session, season: int, runs: int = DEFAULT_RUNS, seed: Optional[int] = None
+    db: Session, season: int, runs: int = DEFAULT_RUNS, seed: int | None = None
 ) -> dict:
     """Simulate the season and store the result, replacing any row for this week.
 
@@ -543,7 +543,7 @@ def refresh_projection(
     return projection
 
 
-def load_cached_projection(db: Session, season: int, week: Optional[int] = None) -> Optional[dict]:
+def load_cached_projection(db: Session, season: int, week: int | None = None) -> dict | None:
     """Return the stored projection for a season/week, or None if there is none.
 
     With no `week`, returns the most recently simulated week for that season.

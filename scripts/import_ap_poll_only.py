@@ -159,7 +159,7 @@ def main():
             total_imported += count
             weeks_with_data += 1
         else:
-            print(f"  - No AP Poll data available")
+            print("  - No AP Poll data available")
 
     # Print summary
     print()

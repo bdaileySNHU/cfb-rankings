@@ -23,9 +23,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.models.database import SessionLocal
 from src.core.ranking_service import RankingService
-from src.models.models import Game, Team, Season
+from src.models.database import SessionLocal
+from src.models.models import Game, Season, Team
 
 
 def check_season_exists(db, season: int):
@@ -64,7 +64,7 @@ def analyze_current_state(db, season: int):
         if abs(rating_sum) > 0.01:
             imbalances += 1
 
-    print(f"\nCurrent State:")
+    print("\nCurrent State:")
     print(f"  Total games: {total_games}")
     print(f"  Processed games: {processed_games}")
     print(f"  Excluded games: {excluded_games}")
@@ -163,7 +163,7 @@ def reprocess_season(db, season: int, dry_run: bool = False):
 
 def verify_reprocessing(db, season: int):
     """Verify that reprocessing was successful."""
-    print(f"\nVerifying reprocessing results...")
+    print("\nVerifying reprocessing results...")
 
     # Check processed games
     total_games = db.query(Game).filter(
