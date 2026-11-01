@@ -2,7 +2,7 @@
 Tests for preseason weights admin endpoints and preseason components endpoint.
 
 EPIC-032 Story 32.4 — covers:
-  GET  /api/admin/preseason-weights
+  GET  /api/preseason/weights
   PUT  /api/admin/preseason-weights
   GET  /api/preseason/components
 
@@ -59,12 +59,12 @@ def make_client(test_db):
 
 
 # ---------------------------------------------------------------------------
-# GET /api/admin/preseason-weights
+# GET /api/preseason/weights
 # ---------------------------------------------------------------------------
 
 
 class TestGetPreseasonWeights:
-    """Tests for GET /api/admin/preseason-weights"""
+    """Tests for GET /api/preseason/weights"""
 
     def test_returns_200(self, test_db):
         client = make_client(test_db)
@@ -72,7 +72,7 @@ class TestGetPreseasonWeights:
             "src.core.position_service.load_position_weights",
             return_value=DEFAULT_CONFIG.copy(),
         ):
-            response = client.get("/api/admin/preseason-weights")
+            response = client.get("/api/preseason/weights")
         assert response.status_code == 200
 
     def test_response_has_required_fields(self, test_db):
@@ -81,7 +81,7 @@ class TestGetPreseasonWeights:
             "src.core.position_service.load_position_weights",
             return_value=DEFAULT_CONFIG.copy(),
         ):
-            data = client.get("/api/admin/preseason-weights").json()
+            data = client.get("/api/preseason/weights").json()
         assert "previous_season_weight" in data
         assert "mean_regression_factor" in data
         assert "returning_regression_scale" in data
@@ -95,7 +95,7 @@ class TestGetPreseasonWeights:
         with patch(
             "src.core.position_service.load_position_weights", return_value=config
         ):
-            data = client.get("/api/admin/preseason-weights").json()
+            data = client.get("/api/preseason/weights").json()
         assert data["previous_season_weight"] == pytest.approx(0.25)
         assert data["mean_regression_factor"] == pytest.approx(0.70)
         assert data["returning_regression_scale"] == pytest.approx(0.50)
@@ -106,7 +106,7 @@ class TestGetPreseasonWeights:
             "src.core.position_service.load_position_weights",
             side_effect=Exception("disk error"),
         ):
-            response = client.get("/api/admin/preseason-weights")
+            response = client.get("/api/preseason/weights")
         assert response.status_code == 500
 
 
@@ -251,47 +251,61 @@ class TestPutPreseasonWeights:
         finally:
             tmp_path.unlink(missing_ok=True)
 
-    # ---- Validation (auth-independent — 422 fires before auth check) ----
+    # ---- Validation (authed — the router-level auth check fires before body validation) ----
 
-    def test_rejects_prev_season_weight_above_1(self, test_db):
+    def test_rejects_prev_season_weight_above_1(self, test_db, monkeypatch):
         client = make_client(test_db)
+        client.headers.update(ADMIN_HEADERS)
+        monkeypatch.setenv("ADMIN_SECRET", ADMIN_KEY)
         bad_payload = {**VALID_WEIGHTS_PAYLOAD, "previous_season_weight": 1.5}
         response = client.put("/api/admin/preseason-weights", json=bad_payload)
         assert response.status_code == 422
 
-    def test_rejects_prev_season_weight_below_0(self, test_db):
+    def test_rejects_prev_season_weight_below_0(self, test_db, monkeypatch):
         client = make_client(test_db)
+        client.headers.update(ADMIN_HEADERS)
+        monkeypatch.setenv("ADMIN_SECRET", ADMIN_KEY)
         bad_payload = {**VALID_WEIGHTS_PAYLOAD, "previous_season_weight": -0.1}
         response = client.put("/api/admin/preseason-weights", json=bad_payload)
         assert response.status_code == 422
 
-    def test_rejects_mean_regression_above_1(self, test_db):
+    def test_rejects_mean_regression_above_1(self, test_db, monkeypatch):
         client = make_client(test_db)
+        client.headers.update(ADMIN_HEADERS)
+        monkeypatch.setenv("ADMIN_SECRET", ADMIN_KEY)
         bad_payload = {**VALID_WEIGHTS_PAYLOAD, "mean_regression_factor": 1.1}
         response = client.put("/api/admin/preseason-weights", json=bad_payload)
         assert response.status_code == 422
 
-    def test_rejects_mean_regression_below_0(self, test_db):
+    def test_rejects_mean_regression_below_0(self, test_db, monkeypatch):
         client = make_client(test_db)
+        client.headers.update(ADMIN_HEADERS)
+        monkeypatch.setenv("ADMIN_SECRET", ADMIN_KEY)
         bad_payload = {**VALID_WEIGHTS_PAYLOAD, "mean_regression_factor": -0.01}
         response = client.put("/api/admin/preseason-weights", json=bad_payload)
         assert response.status_code == 422
 
-    def test_rejects_returning_regression_scale_above_1(self, test_db):
+    def test_rejects_returning_regression_scale_above_1(self, test_db, monkeypatch):
         """returning_regression_scale has le=1.0 per schema (matches slider max)."""
         client = make_client(test_db)
+        client.headers.update(ADMIN_HEADERS)
+        monkeypatch.setenv("ADMIN_SECRET", ADMIN_KEY)
         bad_payload = {**VALID_WEIGHTS_PAYLOAD, "returning_regression_scale": 1.5}
         response = client.put("/api/admin/preseason-weights", json=bad_payload)
         assert response.status_code == 422
 
-    def test_rejects_returning_regression_scale_below_0(self, test_db):
+    def test_rejects_returning_regression_scale_below_0(self, test_db, monkeypatch):
         client = make_client(test_db)
+        client.headers.update(ADMIN_HEADERS)
+        monkeypatch.setenv("ADMIN_SECRET", ADMIN_KEY)
         bad_payload = {**VALID_WEIGHTS_PAYLOAD, "returning_regression_scale": -0.1}
         response = client.put("/api/admin/preseason-weights", json=bad_payload)
         assert response.status_code == 422
 
-    def test_rejects_missing_fields(self, test_db):
+    def test_rejects_missing_fields(self, test_db, monkeypatch):
         client = make_client(test_db)
+        client.headers.update(ADMIN_HEADERS)
+        monkeypatch.setenv("ADMIN_SECRET", ADMIN_KEY)
         response = client.put(
             "/api/admin/preseason-weights",
             json={"previous_season_weight": 0.30},

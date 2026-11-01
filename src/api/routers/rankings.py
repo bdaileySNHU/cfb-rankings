@@ -7,7 +7,7 @@ import logging
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -423,6 +423,33 @@ async def get_playoff_projection(
         return cached
 
     return project_playoff_bracket(db, season)
+
+
+@router.get(
+    "/api/preseason/weights",
+    response_model=schemas.PreseasonWeightsResponse,
+    tags=["Rankings"],
+)
+async def get_preseason_weights():
+    """Get current EPIC-030 regression parameters from position_weights.json.
+
+    Public (the simulator reads it for every visitor); the PUT stays under
+    /api/admin. Used by the preseason simulator to seed slider defaults with the
+    currently active official parameter values.
+
+    Returns:
+        PreseasonWeightsResponse with the three tunable regression params.
+    """
+    from src.core.position_service import load_position_weights
+    try:
+        config = load_position_weights()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read config: {e}")
+    return schemas.PreseasonWeightsResponse(
+        previous_season_weight=config.get("previous_season_weight", 0.0),
+        mean_regression_factor=config.get("mean_regression_factor", 0.60),
+        returning_regression_scale=config.get("returning_regression_scale", 0.60),
+    )
 
 
 @router.get(

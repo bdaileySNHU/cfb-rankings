@@ -98,7 +98,7 @@ function loadComponents(baseUrl) {
 }
 
 function loadOfficialWeights(baseUrl) {
-  return fetch(baseUrl + '/admin/preseason-weights')
+  return fetch(baseUrl + '/preseason/weights')
     .then(function(resp) {
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       return resp.json();

@@ -21,6 +21,46 @@ sys.path.insert(0, str(scripts_dir))
 
 from src.models.models import APIUsage, UpdateTask
 
+ADMIN_KEY = "test-admin-key"
+
+
+@pytest.fixture(autouse=True)
+def admin_auth(test_client, monkeypatch):
+    """Every admin route requires X-Admin-Key; send a valid one by default."""
+    monkeypatch.setenv("ADMIN_SECRET", ADMIN_KEY)
+    test_client.headers["X-Admin-Key"] = ADMIN_KEY
+
+
+class TestAdminAuth:
+    """Every /api/admin/* route rejects requests without a valid X-Admin-Key."""
+
+    ROUTES = [
+        (r.path.replace("{task_id}", "x"), sorted(r.methods)[0])
+        for r in __import__("src.api.main", fromlist=["app"]).app.routes
+        if getattr(r, "path", "").startswith("/api/admin")
+    ]
+
+    def test_all_admin_routes_covered(self):
+        assert len(self.ROUTES) >= 12
+
+    @pytest.mark.parametrize("path,method", ROUTES)
+    def test_no_header_403(self, test_client, path, method):
+        del test_client.headers["X-Admin-Key"]
+        assert test_client.request(method, path).status_code == 403
+
+    @pytest.mark.parametrize("path,method", ROUTES)
+    def test_wrong_key_403(self, test_client, path, method):
+        test_client.headers["X-Admin-Key"] = "wrong"
+        assert test_client.request(method, path).status_code == 403
+
+    @pytest.mark.parametrize("path,method", ROUTES)
+    def test_secret_unset_403(self, test_client, monkeypatch, path, method):
+        monkeypatch.delenv("ADMIN_SECRET")
+        assert test_client.request(method, path).status_code == 403
+
+    def test_right_key_200(self, test_client):
+        assert test_client.get("/api/admin/config").status_code == 200
+
 
 class TestUsageDashboardEndpoint:
     """Tests for GET /api/admin/usage-dashboard"""
