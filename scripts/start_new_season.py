@@ -147,8 +147,6 @@ def save_preseason_rankings(db, season_year: int, dry_run: bool = True):
         print(f"\n[DRY RUN] Would save preseason rankings for {season_year} (Week 0)")
         return
 
-    ranking_service = RankingService(db)
-
     print(f"\nSaving preseason rankings for {season_year} (Week 0):")
 
     # Get all teams sorted by preseason ELO

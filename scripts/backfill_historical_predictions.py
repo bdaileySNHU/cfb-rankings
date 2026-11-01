@@ -465,7 +465,7 @@ def main():
 
         db = SessionLocal()
         try:
-            count = rollback_predictions(db, args.start_time, args.end_time, args.dry_run)
+            rollback_predictions(db, args.start_time, args.end_time, args.dry_run)
             logger.info("=" * 80)
             sys.exit(0)
         except Exception as e:

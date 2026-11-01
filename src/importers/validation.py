@@ -135,7 +135,7 @@ def print_duplicate_report(duplicates: list):
     for dup in duplicates:
         print(f"\n{dup['away_team']} @ {dup['home_team']} (Week {dup['week']}, {dup['season']})")
         print(f"  Found {dup['count']} duplicate records:")
-        for game_id, scores in zip(dup["game_ids"], dup["scores"]):
+        for game_id, scores in zip(dup["game_ids"], dup["scores"], strict=False):
             print(f"    - Game ID {game_id}: {scores[1]}-{scores[0]}")
 
     print("\nTo fix duplicates manually:")

@@ -494,7 +494,7 @@ async def get_team_position_strength(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to load position weights configuration: {str(e)}"
-        )
+        ) from e
 
     # Decide the data source (EPIC-039). "roster" scores from the actual roster
     # snapshot for the season; falls back to recruiting-class data per-team when
@@ -550,7 +550,7 @@ async def get_team_position_strength(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to calculate position scores: {str(e)}"
-        )
+        ) from e
 
     # Calculate overall position bonus
     try:
@@ -565,7 +565,7 @@ async def get_team_position_strength(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to calculate position strength: {str(e)}"
-        )
+        ) from e
 
     return {
         "team_id": team_id,

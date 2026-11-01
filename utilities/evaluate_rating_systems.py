@@ -345,7 +345,7 @@ def evaluate_systems(season_year: int = 2025):
 
         # Overall recommendation
         scores = {}
-        for name, metrics in results:
+        for name, _metrics in results:
             # Simple scoring: 3 points for best in category, 2 for second, 1 for third
             scores[name] = 0
 

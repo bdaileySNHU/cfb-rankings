@@ -22,6 +22,10 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent

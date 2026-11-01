@@ -111,7 +111,7 @@ def calculate_correlation(sports247: dict[str, int], ours: dict[str, dict]) -> f
 
     # Manual Spearman correlation calculation
     n = len(sports247_ranks)
-    d_squared_sum = sum((r1 - r2) ** 2 for r1, r2 in zip(sports247_ranks, our_ranks))
+    d_squared_sum = sum((r1 - r2) ** 2 for r1, r2 in zip(sports247_ranks, our_ranks, strict=False))
     correlation = 1 - (6 * d_squared_sum) / (n * (n**2 - 1))
 
     return correlation

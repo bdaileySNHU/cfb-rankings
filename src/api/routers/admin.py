@@ -90,7 +90,6 @@ async def replay_postseason_rankings(season: int, db: Session = Depends(get_db))
     HOME_ADV = ranking_service.HOME_FIELD_ADVANTAGE
 
     weeks_processed = []
-    current_week = None
     games_by_week: dict = {}
     for g in postseason_games:
         games_by_week.setdefault(g.week, []).append(g)
@@ -260,7 +259,6 @@ async def backfill_season_snapshots(season: int, db: Session = Depends(get_db)):
     from collections import defaultdict
     wins_cumul: dict = defaultdict(lambda: defaultdict(int))
     losses_cumul: dict = defaultdict(lambda: defaultdict(int))
-    max_week = max((g.week for g in processed_games), default=latest_week)
 
     for row in all_results:
         if row.home_score > row.away_score:
@@ -366,7 +364,7 @@ async def get_api_usage(month: str | None = None):
 
         return {**usage_stats, "last_updated": datetime.utcnow()}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve API usage stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve API usage stats: {str(e)}") from e
 
 
 # ============================================================================
@@ -824,7 +822,7 @@ async def update_preseason_weights(
         with open(DEFAULT_CONFIG_PATH) as f:
             config = _json.load(f)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read config: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to read config: {e}") from e
 
     config["previous_season_weight"] = weights.previous_season_weight
     config["mean_regression_factor"] = weights.mean_regression_factor
@@ -834,7 +832,7 @@ async def update_preseason_weights(
         with open(DEFAULT_CONFIG_PATH, "w") as f:
             _json.dump(config, f, indent=2)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to write config: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to write config: {e}") from e
 
     logger.info(
         f"Preseason weights updated: prev_weight={weights.previous_season_weight}, "

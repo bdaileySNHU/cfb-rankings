@@ -140,7 +140,7 @@ async def get_predictions(
         return result
     except Exception as e:
         logger.error(f"Error getting predictions: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error getting predictions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting predictions: {str(e)}") from e
 
 
 @router.get(
@@ -196,7 +196,8 @@ async def get_historical_predictions(
                 if row:
                     return row[0]
                 # No history — fall back to team's current rating
-                return home_team.elo_rating if team_id == home_team.id else away_team.elo_rating
+                # Called right away inside this iteration, so late binding is safe.
+                return home_team.elo_rating if team_id == home_team.id else away_team.elo_rating  # noqa: B023
 
             home_elo = get_elo_at_week(home_team.id)
             away_elo = get_elo_at_week(away_team.id)
@@ -272,7 +273,7 @@ async def get_historical_predictions(
 
     except Exception as e:
         logger.error(f"Error generating historical predictions: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generating historical predictions: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating historical predictions: {e}") from e
 
 
 @router.get(
@@ -304,7 +305,7 @@ async def get_prediction_accuracy(
         logger.error(f"Error retrieving prediction accuracy: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Error retrieving prediction accuracy: {str(e)}"
-        )
+        ) from e
 
 
 @router.get(
@@ -340,7 +341,7 @@ async def get_team_prediction_accuracy_endpoint(
         logger.error(f"Error retrieving team prediction accuracy: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Error retrieving team prediction accuracy: {str(e)}"
-        )
+        ) from e
 
 
 @router.get(
@@ -419,7 +420,7 @@ async def get_stored_predictions(
         logger.error(f"Error retrieving stored predictions: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Error retrieving stored predictions: {str(e)}"
-        )
+        ) from e
 
 
 @router.get(

@@ -442,7 +442,7 @@ async def get_preseason_weights():
     try:
         config = load_position_weights()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read config: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to read config: {e}") from e
     return schemas.PreseasonWeightsResponse(
         previous_season_weight=config.get("previous_season_weight", 0.0),
         mean_regression_factor=config.get("mean_regression_factor", 0.60),

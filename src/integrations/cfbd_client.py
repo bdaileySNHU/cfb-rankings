@@ -46,8 +46,12 @@ import functools
 import logging
 import os
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 import requests
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -353,7 +357,7 @@ def get_season_end_date() -> tuple[int, int]:
         raise ValueError(
             f"CFB_SEASON_END_DATE must be in MM-DD format (e.g., '02-01'). "
             f"Got: '{end_date_str}'. Error: {e}"
-        )
+        ) from e
 
 
 class CFBDClient:
