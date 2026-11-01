@@ -353,6 +353,73 @@ class TestErrorHandling:
         result = client._get("/games")
         assert result is None
 
+    @staticmethod
+    def _http_error(status):
+        import requests
+
+        response = Mock(status_code=status)
+        response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            f"{status} Server Error", response=response
+        )
+        return response
+
+    @patch("time.sleep")
+    @patch("src.integrations.cfbd_client.requests.get")
+    def test_transient_error_is_retried(self, mock_get, _sleep, client):
+        """A 502 followed by a good response returns the data"""
+        ok = Mock(status_code=200)
+        ok.json.return_value = [{"id": 1}]
+        mock_get.side_effect = [self._http_error(502), ok]
+
+        assert client._get("/games") == [{"id": 1}]
+        assert mock_get.call_count == 2
+
+    @patch("time.sleep")
+    @patch("src.integrations.cfbd_client.requests.get")
+    def test_timeouts_exhaust_retries(self, mock_get, mock_sleep, client):
+        """Persistent timeouts give up after 3 retries"""
+        import requests
+
+        mock_get.side_effect = requests.exceptions.Timeout("Read timed out")
+
+        assert client._get("/games") is None
+        assert mock_get.call_count == 4
+        assert [c.args[0] for c in mock_sleep.call_args_list] == [5, 15, 30]
+
+    @patch("time.sleep")
+    @patch("src.integrations.cfbd_client.requests.get")
+    def test_client_errors_are_not_retried(self, mock_get, _sleep, client):
+        """A 404 is not transient, so it is not retried"""
+        mock_get.return_value = self._http_error(404)
+
+        assert client._get("/games") is None
+        assert mock_get.call_count == 1
+
+    @patch("time.sleep")
+    @patch("src.integrations.cfbd_client.requests.get")
+    def test_fails_fast_after_repeated_exhausted_requests(self, mock_get, _sleep, client):
+        """Once the API looks down, later requests stop retrying until one succeeds"""
+        import requests
+
+        mock_get.side_effect = requests.exceptions.Timeout("Read timed out")
+        for _ in range(CFBDClient.MAX_CONSECUTIVE_FAILURES):
+            client._get("/games")
+        mock_get.reset_mock()
+
+        assert client._get("/games") is None
+        assert mock_get.call_count == 1
+
+        ok = Mock(status_code=200)
+        ok.json.return_value = []
+        mock_get.side_effect = None
+        mock_get.return_value = ok
+        client._get("/games")
+        mock_get.reset_mock()
+        mock_get.side_effect = [self._http_error(503), ok]
+
+        assert client._get("/games") == []
+        assert mock_get.call_count == 2
+
 
 class TestGetSeasonEndDate:
     """Tests for get_season_end_date() configuration function"""
