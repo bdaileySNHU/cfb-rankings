@@ -290,10 +290,10 @@ Interactive docs: `/docs` (Swagger) and `/redoc`.
 ### Security
 
 **1. No authentication on any endpoint.** Verified — there is no auth dependency
-anywhere in `src/api/`. Every write endpoint is open, including
-`POST /api/seasons/{year}/reset` (wipes a season's ratings) and the entire
-`/api/admin/*` surface. Currently mitigated only by obscurity. This is the
-highest-severity item in the codebase.
+anywhere in `src/api/` outside the admin router. `/api/admin/*` now requires
+`X-Admin-Key` (router-level `require_admin` dependency, 403 when `ADMIN_SECRET`
+is unset). Other write endpoints are still open, including
+`POST /api/seasons/{year}/reset` (wipes a season's ratings).
 
 **2. CORS allows all origins** (`src/api/main.py:70`). `allow_origins=["*"]`
 combined with `allow_credentials=True`. The code carries its own TODO.

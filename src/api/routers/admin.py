@@ -5,6 +5,7 @@ backend modularization. Route paths and handler logic are unchanged.
 """
 import logging
 import os
+import secrets
 from datetime import datetime
 from typing import List, Optional
 
@@ -38,7 +39,16 @@ from pathlib import Path
 from fastapi import BackgroundTasks
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+
+
+def require_admin(x_admin_key: Optional[str] = Header(default=None, alias="X-Admin-Key")) -> None:
+    """Reject the request unless X-Admin-Key matches ADMIN_SECRET. Unset secret = all admin routes off."""
+    secret = os.environ.get("ADMIN_SECRET", "")
+    if not secret or not x_admin_key or not secrets.compare_digest(x_admin_key, secret):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
+router = APIRouter(dependencies=[Depends(require_admin)])
 
 @router.post("/api/admin/replay-postseason", tags=["Admin"])
 async def replay_postseason_rankings(season: int, db: Session = Depends(get_db)):
@@ -783,32 +793,6 @@ async def update_system_config(config_update: schemas.ConfigUpdate):
     return await get_system_config()
 
 
-@router.get(
-    "/api/admin/preseason-weights",
-    response_model=schemas.PreseasonWeightsResponse,
-    tags=["Admin"],
-)
-async def get_preseason_weights():
-    """Get current EPIC-030 regression parameters from position_weights.json.
-
-    Used by the preseason simulator to seed slider defaults with the
-    currently active official parameter values.
-
-    Returns:
-        PreseasonWeightsResponse with the three tunable regression params.
-    """
-    from src.core.position_service import load_position_weights
-    try:
-        config = load_position_weights()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read config: {e}")
-    return schemas.PreseasonWeightsResponse(
-        previous_season_weight=config.get("previous_season_weight", 0.0),
-        mean_regression_factor=config.get("mean_regression_factor", 0.60),
-        returning_regression_scale=config.get("returning_regression_scale", 0.60),
-    )
-
-
 @router.put(
     "/api/admin/preseason-weights",
     response_model=schemas.PreseasonWeightsResponse,
@@ -816,7 +800,6 @@ async def get_preseason_weights():
 )
 async def update_preseason_weights(
     weights: schemas.PreseasonWeightsUpdate,
-    x_admin_key: str = Header(default=None, alias="X-Admin-Key"),
 ):
     """Update EPIC-030 regression parameters in position_weights.json (EPIC-032).
 
@@ -842,10 +825,6 @@ async def update_preseason_weights(
         HTTPException 403: If the admin key is missing or incorrect.
         HTTPException 500: If the config file cannot be read or written.
     """
-    admin_secret = os.environ.get("ADMIN_SECRET", "")
-    if not admin_secret or x_admin_key != admin_secret:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
     import json as _json
     from src.core.position_service import DEFAULT_CONFIG_PATH
 
@@ -892,9 +871,7 @@ def _ensure_data_dir():
 
 
 @router.get("/api/admin/import/status", response_model=schemas.ImportStatus, tags=["Admin"])
-async def get_import_status(
-    x_admin_key: str = Header(default=None, alias="X-Admin-Key"),
-):
+async def get_import_status():
     """Get status of the last import run.
 
     Returns metadata about the most recent data import operation,
@@ -909,10 +886,6 @@ async def get_import_status(
     Raises:
         HTTPException 403: If the admin key is missing or incorrect.
     """
-    admin_secret = os.environ.get("ADMIN_SECRET", "")
-    if not admin_secret or x_admin_key != admin_secret:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
     _ensure_data_dir()
 
     if not _IMPORT_LOG_PATH.exists():
@@ -931,7 +904,6 @@ async def get_import_status(
 async def trigger_import(
     season: Optional[int] = Query(None, description="Season year (defaults to active season)"),
     week: Optional[int] = Query(None, description="Specific week to import (imports all weeks if omitted)"),
-    x_admin_key: str = Header(default=None, alias="X-Admin-Key"),
     db: Session = Depends(get_db),
 ):
     """Trigger a live data import from the CFBD API.
@@ -955,10 +927,6 @@ async def trigger_import(
         HTTPException 403: If the admin key is missing or incorrect.
         HTTPException 500: If the import fails.
     """
-    admin_secret = os.environ.get("ADMIN_SECRET", "")
-    if not admin_secret or x_admin_key != admin_secret:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
     _ensure_data_dir()
     timestamp = datetime.utcnow().isoformat() + "Z"
 

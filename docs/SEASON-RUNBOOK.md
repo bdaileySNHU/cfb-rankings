@@ -391,7 +391,7 @@ curl -s -X POST -H "X-Admin-Key: $ADMIN_SECRET" \
 ### Manually set the current week (if detection is wrong)
 
 ```bash
-curl -s -X POST \
+curl -s -X POST -H "X-Admin-Key: $ADMIN_SECRET" \
   "http://localhost:8000/api/admin/update-current-week?year=2026&week=8"
 ```
 
@@ -499,7 +499,7 @@ in `deploy/cfb-rankings.service`.
 | Variable | Required | Description |
 |---|---|---|
 | `CFBD_API_KEY` | Yes | CollegeFootballData.com API key. Get one at https://collegefootballdata.com/key |
-| `ADMIN_SECRET` | Yes | Secret key for admin-protected API endpoints (`X-Admin-Key` header). Set to a long random string. |
+| `ADMIN_SECRET` | Yes | Secret key for every `/api/admin/*` endpoint (`X-Admin-Key` header). Unset = all admin endpoints return 403. Set to a long random string. |
 | `DATABASE_URL` | No | SQLAlchemy database URL. Default: `sqlite:///./cfb_rankings.db` |
 | `CFBD_MONTHLY_LIMIT` | No | Monthly API call budget. Default: `30000` |
 | `CFB_SEASON_END_DATE` | No | When the CFB season ends in `MM-DD` format. Default: `02-01` (February 1). Affects season-year detection. |
@@ -543,7 +543,7 @@ tail -100 /var/log/cfb-rankings/weekly.log
 
 Common causes:
 - `CFBD_API_KEY` not set or revoked — verify at https://collegefootballdata.com/key
-- Monthly quota exceeded — check `curl http://localhost:8000/api/admin/api-usage`
+- Monthly quota exceeded — check `curl -H "X-Admin-Key: $ADMIN_SECRET" http://localhost:8000/api/admin/api-usage`
 - Network timeout — retry the import; CFBD API has retry logic built in
 
 ### Rankings not updating after import
