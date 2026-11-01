@@ -52,7 +52,7 @@ def investigate_unprocessed(db, season: int):
         else:
             fbs_games.append(game)
 
-    print(f"Categories:")
+    print("Categories:")
     print(f"  - FCS games: {len(fcs_games)}")
     print(f"  - FBS games: {len(fbs_games)}")
     print()

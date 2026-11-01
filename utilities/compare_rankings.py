@@ -3,11 +3,9 @@ Compare ELO Rankings with Official Polls
 Shows how our model compares to AP Poll, Coaches Poll, and CFP Rankings
 """
 
-import os
 
-from src.integrations.cfbd_client import CFBDClient
-from src.models.database import SessionLocal
 from src.core.ranking_service import RankingService
+from src.models.database import SessionLocal
 
 # AP Poll Rankings (Week 5, 2024 - as reference)
 AP_POLL_WEEK_5 = {
@@ -153,7 +151,7 @@ def analyze_prediction_accuracy():
     """Analyze how well ELO predicted game outcomes"""
     db = SessionLocal()
 
-    from src.models.models import Game, Team
+    from src.models.models import Game
 
     print()
     print("=" * 100)

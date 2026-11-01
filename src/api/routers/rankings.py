@@ -4,8 +4,7 @@ Auto-extracted from the former monolithic main.py during the EPIC-043
 backend modularization. Route paths and handler logic are unchanged.
 """
 import logging
-from datetime import datetime, timezone
-from typing import List, Optional
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
@@ -22,9 +21,9 @@ router = APIRouter()
 
 @router.get("/api/rankings", response_model=schemas.RankingsResponse, tags=["Rankings"])
 async def get_rankings(
-    season: Optional[int] = None,
-    limit: Optional[int] = Query(25, ge=1, le=200),
-    week: Optional[int] = Query(None, ge=0, le=20, description="Specific week snapshot (defaults to current week)"),
+    season: int | None = None,
+    limit: int | None = Query(25, ge=1, le=200),
+    week: int | None = Query(None, ge=0, le=20, description="Specific week snapshot (defaults to current week)"),
     db: Session = Depends(get_db),
 ):
     """Get current team rankings sorted by ELO rating.
@@ -191,7 +190,7 @@ async def get_rankings(
         .scalar()
     )
     if last_updated is not None and last_updated.tzinfo is None:
-        last_updated = last_updated.replace(tzinfo=timezone.utc)
+        last_updated = last_updated.replace(tzinfo=UTC)
 
     # The week rolls over before most of its games kick off, so the stamp needs
     # to know how many are final to avoid claiming "after Week N finals" on a
@@ -265,7 +264,7 @@ async def compare_rankings(season: int, db: Session = Depends(get_db)):
     return {"season": season, "week": week, "ap_week": ap_week, "sp_week": sp_week, "teams": rows}
 
 
-@router.get("/api/rankings/history", response_model=List[schemas.RankingHistory], tags=["Rankings"])
+@router.get("/api/rankings/history", response_model=list[schemas.RankingHistory], tags=["Rankings"])
 async def get_ranking_history(team_id: int, season: int, db: Session = Depends(get_db)):
     """Get historical rankings for a specific team across a season.
 
@@ -308,7 +307,6 @@ WEEK_LABELS = {
 @router.get("/api/rankings/weeks", tags=["Rankings"])
 async def get_ranking_weeks(season: int, db: Session = Depends(get_db)):
     """Return weeks that have ranking snapshots for a season, plus postseason weeks from games."""
-    from sqlalchemy import text as sa_text2
 
     snapshot_weeks = (
         db.query(RankingHistory.week)
@@ -386,7 +384,7 @@ async def get_postseason(season: int, db: Session = Depends(get_db)):
 
 @router.get("/api/playoff-projection", tags=["Rankings"])
 async def get_playoff_projection(
-    season: Optional[int] = None,
+    season: int | None = None,
     refresh: bool = False,
     db: Session = Depends(get_db),
 ):
@@ -454,11 +452,11 @@ async def get_preseason_weights():
 
 @router.get(
     "/api/preseason/components",
-    response_model=List[schemas.PreseasonComponent],
+    response_model=list[schemas.PreseasonComponent],
     tags=["Rankings"],
 )
 async def get_preseason_components(
-    season: Optional[int] = None,
+    season: int | None = None,
     db: Session = Depends(get_db),
 ):
     """Get raw preseason rating components for all FBS teams (EPIC-032).

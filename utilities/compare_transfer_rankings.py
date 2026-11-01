@@ -4,7 +4,6 @@ EPIC-026 Story 26.8: Validation
 """
 
 import sqlite3
-from typing import Dict, List, Tuple
 
 # 247Sports Top 25 (from web scraping)
 SPORTS_247_RANKINGS = {
@@ -36,7 +35,7 @@ SPORTS_247_RANKINGS = {
 }
 
 
-def get_our_rankings(db_path: str = "cfb_rankings.db") -> Dict[str, int]:
+def get_our_rankings(db_path: str = "cfb_rankings.db") -> dict[str, int]:
     """Get our transfer portal rankings from database"""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -76,8 +75,8 @@ def normalize_team_name(name: str) -> str:
 
 
 def find_overlaps(
-    sports247: Dict[str, int], ours: Dict[str, dict]
-) -> Tuple[List[str], List[str], List[str]]:
+    sports247: dict[str, int], ours: dict[str, dict]
+) -> tuple[list[str], list[str], list[str]]:
     """Find teams in both rankings, and unique to each"""
     sports247_names = set(normalize_team_name(name) for name in sports247.keys())
     our_names = set(normalize_team_name(name) for name in ours.keys())
@@ -89,7 +88,7 @@ def find_overlaps(
     return sorted(in_both), sorted(only_247), sorted(only_ours)
 
 
-def calculate_correlation(sports247: Dict[str, int], ours: Dict[str, dict]) -> float:
+def calculate_correlation(sports247: dict[str, int], ours: dict[str, dict]) -> float:
     """Calculate Spearman rank correlation for overlapping teams"""
     # Get teams in both rankings
     common_teams = []

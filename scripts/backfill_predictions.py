@@ -12,9 +12,9 @@ import sys
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from src.core.ranking_service import create_and_store_prediction
 from src.models.database import SessionLocal
 from src.models.models import Game, Prediction
-from src.core.ranking_service import create_and_store_prediction
 
 
 def backfill_predictions(db, season: int):
@@ -59,7 +59,7 @@ def backfill_predictions(db, season: int):
             if predictions_created % 50 == 0:
                 print(f"  Created {predictions_created} predictions...")
 
-    print(f"\nBackfill complete!")
+    print("\nBackfill complete!")
     print(f"  Total games: {total_games}")
     print(f"  Already had predictions: {games_with_predictions}")
     print(f"  Predictions created: {predictions_created}")

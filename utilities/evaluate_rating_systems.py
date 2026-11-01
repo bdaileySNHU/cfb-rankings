@@ -14,12 +14,9 @@ Metrics:
 """
 
 import math
-import sys
-from copy import deepcopy
-from typing import Dict, List, Tuple
 
 from src.models.database import SessionLocal
-from src.models.models import ConferenceType, Game, Season, Team
+from src.models.models import ConferenceType, Game, Team
 
 
 class RatingSystem:
@@ -31,7 +28,7 @@ class RatingSystem:
         self.initial_ratings = {}  # team_id -> preseason_rating
         self.predictions = []  # List of (predicted_prob, actual_result)
 
-    def initialize_teams(self, teams: List[Team]):
+    def initialize_teams(self, teams: list[Team]):
         """Set up initial ratings"""
         for team in teams:
             self.teams[team.id] = team.initial_rating
@@ -49,7 +46,7 @@ class RatingSystem:
         """Calculate expected score using ELO formula"""
         return 1 / (1 + 10 ** ((rating_b - rating_a) / 400))
 
-    def predict_game(self, game: Game, week: int) -> Tuple[float, bool]:
+    def predict_game(self, game: Game, week: int) -> tuple[float, bool]:
         """
         Predict game outcome and record prediction
 
@@ -114,7 +111,7 @@ class RatingSystem:
 
     def get_conference_multipliers(
         self, home_conf: ConferenceType, away_conf: ConferenceType, home_won: bool
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Get conference multipliers"""
         home_p5 = home_conf == ConferenceType.POWER_5
         away_p5 = away_conf == ConferenceType.POWER_5
@@ -131,7 +128,7 @@ class RatingSystem:
         else:  # Both G5
             return (1.0, 1.0)
 
-    def calculate_metrics(self) -> Dict[str, float]:
+    def calculate_metrics(self) -> dict[str, float]:
         """Calculate prediction accuracy metrics"""
         if not self.predictions:
             return {}
@@ -198,7 +195,7 @@ class PreseasonDecaySystem(RatingSystem):
         super().__init__("Preseason Decay")
         self.rating_changes = {}  # team_id -> cumulative rating change
 
-    def initialize_teams(self, teams: List[Team]):
+    def initialize_teams(self, teams: list[Team]):
         super().initialize_teams(teams)
         for team in teams:
             self.rating_changes[team.id] = 0.0

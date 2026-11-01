@@ -46,7 +46,6 @@ import functools
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 import requests
 
@@ -388,7 +387,7 @@ class CFBDClient:
     TRANSIENT_RETRY_WAITS = (5, 15, 30)
     MAX_CONSECUTIVE_FAILURES = 3
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         """
         Initialize CFBD client
 
@@ -485,7 +484,7 @@ class CFBDClient:
             # After season end date through December: current year
             return now.year
 
-    def get_current_week(self, season: int) -> Optional[int]:
+    def get_current_week(self, season: int) -> int | None:
         """
         Get the current week of the season from CFBD API.
 
@@ -613,7 +612,7 @@ class CFBDClient:
 
         return labor_day + timedelta(days=days_until_saturday)
 
-    def get_teams(self, year: int = 2024) -> List[Dict]:
+    def get_teams(self, year: int = 2024) -> list[dict]:
         """
         Get all FBS teams for a given year
 
@@ -625,7 +624,7 @@ class CFBDClient:
         """
         return self._get("/teams/fbs", params={"year": year})
 
-    def get_all_teams(self) -> List[Dict]:
+    def get_all_teams(self) -> list[dict]:
         """Every team CFBD knows, all divisions: ``id`` and ``school`` among others.
 
         The scoreboard names teams with mascots ("Florida Gators"); this maps
@@ -633,7 +632,7 @@ class CFBDClient:
         """
         return self._get("/teams") or []
 
-    def get_scoreboard(self) -> List[Dict]:
+    def get_scoreboard(self) -> list[dict]:
         """Live FBS scoreboard: status, clock, situation, scores, lines, weather.
 
         One call covers the whole slate. CFBD refreshes it about once a minute
@@ -644,11 +643,11 @@ class CFBDClient:
     def get_games(
         self,
         year: int,
-        week: Optional[int] = None,
-        team: Optional[str] = None,
+        week: int | None = None,
+        team: str | None = None,
         season_type: str = "regular",
-        classification: Optional[str] = None,
-    ) -> List[Dict]:
+        classification: str | None = None,
+    ) -> list[dict]:
         """
         Get games for a season
 
@@ -672,7 +671,7 @@ class CFBDClient:
 
         return self._get("/games", params=params)
 
-    def get_recruiting_rankings(self, year: int) -> List[Dict]:
+    def get_recruiting_rankings(self, year: int) -> list[dict]:
         """
         Get recruiting rankings for a class year
 
@@ -687,10 +686,10 @@ class CFBDClient:
     def get_recruiting_players(
         self,
         year: int,
-        team: Optional[str] = None,
-        position: Optional[str] = None,
+        team: str | None = None,
+        position: str | None = None,
         classification: str = "HighSchool",
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Get individual player recruiting rankings from the CFBD API.
 
@@ -761,7 +760,7 @@ class CFBDClient:
 
         return result
 
-    def get_roster(self, team: Optional[str] = None, year: Optional[int] = None) -> List[Dict]:
+    def get_roster(self, team: str | None = None, year: int | None = None) -> list[dict]:
         """
         Get a team's roster for a given season from the CFBD API.
 
@@ -802,7 +801,7 @@ class CFBDClient:
             - Gracefully handles API errors by returning empty list
             - API endpoint: GET /roster
         """
-        params: Dict = {}
+        params: dict = {}
         if team:
             params["team"] = team
         if year:
@@ -818,8 +817,8 @@ class CFBDClient:
         return result
 
     def get_player_ppa_season(
-        self, year: int, team: Optional[str] = None
-    ) -> List[Dict]:
+        self, year: int, team: str | None = None
+    ) -> list[dict]:
         """
         Get per-player season PPA (Predicted Points Added) from the CFBD API.
 
@@ -853,7 +852,7 @@ class CFBDClient:
             - Gracefully handles API errors by returning empty list
             - API endpoint: GET /ppa/players/season
         """
-        params: Dict = {"year": year}
+        params: dict = {"year": year}
         if team:
             params["team"] = team
 
@@ -870,9 +869,9 @@ class CFBDClient:
     def get_player_season_stats(
         self,
         year: int,
-        team: Optional[str] = None,
-        category: Optional[str] = None,
-    ) -> List[Dict]:
+        team: str | None = None,
+        category: str | None = None,
+    ) -> list[dict]:
         """
         Get per-player season box-score stats from the CFBD API.
 
@@ -907,7 +906,7 @@ class CFBDClient:
             - Gracefully handles API errors by returning empty list
             - API endpoint: GET /stats/player/season
         """
-        params: Dict = {"year": year}
+        params: dict = {"year": year}
         if team:
             params["team"] = team
         if category:
@@ -924,7 +923,7 @@ class CFBDClient:
 
         return result
 
-    def get_team_ppa_season(self, year: int, team: Optional[str] = None) -> List[Dict]:
+    def get_team_ppa_season(self, year: int, team: str | None = None) -> list[dict]:
         """
         Get opponent-adjusted team season PPA (Predicted Points Added per play).
 
@@ -961,7 +960,7 @@ class CFBDClient:
             - Gracefully handles API errors by returning empty list
             - API endpoint: GET /ppa/teams
         """
-        params: Dict = {"year": year}
+        params: dict = {"year": year}
         if team:
             params["team"] = team
 
@@ -973,7 +972,7 @@ class CFBDClient:
 
         return result
 
-    def get_team_talent(self, year: int) -> List[Dict]:
+    def get_team_talent(self, year: int) -> list[dict]:
         """
         Get team talent composite scores
 
@@ -985,7 +984,7 @@ class CFBDClient:
         """
         return self._get("/talent", params={"year": year})
 
-    def get_returning_production(self, year: int, team: Optional[str] = None) -> List[Dict]:
+    def get_returning_production(self, year: int, team: str | None = None) -> list[dict]:
         """
         Get returning production percentages
 
@@ -1002,7 +1001,7 @@ class CFBDClient:
 
         return self._get("/player/returning", params=params)
 
-    def get_transfer_portal(self, year: int) -> List[Dict]:
+    def get_transfer_portal(self, year: int) -> list[dict]:
         """
         Get transfer portal data
 
@@ -1014,7 +1013,7 @@ class CFBDClient:
         """
         return self._get("/player/portal", params={"year": year})
 
-    def get_ap_poll(self, year: int, week: Optional[int] = None) -> List[Dict]:
+    def get_ap_poll(self, year: int, week: int | None = None) -> list[dict]:
         """
         Get AP Poll rankings for a specific week
 
@@ -1086,7 +1085,7 @@ class CFBDClient:
 
         return ap_rankings
 
-    def get_sp_ratings(self, year: int) -> List[Dict]:
+    def get_sp_ratings(self, year: int) -> list[dict]:
         """
         Get SP+ ratings for every FBS team in a season.
 
@@ -1114,7 +1113,7 @@ class CFBDClient:
         """
         return self._get("/ratings/sp", params={"year": year}) or []
 
-    def get_betting_lines(self, year: int) -> List[Dict]:
+    def get_betting_lines(self, year: int) -> list[dict]:
         """
         Get sportsbook lines for every game in a season, regular and postseason.
 
@@ -1130,7 +1129,7 @@ class CFBDClient:
 
     def get_game_line_scores(
         self, game_id: int, year: int, week: int, home_team: str, away_team: str
-    ) -> Optional[Dict[str, List[int]]]:
+    ) -> dict[str, list[int]] | None:
         """
         Fetch quarter-by-quarter line scores for a game from CFBD API.
 

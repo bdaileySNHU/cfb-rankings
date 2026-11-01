@@ -17,7 +17,6 @@ Part of EPIC-017: Retrospective Prediction Generation
 
 import argparse
 import logging
-import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path

@@ -4,7 +4,6 @@ Auto-extracted from the former monolithic main.py during the EPIC-043
 backend modularization. Route paths and handler logic are unchanged.
 """
 import logging
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
@@ -24,12 +23,12 @@ from src.models.models import Game, Prediction, RankingHistory, Season, Team
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.get("/api/predictions", response_model=List[schemas.GamePrediction], tags=["Predictions"])
+@router.get("/api/predictions", response_model=list[schemas.GamePrediction], tags=["Predictions"])
 async def get_predictions(
-    week: Optional[int] = Query(None, ge=0, le=20, description="Specific week number (0-20, includes playoffs)"),
-    team_id: Optional[int] = Query(None, ge=1, description="Filter by team ID"),
+    week: int | None = Query(None, ge=0, le=20, description="Specific week number (0-20, includes playoffs)"),
+    team_id: int | None = Query(None, ge=1, description="Filter by team ID"),
     next_week: bool = Query(True, description="Only show next week's games"),
-    season: Optional[int] = Query(None, ge=2020, description="Season year"),
+    season: int | None = Query(None, ge=2020, description="Season year"),
     db: Session = Depends(get_db),
 ):
     """
@@ -282,7 +281,7 @@ async def get_historical_predictions(
     tags=["Predictions"],
 )
 async def get_prediction_accuracy(
-    season: Optional[int] = Query(None, description="Filter by season year"),
+    season: int | None = Query(None, description="Filter by season year"),
     db: Session = Depends(get_db),
 ):
     """
@@ -315,7 +314,7 @@ async def get_prediction_accuracy(
 )
 async def get_team_prediction_accuracy_endpoint(
     team_id: int,
-    season: Optional[int] = Query(None, description="Filter by season year"),
+    season: int | None = Query(None, description="Filter by season year"),
     db: Session = Depends(get_db),
 ):
     """
@@ -345,12 +344,12 @@ async def get_team_prediction_accuracy_endpoint(
 
 
 @router.get(
-    "/api/predictions/stored", response_model=List[schemas.StoredPrediction], tags=["Predictions"]
+    "/api/predictions/stored", response_model=list[schemas.StoredPrediction], tags=["Predictions"]
 )
 async def get_stored_predictions(
-    season: Optional[int] = Query(None, description="Filter by season year"),
-    week: Optional[int] = Query(None, ge=0, le=20, description="Filter by week (includes playoffs)"),
-    team_id: Optional[int] = Query(None, description="Filter by team ID"),
+    season: int | None = Query(None, description="Filter by season year"),
+    week: int | None = Query(None, ge=0, le=20, description="Filter by week (includes playoffs)"),
+    team_id: int | None = Query(None, description="Filter by team ID"),
     evaluated_only: bool = Query(False, description="Only return evaluated predictions"),
     db: Session = Depends(get_db),
 ):
@@ -427,7 +426,7 @@ async def get_stored_predictions(
     "/api/predictions/comparison", response_model=schemas.ComparisonStats, tags=["Predictions"]
 )
 async def get_prediction_comparison(
-    season: Optional[int] = Query(None, description="Season year (defaults to active season)"),
+    season: int | None = Query(None, description="Season year (defaults to active season)"),
     db: Session = Depends(get_db),
 ):
     """

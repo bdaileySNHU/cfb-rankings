@@ -377,7 +377,7 @@ def import_bowl_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ranki
                 try:
                     ranking_service.process_game(existing_game)
                     processed += 1
-                    print(f"    ✓ Processed for rankings")
+                    print("    ✓ Processed for rankings")
                 except Exception as e:
                     print(f"    ⚠️  Processing failed: {str(e)}")
 
@@ -625,7 +625,7 @@ def import_playoff_games(cfbd: CFBDClient, db, team_objects: dict, year: int, ra
                 try:
                     ranking_service.process_game(existing_game)
                     processed += 1
-                    print(f"    ✓ Processed for rankings")
+                    print("    ✓ Processed for rankings")
                 except Exception as e:
                     print(f"    ⚠️  Processing failed: {str(e)}")
 

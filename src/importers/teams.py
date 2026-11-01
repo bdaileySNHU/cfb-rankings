@@ -1,10 +1,10 @@
 """Team import from the CFBD API."""
 
+from sqlalchemy import or_
+
 from src.core.ranking_service import RankingService
 from src.importers.common import CONFERENCE_MAP
 from src.integrations.cfbd_client import CFBDClient
-from sqlalchemy import or_
-
 from src.models.models import ConferenceType, Game, Team, has_been_played
 
 

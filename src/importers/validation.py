@@ -176,7 +176,7 @@ def validate_import_results(db, import_stats: dict, year: int):
     print(f"  Future Games: {future_games}")
 
     # Verify against import stats
-    print(f"\nImport Stats:")
+    print("\nImport Stats:")
     print(f"  FBS Games Imported: {import_stats.get('imported', 0)}")
     print(f"  FCS Games Imported: {import_stats.get('fcs_imported', 0)}")
     print(f"  Future Games Imported: {import_stats.get('future_imported', 0)}")

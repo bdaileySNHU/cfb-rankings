@@ -12,14 +12,14 @@ Usage:
     python utilities/save_final_season_snapshot.py --season 2025 --dry-run
 """
 import argparse
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from src.core.ranking_service import RankingService
 from src.models.database import SessionLocal
 from src.models.models import Team
-from src.core.ranking_service import RankingService
 
 
 def main():

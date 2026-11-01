@@ -91,7 +91,7 @@ def analyze_imbalances(db, season: int):
     total_imbalance = sum(imb for _, imb in imbalances)
     avg_imbalance = total_imbalance / len(imbalances)
 
-    print(f"\nStatistics:")
+    print("\nStatistics:")
     print(f"  Total imbalance: {total_imbalance:.6f}")
     print(f"  Average imbalance: {avg_imbalance:.6f}")
     print(f"  Max imbalance: {max(abs(imb) for _, imb in imbalances):.6f}")

@@ -81,7 +81,7 @@ def archive_season(db: Any, season_year: int, confirm: bool) -> bool:
     print(f"{'='*60}")
     print(f"Season: {season_year}")
     print(f"Current Status: is_active = {season.is_active}")
-    print(f"New Status: is_active = False")
+    print("New Status: is_active = False")
     print(f"{'='*60}\n")
 
     if not confirm:
@@ -356,7 +356,7 @@ If archival needs to be rolled back:
     with open(checklist_path, "w") as f:
         f.write(checklist_content)
 
-    print(f"✓ Created/updated season-end checklist: docs/season-end-checklist.md")
+    print("✓ Created/updated season-end checklist: docs/season-end-checklist.md")
 
 
 def verify_system_readiness(db: Any) -> None:

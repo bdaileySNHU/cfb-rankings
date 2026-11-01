@@ -37,7 +37,7 @@ import math
 import os
 import statistics
 from datetime import date, datetime, time, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, object_session
@@ -86,14 +86,14 @@ EFFICIENCY_MIN_TEAMS = 20
 PREDICTION_SCALE = 333
 
 
-def net_ppa(team: Team) -> Optional[float]:
+def net_ppa(team: Team) -> float | None:
     """Net opponent-adjusted PPA per play (offense minus defense allowed)."""
     if team.offense_ppa is None or team.defense_ppa is None:
         return None
     return team.offense_ppa - team.defense_ppa
 
 
-def efficiency_scale(db: Session) -> Optional[Tuple[float, float, float, float]]:
+def efficiency_scale(db: Session) -> tuple[float, float, float, float] | None:
     """Population stats needed to express efficiency on the ELO scale.
 
     Computed over FBS teams that have efficiency data, so the mapping tracks
@@ -131,7 +131,7 @@ def efficiency_scale(db: Session) -> Optional[Tuple[float, float, float, float]]
     return statistics.fmean(elos), stdev_elo, statistics.fmean(nets), stdev_net
 
 
-def efficiency_rating(team: Team, scale: Tuple[float, float, float, float]) -> Optional[float]:
+def efficiency_rating(team: Team, scale: tuple[float, float, float, float]) -> float | None:
     """Express a team's efficiency on the ELO scale.
 
     Args:
@@ -152,9 +152,9 @@ def efficiency_rating(team: Team, scale: Tuple[float, float, float, float]) -> O
 
 def blend_rating(
     elo: float,
-    eff: Optional[float],
+    eff: float | None,
     weight: float = None,
-    week: Optional[int] = None,
+    week: int | None = None,
     min_week: int = None,
 ) -> float:
     """Combine an ELO rating with an efficiency rating on the same scale.
@@ -188,8 +188,8 @@ def blend_rating(
 
 def effective_rating(
     team: Team,
-    week: Optional[int] = None,
-    scale: Optional[Tuple[float, float, float, float]] = None,
+    week: int | None = None,
+    scale: tuple[float, float, float, float] | None = None,
 ) -> float:
     """Return the rating used for rankings and predictions.
 
@@ -530,7 +530,7 @@ class RankingService:
         team.initial_rating = rating
         self.db.commit()
 
-    def _get_previous_season_elo(self, team_id: int, current_season: int) -> Optional[float]:
+    def _get_previous_season_elo(self, team_id: int, current_season: int) -> float | None:
         """Get team's final ELO from the previous season via ranking_history.
 
         Prefers the sentinel week=999 snapshot (postseason-complete) if available,
@@ -763,7 +763,7 @@ class RankingService:
 
     def get_conference_multiplier(
         self, winner_conf: ConferenceType, loser_conf: ConferenceType
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Get rating change multipliers based on conference matchup
 
@@ -1023,7 +1023,7 @@ class RankingService:
 
         return total_rating / count if count > 0 else 0.0
 
-    def get_current_rankings(self, season: int, limit: Optional[int] = None, week: Optional[int] = None) -> List[dict]:
+    def get_current_rankings(self, season: int, limit: int | None = None, week: int | None = None) -> list[dict]:
         """
         Get current rankings sorted by ELO rating
 
@@ -1208,8 +1208,8 @@ SLATE_SPLIT_DAYS = 4
 
 
 def next_slate_window(
-    db: Session, season_year: int, today: Optional[date] = None
-) -> Optional[Tuple[int, datetime, datetime]]:
+    db: Session, season_year: int, today: date | None = None
+) -> tuple[int, datetime, datetime] | None:
     """Find the next slate of games as a date window rather than a week number.
 
     Week numbers are usually a fine proxy for "what's on next", but not always:
@@ -1238,7 +1238,7 @@ def next_slate_window(
         return None
 
     # Game datetimes are stored as naive UTC, so group on UTC days.
-    days_by_week: Dict[int, set] = {}
+    days_by_week: dict[int, set] = {}
     for week, when in rows:
         days_by_week.setdefault(week, set()).add(when.date())
     today = today or datetime.utcnow().date()
@@ -1265,11 +1265,11 @@ def next_slate_window(
 
 def generate_predictions(
     db: Session,
-    week: Optional[int] = None,
-    team_id: Optional[int] = None,
+    week: int | None = None,
+    team_id: int | None = None,
     next_week: bool = True,
-    season_year: Optional[int] = None,
-) -> List[Dict[str, Any]]:
+    season_year: int | None = None,
+) -> list[dict[str, Any]]:
     """
     Generate predictions for upcoming (unprocessed) games.
 
@@ -1360,7 +1360,7 @@ def validate_week(week: int) -> bool:
     return MIN_WEEK <= week <= MAX_WEEK
 
 
-def validate_team_for_prediction(team: Optional[Team]) -> bool:
+def validate_team_for_prediction(team: Team | None) -> bool:
     """
     Validate team exists and has valid rating for prediction.
 
@@ -1426,8 +1426,8 @@ def _calculate_game_prediction(
     game: Game,
     home_team: Team,
     away_team: Team,
-    scale: Optional[Tuple[float, float, float, float]] = None,
-) -> Dict[str, Any]:
+    scale: tuple[float, float, float, float] | None = None,
+) -> dict[str, Any]:
     """
     Calculate prediction for a single game.
 
@@ -1557,9 +1557,9 @@ def _sim(a: dict, b: dict, neutral: bool, label: str, rng=None) -> dict:
     return _project_matchup(high, low, neutral, label, rng)
 
 
-def conference_sizes(db: Session) -> Dict[str, int]:
+def conference_sizes(db: Session) -> dict[str, int]:
     """FBS member count per conference name, used for champion eligibility."""
-    sizes: Dict[str, int] = {}
+    sizes: dict[str, int] = {}
     for name, in db.query(Team.conference_name).filter(Team.is_fcs == False).all():  # noqa: E712
         if name in _INDEPENDENT_CONFS:
             continue
@@ -1567,14 +1567,14 @@ def conference_sizes(db: Session) -> Dict[str, int]:
     return sizes
 
 
-def top_rated_champions(rankings: List[dict], conf_sizes: Dict[str, int]) -> List[dict]:
+def top_rated_champions(rankings: list[dict], conf_sizes: dict[str, int]) -> list[dict]:
     """Projected conference champions = highest-rated team in each eligible league.
 
     The cheap stand-in used when no season has been simulated. Conferences below
     MIN_CONFERENCE_SIZE are skipped so stale realignment data cannot mint a
     champion (and therefore an auto-bid) out of a two-team conference.
     """
-    champ_by_conf: Dict[str, dict] = {}
+    champ_by_conf: dict[str, dict] = {}
     for r in rankings:
         conf = r.get("conference_name")
         if conf in _INDEPENDENT_CONFS or r.get("conference") == "FCS":
@@ -1587,7 +1587,7 @@ def top_rated_champions(rankings: List[dict], conf_sizes: Dict[str, int]) -> Lis
     return list(champ_by_conf.values())
 
 
-def select_cfp_field(rankings: List[dict], champs: List[dict]) -> List[dict]:
+def select_cfp_field(rankings: list[dict], champs: list[dict]) -> list[dict]:
     """Seed the CFP field from a rating-ordered team list and a champion list.
 
     The single place the CFP selection rule lives, so the deterministic
@@ -1640,7 +1640,7 @@ def select_cfp_field(rankings: List[dict], champs: List[dict]) -> List[dict]:
     ]
 
 
-def run_bracket(seeded: List[dict], rng=None) -> dict:
+def run_bracket(seeded: list[dict], rng=None) -> dict:
     """Play the 12-team bracket out from a seeded field.
 
     Seeds 5-12 meet on the higher seed's campus; every later round is neutral.
@@ -1704,7 +1704,7 @@ def project_playoff_bracket(db: Session, season: int) -> dict:
     }
 
 
-def create_and_store_prediction(db: Session, game: Game) -> Optional[Prediction]:
+def create_and_store_prediction(db: Session, game: Game) -> Prediction | None:
     """
     Create and store a prediction for a future game.
 
@@ -1773,7 +1773,7 @@ def create_and_store_prediction(db: Session, game: Game) -> Optional[Prediction]
         return None
 
 
-def evaluate_prediction_accuracy(db: Session, game: Game) -> Optional[Prediction]:
+def evaluate_prediction_accuracy(db: Session, game: Game) -> Prediction | None:
     """
     Evaluate prediction accuracy for a completed game.
 
@@ -1812,7 +1812,7 @@ def evaluate_prediction_accuracy(db: Session, game: Game) -> Optional[Prediction
     return prediction
 
 
-def get_overall_prediction_accuracy(db: Session, season: Optional[int] = None) -> Dict[str, Any]:
+def get_overall_prediction_accuracy(db: Session, season: int | None = None) -> dict[str, Any]:
     """
     Get overall prediction accuracy statistics.
 
@@ -1829,7 +1829,6 @@ def get_overall_prediction_accuracy(db: Session, season: Optional[int] = None) -
         >>> stats = get_overall_prediction_accuracy(db, season=2024)
         >>> print(f"Accuracy: {stats['accuracy_percentage']:.1f}%")
     """
-    from sqlalchemy import func
 
     # Build base query
     query = db.query(Prediction)
@@ -1864,8 +1863,8 @@ def get_overall_prediction_accuracy(db: Session, season: Optional[int] = None) -
 
 
 def get_team_prediction_accuracy(
-    db: Session, team_id: int, season: Optional[int] = None
-) -> Dict[str, Any]:
+    db: Session, team_id: int, season: int | None = None
+) -> dict[str, Any]:
     """
     Get prediction accuracy for a specific team.
 

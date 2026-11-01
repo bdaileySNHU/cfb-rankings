@@ -14,7 +14,6 @@ import argparse
 import os
 import sys
 import time
-from typing import Dict, List, Tuple
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -51,7 +50,7 @@ class QuarterScoreBackfiller:
             "already_filled": 0,
         }
 
-    def get_games_needing_backfill(self, season: int = None, limit: int = None) -> List[Game]:
+    def get_games_needing_backfill(self, season: int = None, limit: int = None) -> list[Game]:
         """Fetch games with NULL quarter scores"""
         query = self.db.query(Game).filter(Game.q1_home.is_(None))
 

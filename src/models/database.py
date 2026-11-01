@@ -32,7 +32,7 @@ Note:
 import os
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from src.models.models import Base
 

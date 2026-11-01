@@ -9,7 +9,6 @@ import argparse
 import os
 import sys
 from datetime import datetime
-from typing import Dict, List, Tuple
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -22,9 +21,9 @@ import logging
 
 from sqlalchemy.orm import Session
 
-from src.models.database import SessionLocal
-from src.models.models import Game, RankingHistory, Team
 from src.core.ranking_service import RankingService
+from src.models.database import SessionLocal
+from src.models.models import Game, Team
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,7 +36,7 @@ class RankingComparisonReport:
         self.db = db
         self.ranking_service = RankingService(db)
 
-    def capture_current_rankings(self, season: int) -> List[Tuple[int, str, float]]:
+    def capture_current_rankings(self, season: int) -> list[tuple[int, str, float]]:
         """Capture current rankings for a season"""
         teams = self.db.query(Team).order_by(Team.elo_rating.desc()).all()
         return [(i + 1, team.name, team.elo_rating) for i, team in enumerate(teams)]
@@ -69,8 +68,8 @@ class RankingComparisonReport:
 
     def generate_comparison_report(
         self,
-        before: List[Tuple[int, str, float]],
-        after: List[Tuple[int, str, float]],
+        before: list[tuple[int, str, float]],
+        after: list[tuple[int, str, float]],
         output_file: str,
     ):
         """Generate markdown comparison report"""
@@ -80,15 +79,15 @@ class RankingComparisonReport:
 
         # Generate report
         with open(output_file, "w") as f:
-            f.write(f"# Quarter-Weighted ELO Ranking Comparison Report\n\n")
+            f.write("# Quarter-Weighted ELO Ranking Comparison Report\n\n")
             f.write(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-            f.write(f"## Summary\n\n")
+            f.write("## Summary\n\n")
             f.write(
-                f"This report compares rankings before and after implementing quarter-weighted ELO with garbage time adjustment.\n\n"
+                "This report compares rankings before and after implementing quarter-weighted ELO with garbage time adjustment.\n\n"
             )
 
             # Top 25 comparison
-            f.write(f"## Top 25 Ranking Changes\n\n")
+            f.write("## Top 25 Ranking Changes\n\n")
             f.write("| Rank (After) | Team | Rank (Before) | Change | Rating (After) |\n")
             f.write("|--------------|------|---------------|--------|----------------|\n")
 
@@ -103,7 +102,7 @@ class RankingComparisonReport:
                 f.write(f"| {rank} | {team} | {before_rank} | {change_str} | {rating:.2f} |\n")
 
             # Biggest movers
-            f.write(f"\n## Biggest Movers\n\n")
+            f.write("\n## Biggest Movers\n\n")
             f.write("Teams with largest ranking changes:\n\n")
 
             movers = []
@@ -124,15 +123,15 @@ class RankingComparisonReport:
                 f.write(f"| {team} | {before} | {after} | {change_str} |\n")
 
             # Analysis section
-            f.write(f"\n## Analysis\n\n")
+            f.write("\n## Analysis\n\n")
             f.write("### Algorithm Impact\n\n")
             f.write(
-                f"- Teams that benefited most (moved up): Likely teams with competitive games\n"
+                "- Teams that benefited most (moved up): Likely teams with competitive games\n"
             )
             f.write(
-                f"- Teams that dropped (moved down): Likely teams with garbage time inflation\n"
+                "- Teams that dropped (moved down): Likely teams with garbage time inflation\n"
             )
-            f.write(f"- Minimal movement: Teams with close games throughout\n\n")
+            f.write("- Minimal movement: Teams with close games throughout\n\n")
 
             # Garbage time examples
             f.write("### Garbage Time Detection Examples\n\n")

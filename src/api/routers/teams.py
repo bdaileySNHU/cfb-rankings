@@ -5,7 +5,6 @@ backend modularization. Route paths and handler logic are unchanged.
 """
 import logging
 from datetime import datetime
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, or_
@@ -19,9 +18,9 @@ from src.models.models import ConferenceType, Game, RankingHistory, Season, Team
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.get("/api/teams", response_model=List[schemas.Team], tags=["Teams"])
+@router.get("/api/teams", response_model=list[schemas.Team], tags=["Teams"])
 async def get_teams(
-    conference: Optional[ConferenceType] = None,
+    conference: ConferenceType | None = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
@@ -334,8 +333,8 @@ async def get_team_schedule(team_id: int, season: int, db: Session = Depends(get
 @router.get("/api/teams/{team_id}/players", response_model=schemas.TeamPlayersResponse, tags=["Teams"])
 async def get_team_players(
     team_id: int,
-    recruiting_year: Optional[int] = None,
-    position: Optional[str] = None,
+    recruiting_year: int | None = None,
+    position: str | None = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
@@ -412,8 +411,8 @@ async def get_team_players(
 @router.get("/api/teams/{team_id}/position-strength", tags=["Teams"])
 async def get_team_position_strength(
     team_id: int,
-    recruiting_year: Optional[int] = None,
-    season: Optional[int] = None,
+    recruiting_year: int | None = None,
+    season: int | None = None,
     db: Session = Depends(get_db),
 ):
     """Calculate position group strength for a team.
@@ -744,7 +743,7 @@ def get_team_preseason(team_id: int, season: int = None, db: Session = Depends(g
 def get_matchup(
     teamA: int,
     teamB: int,
-    season: Optional[int] = None,
+    season: int | None = None,
     db: Session = Depends(get_db),
 ):
     """Head-to-head team comparison: stats, ELO history, and win probabilities.

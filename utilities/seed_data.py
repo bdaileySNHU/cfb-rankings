@@ -4,9 +4,9 @@ Seed script to populate database with sample teams and games
 
 from datetime import datetime
 
-from src.models.database import SessionLocal, init_db, reset_db
-from src.models.models import ConferenceType, Game, Season, Team
 from src.core.ranking_service import RankingService
+from src.models.database import SessionLocal, reset_db
+from src.models.models import ConferenceType, Game, Season, Team
 
 
 def seed_database():

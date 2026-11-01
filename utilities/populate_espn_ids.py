@@ -14,7 +14,6 @@ and reported at the end so you can add them manually.
 """
 
 import sqlite3
-import sys
 
 # ---------------------------------------------------------------------------
 # ESPN team ID map  (team name variants → ESPN integer ID)
@@ -228,7 +227,7 @@ def main():
     conn.close()
 
     print()
-    print(f"=" * 70)
+    print("=" * 70)
     print(f"Updated: {updated} teams")
     if skipped:
         print(f"No ESPN ID found for {len(skipped)} teams:")

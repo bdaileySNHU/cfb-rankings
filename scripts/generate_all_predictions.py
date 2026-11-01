@@ -13,10 +13,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from datetime import datetime
 
-from src.models.database import SessionLocal
-from src.models.models import Prediction
 from src.core.ranking_service import generate_predictions
 from src.integrations.cfbd_client import CFBDClient
+from src.models.database import SessionLocal
+from src.models.models import Prediction
 
 
 def main():

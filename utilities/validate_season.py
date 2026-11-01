@@ -16,7 +16,7 @@ import argparse
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from sqlalchemy import func
 
@@ -26,7 +26,7 @@ sys.path.insert(0, str(project_root))
 
 # Import database and models
 from src.models.database import SessionLocal
-from src.models.models import APPollRanking, Game, RankingHistory, Season, Team
+from src.models.models import APPollRanking, Game, Season, Team
 
 
 class ValidationReport:
@@ -35,10 +35,10 @@ class ValidationReport:
     def __init__(self, season: int):
         self.season = season
         self.status = "PASS"
-        self.summary: Dict[str, Any] = {}
-        self.findings: List[str] = []
-        self.warnings: List[str] = []
-        self.errors: List[str] = []
+        self.summary: dict[str, Any] = {}
+        self.findings: list[str] = []
+        self.warnings: list[str] = []
+        self.errors: list[str] = []
 
     def add_finding(self, message: str) -> None:
         """Add a general finding to the report."""
