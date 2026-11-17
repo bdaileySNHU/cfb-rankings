@@ -120,3 +120,22 @@ API (only OFF/DEF per-game scoring added).
   acceptance walk (44.4 / 44.10).
 
 ---
+
+---
+
+## EPIC-046: CFP Committee Rankings on Comparison Page
+**Effort:** Small–Medium (2–3 stories)
+**Logged:** 2026-11-16
+
+Add the official College Football Playoff committee rankings next to the AP
+Poll on `frontend/comparison.html`:
+- Import: CFBD `/rankings` already returns the committee poll in the same
+  response; `CFBDClient.get_ap_poll` (`src/integrations/cfbd_client.py:1073`)
+  filters it out. Keep the `"Playoff Committee Rankings"` poll too and store it
+  in `APPollRanking` with its own `poll_type` (column exists; importer
+  `src/importers/polls.py:56` hard-codes `"AP Top 25"` today).
+- Service: parameterize `src/core/ap_poll_service.py:40` by `poll_type` so the
+  comparison stats run for either poll.
+- UI: CFP rank column in the ranking table + CFP accuracy stat card. Committee
+  rankings only exist from ~week 10 on, so show "—" for earlier weeks.
+- Verify exact CFBD poll name against a live 2026 response before coding.
