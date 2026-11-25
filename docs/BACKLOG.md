@@ -123,9 +123,14 @@ API (only OFF/DEF per-game scoring added).
 
 ---
 
-## EPIC-046: CFP Committee Rankings on Comparison Page
+## EPIC-046: CFP Committee Rankings on Comparison Page ✅ Complete
 **Effort:** Small–Medium (2–3 stories)
-**Logged:** 2026-11-16
+**Logged:** 2026-11-16 · **Completed:** 2026-11-25
+
+> Shipped with its own `cfp_rankings` table, not a `poll_type` row on
+> `APPollRanking`: that table's UNIQUE(season, week, team_id) would collide
+> for every team both polls rank (same reason SP+ has its own table). Poll
+> name verified live: `"Playoff Committee Rankings"`, weeks 10+.
 
 Add the official College Football Playoff committee rankings next to the AP
 Poll on `frontend/comparison.html`:

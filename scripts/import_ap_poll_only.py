@@ -1,9 +1,10 @@
 """
-Import AP Poll Rankings Only
-EPIC-010: AP Poll Prediction Comparison
+Import AP Poll and CFP Committee Rankings Only
+EPIC-010 / EPIC-046: poll prediction comparison
 
-This script imports AP Poll rankings for an existing season without
-resetting the database or re-importing games.
+Imports AP Poll and CFP committee rankings for an existing season without
+resetting the database or re-importing games. Uses the same importer as the
+weekly update, so it also backfills committee weeks (~10 on).
 """
 
 import os
@@ -16,84 +17,17 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
 
+from src.importers.polls import import_ap_poll_rankings
 from src.integrations.cfbd_client import CFBDClient
 from src.models.database import SessionLocal
-from src.models.models import APPollRanking, Team
-
-
-def import_ap_poll_for_week(cfbd: CFBDClient, db, year: int, week: int) -> int:
-    """
-    Import AP Poll rankings for a specific week.
-
-    Args:
-        cfbd: CFBD client instance
-        db: Database session
-        year: Season year
-        week: Week number
-
-    Returns:
-        int: Number of rankings imported
-    """
-    # Fetch AP Poll data for this week
-    ap_poll_data = cfbd.get_ap_poll(year, week)
-
-    if not ap_poll_data:
-        return 0
-
-    rankings_imported = 0
-
-    for ranking in ap_poll_data:
-        school_name = ranking.get("school")
-        rank = ranking.get("rank")
-
-        # Find team in our database
-        team = db.query(Team).filter(Team.name == school_name).first()
-        if not team:
-            print(f"      Warning: AP Poll team '{school_name}' not found in database")
-            continue
-
-        # Check if ranking already exists (prevent duplicates)
-        existing = (
-            db.query(APPollRanking)
-            .filter(
-                APPollRanking.season == year,
-                APPollRanking.week == week,
-                APPollRanking.team_id == team.id,
-            )
-            .first()
-        )
-
-        if existing:
-            # Update existing ranking
-            existing.rank = rank
-            existing.first_place_votes = ranking.get("firstPlaceVotes", 0)
-            existing.points = ranking.get("points", 0)
-            existing.poll_type = ranking.get("poll", "AP Top 25")
-            print(f"      Updated: #{rank} {school_name}")
-        else:
-            # Create new ranking
-            ap_ranking = APPollRanking(
-                season=year,
-                week=week,
-                poll_type=ranking.get("poll", "AP Top 25"),
-                rank=rank,
-                team_id=team.id,
-                first_place_votes=ranking.get("firstPlaceVotes", 0),
-                points=ranking.get("points", 0),
-            )
-            db.add(ap_ranking)
-            rankings_imported += 1
-            print(f"      Added: #{rank} {school_name}")
-
-    db.commit()
-    return rankings_imported
+from src.models.models import Team
 
 
 def main():
     """Main import function"""
     print("=" * 80)
-    print("AP POLL RANKINGS IMPORT")
-    print("EPIC-010: AP Poll Prediction Comparison")
+    print("AP POLL + CFP COMMITTEE RANKINGS IMPORT")
+    print("EPIC-010 / EPIC-046: poll prediction comparison")
     print("=" * 80)
     print()
 
@@ -140,26 +74,28 @@ def main():
         weeks = [int(w.strip()) for w in weeks_input.split(",")]
 
     print()
-    print(f"Importing AP Poll rankings for {season}, weeks: {list(weeks)}")
+    print(f"Importing AP + CFP rankings for {season}, weeks: {list(weeks)}")
     print()
 
     # Initialize database
     db = SessionLocal()
 
-    # Import AP Poll rankings
+    team_objects = {t.name: t for t in db.query(Team).all()}
+
+    # Import AP Poll + CFP committee rankings
     total_imported = 0
     weeks_with_data = 0
 
     for week in weeks:
         print(f"Week {week}...")
-        count = import_ap_poll_for_week(cfbd, db, season, week)
+        count = import_ap_poll_rankings(cfbd, db, team_objects, season, week)
 
         if count > 0:
             print(f"  ✓ Imported {count} rankings")
             total_imported += count
             weeks_with_data += 1
         else:
-            print("  - No AP Poll data available")
+            print("  - No new poll rankings")
 
     # Print summary
     print()
@@ -167,7 +103,7 @@ def main():
     print("IMPORT SUMMARY")
     print("=" * 80)
     print(f"Total rankings imported: {total_imported}")
-    print(f"Weeks with AP Poll data: {weeks_with_data}")
+    print(f"Weeks with new rankings: {weeks_with_data}")
     print("=" * 80)
     print()
     print("✓ Import complete!")

@@ -345,7 +345,7 @@ def import_games(
         if not validate_only:
             ap_rankings_count = import_ap_poll_rankings(cfbd, db, team_objects, year, week)
             if ap_rankings_count > 0:
-                print(f"    AP Poll: {ap_rankings_count} rankings imported")
+                print(f"    AP/CFP polls: {ap_rankings_count} rankings imported")
                 ap_poll_rankings_imported += ap_rankings_count
 
             # Snapshot SP+ alongside the poll. Write-once per week: a week

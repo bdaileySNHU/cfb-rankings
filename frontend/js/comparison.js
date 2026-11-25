@@ -73,6 +73,7 @@ async function loadComparisonData(season = null) {
     displayHeroStats(comparison);
     displayHeadToHead(comparison, 'sp', 'SP+');
     displayHeadToHead(comparison, 'spread', 'Vegas');
+    displayHeadToHead(comparison, 'cfp', 'CFP');
     displayBreakdownStats(comparison);
     displayPostseasonStats(comparison);  // EPIC-COMPARISON-BOWL-PLAYOFF
     displayAccuracyChart(comparison);
@@ -144,7 +145,7 @@ function displayHeroStats(comparison) {
 /**
  * Display an ELO head-to-head row (SP+, Vegas). Each source is graded on its
  * own game subset, so it gets its own row rather than being merged with AP.
- * `key` is both the element-id prefix and the API field suffix (sp_*, spread_*).
+ * `key` is both the element-id prefix and the API field suffix (sp_*, spread_*, cfp_*).
  */
 function displayHeadToHead(comparison, key, label) {
   const section = document.getElementById(`${key}-comparison`);
@@ -427,7 +428,7 @@ function showError(message) {
 }
 
 /**
- * Rankings side by side: ELO vs AP vs SP+, sortable by any column.
+ * Rankings side by side: ELO vs AP vs SP+ vs CFP, sortable by any column.
  * Diff = other rank - ELO rank, so positive means we rate the team higher.
  */
 let rankCompareRows = [];
@@ -439,12 +440,14 @@ async function loadRankCompare(season) {
     ...t,
     ap_diff: t.ap_rank && t.elo_rank ? t.ap_rank - t.elo_rank : null,
     sp_diff: t.sp_rank && t.elo_rank ? t.sp_rank - t.elo_rank : null,
+    cfp_diff: t.cfp_rank && t.elo_rank ? t.cfp_rank - t.elo_rank : null,
   }));
   const weeks = [`ELO wk ${data.week}`];
   if (data.ap_week != null) weeks.push(`AP wk ${data.ap_week}`);
   if (data.sp_week != null) weeks.push(`SP+ wk ${data.sp_week}`);
+  if (data.cfp_week != null) weeks.push(`CFP wk ${data.cfp_week}`);
   document.getElementById('rank-compare-note').textContent =
-    `Our rank next to the AP Poll and SP+ (${weeks.join(' · ')}). Click a column to sort.`;
+    `Our rank next to the AP Poll, SP+ and CFP committee (${weeks.join(' · ')}). Click a column to sort.`;
   renderRankCompare();
 }
 
@@ -471,6 +474,8 @@ function renderRankCompare() {
       <td>${diff(r.ap_diff)}</td>
       <td>${cell(r.sp_rank)}</td>
       <td>${diff(r.sp_diff)}</td>
+      <td>${cell(r.cfp_rank)}</td>
+      <td>${diff(r.cfp_diff)}</td>
     </tr>`).join('');
   document.querySelectorAll('.rank-compare th').forEach(th => {
     const k = th.querySelector('button').dataset.sort;

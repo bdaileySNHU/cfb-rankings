@@ -754,6 +754,40 @@ class APPollRanking(Base):
         return f"<APPollRanking(season={self.season}, week={self.week}, rank=#{self.rank}, team={self.team.name if self.team else 'Unknown'})>"
 
 
+class CFPRanking(Base):
+    """
+    College Football Playoff committee rankings, weekly (EPIC-046).
+
+    Own table for the same reason as SPPlusRating: ap_poll_rankings carries
+    UNIQUE (season, week, team_id), so a committee row would collide with the
+    AP row for every team both rank. CFBD files the committee poll under the
+    same week numbering as AP, so lookups by game.week work identically.
+    Only exists from roughly week 10 on.
+    """
+
+    __tablename__ = "cfp_rankings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    season = Column(Integer, nullable=False, index=True)
+    week = Column(Integer, nullable=False, index=True)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False, index=True)
+    rank = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    team = relationship("Team", foreign_keys=[team_id])
+
+    __table_args__ = (
+        Index("idx_cfp_season_week", "season", "week"),
+        UniqueConstraint("season", "week", "team_id", name="uq_cfp_season_week_team"),
+    )
+
+    def __repr__(self):
+        """Return string representation showing season, week, rank, and team."""
+        team = self.team.name if self.team else "Unknown"
+        return (
+            f"<CFPRanking(season={self.season}, week={self.week}, rank=#{self.rank}, team={team})>"
+        )
+
 
 class SPPlusRating(Base):
     """
