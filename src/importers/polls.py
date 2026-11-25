@@ -3,12 +3,14 @@
 from statistics import median
 
 from src.integrations.cfbd_client import CFBDClient
-from src.models.models import APPollRanking, BettingLine, Game, SPPlusRating
+from src.models.models import APPollRanking, BettingLine, CFPRanking, Game, SPPlusRating
+
+CFP_POLL = "Playoff Committee Rankings"
 
 
 def import_ap_poll_rankings(cfbd: CFBDClient, db, team_objects: dict, year: int, week: int) -> int:
     """
-    Import AP Poll rankings for a specific week.
+    Import AP Poll and CFP committee rankings for a specific week.
 
     Part of EPIC-010: AP Poll Prediction Comparison
 
@@ -20,10 +22,11 @@ def import_ap_poll_rankings(cfbd: CFBDClient, db, team_objects: dict, year: int,
         week: Week number
 
     Returns:
-        int: Number of rankings imported
+        int: Number of new rankings stored, across both polls
     """
-    # Fetch AP Poll data for this week
-    ap_poll_data = cfbd.get_ap_poll(year, week)
+    # One /rankings call serves both polls. The committee poll (EPIC-046) only
+    # exists from ~week 10 on and goes to its own table; see CFPRanking.
+    ap_poll_data = cfbd.get_ap_poll(year, week, polls=("AP Top 25", CFP_POLL))
 
     if not ap_poll_data:
         # No AP Poll available for this week (common for early weeks, late season)
@@ -39,7 +42,20 @@ def import_ap_poll_rankings(cfbd: CFBDClient, db, team_objects: dict, year: int,
         team = team_objects.get(school_name)
         if not team:
             # Team not in our FBS list (shouldn't happen for AP Top 25)
-            print(f"      Warning: AP Poll team '{school_name}' not found in database")
+            print(f"      Warning: {ranking.get('poll', 'AP Poll')} team '{school_name}' not found in database")
+            continue
+
+        if ranking.get("poll") == CFP_POLL:
+            cfp = (
+                db.query(CFPRanking)
+                .filter_by(season=year, week=week, team_id=team.id)
+                .first()
+            )
+            if cfp:
+                cfp.rank = rank
+            else:
+                db.add(CFPRanking(season=year, week=week, team_id=team.id, rank=rank))
+                rankings_imported += 1
             continue
 
         # Check if ranking already exists (prevent duplicates)

@@ -1017,9 +1017,16 @@ class CFBDClient:
         """
         return self._get("/player/portal", params={"year": year})
 
-    def get_ap_poll(self, year: int, week: int | None = None) -> list[dict]:
+    def get_ap_poll(
+        self, year: int, week: int | None = None, polls: tuple[str, ...] = ("AP Top 25",)
+    ) -> list[dict]:
         """
         Get AP Poll rankings for a specific week
+
+        `polls` names which CFBD polls to keep; each row's "poll" key says which
+        one it came from. /rankings returns every poll in one response, so
+        asking for several costs no extra API calls (EPIC-046 adds
+        "Playoff Committee Rankings").
 
         Part of EPIC-010: AP Poll Prediction Comparison
 
@@ -1070,7 +1077,7 @@ class CFBDClient:
         ap_rankings = []
         for poll_week in rankings:
             for poll in poll_week.get("polls", []):
-                if poll.get("poll") == "AP Top 25":
+                if poll.get("poll") in polls:
                     # Extract rankings with metadata
                     for team_ranking in poll.get("ranks", []):
                         ap_rankings.append(

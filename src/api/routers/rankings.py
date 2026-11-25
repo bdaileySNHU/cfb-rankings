@@ -14,7 +14,7 @@ from src.core.ranking_service import RankingService, project_playoff_bracket
 from src.core.season_simulation import load_cached_projection, refresh_projection
 from src.models import schemas
 from src.models.database import get_db
-from src.models.models import APPollRanking, Game, RankingHistory, Season, SPPlusRating, Team
+from src.models.models import APPollRanking, CFPRanking, Game, RankingHistory, Season, SPPlusRating, Team
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -220,7 +220,7 @@ async def get_rankings(
 
 @router.get("/api/rankings/compare", tags=["Rankings"])
 async def compare_rankings(season: int, db: Session = Depends(get_db)):
-    """ELO rank beside the latest AP and SP+ ranks, one row per team.
+    """ELO rank beside the latest AP, SP+ and CFP committee ranks, one row per team.
 
     Rows are our top 25 plus every team AP or SP+ ranks. Each source uses its
     latest snapshot at or before the season's current week.
@@ -242,8 +242,9 @@ async def compare_rankings(season: int, db: Session = Depends(get_db)):
 
     ap_week, ap = latest(APPollRanking)
     sp_week, sp = latest(SPPlusRating)
+    cfp_week, cfp = latest(CFPRanking)
 
-    team_ids = {r["team_id"] for r in elo[:25]} | ap.keys() | sp.keys()
+    team_ids = {r["team_id"] for r in elo[:25]} | ap.keys() | sp.keys() | cfp.keys()
     names = dict(db.query(Team.id, Team.name).filter(Team.id.in_(team_ids)).all()) if team_ids else {}
 
     rows = []
@@ -258,10 +259,11 @@ async def compare_rankings(season: int, db: Session = Depends(get_db)):
             "ap_rank": ap[tid].rank if tid in ap else None,
             "sp_rank": sp[tid].ranking if tid in sp else None,
             "sp_rating": sp[tid].rating if tid in sp else None,
+            "cfp_rank": cfp[tid].rank if tid in cfp else None,
         })
     rows.sort(key=lambda r: r["elo_rank"] or 999)
 
-    return {"season": season, "week": week, "ap_week": ap_week, "sp_week": sp_week, "teams": rows}
+    return {"season": season, "week": week, "ap_week": ap_week, "sp_week": sp_week, "cfp_week": cfp_week, "teams": rows}
 
 
 @router.get("/api/rankings/history", response_model=list[schemas.RankingHistory], tags=["Rankings"])

@@ -8,7 +8,15 @@ Part of EPIC-010: AP Poll Prediction Comparison.
 
 from sqlalchemy.orm import Session
 
-from src.models.models import APPollRanking, BettingLine, Game, Prediction, SPPlusRating, Team
+from src.models.models import (
+    APPollRanking,
+    BettingLine,
+    CFPRanking,
+    Game,
+    Prediction,
+    SPPlusRating,
+    Team,
+)
 
 
 def get_team_ap_rank(db: Session, team_id: int, season: int, week: int) -> int | None:
@@ -156,6 +164,28 @@ def get_sp_prediction_for_game(db: Session, game: Game) -> int | None:
     away_rank = get_team_sp_rank(db, game.away_team_id, game.season, game.week)
 
     return _pick_by_rank(game, home_rank, away_rank)
+
+
+def get_cfp_prediction_for_game(db: Session, game: Game) -> int | None:
+    """
+    CFP committee pick for a game: better committee rank wins (EPIC-046).
+
+    Silent before the committee's first ranking (~week 10), so it is graded
+    only on late-season games involving at least one ranked team.
+    """
+    def rank(team_id):
+        row = (
+            db.query(CFPRanking)
+            .filter(
+                CFPRanking.team_id == team_id,
+                CFPRanking.season == game.season,
+                CFPRanking.week == game.week,
+            )
+            .first()
+        )
+        return row.rank if row else None
+
+    return _pick_by_rank(game, rank(game.home_team_id), rank(game.away_team_id))
 
 
 def get_spread_prediction_for_game(db: Session, game: Game) -> int | None:
@@ -445,6 +475,12 @@ def calculate_comparison_stats(db: Session, season: int) -> dict:
         db, games, get_spread_prediction_for_game
     )
     spread_accuracy = spread_correct / spread_games if spread_games else 0.0
+    # CFP committee, same treatment again.
+    cfp_games, cfp_correct, elo_correct_vs_cfp = _head_to_head(
+        db, games, get_cfp_prediction_for_game
+    )
+    cfp_accuracy = cfp_correct / cfp_games if cfp_games else 0.0
+    elo_accuracy_vs_cfp = elo_correct_vs_cfp / cfp_games if cfp_games else 0.0
     elo_accuracy_vs_spread = elo_correct_vs_spread / spread_games if spread_games else 0.0
 
     sp_accuracy = sp_correct_count / sp_games_compared if sp_games_compared > 0 else 0.0
@@ -487,4 +523,11 @@ def calculate_comparison_stats(db: Session, season: int) -> dict:
         "elo_correct_vs_spread": elo_correct_vs_spread,
         "elo_accuracy_vs_spread": round(elo_accuracy_vs_spread, 4),
         "elo_advantage_vs_spread": round(elo_accuracy_vs_spread - spread_accuracy, 4),
+        # CFP committee comparison (own denominator, like SP+)
+        "cfp_games_compared": cfp_games,
+        "cfp_correct": cfp_correct,
+        "cfp_accuracy": round(cfp_accuracy, 4),
+        "elo_correct_vs_cfp": elo_correct_vs_cfp,
+        "elo_accuracy_vs_cfp": round(elo_accuracy_vs_cfp, 4),
+        "elo_advantage_vs_cfp": round(elo_accuracy_vs_cfp - cfp_accuracy, 4),
     }
