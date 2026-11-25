@@ -166,26 +166,51 @@ def get_sp_prediction_for_game(db: Session, game: Game) -> int | None:
     return _pick_by_rank(game, home_rank, away_rank)
 
 
+def get_team_cfp_rank(db: Session, team_id: int, season: int, week: int) -> int | None:
+    """
+    Get a team's CFP committee rank for a week (EPIC-046).
+
+    Args:
+        db: Database session
+        team_id: Team ID
+        season: Season year
+        week: Week number
+
+    Returns:
+        int: Committee rank (1-25), or None if unranked or before the
+        committee's first ranking (~week 10)
+    """
+    ranking = (
+        db.query(CFPRanking)
+        .filter(
+            CFPRanking.team_id == team_id,
+            CFPRanking.season == season,
+            CFPRanking.week == week,
+        )
+        .first()
+    )
+
+    return ranking.rank if ranking else None
+
+
 def get_cfp_prediction_for_game(db: Session, game: Game) -> int | None:
     """
     CFP committee pick for a game: better committee rank wins (EPIC-046).
 
     Silent before the committee's first ranking (~week 10), so it is graded
     only on late-season games involving at least one ranked team.
-    """
-    def rank(team_id):
-        row = (
-            db.query(CFPRanking)
-            .filter(
-                CFPRanking.team_id == team_id,
-                CFPRanking.season == game.season,
-                CFPRanking.week == game.week,
-            )
-            .first()
-        )
-        return row.rank if row else None
 
-    return _pick_by_rank(game, rank(game.home_team_id), rank(game.away_team_id))
+    Args:
+        db: Database session
+        game: Game object
+
+    Returns:
+        int: team_id of predicted winner, or None if no CFP prediction possible
+    """
+    home_rank = get_team_cfp_rank(db, game.home_team_id, game.season, game.week)
+    away_rank = get_team_cfp_rank(db, game.away_team_id, game.season, game.week)
+
+    return _pick_by_rank(game, home_rank, away_rank)
 
 
 def get_spread_prediction_for_game(db: Session, game: Game) -> int | None:

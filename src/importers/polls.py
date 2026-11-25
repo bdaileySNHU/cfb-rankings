@@ -42,7 +42,8 @@ def import_ap_poll_rankings(cfbd: CFBDClient, db, team_objects: dict, year: int,
         team = team_objects.get(school_name)
         if not team:
             # Team not in our FBS list (shouldn't happen for AP Top 25)
-            print(f"      Warning: {ranking.get('poll', 'AP Poll')} team '{school_name}' not found in database")
+            poll = ranking.get("poll", "AP Poll")
+            print(f"      Warning: {poll} team '{school_name}' not found in database")
             continue
 
         if ranking.get("poll") == CFP_POLL:

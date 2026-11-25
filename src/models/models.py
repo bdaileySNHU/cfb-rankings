@@ -767,16 +767,26 @@ class CFPRanking(Base):
 
     __tablename__ = "cfp_rankings"
 
-    id = Column(Integer, primary_key=True)
-    season = Column(Integer, nullable=False)
-    week = Column(Integer, nullable=False)
-    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    season = Column(Integer, nullable=False, index=True)
+    week = Column(Integer, nullable=False, index=True)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False, index=True)
     rank = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    team = relationship("Team", foreign_keys=[team_id])
 
     __table_args__ = (
+        Index("idx_cfp_season_week", "season", "week"),
         UniqueConstraint("season", "week", "team_id", name="uq_cfp_season_week_team"),
     )
 
+    def __repr__(self):
+        """Return string representation showing season, week, rank, and team."""
+        team = self.team.name if self.team else "Unknown"
+        return (
+            f"<CFPRanking(season={self.season}, week={self.week}, rank=#{self.rank}, team={team})>"
+        )
 
 
 class SPPlusRating(Base):

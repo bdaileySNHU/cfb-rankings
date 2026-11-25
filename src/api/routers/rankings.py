@@ -14,7 +14,15 @@ from src.core.ranking_service import RankingService, project_playoff_bracket
 from src.core.season_simulation import load_cached_projection, refresh_projection
 from src.models import schemas
 from src.models.database import get_db
-from src.models.models import APPollRanking, CFPRanking, Game, RankingHistory, Season, SPPlusRating, Team
+from src.models.models import (
+    APPollRanking,
+    CFPRanking,
+    Game,
+    RankingHistory,
+    Season,
+    SPPlusRating,
+    Team,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -222,7 +230,7 @@ async def get_rankings(
 async def compare_rankings(season: int, db: Session = Depends(get_db)):
     """ELO rank beside the latest AP, SP+ and CFP committee ranks, one row per team.
 
-    Rows are our top 25 plus every team AP or SP+ ranks. Each source uses its
+    Rows are our top 25 plus every team AP, SP+ or the committee ranks. Each source uses its
     latest snapshot at or before the season's current week.
     """
     season_obj = db.query(Season).filter(Season.year == season).first()
@@ -263,7 +271,14 @@ async def compare_rankings(season: int, db: Session = Depends(get_db)):
         })
     rows.sort(key=lambda r: r["elo_rank"] or 999)
 
-    return {"season": season, "week": week, "ap_week": ap_week, "sp_week": sp_week, "cfp_week": cfp_week, "teams": rows}
+    return {
+        "season": season,
+        "week": week,
+        "ap_week": ap_week,
+        "sp_week": sp_week,
+        "cfp_week": cfp_week,
+        "teams": rows,
+    }
 
 
 @router.get("/api/rankings/history", response_model=list[schemas.RankingHistory], tags=["Rankings"])

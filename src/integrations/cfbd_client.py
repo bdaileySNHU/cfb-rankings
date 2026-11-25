@@ -1021,7 +1021,7 @@ class CFBDClient:
         self, year: int, week: int | None = None, polls: tuple[str, ...] = ("AP Top 25",)
     ) -> list[dict]:
         """
-        Get AP Poll rankings for a specific week
+        Get AP Poll (and optionally other poll) rankings for a specific week
 
         `polls` names which CFBD polls to keep; each row's "poll" key says which
         one it came from. /rankings returns every poll in one response, so
@@ -1033,13 +1033,15 @@ class CFBDClient:
         Args:
             year: Season year
             week: Optional week number (if omitted, gets all weeks for the season)
+            polls: CFBD poll names to keep (default AP only), e.g.
+                ("AP Top 25", "Playoff Committee Rankings")
 
         Returns:
-            List of AP Poll ranking dictionaries, each containing:
+            List of ranking dictionaries, one per ranked team per poll, each containing:
             - season: int
             - seasonType: str (regular, postseason)
             - week: int
-            - poll: str ("AP Top 25")
+            - poll: str (which poll, e.g. "AP Top 25")
             - rank: int
             - school: str (team name)
             - conference: str

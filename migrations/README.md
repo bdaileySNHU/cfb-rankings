@@ -38,6 +38,7 @@ python migrations/migrate_add_predictions.py
 | 2024-10-XX | `migrate_add_predictions.py` | Add predictions table for EPIC-009 | ✅ Complete |
 | 2024-11-XX | `migrate_add_quarter_scores.py` | Add quarter-by-quarter scoring columns | ✅ Complete |
 | 2024-11-XX | `migrate_add_ap_poll_rankings.py` | Add AP Poll rankings table for EPIC-010 | ✅ Complete |
+| 2026-11-25 | `migrate_add_cfp_rankings.py` | Add CFP committee rankings table for EPIC-046 (startup `create_all` also creates it) | ⏳ Pending deploy |
 | 2024-11-XX | `migrate_add_conference_name.py` | Add actual conference name field | ✅ Complete |
 | 2024-11-XX | `migrate_add_game_type.py` | Add game type classification (EPIC-022) | ✅ Complete |
 | 2024-12-XX | `migrate_add_transfer_portal_fields.py` | Add transfer portal metrics (EPIC-026) | ✅ Complete |
